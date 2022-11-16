@@ -1,0 +1,50 @@
+
+ffmpeg
+================
+
+j
+## Extract Audio From webm
+
+Lookup format of audio stream with:
+
+  ffmpeg -i in.webm
+
+Then use that knowlege to extract that (audio) stream:
+
+  ffmpeg -i in.webm -vn -acodec copy out.FORMAT_FROM_BEFORE
+
+
+
+## Convert Formats
+
+ffmpeg -i in.opus out.wav
+
+
+
+## Record Desktop
+
+  ffmpeg -f gdigrab -framerate 6 -probesize 10M -offset_x 0 -offset_y 0 \
+      -video_size 1920x1200 -show_region 1 -i desktop -c:v h264_qsv \
+      -pix_fmt yuv420p "output-$(date +%Y%m%d-%H%M%S).mp4"
+
+
+
+## Video to Gif
+
+HINT: Use same filter for palette as for conversion.
+
+  FILTERV=fps=6,scale=-1:600
+  FILTERV=fps=6,scale=-1:480
+  INPUTV=input.mp4
+
+Create custom palette:
+  ffmpeg -ss 4 -t 33 -i "$INPUTV" -vf "$FILTERV,palettegen=stats_mode=diff" palette.png
+
+Use this palette:
+  ffmpeg -ss 4 -t 33 -i "$INPUTV" -i palette.png -filter_complex "[0:v]$FILTERV[vid];[vid][1:v]paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle" output.gif
+
+Working example from web (but not optimized):
+  ffmpeg -ss 0 -t 2.5 -i INPUT.mp4 -filter_complex "[0:v] fps=12,scale=-1:600,split [a][b];[a] palettegen=stats_mode=diff [p];[b][p] paletteuse=new=1" OUTPUT.gif
+
+
+

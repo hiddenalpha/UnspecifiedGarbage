@@ -1,0 +1,53 @@
+
+How to install a docker daemon eg in a VM or so
+===============================================
+
+Setup a VM (eg debian bullseye)
+
+Add auth proxy in "/etc/environment"
+
+Make sure "apt update" works.
+
+Install docker as described on "https://docs.docker.com/engine/install/debian/"
+
+  sudo apt update
+  sudo apt-get install -y --no-install-recommends ca-certificates curl gnupg lsb-release
+
+  # I had to download that gpg on my host and then pasting it into the vm
+  # to use it there
+  curl -sSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+
+  echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+  sudo apt update
+  sudo apt install -y --no-install-recommends docker-ce docker-ce-cli containerd.io
+
+Edit "/lib/systemd/system/docker.service" and add environ config in "service"
+section (HINT: "/etc/environment" does not work)
+
+  [service]
+  ...
+  Environment="HTTP_PROXY=http://10.0.2.2:31280"
+  Environment="http_proxy=http://10.0.2.2:31280"
+  Environment="HTTPS_PROXY=http://10.0.2.2:31280"
+  Environment="https_proxy=http://10.0.2.2:31280"
+  Environment="NO_PROXY=127.0.0.1,10.0.2.2,*.post.ch"
+  Environment="no_proxy=127.0.0.1,10.0.2.2,*.post.ch"
+
+
+Edit (or create) "/etc/docker/daemon.json" with contents as below.
+HINT: Maybe 'insecure' not needed, ToBeTested.
+
+    {
+      "registry-mirrors": [
+        "https://docker.tools.post.ch"
+      ],
+      "insecure-registries" : [
+        "index.docker.io",
+        "docker.tools.post.ch"
+      ]
+    }
+
+
+
+

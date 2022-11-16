@@ -1,0 +1,33 @@
+
+Tar
+================
+
+For specific use cases see also doc for eg "openshift", "docker", etc.
+
+
+## Backup With Ignoring Useless Files
+
+Use -x (--exclude=) arg or -X (--exclude-from=).
+
+For example to exclude VCS stuff:
+
+  tar --exclude-backups --exclude-vcs-ignores --exclude-vcs
+
+Or with custom rules:
+
+  tar -X exclude-list.txt
+
+Example "exclude-list.txt":
++-----------------------------------------------------------------------
+| target
+| node_modules
+| *.a
+| *.class
+| *.o
++-----------------------------------------------------------------------
+
+
+## Extract By Pattern
+
+TBD
+

@@ -1,0 +1,28 @@
+
+Bitbucket CheatSheet
+====================
+
+
+## Download ZIP / TAR
+
+  https://${USER}:{pass}@gitit.post.ch/rest/api/latest/projects/~FANKHAUSEAND/repos/FOO/archive?format=tgz
+
+  https://${USER}:{PASS}@gitit.post.ch/rest/api/latest/projects/~FANKHAUSEAND/repos/FOO/archive?at=refs%2Fheads%2F{BRANCH}&format=tgz
+
+
+TODO test:
+curl -u USER:PASS https://gitit.post.ch/rest/api/1.0/projects/WORK/repos/my-repo/commits/?until=master
+
+curl -sSD- https://gitit.post.ch/2.0/repositories/ISA?fields=values.links
+
+
+## Image size in comment
+
+Source: "https://stackoverflow.com/a/67069086/4415884"
+
+![alt text for the image](image-file.png){width=50%}
+![alt text for the image](image-file.png){height=50 width=60}
+![alt text for the image](image-file.png){height=100}
+![alt text for the image](image-file.png){width=200px}
+
+

@@ -1,0 +1,49 @@
+
+SSH Setup & Key Management
+==========================
+
+## Create New Ssh Key
+
+Create "path/to/key" and "path/to/key.pub" as a 2048 bit RSA with
+"your comment" as comment (you can skip "-C comment" if you dont care).
+
+```sh
+ssh-keygen -t rsa -b 2048 -f path/to/key -C "your comment"
+```
+
+
+## Change Passphrase
+
+```sh
+ssh-keygen -p -f path/to/key
+```
+
+NOTE: Just hitting enter when asked for the new one will remove the passphrase.
+
+
+## Inspect keys
+
+Print public key hash:
+```sh
+ssh-keygen -l -f path/to/key.pub
+```
+
+Print public key hash as md5:
+```sh
+ssh-keygen -E md5 -l -f path/to/key.pub
+```
+
+```sh
+ssh-keygen -y -f path/to/key > path/to/key.pub
+```
+
+
+## TODO
+
+ -e      This option will read a private or public OpenSSH key file
+         and print to stdout a public key in one of the formats
+         specified by the -m option.  The default export format is
+         “RFC4716”.  This option allows exporting OpenSSH keys for
+         use by other programs, including several commercial SSH
+         implementations.
+

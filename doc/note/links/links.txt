@@ -1,0 +1,391 @@
+
+Links (Aka arguments)
+=====================
+
+## Pro DI over serviceLocator
+- "http://blog.ploeh.dk/2010/02/03/ServiceLocatorisanAnti-Pattern/"
+- "https://adamcod.es/2013/11/25/service-locator-vs-dependency-injection-container.html"
+- "https://stackoverflow.com/questions/10356497/is-is-an-anti-pattern-to-inject-di-container-to-almost-each-class"
+- "https://www.devtrends.co.uk/blog/how-not-to-do-dependency-injection-the-static-or-singleton-container"
+
+## Pro constructor injection:
+- "http://olivergierke.de/2013/11/why-field-injection-is-evil/"
+- "https://www.petrikainulainen.net/software-development/design/why-i-changed-my-mind-about-field-injection/"
+- "http://blog.schauderhaft.de/2012/06/05/repeat-after-me-setter-injection-is-a-symptom-of-design-problems/"
+- "http://blog.schauderhaft.de/2012/01/01/the-one-correct-way-to-do-dependency-injection/"
+- "https://spring.io/blog/2007/07/11/setter-injection-versus-constructor-injection-and-the-use-of-required/"
+- "http://evan.bottch.com/2009/02/03/setter-injection-sucks/"
+
+## Pro DI over inheritance:
+- "https://stackoverflow.com/questions/30767395/when-to-use-di-over-abstract-inheritance"
+
+## Contra global state:
+- "https://softwareengineering.stackexchange.com/questions/148108/why-is-global-state-so-evil"
+- "https://dzone.com/articles/why-static-bad-and-how-avoid"
+- "https://en.wikipedia.org/wiki/Global_variable"
+
+## Contra property injection:
+- "https://gitit.post.ch/projects/ISA/repos/platform/pull-requests/132/overview"
+- "https://stackoverflow.com/a/12476575/4415884"
+
+## Dependency inversion example:
+- "https://softwareengineering.stackexchange.com/a/191725"
+- "https://lostechies.com/derickbailey/2011/09/22/dependency-injection-is-not-the-same-as-the-dependency-inversion-principle/"
+- "http://www.oodesign.com/dependency-inversion-principle.html" (Says do not always)
+
+## Strategy Pattern (Class with only one method is OK)
+- "https://softwareengineering.stackexchange.com/questions/225893/are-classes-with-only-a-single-public-method-a-problem"
+
+## contra static method (aka utility classes):
+- "https://simpleprogrammer.com/static-methods-will-shock-you/"
+- "http://vojtechruzicka.com/avoid-utility-classes/"
+
+## static method wrapping:
+- "https://stackoverflow.com/questions/6523463/how-to-use-dependency-injection-with-static-methods"
+- "https://medium.com/@slavik57/static-methods-to-dependency-injection-in-3-simple-steps-c3f50bf3f115"
+
+## Contra mocking framework:
+- "http://www.disgruntledrats.com/?p=620"
+
+## Contra oneliners:
+- "http://wiki.c2.com/?IntroduceExplainingVariable"
+- "https://refactoring.com/catalog/extractVariable.html"
+- "https://github.com/swisspush/apikana/blob/v0.9.19/src/deps/helper.js#L207-L211"
+
+## Git: pro merge, contra rebase:
+- "https://medium.com/@fredrikmorken/why-you-should-stop-using-git-rebase-5552bee4fed1"
+
+## Git: contra rebase shared/remote: Do NEVER rebase shared branches:
+- "https://medium.freecodecamp.org/git-rebase-and-the-golden-rule-explained-70715eccc372"
+
+## Git: pro squash:
+- "https://blog.carbonfive.com/2017/08/28/always-squash-and-rebase-your-git-commits/"
+
+## Git: merge VS rebase: Choose right strategy for right task:
+- "https://delicious-insights.com/en/posts/getting-solid-at-git-rebase-vs-merge/"
+
+## Git is NOT an artifact storage
+- "https://devops.stackexchange.com/q/452"
+
+## Pro FailFast, dont ignore errors:
+- "https://softwareengineering.stackexchange.com/a/190535"
+- [Ignore Return IllegalThreadStateException](https://gitit.post.ch/projects/ISA/repos/zarquon/pull-requests/2/overview?commentId=61293)
+
+## Contra Java Optional:
+- "https://homes.cs.washington.edu/~mernst/advice/nothing-is-better-than-optional.html"
+
+## SOLID:
+- "https://www.youtube.com/watch?v=TMuno5RZNeE"
+- SRP "https://blog.ndepend.com/solid-design-the-single-responsibility-principle-srp/"
+- OCP "https://blog.ndepend.com/solid-design-the-open-close-principle-ocp/"
+- LSP "https://blog.ndepend.com/solid-design-the-liskov-substitution-principle/"
+- DIP "https://stackify.com/dependency-inversion-principle/"
+
+## Java how to handle InterruptedException:
+- "https://www.yegor256.com/2015/10/20/interrupted-exception.html"
+- "https://stackoverflow.com/questions/3976344/handling-interruptedexception-in-java"
+- "https://gitit.post.ch/projects/ISA/repos/preflux/pull-requests/39/overview?commentId=33603"
+- "https://gitit.post.ch/projects/ISA/repos/zarquon/pull-requests/3/overview?commentId=62065"
+- "https://jira.post.ch/browse/SDCISA-5624"
+- "https://gitit.post.ch/projects/ISA/repos/halfrunt/pull-requests/27/overview?commentId=105541"
+
+## Please don't never not avoid nevative (un)logic
+- "https://schneide.blog/tag/boolean-statements/"
+
+## maximum line length:
+- "https://www.codereadability.com/maximum-line-length/"
+
+## composition over inheritance:
+- "https://medium.com/humans-create-software/composition-over-inheritance-cb6f88070205"
+- "https://softwareengineering.stackexchange.com/a/371715/306800"
+- "https://youtu.be/wfMtDGfHWpA"
+
+## requirements, experts, business:
+- "https://www.youtube.com/watch?v=BKorP55Aqvg"
+
+## technical dept (technische schulden)
+- "https://www.youtube.com/watch?v=mSuUPsbqmQ8"
+
+## Why Cant Programmers Program?
+- "https://blog.codinghorror.com/why-cant-programmers-program/"
+
+## Do Certifications Matter?
+- "https://blog.codinghorror.com/do-certifications-matter/"
+
+## Single Line If Statements
+- "https://medium.com/@jonathanabrams/single-line-if-statements-2565c62ff492"
+
+## Why I Have Given Up On Coding Standards
+- "http://www.richardrodger.com/2012/11/03/why-i-have-given-up-on-coding-standards/"
+
+## slf4j logger dos and donts0
+- [case SO](https://stackoverflow.com/questions/1417190/should-a-static-final-logger-be-declared-in-upper-case)
+- [case java-styleguide](https://web.archive.org/web/20120911192801if_/http://developers.sun.com/sunstudio/products/archive/whitepapers/java-style.pdf#G3.5426)
+- [case slf4j](http://www.slf4j.org/api/org/slf4j/Logger.html)
+- [General rules](https://gualtierotesta.github.io/java/tutorial-correct-slf4j-logging-usage-and-how-to-check-it/)
+- [logging guards](https://stackoverflow.com/a/12953090/4415884)
+
+## Misleading log msg messages
+- "https://gitit.post.ch/projects/ISA/repos/zarquon/pull-requests/2/overview?commentId=61283"
+
+## Test Coverage Is Stupid
+- "https://gitit.post.ch/projects/ISA/repos/vannharl/pull-requests/2/overview?commentId=51611"
+
+## don't never not avoid nevative (un)logic
+- "https://gitit.post.ch/projects/ISA/repos/preflux/pull-requests/226/overview?commentId=73901"
+- "https://gitit.post.ch/projects/ISA/repos/zarquon/pull-requests/2/overview?commentId=61255"
+
+## CodeLeichen
+- [no think no brain stupid adopt](https://gitit.post.ch/projects/ISA/repos/zarquon/pull-requests/2/overview?commentId=61313
+
+## Java Instance initializer (Constructor Alternative)
+- "https://gitit.post.ch/projects/ISA/repos/zarquon/pull-requests/2/overview?commentId=61316"
+
+## Rest API Change Json Unknown/additional Properties
+- "https://gitit.post.ch/projects/ISA/repos/zarquon/pull-requests/2/overview?commentId=61312"
+
+## Code Style format auto-formatters
+- [static final java uppercase](https://gitit.post.ch/projects/ISA/repos/preflux/pull-requests/82/overview?commentId=39126)
+- [invalid java class name](https://gitit.post.ch/projects/ISA/repos/preflux/pull-requests/82/overview?commentId=39125)
+- "https://gitit.post.ch/projects/ISA/repos/zarniwoop/pull-requests/20/overview?commentId=85912"
+- "https://gitit.post.ch/projects/ISA/repos/zarniwoop/pull-requests/21/overview?commentId=87250"
+- "https://gitit.post.ch/projects/ISA/repos/beeble/pull-requests/126/overview?commentId=70762"
+- "https://gitit.post.ch/projects/ISA/repos/common-metric-api/pull-requests/4/overview?commentId=71386"
+- "https://gitit.post.ch/projects/ISA/repos/eagle/pull-requests/257/overview?commentId=72952"
+- "https://gitit.post.ch/projects/ISA/repos/customer-api/pull-requests/10/overview?commentId=89900"
+
+## Abstractions should not depend on details. Details should depend on abstractions.
+- "https://stackoverflow.com/questions/52857145/what-is-mean-by-abstractions-should-not-depend-on-details-details-should-depen"
+- "https://softwareengineering.stackexchange.com/questions/401769/depend-on-abstractions-not-on-concretions-what-is-the-exact-meaning-of-this-t"
+- "https://sonar.tools.pnet.ch/coding_rules?open=squid%3AS1319&rule_key=squid%3AS1319"
+- "https://wikit.post.ch/display/ISA/Code+Formatting?focusedCommentId=791239536#comment-791239536"
+
+## Sonar is stupid
+- "https://gitit.post.ch/projects/ZEWAS/repos/zewas/browse/zewas-process/src/main/java/ch/post/it/zewas/process/reportgenerator/sql/SqlReportGenerator.java?at=refs%2Ftags%2Fzewas-17.10.00.17#385"
+- "https://gitit.post.ch/projects/ISA/repos/platform/pull-requests/156"
+
+## Plain Old Data (POD, POJO, DTO)
+- "https://de.wikipedia.org/wiki/Plain_Old_Data_structure#PODs_in_Java"
+
+## Java enums
+- [Do NOT use enum ordinals](https://jira.post.ch/browse/SDCISA-2212?focusedCommentId=1088884&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-1088884)
+
+## C enums
+- [Never Start Enum At Zero](https://gitit.post.ch/projects/ISA/repos/zarniwoop/pull-requests/5/overview?commentId=50182)
+
+## You SHOULD reinvent the wheel
+- "https://blog.codinghorror.com/dont-reinvent-the-wheel-unless-you-plan-on-learning-more-about-wheels/"
+
+## Misc
+- (Java Anti-Patterns) "https://www.odi.ch/prog/design/newbies.php"
+
+## Java Memory
+- "youtube.com/watch?v=f2aNWtt0QRo"
+- jvm GC statistics "https://stackoverflow.com/a/467366"
+
+## Yaml Is Bullshit
+- "https://www.arp242.net/yaml-config.html#can-be-hard-to-edit-especially-for-large-files"
+
+## Goto Error Handling
+- "https://dzone.com/articles/error-handling-via-goto-in-c"
+- "https://www.cprogramming.com/tutorial/goto.html"
+- "https://eli.thegreenplace.net/2009/04/27/using-goto-for-error-handling-in-c/"
+
+## Java Streams, forEach stupid
+- "https://stackoverflow.com/a/20177092/4415884"
+- "https://github.com/swisspush/gateleen/pull/426#discussion_r813752075"
+- "https://github.com/swisspush/gateleen/blob/v1.1.61/gateleen-kafka/src/main/java/org/swisspush/gateleen/kafka/KafkaMessageSender.java#L21"
+- performance long "https://m.youtube.com/watch?v=x5akmCWgGY0"
+- think please ... "https://m.youtube.com/watch?v=hSfylUXhpkA"
+
+## The Only way to Format Dates ISO 8601
+- "https://xkcd.com/1179/"
+
+## Backward compatibility, Breaking Changes
+- "https://www.redstar.be/backward-compatibility-in-software-development-what-and-why/"
+- [thor](https://gitit.post.ch/projects/ISA/repos/fis-masterdata-api/pull-requests/17/overview?commentId=227703)
+
+## Performance DOES matter
+- "https://github.com/swisspush/gateleen/pull/456#discussion_r844865066"
+- [examples](https://m.youtube.com/watch?v=EpYr3T5VP6w)
+- "https://jira.post.ch/browse/SDCISA-4714"
+- "https://jira.post.ch/browse/SDCISA-8136"
+- "https://jira.post.ch/browse/SDCISA-2876"
+- "https://jira.post.ch/browse/SDCISA-9059"
+
+## Performance clang micro benchmarking
+- "https://m.youtube.com/watch?v=nXaxk27zwlk"
+
+## POSIX shell language syntax
+- "https://pubs.opengroup.org/onlinepubs/009695399/utilities/xcu_chap02.html"
+
+## How to API design
+- "https://m.youtube.com/watch?v=2xgplCQS1bY"
+
+## Posix c API design
+- "https://lucumr.pocoo.org/2013/8/18/beautiful-native-libraries/"
+
+## API paisa-api 01.03.00.01 Breaking change ISAGD-6566
+- "https://gitit.post.ch/projects/ISA/repos/fis-api/pull-requests/9/overview?commentId=129349"
+- "https://gitit.post.ch/projects/ISA/repos/user-identification-api/pull-requests/6/overview?commentId=130606"
+- "https://gitit.post.ch/projects/ISA/repos/iobox-api/pull-requests/6/overview?commentId=129739"
+- "https://gitit.post.ch/projects/ISA/repos/forms-api/pull-requests/6/overview?commentId=129437"
+- "https://gitit.post.ch/projects/ISA/repos/communication-alarming-api/pull-requests/8/overview?commentId=129239"
+- "https://gitit.post.ch/projects/ISA/repos/controlcenter-inquiry-api/pull-requests/7/overview?commentId=129212"
+- "https://gitit.post.ch/projects/ISA/repos/timetable-export-api/pull-requests/9/overview?commentId=88705"
+
+## Apikana PaISA api contact email remove
+- "https://gitit.post.ch/projects/ISA/repos/communication-phonebook-api/pull-requests/8/overview?commentId=149593"
+- "https://gitit.post.ch/projects/ISA/repos/vehicle-api/pull-requests/9/overview?commentId=149660&action=view"
+
+## API Review Swagger Links
+- Swagger link please 1 "https://gitit.post.ch/projects/ISA/repos/vending-transaction-api/pull-requests/6/overview?commentId=97141"
+- Use them! "https://gitit.post.ch/projects/ISA/repos/vending-transaction-api/pull-requests/1/overview?commentId=48983"
+- Not up-to-date "https://gitit.post.ch/projects/ISA/repos/deployment-masterdata-api/pull-requests/8/overview?commentId=78414"
+- Swagger link please 2 "https://gitit.post.ch/projects/ISA/repos/timetable-registration-api/pull-requests/7/overview?commentId=98168"
+- SwaggerUI broken "https://gitit.post.ch/projects/ISA/repos/vehiclelink-power-api/pull-requests/11/overview?commentId=95353"
+- SwaggerUI broken "https://gitit.post.ch/projects/ISA/repos/vehicle-messaging-api/pull-requests/8/overview?commentId=189586"
+- SwaggerUI broken "https://gitit.post.ch/projects/ISA/repos/vehicle-setup-api/pull-requests/32/overview?commentId=189587"
+- parent paisa-api 01.04.00.00 is broken "https://gitit.post.ch/projects/ISA/repos/timetable-registration-api/pull-requests/7/overview?commentId=98172"
+
+## Primitive, restricted API
+- "https://gitit.post.ch/projects/ISA/repos/vehicle-setup-api/pull-requests/14/overview?commentId=61969&action=view"
+
+## API ugly definitions.ref$ array
+- "https://gitit.post.ch/projects/ISA/repos/vehicle-profile-api/pull-requests/17/overview?commentId=173135"
+
+## api order property field summary top
+- "https://gitit.post.ch/projects/ISA/repos/customer-swisspass-api/pull-requests/1/overview?commentId=66513"
+- "https://gitit.post.ch/projects/ISA/repos/vehiclelink-power-api/pull-requests/9/overview?commentId=80215"
+
+## API Design Topic Subject Spread multiple several repos
+- "https://gitit.post.ch/projects/ISA/repos/vehicle-setup-api/pull-requests/23/overview?commentId=82379"
+
+## API Ignore documentation
+- "https://gitit.post.ch/projects/ISA/repos/customer-api/pull-requests/8/overview?commentId=88741"
+
+## Documentation Noise/Clutter Comments, APIs (no response was specified)
+- Explanation "https://gitit.post.ch/projects/ISA/repos/deployment-masterdata-api/pull-requests/12/overview?commentId=187097"
+- Bad: "https://gitit.post.ch/projects/ISA/repos/vending-twint-api/pull-requests/1/overview?commentId=87895"
+- Good: "https://gitit.post.ch/projects/ISA/repos/vending-transaction-api/browse/src/rest/openapi/api.yaml?at=refs%2Ftags%2Fvending-transaction-api-01.00.00.00#79-80,96-98,112-113,130-131,162-164,197-199,230-232,250-252,270-272,287-288"
+- Damn It! write descriptions, stupid! "https://gitit.post.ch/projects/ISA/repos/vending-payment-api/pull-requests/5/overview?commentId=106020"
+
+## JenkinsfileRelease Api pipeline broken latest version
+- "https://jira.post.ch/browse/SDCISA-3378"
+
+## PRs and reviews are important
+- "https://gitit.post.ch/projects/ISA/repos/preflux/pull-requests/251/overview?commentId=87095"
+- "https://gitit.post.ch/projects/ISA/repos/system-status-api/pull-requests/7/overview?commentId=108200"
+- "https://gitit.post.ch/projects/ISA/repos/communication-modem-api/pull-requests/7/overview?commentId=103394"
+
+## Preflux Null Check Useless?
+- "https://gitit.post.ch/projects/ISA/repos/preflux/pull-requests/193/overview?commentId=66746"
+
+## bash pipeline exit codes (educational)
+- "https://www.shellscript.sh/tips/pipestatus/"
+
+## Command Escaping And Injection
+- "https://jira.post.ch/browse/SDCISA-3602"
+
+## logger noise spam verbose
+- [fix the REAL problem please](https://jira.post.ch/browse/SDCISA-3637?focusedCommentId=1252741&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-1252741)
+
+## Bashisms
+- "https://askubuntu.com/questions/1059265/whats-the-problem-with-bashisms"
+- "https://gitit.post.ch/projects/ISA/repos/wowbagger-kickstart/pull-requests/38/overview?commentId=208533"
+- "https://pubs.opengroup.org/onlinepubs/009695399/utilities/xcu_chap02.html"
+
+## YAGNI (but also KISS and DRY)
+- "https://medium.com/swlh/yagni-and-dry-the-kiss-of-death-for-your-software-project-cfd44b0654b6#fc82"
+
+## How to format method parameters
+- "https://gitit.post.ch/projects/ISA/repos/god-backend/pull-requests/281/overview?commentId=210650"
+
+## Stringly Typed
+- "https://jira.post.ch/browse/SDCISA-9678"
+- "https://devcards.io/stringly-typed"
+- "https://softwareengineering.stackexchange.com/a/365344/306800"
+
+## Automatically implicit mkdir parents is bullshit
+- "https://gitit.post.ch/projects/ISA/repos/preflux/pull-requests/490/overview?commentId=213152"
+
+## Privacy EBanking ist ein Witz
+- "https://m.youtube.com/watch?v=KopWe2ZpVQI"
+
+## JavaScript EventLoop Visual Explained
+- "https://m.youtube.com/watch?v=cCOL7MC4Pl0"
+
+## How to write comments.
+- "https://m.youtube.com/watch?v=yhF7OmuIILc"
+
+## Danfoss einstellen
+- "https://m.youtube.com/watch?v=VdIheN-c7G0"
+- "https://m.youtube.com/watch?v=3fh9qm-ljA8"
+
+## java slf4j parameterized logging log4shell
+- "https://www.tutorialspoint.com/slf4j/slf4j_parameterized_logging.htm"
+- "https://beaglesecurity.com/blog/vulnerability/format-string-vulnerability.html"
+- "https://nvd.nist.gov/vuln/detail/CVE-2021-44228"
+
+## slf4j logger logging paisa platform alice
+- logger fail "https://jira.post.ch/browse/SDCISA-9903"
+
+## java assert
+- how to enable "https://stackoverflow.com/a/68893479/4415884"
+- what are they for "https://stackoverflow.com/a/298933/4415884"
+- I dont care "https://gitit.post.ch/projects/ISA/repos/preflux/pull-requests/505/overview?commentId=219173"
+
+## Mensch verblödet, modern tech, IQ, dumm, test
+- "https://m.youtube.com/watch?v=_dAtdSVeiLM"
+
+## MultiThreading vertx gateleen
+- "https://jira.post.ch/browse/SDCISA-9845?focusedCommentId=1617020&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-1617020
+
+## MultiThreading concurrency atomic volatile
+- "https://gitit.post.ch/projects/ISA/repos/halfrunt/pull-requests/27/overview?commentId=105019"
+- [volatile](https://gitit.post.ch/projects/ISA/repos/houston/pull-requests/367/overview?commentId=155920)
+- [locking](https://gitit.post.ch/projects/ISA/repos/houston/pull-requests/367/overview?commentId=155916)
+
+## MultiThreading Dead Lock
+- [Zarquon IO stream read write](https://gitit.post.ch/projects/ISA/repos/zarquon/pull-requests/2/overview?commentId=61285)
+
+## Uncle Bob - Why Are Programmers slow
+- "https://youtu.be/G6HyEeEcB-w"
+
+## Backward compatible Support old systems
+- (32-bit CPU) "https://itsfoss.com/32-bit-os-list/"
+
+## Resilience limit upper bound
+- [Thought OOM](https://jira.post.ch/browse/SDCISA-10021)
+- [Thought DB streams](https://wikit.post.ch/pages/viewpage.action?pageId=993270063&focusedCommentId=993272727#comment-993272727)
+
+## Bugs, Frameworks, Dependencies include them all
+- "https://medium.com/dinahmoe/escape-dependency-hell-b289de537403"
+- "https://gitit.post.ch/projects/ISA/repos/preflux/pull-requests/119/overview?commentId=46245"
+
+## Input validation
+- WontDo "https://gitit.post.ch/projects/ISA/repos/preflux/pull-requests/512/overview?commentId=222672"
+
+## Git for windoof CRLF broken
+- "https://wikit.post.ch/display/ISA/Code+Formatting?focusedCommentId=791239536#comment-791239536"
+
+## EddieName VS Hostname VS FQDN
+- "https://gitit.post.ch/projects/ISA/repos/deployment-pipeline-api/pull-requests/2/overview?commentId=50191"
+
+## post architektur Semver
+- "https://wikit.post.ch/x/oeQKJw#id-20201111I2ArchitectureMeetingProtocol-GitOpsWorkgroup:ReferenceArchitecturePrincipleforVersioning"
+
+## Early-return error handling
+- "https://gitit.post.ch/projects/ISA/repos/preflux/pull-requests/226/overview?commentId=73892"
+
+## Stage Env Specific Conditional TimeBomb
+- "https://gitit.post.ch/projects/ISA/repos/preflux/pull-requests/231/overview?commentId=75315"
+
+## Implicit/Explicit Encoding charset java String getBytes
+- "https://gitit.post.ch/projects/ISA/repos/halfrunt/pull-requests/10/overview?commentId=76149"
+- "https://wikit.post.ch/pages/viewpage.action?pageId=193593428#JavaLanguage-Encoding"
+
+## FileLogging is a MUST have (kibana is bullsh**)
+- [example](https://jira.post.ch/browse/SDCISA-8382?focusedCommentId=1554435&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-1554435)
+- [warning](https://jira.post.ch/browse/SDCISA-7230?focusedCommentId=1550476&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-1550476)
+

@@ -1,0 +1,45 @@
+
+# Docker
+================
+
+
+## Manage Volumes
+
+List:
+  docker volume ls
+
+List LARGE volumes:
+  sudo sh -c 'cd /var/lib/docker/volumes && du -hs *' | sort -hrk1 | head
+
+Show owner:
+  docker ps -a --filter volume=VOLUME
+
+Browse image:
+  docker image ls | grep base
+  docker run --rm -ti --entrypoint /bin/bash IMAGE -s
+
+Browse volume:
+  docker run --rm -ti -v=VOLUME:/mnt/myvolume IMAGE bash
+
+Browse dead container:
+  //TODO:  docker exec --entrypoint /bin/bash CONTAINER args for bash
+  //WRONG: docker run --entrypoint /bin/bash CONTAINER args for bash
+
+Export image:
+  docker save PATH/NAME:VERSION > IMAGE.tar
+
+Side-Mount tcpdump into container where it does not exist
+  docker run --rm -ti --network container:"${CNTNR_TO_DUMP:?}" -v "/tmp/foo:/work" "${IMG_WITH_TCPDUMP_EG_BASEIMG:?}" bash
+
+
+
+## Publish custom images to artifactory
+
+To allow deletion: Tag MUST contain "latest" or "SNAPSHOT". Eg:
+- "docker.tools.post.ch/USERNAME/<imagename>:latest"
+
+docker build -t my_image:0.0.0-SNAPSHOT .
+
+
+
+

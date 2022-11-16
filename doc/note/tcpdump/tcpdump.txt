@@ -1,0 +1,60 @@
+
+Tcpdump
+================
+
+
+## Realtime Download:
+
+  scriptlee -W OcChunkDownload.lua -n OC_PROJ --scan-delay 10 --workdir ../../../../../tmp --pod-pattern 'houston.%d' --file-pattern 'houston.STAGE.tcp.*gz' --skip 1
+
+
+
+## Base (inclusive blacklist brox, fluentd, ...):
+
+redis=6379, brox=7022, fluentd=7099
+
+  cd /tmp && timeout --foreground -s INT 180 tcpdump -ni any -C 50M -W 999 -w houston-STAGE-tcp-`date -u +%Y%m%d-%H%M%S`.pcap "not port 443 and not port 6379 and not port 7022 and not port 7099" -z gzip
+
+
+
+## pcap cli PreProcessing
+
+Tips: "https://chrissanders.org/2018/06/large-captures4-filter-whittling/"
+
+  mergecap.exe -a -w OUTFILE INFILES_GLOB
+
+  -Y 'http.request.uri.query contains "expand"'
+  -Y 'http.time < 2.0 or http.request'
+
+
+
+## Accept HTTP POST requests:
+
+  "tcp[((tcp[12:1] & 0xf0) >> 2):4] = 0x504F5354"
+
+
+
+## Copy result to local machine (the boring way)
+
+  oc rsync <pod-name>:/remote/dir/filename .
+
+
+
+## Special filters
+
+  "tcp[tcpflags] & (tcp-syn|tcp-ack|tcp-fin|tcp-rst) != 0"
+
+  "ip 1.2.3.4"
+
+  "net 172.18.0.0/16"
+
+
+
+## Extract hosts file from DNS traffic
+
+Not perfect because needs manual fine-tuning. But can be helpful anyway.
+
+  -Y 'dns.a and dns.resp.name' -Tfields -edns.a -edns.resp.name
+
+Vielleicht auch mal option "-zhosts" ausprobieren. Sollte auch sowas tun.
+

@@ -1,0 +1,33 @@
+
+Systemd
+================
+
+Setup a service on a per-user basis:
+
++------------------------------------------------------------------------------
+| $ cat ~/.config/systemd/user/andy-zarquon.service
+| 
+| ; [Unit]
+| ; Description=QuickNDirty Zarquon instance for andis tests.
+| ; [Service]
+| ; ExecStart=java -jar /tmp/andy-as-isa/zarquon.jar
+| ; [Install]
+| ; WantedBy=default.target
++------------------------------------------------------------------------------
+
++------------------------------------------------------------------------------
+| $ cat /etc/systemd/system/andy-zarquon.service
+|
+| [Unit]
+| Description=QuickNDirty Zarquon instance for andis tests.
+| 
+| [Service]
+| Type=simple
+| User=isa
+| ExecStart=/usr/bin/sh -c '. /etc/profile.d/paisa_env.sh && echo "isa2016"|java -Dserver.port=7091 -jar /tmp/andy-as-isa/zarquon.jar 2>&1 > /tmp/andy-as-isa/zarquon.log'
+| 
+| ; Autostart NOT wanted
+| ; [Install]
+| ; WantedBy=default.target
++------------------------------------------------------------------------------
+
