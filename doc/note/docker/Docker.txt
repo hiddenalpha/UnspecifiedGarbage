@@ -1,6 +1,31 @@
 
-# Docker
+Docker
 ================
+
+Likely "docker" commands require "sudo".
+
+
+## Build image, container and run it
+
+Example IMG:  "your_img_name:latest"
+Example CNTNR: "your_container"
+
+  cd /some/empty/directory
+  curl -sSL "http://example.com/path/to.Dockerfile" | docker build . -f - -t IMG
+  docker create --name CNTNR -v "$PWD:/work" IMG
+  docker start CNTNR
+
+
+## Basic Usage
+
+  docker build -f DOCKERFILE -t IMG WORKDIR
+
+  docker run --rm -ti IMG sh
+  docker run --rm -i IMG sh --help
+
+  docker exec -ti CNTNR sh
+  docker exec -ti CNTNR -- sh -c 'echo foo bar'
+
 
 
 ## Manage Volumes
@@ -36,10 +61,15 @@ Side-Mount tcpdump into container where it does not exist
 ## Publish custom images to artifactory
 
 To allow deletion: Tag MUST contain "latest" or "SNAPSHOT". Eg:
-- "docker.tools.post.ch/USERNAME/<imagename>:latest"
+- "docker.example.com/USERNAME/<imagename>:latest"
 
-docker build -t my_image:0.0.0-SNAPSHOT .
+  docker build -t my_image:0.0.0-SNAPSHOT .
 
+
+
+## X11 app within container using host display
+
+sudo docker create --name "${CNTNR:?}" -e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix:ro "${IMG:?}"
 
 
 
