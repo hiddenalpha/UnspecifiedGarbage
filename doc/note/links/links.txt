@@ -203,7 +203,8 @@ Links (Aka arguments)
 
 ## Backward compatibility, Breaking Changes
 - "https://www.redstar.be/backward-compatibility-in-software-development-what-and-why/"
-- [thor](https://gitit.post.ch/projects/ISA/repos/fis-masterdata-api/pull-requests/17/overview?commentId=227703)
+- [thor-DasUnheilNaht](https://gitit.post.ch/projects/ISA/repos/fis-masterdata-api/pull-requests/17/overview?commentId=227703)
+- [thor-DerBlizHatEingeschlagen](https://gitit.post.ch/projects/ISA/repos/fis-masterdata-api/pull-requests/18/overview)
 
 ## Performance DOES matter
 - "https://github.com/swisspush/gateleen/pull/456#discussion_r844865066"
