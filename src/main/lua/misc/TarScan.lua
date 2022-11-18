@@ -3,6 +3,8 @@
   Initially created to list processed eddies with MasterdataCleanup
   FleetHelper around november 2022.
 
+  Did work with  scriptlee  0.0.5-23-gc70b3c1-G
+
   ]====================================================================]
 
 
