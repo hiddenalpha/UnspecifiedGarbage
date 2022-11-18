@@ -238,6 +238,9 @@ Links (Aka arguments)
 ## Apikana PaISA api contact email remove
 - "https://gitit.post.ch/projects/ISA/repos/communication-phonebook-api/pull-requests/8/overview?commentId=149593"
 - "https://gitit.post.ch/projects/ISA/repos/vehicle-api/pull-requests/9/overview?commentId=149660&action=view"
+- [pipeline2 email](https://gitit.post.ch/projects/ISA/repos/deployment-upgrade-api/pull-requests/8/overview?commentId=229061)
+- [pipeline2 email](https://gitit.post.ch/projects/ISA/repos/vehiclelink-power-api/pull-requests/22/diff#Jenkinsfile)
+- [pipeline2 email](https://gitit.post.ch/projects/ISA/repos/vehicle-setup-api/pull-requests/33/diff#Jenkinsfile)
 
 ## API Review Swagger Links
 - Swagger link please 1 "https://gitit.post.ch/projects/ISA/repos/vending-transaction-api/pull-requests/6/overview?commentId=97141"
