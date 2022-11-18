@@ -235,9 +235,9 @@ Links (Aka arguments)
 - "https://gitit.post.ch/projects/ISA/repos/controlcenter-inquiry-api/pull-requests/7/overview?commentId=129212"
 - "https://gitit.post.ch/projects/ISA/repos/timetable-export-api/pull-requests/9/overview?commentId=88705"
 
-## Apikana PaISA api contact email remove
-- "https://gitit.post.ch/projects/ISA/repos/communication-phonebook-api/pull-requests/8/overview?commentId=149593"
-- "https://gitit.post.ch/projects/ISA/repos/vehicle-api/pull-requests/9/overview?commentId=149660&action=view"
+## Apikana PaISA api contact email
+- [remove in api.yaml](https://gitit.post.ch/projects/ISA/repos/communication-phonebook-api/pull-requests/8/overview?commentId=149593)
+- [remove in api.yaml](https://gitit.post.ch/projects/ISA/repos/vehicle-api/pull-requests/9/overview?commentId=149660&action=view)
 - [pipeline2 email](https://gitit.post.ch/projects/ISA/repos/deployment-upgrade-api/pull-requests/8/overview?commentId=229061)
 - [pipeline2 email](https://gitit.post.ch/projects/ISA/repos/vehiclelink-power-api/pull-requests/22/diff#Jenkinsfile)
 - [pipeline2 email](https://gitit.post.ch/projects/ISA/repos/vehicle-setup-api/pull-requests/33/diff#Jenkinsfile)
