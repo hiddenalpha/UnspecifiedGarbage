@@ -1,0 +1,50 @@
+
+Git Version Control
+===================
+
+
+## Scattered Shallow Clone
+
+How to clone minimally required commits to have a working repo. VERY handy if
+we just need to diff two refs from a GIANT repo where we do not have a local
+copy of.
+
+Basic setup:
+  mkdir MyTinyClone
+  cd MyTinyClone
+  git init
+  git co --orphan empty
+  git commit --allow-empty -m "Empty commit where our HEAD can stay to reduce unwanted disk IO"
+  git tag empty empty
+  git co --detach
+  git br -D empty
+
+Seek what we wanna download:
+  git remote add origin ssh://example.com/repo.git
+  git ls-remote origin | grep whatever
+
+Fetch only EXACTLY the branches we want (for example using previous output to
+decide):
+  git fetch origin --depth=1 refs/heads/the-branch
+  git br the-branch FETCH_HEAD
+
+Usually tags are of special interest in such a clone (note how we specify it
+twice with colon in between):
+  git fetch origin --depth=1 refs/tags/v1.2.3:refs/tags/v1.2.3
+
+
+
+## Reduce local disk usage
+
+Source: "https://gitbetter.substack.com/p/how-to-clean-up-the-git-repo-and"
+
+  git remote prune origin
+  git repack
+  git prune-packed
+  git gc --aggressive
+
+Sometimes also helpful. WARN reflog will be useless after that. Pass -n to see
+what gets deleted:
+  git prune
+
+
