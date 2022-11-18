@@ -1,4 +1,4 @@
-package ch/hiddenalpha/unspecifiedgarbage/format;
+package ch.hiddenalpha.unspecifiedgarbage.format;
 
 import org.junit.Assert;
 import org.junit.Test;

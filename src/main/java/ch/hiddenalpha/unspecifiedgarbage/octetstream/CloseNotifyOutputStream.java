@@ -1,4 +1,4 @@
-package java.ch.hiddenalpha.unspecifiedgarbage.octetstream;
+package ch.hiddenalpha.unspecifiedgarbage.octetstream;
 
 import java.io.FilterOutputStream;
 import java.io.IOException;
@@ -18,8 +18,8 @@ public class CloseNotifyOutputStream extends FilterOutputStream {
     private final AtomicBoolean isFired = new AtomicBoolean(false);
 
     public CloseNotifyOutputStream(OutputStream out, Runnable onClose) {
-        throw new UnsupportedOperationException("TODO need to delegate close call");/*TODO*/
         super(out);
+        if(true) throw new UnsupportedOperationException("TODO need to delegate close call");/*TODO*/
         this.onClose = requireNonNull(onClose);
     }
 

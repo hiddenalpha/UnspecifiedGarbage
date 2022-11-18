@@ -1,4 +1,4 @@
-package java.ch.hiddenalpha.unspecifiedgarbage.octetstream;
+package ch.hiddenalpha.unspecifiedgarbage.octetstream;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -13,10 +13,10 @@ public class ByteChunkOStream extends OutputStream {
     private final int chunkSize; // Hint of how large our produced chunks should be.
     private byte[] buf;
     private int bufUsedBytes; // How many bytes actually are in-use.
-    private final ChunkHandler<byte[]> onChunk;
+    private final ChunkHandler onChunk;
     private EndHandler onEnd;
 
-    public ByteChunkOStream( int chunkSize, ChunkHandler<byte[]> onChunk, EndHandler onEnd ){
+    public ByteChunkOStream( int chunkSize, ChunkHandler onChunk, EndHandler onEnd ){
         assert onChunk != null : "ChunkHandler cannot be null";
         assert chunkSize >= 1 : "chunk size too small: "+ chunkSize;
         this.chunkSize = chunkSize;
@@ -65,7 +65,7 @@ public class ByteChunkOStream extends OutputStream {
     public void close() throws IOException {
         flush();
         buf = null; // Think for GC
-        var tmp = onEnd;
+        EndHandler tmp = onEnd;
         onEnd = null; // Reduce probability of calling it multiple times
         if( tmp != null ){
             tmp.run();
