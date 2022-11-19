@@ -11,7 +11,7 @@ Example IMG:  "your_img_name:latest"
 Example CNTNR: "your_container"
 
   cd /some/empty/directory
-  curl -sSL "http://example.com/path/to.Dockerfile" | docker build . -f - -t IMG
+  curl -sSL "http://example.com/path/to.Dockerfile" | docker build . -f- -t IMG
   docker create --name CNTNR -v "$PWD:/work" IMG
   docker start CNTNR
 
