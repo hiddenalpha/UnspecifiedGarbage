@@ -7,6 +7,15 @@
   but no idea yet why sometimes we see those exceptions while classpath
   resource requests.
 
+  20221122 issue with scriptlee 0.0.5-23-gc70b3c1-G :
+
+RuntimeError: [string "C:/Users/fankhauseand/projects/UnspecifiedGar..."]:72: Unknown error (@src/main/c/scriptlee/lua_http.c:1848)
+stack traceback:
+        [C]: in method 'closeSnk'
+        [string "C:/Users/fankhauseand/projects/UnspecifiedGar..."]:72: in field 'run'
+        [string "C:/Users/fankhauseand/projects/UnspecifiedGar..."]:91: in function <[string "C:/Users/fankhauseand/projects/UnspecifiedGar..."]:85>
+        [C]: in ?
+
   ]====================================================================]
 
 local AF_INET = assert(require("scriptlee").posix.AF_INET)
