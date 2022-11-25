@@ -19,12 +19,12 @@ Example CNTNR: "your_container"
 ## Basic Usage
 
   docker build -f DOCKERFILE -t IMG WORKDIR
-
   docker run --rm -ti IMG sh
   docker run --rm -i IMG sh --help
-
+  docker create --name CNTNR -v "$PWD:/work" IMG
+  docker start CNTNR
   docker exec -ti CNTNR sh
-  docker exec -ti CNTNR -- sh -c 'echo foo bar'
+  docker exec -ti CNTNR sh -c 'echo foo bar'
 
 
 
