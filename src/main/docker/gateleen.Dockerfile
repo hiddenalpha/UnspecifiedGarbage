@@ -26,7 +26,7 @@ RUN true \
     && $PKGINIT && $PKGADD $PKGS_TO_ADD \
     && sed -i "s,</settings>,  <localRepository>/data/maven/.m2/repository</localRepository>\n</settings>,g" /usr/share/java/maven-3/conf/settings.xml \
     && mkdir /data /data/maven /work/gateleen \
-    && chown 1000:1000 /data/maven /work /work/gateleen \
+    && chown "${UID:?}:${GID:?}" /data/maven /work /work/gateleen \
     && curl -sSL https://github.com/swisspush/gateleen/archive/refs/tags/"$GATELEEN_GIT_TAG".tar.gz > "/tmp/gateleen-$GATELEEN_GIT_TAG.tgz" \
     && cd /work/gateleen \
     && su user -c 'tar --strip-components 1 -xf /tmp/gateleen-"$GATELEEN_GIT_TAG".tgz' \
