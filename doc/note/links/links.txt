@@ -16,6 +16,9 @@ Links (Aka arguments)
 - "https://spring.io/blog/2007/07/11/setter-injection-versus-constructor-injection-and-the-use-of-required/"
 - "http://evan.bottch.com/2009/02/03/setter-injection-sucks/"
 
+## Dependency Injection violation
+- [Houston, ich glaub mir wird schlecht](https://gitit.post.ch/projects/ISA/repos/houston/pull-requests/410/overview?commentId=231234)
+
 ## Pro DI over inheritance:
 - "https://stackoverflow.com/questions/30767395/when-to-use-di-over-abstract-inheritance"
 
@@ -213,6 +216,7 @@ Links (Aka arguments)
 - "https://jira.post.ch/browse/SDCISA-8136"
 - "https://jira.post.ch/browse/SDCISA-2876"
 - "https://jira.post.ch/browse/SDCISA-9059"
+- [vortex too slow](https://jira.post.ch/browse/SDCISA-9990)
 
 ## Performance clang micro benchmarking
 - "https://m.youtube.com/watch?v=nXaxk27zwlk"
