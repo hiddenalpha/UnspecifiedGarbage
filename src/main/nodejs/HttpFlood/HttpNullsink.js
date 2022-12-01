@@ -106,14 +106,16 @@ function logStatsPeriodically( cls_nullsink ){
         const durationMs = Math.floor(hrtimeDiffMs(now, cls_nullsink.lastStats));
         const totlMs = Math.floor(hrtimeDiffMs(now, cls_nullsink.srvStart))
         cls_nullsink.reqTotl += cls_nullsink.reqCnt;
-        stdlog.write("Stats: Consumed  "
-            + cls_nullsink.reqCnt +"  req in  "
-            + durationMs +"  ms. So avg  "
-            + Math.floor(cls_nullsink.reqCnt / durationMs * 1000) +"  req/sec of overall  "
-            + cls_nullsink.reqTotl +"  req in  "
-            + Math.floor(totlMs/1000) +"  sec. Avg  "
-            + Math.floor(cls_nullsink.reqTotl / totlMs)
+
+        const reqPerSecStr = ("      "+ Math.floor(cls_nullsink.reqCnt / durationMs * 1000)).substr(-6);
+        const numReqTotalStr = ("         "+ cls_nullsink.reqTotl).substr(-9);
+        const runningSinceSecStr = ("         "+ Math.floor(totlMs/1000)).substr(-9);
+        stdlog.write("Stats:  "
+            + reqPerSecStr +"/sec, "
+            + numReqTotalStr +" req total,  "
+            + runningSinceSecStr +"s running"
             +"\n");
+
         cls_nullsink.lastStats = now;
         cls_nullsink.reqCnt = 0;
         scheduleOne();
