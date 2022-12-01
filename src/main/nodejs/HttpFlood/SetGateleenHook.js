@@ -72,7 +72,7 @@ function parseArgs( cls_hook, args ){
             if( isNaN(cls_hook.hookTimeoutSec) ){ stdlog.write("Parse --hook-timeout-sec failed: "+args[i]+"\n"); return -1; }
         }else if( arg == "--route"){
             cls_hook.isRoute = true;
-        }else if( arg == "--isListener"){
+        }else if( arg == "--listener"){
             cls_hook.isListener = true;
         }else{
             stdlog.write("Unknown arg: "+ arg +"\n");
