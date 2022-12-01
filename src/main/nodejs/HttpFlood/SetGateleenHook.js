@@ -1,28 +1,27 @@
 ;(function(){ "use strict";
 
-const http = require( "http" );
-const util = require( "util" );
+const http = require("http");
+const util = require("util");
 const DevNull = { write:function(){} };
 
 const stdin  = process.stdin ;
 const stdout = process.stdout;
 const stdlog = process.stderr;
-const noop = function(){};
 
 
-setTimeout( main );
+setTimeout(main);
 
 
 function printHelp(){
     stdout.write("\n"
         +"  hiddenalphas simple gateleen hook utilty.\n"
         +"\n"
-        +"Options:\n"
+        +"  Options:\n"
         +"\n"
-        +"    --host <ip|hostname>\n"
-        +"        Target host.\n"
+        +"    --host <ip|hostname>  (default 127.0.0.1)\n"
+        +"        Gateleen to use.\n"
         +"\n"
-        +"    --port <int>\n"
+        +"    --port <int>  (default 7012)\n"
         +"        Target port.\n"
         +"\n"
         +"    --path <string>\n"
@@ -32,8 +31,8 @@ function printHelp(){
         +"        Destination of the hook. Aka where gateleen will forward the\n"
         +"        requests to.\n"
         +"\n"
-        +"    --hook-timeout-sec <int>\n"
-        +"        Lifetime of the hook in seconds. Defaults to 300 (5 minutes).\n"
+        +"    --hook-timeout-sec <int>  (default 300)\n"
+        +"        Lifetime of the hook in seconds.\n"
         +"\n"
         +"    --route\n"
         +"        Set a route hook.\n"
@@ -45,8 +44,8 @@ function printHelp(){
 
 
 function parseArgs( cls_hook, args ){
-    cls_hook.host = null;
-    cls_hook.port = null;
+    cls_hook.host = "127.0.0.1";
+    cls_hook.port = 7012;
     cls_hook.path = null;
     cls_hook.destination = null;
     cls_hook.hookTimeoutSec = 300;
@@ -54,35 +53,35 @@ function parseArgs( cls_hook, args ){
     cls_hook.isListener = false;
     for( let i=2 ; i<args.length ; ++i ){
         let arg = args[i];
-        if( arg=="--help" ){
+        if( arg == "--help" ){
             printHelp(); return -1;
-        }else if( arg=="--host" ){
+        }else if( arg == "--host" ){
             cls_hook.host = args[++i];
-            if(!args[i]){ stdlog.write("Arg --host expects a value\n"); return -1; }
-        }else if( arg=="--port" ){
-            cls_hook.port = parseInt( args[++i] );
+            if( !args[i] ){ stdlog.write("Arg --host expects a value\n"); return -1; }
+        }else if( arg == "--port" ){
+            cls_hook.port = parseInt(args[++i]);
             if( isNaN(cls_hook.port) ){ stdlog.write("Arg --port: Cannot parse "+ argv[i]+"\n"); return -1; }
-        }else if( arg=="--path" ){
+        }else if( arg == "--path" ){
             cls_hook.path = args[++i];
             if( !args[i] ){ stdlog.write("Arg --path expects a value\n"); return -1; }
-        }else if( arg=="--destination"){
+        }else if( arg == "--destination"){
             cls_hook.destination = args[++i];
             if( !args[i] ){ stdlog.write("Arg --destination expects a value\n"); return -1; }
-        }else if( arg=="--hook-timeout-sec"){
+        }else if( arg == "--hook-timeout-sec"){
             cls_hook.hookTimeoutSec = parseInt(args[++i]);
             if( isNaN(cls_hook.hookTimeoutSec) ){ stdlog.write("Parse --hook-timeout-sec failed: "+args[i]+"\n"); return -1; }
-        }else if( arg=="--route"){
+        }else if( arg == "--route"){
             cls_hook.isRoute = true;
-        }else if( arg=="--isListener"){
+        }else if( arg == "--isListener"){
             cls_hook.isListener = true;
         }else{
             stdlog.write("Unknown arg: "+ arg +"\n");
         }
     }
-    if( cls_hook.host===null ){ stdlog.write("Arg --host missing\n"); return -1; }
-    if( cls_hook.port===null ){ stdlog.write("Arg --port missing\n"); return -1; }
-    if( cls_hook.path===null ){ stdlog.write("Arg --path missing\n"); return -1; }
-    if( cls_hook.destination===null ){ stdlog.write("Arg --destination missing\n"); return -1; }
+    if( cls_hook.host === null ){ stdlog.write("Arg --host missing\n"); return -1; }
+    if( cls_hook.port === null ){ stdlog.write("Arg --port missing\n"); return -1; }
+    if( cls_hook.path === null ){ stdlog.write("Arg --path missing\n"); return -1; }
+    if( cls_hook.destination === null ){ stdlog.write("Arg --destination missing\n"); return -1; }
     if( !cls_hook.isRoute && !cls_hook.isListener ){ stdlog.write("Need one of --route or --listener\n"); return -1; }
     if( cls_hook.isRoute && cls_hook.isListener ){ stdlog.write("Cannot be --route and --listener simultaneously\n"); return -1; }
     return 0;
@@ -100,7 +99,7 @@ function main() {
         isListener: false,
     });
     if( parseArgs(cls_hook, process.argv) ) return;
-    setHook( cls_hook );
+    setHook(cls_hook);
 }
 
 

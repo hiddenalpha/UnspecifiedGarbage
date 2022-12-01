@@ -1,22 +1,17 @@
 ;(function(){ "use strict";
 
-const http = require( "http" );
-const util = require( "util" );
+const http = require("http");
+const util = require("util");
 const DevNull = { write:function(){} };
 
 const hrtime = process.hrtime;
 const stdin  = process.stdin ;
 const stdlog = process.stderr;
-const stdout = DevNull;// process.stdout;
+const stdout = process.stdout;
 const noop = function(){};
 
 
-///////////////////////////////////////////////////////////////////////////////
-// Commandline
-///////////////////////////////////////////////////////////////////////////////
-
-
-setTimeout( main );
+setTimeout(main);
 
 
 function printHelp(){
@@ -52,33 +47,33 @@ function parseArgs( cls_flood, argv ){
     // Parse args
     for( var i=2 ; i<argv.length ; ++i ){
         var arg = argv[i];
-        if( arg=="--help" ){
+        if( arg == "--help" ){
             printHelp();
             return -1;
-        }else if( arg=="--host" ){
+        }else if( arg == "--host" ){
             cls_flood.host = argv[++i];
             if( !cls_flood.host ){ stdlog.write("Arg --host: Value missing\n"); return -1; }
-        }else if( arg=="--port" ){
+        }else if( arg == "--port" ){
             cls_flood.port = parseInt(argv[++i]);
             if( isNaN(cls_flood.port) ){ stdlog.write("Arg --port: Cannot parse "+ argv[i]+"\n"); return -1; }
-        }else if( arg=="--path" ){
+        }else if( arg == "--path" ){
             cls_flood.reqPath = argv[++i];
             if( !cls_flood.reqPath ){ stdlog.write("Arg --path: Value missing\n"); return -1; }
-        }else if( arg=="--max-parallel"){
+        }else if( arg == "--max-parallel"){
             cls_flood.maxParallel = parseInt(argv[++i]);
             if( isNaN(cls_flood.maxParallel) ){ stdlog.write("Arg --max-parallel: Cannot parse "+ argv[i]+"\n"); return -1; }
-        }else if( arg=="--inter-request-gap"){
+        }else if( arg == "--inter-request-gap"){
             cls_flood.interRequestGapMs = parseInt(argv[++i]);
             if( isNaN(cls_flood.interRequestGapMs) ){ stdlog.write("Arg --inter-request-gap: Cannot parse "+argv[i]); return -1; }
         }else{
-            stdlog.write( "Unknown arg: "+ arg +"\n" );
+            stdlog.write("Unknown arg: "+ arg +"\n");
             return -1;
         }
     }
     // A few validity checks.
-    if( cls_flood.host===null ){ stdlog.write("Arg --host missing\n"); return -1; }
-    if( cls_flood.port===null ){ stdlog.write("Arg --port missing\n"); return -1; }
-    if( cls_flood.reqPath===null ){ stdlog.write("Arg --path missing\n"); return -1; }
+    if( cls_flood.host === null ){ stdlog.write("Arg --host missing\n"); return -1; }
+    if( cls_flood.port === null ){ stdlog.write("Arg --port missing\n"); return -1; }
+    if( cls_flood.reqPath === null ){ stdlog.write("Arg --path missing\n"); return -1; }
     if( ! cls_flood.reqPath.startsWith("/") ){ cls_flood.reqPath = "/"+ cls_flood.reqPath; }
     return 0;
 }
@@ -94,7 +89,8 @@ function main() {
         totalReqCount: 0,
         statsIntervalMs: 3000,
         httpAgent: null,
-        printLowMs: 0,
+        method: "PUT",
+        printLowMs: 50,
         printHigMs: Number.MAX_SAFE_INTEGER,
     });
 
@@ -104,13 +100,13 @@ function main() {
         keepAlive:true, maxSockets:cls_flood.maxParallel, keepAliveMsecs: 42000
     });
 
-    flood_sendParallelRequests( cls_flood );
+    flood_sendParallelRequests(cls_flood);
     stdin.on("data", function(){}); // <- Allows entering newlines in console :)
 }
 
 
 function flood_sendParallelRequests( cls_flood ){
-    stdlog.write( "Flood  '"
+    stdlog.write("Flood  '"+ cls_flood.method +" "
         + cls_flood.host +":"+ cls_flood.port + cls_flood.reqPath +"'\n '- on  "
         + cls_flood.maxParallel +"  connections. Print if  t > "
         + cls_flood.printLowMs
@@ -122,31 +118,33 @@ function flood_sendParallelRequests( cls_flood ){
     for( let iSt=0 ; iSt < cls_flood.maxParallel ; ++iSt ){
         fireOne();
     }
-    function fireOne(){ flood_performHttpRequest( cls_flood, onOneDone ); }
+    function fireOne(){ flood_performHttpRequest(cls_flood, onOneDone); }
     function onOneDone(){
         numRequests += 1;
         let now = hrtime();
         let msSinceStatsPrint = hrtimeDiffMs(now, prevStatsPrint);
         if( msSinceStatsPrint > cls_flood.statsIntervalMs ){
             numRequestsTotl += numRequests;
-            printStats( now, numRequestsTotl, numRequests, msSinceStatsPrint );
+            printStats(now, numRequestsTotl, numRequests, msSinceStatsPrint);
             prevStatsPrint = now;
             numRequests = 0;
         }
         // Use the free slot to fire another request.
         if( cls_flood.interRequestGapMs > 0 ){
-            setTimeout( fireOne, cls_flood.interRequestGapMs );
+            setTimeout(fireOne, cls_flood.interRequestGapMs);
         }else{
             fireOne();
         }
     }
     function printStats( now, numRequestsTotl, numRequests, msSinceStatsPrint ){
-        stdlog.write( "Stats: Sent  "+ numRequests +"  req in  "
-            + Math.floor(msSinceStatsPrint) +"  ms. So in avg  "
-            + Math.floor(numRequests / msSinceStatsPrint * 1000) +"  req/sec of total  "
-            + numRequestsTotl +"  req in  "
-            + Math.floor(hrtimeDiffMs(now, floodBegin)/1000) +"  sec."
-            +"\n" );
+        const reqPerSecStr = ("      "+ Math.floor(numRequests / msSinceStatsPrint * 1000)).substr(-6);
+        const numReqTotalStr = ("         "+ numRequestsTotl).substr(-9);
+        const runningSinceSecStr = ("         "+ Math.floor(hrtimeDiffMs(now, floodBegin)/1000)).substr(-9);
+        stdlog.write("Stats:  "
+            + reqPerSecStr +"/sec, "
+            + numReqTotalStr +" req total,  "
+            + runningSinceSecStr +"s running"
+            +"\n");
     }
 }
 
@@ -165,10 +163,9 @@ function flood_performHttpRequest( cls_flood, onResponseEndCb ) {
         path = path.replace( /\/{vehicleId}\//, "/"+ vehicleId +"/" );
         headers = { "x-vehicleid": vehicleId };
     }
-    const method = "GET";
     const req = cls_req.req = http.request({
         hostname: cls_flood.host, port: cls_flood.port,
-        method: method, path: path,
+        method: cls_flood.method, path: path,
         headers: headers,
         agent: cls_flood.httpAgent,
     });
@@ -176,16 +173,16 @@ function flood_performHttpRequest( cls_flood, onResponseEndCb ) {
     req.on("response", function( rsp ){
         cls_req.rsp = rsp;
         cls_req.tsRspBegin = hrtime();
-        rsp.on("data", onResponseData.bind(0,cls_req) );
-        rsp.on("end", onResponseEnd.bind(0,cls_req) );
+        rsp.on("data", onResponseData.bind(0,cls_req));
+        rsp.on("end", onResponseEnd.bind(0,cls_req));
         let s = rsp.statusCode;
-        if( s==200 || s==404 ){
+        if( s == 200 || s == 404 ){
             // Fine
         }else{
             stdlog.write( "Received a: HTTP "+ rsp.statusCode +" "+ rsp.statusMessage +"\n" );
         }
     });
-    if( method != "GET" ){
+    if( cls_flood.method != "GET" ){
         req.write( '{ "info":"Nume es guguseli tscheison zum testle" }' );
     }
     req.end();
@@ -196,10 +193,10 @@ function onResponseData( cls_req, rspBodyChunk ) {
     const rsp = cls_req.rsp;
     if( ! rsp.isContinuedBodyChunk ){
         rsp.isContinuedBodyChunk = true;
-        stdout.write( "\n" );
+//        stdout.write("\n");
     }
-    stdout.write( rspBodyChunk );
-    stdout.write( "\n" );
+//    stdout.write(rspBodyChunk);
+//    stdout.write("\n");
 }
 
 
@@ -214,8 +211,8 @@ function onResponseEnd( cls_req, rsp ){
     }else if( totTime > cls_flood.printHigMs ){
         // Do NOT print
     }else{
-        stdlog.write(util.format( "%s%d%s%d%s%d\n",
-            "HttpCycle: ", totTime, "ms, TTFB: ", reqTime, ", DownloadMs: ", rspTime ));
+//        stdlog.write(util.format( "%s%d%s%d%s%d\n",
+//            "HttpCycle: ", totTime, "ms, TTFB: ", reqTime, ", DownloadMs: ", rspTime ));
     }
     cls_req.onResponseEndCb();
 }
