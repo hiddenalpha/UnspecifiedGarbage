@@ -2,7 +2,15 @@
 Load testing for http server
 ============================
 
-Here some notes about how to use scripts here to stress-test a HTTP server.
+Occasionally I have to produce some load towards gateleen sometimes for
+debugging or reproducing bugs. Luckily it is surprisingly simple to do this
+with a few lines of code. I now did tidy-up my scripts somewhat for better
+re-use. Every command has its own help page. Just call it with --help and you
+see what can be done.
+
+All you need is [nodejs](https://nodejs.org/en/download), and the script of
+interest. Nothing else is needed.
+[NO npm, NO node_modules, NO insertYourHolyFrameworkHere](https://devrant.com/rants/5107044).
 
 
 ##  Example "How to kill gateleen"
