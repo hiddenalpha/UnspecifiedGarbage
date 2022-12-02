@@ -16,6 +16,9 @@ Links (Aka arguments)
 - "https://spring.io/blog/2007/07/11/setter-injection-versus-constructor-injection-and-the-use-of-required/"
 - "http://evan.bottch.com/2009/02/03/setter-injection-sucks/"
 
+## Dependency Injection violation
+- [Houston, ich glaub mir wird schlecht](https://gitit.post.ch/projects/ISA/repos/houston/pull-requests/410/overview?commentId=231234)
+
 ## Pro DI over inheritance:
 - "https://stackoverflow.com/questions/30767395/when-to-use-di-over-abstract-inheritance"
 
@@ -213,6 +216,7 @@ Links (Aka arguments)
 - "https://jira.post.ch/browse/SDCISA-8136"
 - "https://jira.post.ch/browse/SDCISA-2876"
 - "https://jira.post.ch/browse/SDCISA-9059"
+- [vortex too slow](https://jira.post.ch/browse/SDCISA-9990)
 
 ## Performance clang micro benchmarking
 - "https://m.youtube.com/watch?v=nXaxk27zwlk"
@@ -392,4 +396,10 @@ Links (Aka arguments)
 ## FileLogging is a MUST have (kibana is bullsh**)
 - [example](https://jira.post.ch/browse/SDCISA-8382?focusedCommentId=1554435&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-1554435)
 - [warning](https://jira.post.ch/browse/SDCISA-7230?focusedCommentId=1550476&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-1550476)
+
+## Automatic variable dynamic version are evil
+- [Apikana broken by design](https://gitit.post.ch/projects/ISA/repos/notifications-api/pull-requests/7/overview?commentId=232144)
+
+## Encoding mime application/octet-stream string utf8 unicode json payload data
+- [eagle queue browser](https://gitit.post.ch/projects/ISA/repos/eagle/pull-requests/331/overview?commentId=232322)
 

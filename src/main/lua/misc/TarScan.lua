@@ -16,6 +16,38 @@ local mod = {}
 local stdinn, stdout, stdlog = io.stdin, io.stdout, io.stderr
 
 
+function mod.printHelp()
+    stdout:write("\n"
+        .."  ThrowAway script to extract needed data from tar and throw it into\n"
+        .."  a CSV.\n"
+        .."\n"
+        .."  Options:\n"
+        .."\n"
+        .."    --risky\n"
+        .."      WARN: only use this if you know what you're doing.\n"
+        .."\n")
+end
+
+
+function mod.parseArgs( app )
+    local iA = 0
+    local isRisky = false
+    while true do iA = iA + 1
+        local arg = _ENV.arg[iA]
+        if not arg then break end
+        if arg == "--help" then
+            mod.printHelp() return -1
+        elseif arg == "--risky" then
+            isRisky = true
+        else
+            stdlog:write("Unexpected arg: "..arg.."\n") return-1
+        end
+    end
+    if not isRisky then stdlog:write("Bad Args\n")return-1 end
+    return 0
+end
+
+
 function mod.onTarHeader( hdr, app )
     local filename = hdr.filename
     app.currentFileName = hdr.filename
@@ -70,7 +102,7 @@ function mod.main()
         fileIsRelevant = false,
         eddieName = false,
     }
-    --TODO if mod.parseArgs() ~= 0 then os.exit(1) end
+    if mod.parseArgs() ~= 0 then os.exit(1) end
     mod.run(app)
 end
 
