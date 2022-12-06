@@ -150,6 +150,7 @@ Links (Aka arguments)
 ## Code Style format auto-formatters
 - [static final java uppercase](https://gitit.post.ch/projects/ISA/repos/preflux/pull-requests/82/overview?commentId=39126)
 - [invalid java class name](https://gitit.post.ch/projects/ISA/repos/preflux/pull-requests/82/overview?commentId=39125)
+- [Formatters produce crap](https://gitit.post.ch/projects/ISA/repos/minetti/pull-requests/14/overview)
 - "https://gitit.post.ch/projects/ISA/repos/zarniwoop/pull-requests/20/overview?commentId=85912"
 - "https://gitit.post.ch/projects/ISA/repos/zarniwoop/pull-requests/21/overview?commentId=87250"
 - "https://gitit.post.ch/projects/ISA/repos/beeble/pull-requests/126/overview?commentId=70762"

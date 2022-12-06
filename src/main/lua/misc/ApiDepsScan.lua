@@ -46,12 +46,11 @@ end
 
 
 function mod.run( app )
-    mod.loadPomUrlsFully( app )
+    mod.loadPomUrlsFully(app)
     for iPomUrl, pomUrl in ipairs(app.pomUrls) do
         local host = pomUrl:match("http://([^:/]+).*")
         local port = pomUrl:match("http://[^:/]+:([%d]+).*") or 80
-        local url = pomUrl:match("http://[^:/]+(/.*)$") or 80
-        print("URL", url)
+        local url = pomUrl:match("http://[^:/]+[:%d]*(/.*)$")
         local pomReq = objectSeal{ base=false, }
         pomReq.base = app.http:request{
             cls = pomReq,
@@ -63,8 +62,12 @@ function mod.run( app )
                 log:write(hdr.proto .." ".. hdr.status .." ".. hdr.phrase .."\n")
                 for i,v in ipairs(hdr.headers) do print("H", "headers",v.key, v.val) end
             end,
-            --onRspChunk = ,
-            --onRspEnd = ,
+            onRspChunk = function( buf, pomReq )
+                if buf then log:write("onRspChunk(l="..buf:len()..")\n") end
+            end,
+            onRspEnd = function( pomReq )
+                log:write("onRspEnd()\n")
+            end,
         }
         pomReq.base:closeSnk()
     end
