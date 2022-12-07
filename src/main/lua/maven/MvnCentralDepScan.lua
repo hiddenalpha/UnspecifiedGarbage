@@ -391,9 +391,9 @@ function mod.storeAsSqliteFile( app )
     --   JOIN String GroupId ON GroupId.id = A.groupId
     --   JOIN String ArtifactId ON ArtifactId.id = A.artifactId
     --   JOIN String Version ON Version.id = A.version
-    --   JOIN String ParentGid ON ParentGid.id = A.parentGroupId
-    --   JOIN String ParentAid ON ParentAid.id = A.parentArtifactId
-    --   JOIN String ParentVersion ON ParentVersion.id = A.parentVersion
+    --   LEFT JOIN String ParentGid ON ParentGid.id = A.parentGroupId
+    --   LEFT JOIN String ParentAid ON ParentAid.id = A.parentArtifactId
+    --   LEFT JOIN String ParentVersion ON ParentVersion.id = A.parentVersion
     --
     -- Query to list dependencies:
     --   SELECT GroupId.str AS 'GID', ArtifactId.str AS 'AID', Version.str AS 'Version', DepGid.str AS 'Dependency GID', DepAid.str AS 'Dependnecy AID', DepVersion.str AS 'Dependency Version'
