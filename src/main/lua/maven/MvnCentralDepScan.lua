@@ -575,43 +575,62 @@ function mod.newSocketMgr()
         local inaddr = inaddrOfHostname(opts.host)
         local af
         if inaddr:find('^%d+.%d+.%d+.%d+$') then af = AF_INET else af = AF_INET6 end
-        local sock = socket(af, SOCK_STREAM, IPPROTO_TCP)
-        sock:connect(inaddr, opts.port)
         log:write("opts.useTLS "..tostring(opts.useTLS).." (Override to TRUE ...)\n")
         opts.useTLS = true -- TODO why the heck is this needed? (I guess scriptlee bug?)
-        if opts.useTLS then
-            local sockUnderTls = sock
-            sock = newTlsClient{
-                cls = assert(sockUnderTls),
-                peerHostname = assert(opts.host),
-                onVerify = function( tlsIssues, sockUnderTls )
-                    if tlsIssues.CERT_NOT_TRUSTED then
-                        warn("TLS ignore CERT_NOT_TRUSTED");
-                        tlsIssues.CERT_NOT_TRUSTED = false
-                    end
-                end,
-                send = function( buf, sockUnderTls )
-                    local ret = sockUnderTls:write(buf)
-                    sockUnderTls:flush() -- TODO Why is this flush needed?
-                    return ret
-                end,
-                recv = function( sockUnderTls ) return sockUnderTls:read() end,
-                flush = function( sockUnderTls ) sockUnderTls:flush() end,
-                closeSnk = function( sockUnderTls ) sockUnderTls:closeSnk() end,
+        local key = inaddr.."\t"..opts.port.."\t"..tostring(opts.useTLS)
+        log:write("KEY wr '"..key.."'\n")
+        local existing = hosts[key]
+        if existing then
+            return table.remove(existing)
+        else
+            local sock = socket(af, SOCK_STREAM, IPPROTO_TCP)
+            sock:connect(inaddr, opts.port)
+            if opts.useTLS then
+                local sockUnderTls = sock
+                sock = newTlsClient{
+                    cls = assert(sockUnderTls),
+                    peerHostname = assert(opts.host),
+                    onVerify = function( tlsIssues, sockUnderTls )
+                        if tlsIssues.CERT_NOT_TRUSTED then
+                            warn("TLS ignore CERT_NOT_TRUSTED");
+                            tlsIssues.CERT_NOT_TRUSTED = false
+                        end
+                    end,
+                    send = function( buf, sockUnderTls )
+                        local ret = sockUnderTls:write(buf)
+                        sockUnderTls:flush() -- TODO Why is this flush needed?
+                        return ret
+                    end,
+                    recv = function( sockUnderTls ) return sockUnderTls:read() end,
+                    flush = function( sockUnderTls ) sockUnderTls:flush() end,
+                    closeSnk = function( sockUnderTls ) sockUnderTls:closeSnk() end,
+                }
+                assert(not getmetatable(sock).release)
+                getmetatable(sock).release = function( t ) sockUnderTls:release() end;
+            end
+            return {
+                _sock = assert(sock),
+                _host = assert(inaddr),
+                _port = assert(opts.port),
+                _useTLS = opts.useTLS;
+                write = function(t, ...) return sock:write(...)end,
+                read = function(t, ...) return sock:read(...)end,
+                flush = function(t, ...) return sock:flush(...)end,
             }
-            assert(not getmetatable(sock).release)
-            getmetatable(sock).release = function( t ) sockUnderTls:release() end;
         end
-        return {
-            _sock = sock,
-            write = function(t, ...) return sock:write(...)end,
-            read = function(t, ...) return sock:read(...)end,
-            flush = function(t, ...) return sock:flush(...)end,
-        }
+        error("unreachable")
+    end
+    local releaseSock = function( t, sockWrapr )
+        -- keep-alive (TODO only if header says so)
+        local key = sockWrapr._host.."\t"..sockWrapr._port.."\t"..tostring(sockWrapr._useTLS)
+        log:write("KEY rd '"..key.."'\n")
+        local host = hosts[key]
+        if not host then host = {} hosts[key] = host end
+        table.insert(host, sockWrapr)
     end
     return{
         openSock = openSock,
-        releaseSock = function(t, sockWrapr) t:closeSock(sockWrapr) end,
+        releaseSock = releaseSock,
         closeSock = function(t, sockWrapr) sockWrapr._sock:release() end,
     }
 end
