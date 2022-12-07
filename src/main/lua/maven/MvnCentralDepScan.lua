@@ -1,14 +1,21 @@
 --[====================================================================[
 
-  Initially written using scriptlee 0.0.5-41-G .
+  Initially written using scriptlee 0.0.5-46-G .
 
   ]====================================================================]
 
+local AF_INET = require('scriptlee').posix.AF_INET
+local AF_INET6 = require('scriptlee').posix.AF_INET6
+local IPPROTO_TCP = require('scriptlee').posix.IPPROTO_TCP
+local SOCK_STREAM = require('scriptlee').posix.SOCK_STREAM
+local inaddrOfHostname = require('scriptlee').posix.inaddrOfHostname
 local newHttpClient = require("scriptlee").newHttpClient
 local newSqlite = require("scriptlee").newSqlite
+local newTlsClient = assert(require("scriptlee").newTlsClient)
 local newXmlParser = require("scriptlee").newXmlParser
 local objectSeal = require("scriptlee").objectSeal
 local sleep = require("scriptlee").posix.sleep
+local socket = require('scriptlee').posix.socket
 local startOrExecute = require("scriptlee").reactor.startOrExecute
 
 local out, log = io.stdout, io.stderr
@@ -157,7 +164,7 @@ end
 
 
 function mod.onGetPomRspHdr( msg, req )
-    --log:write("< "..tostring(msg.proto) .." "..tostring(msg.status).." "..tostring(msg.phrase).."\n")
+    log:write("< "..tostring(msg.proto) .." "..tostring(msg.status).." "..tostring(msg.phrase).."\n")
     --for i, h in ipairs(msg.headers) do
     --    log:write("< ".. h.key ..": ".. h.val .."\n")
     --end
@@ -507,6 +514,7 @@ function mod.storeAsSqliteFile( app )
             stmt:execute()
         end
     end
+    db:close()
 end
 
 
@@ -524,8 +532,9 @@ function mod.run( app )
         local host = pomUrl:match("^https?://([^:/]+)[:/]")
         local port = pomUrl:match("^https?://[^:/]+:(%d+)[^%d]")
         local url = pomUrl:match("^https?://[^/]+(.*)$")
+        if port == 443 then isTLS = true end
         if not port then port = (isTLS and 443 or 80) end
-        --log:write("> GET ".. proto .."://".. host ..":".. port .. url .."\n")
+        log:write("> GET ".. proto .."://".. host ..":".. port .. url .."\n")
         local req = objectSeal{
             app = app,
             base = false,
@@ -536,7 +545,7 @@ function mod.run( app )
             host = assert(host), port = assert(port),
             method = "GET", url = url,
             --hdrs = ,
-            useTLS = false, --TODO useTLS = isTLS,
+            useTLS = isTLS,
             onRspHdr = mod.onGetPomRspHdr,
             onRspChunk = mod.onGetPomRspChunk,
             onRspEnd = mod.onGetPomRspEnd,
@@ -551,9 +560,68 @@ function mod.run( app )
 end
 
 
+function mod.newSocketMgr()
+    local hosts = {}
+    local openSock = function( t, opts )
+        for k, v in pairs(opts) do
+            if false then
+            elseif k=='host' or k=='port' then
+            elseif k=='useTLS' then
+                if v then error('TLS not impl') end
+            else
+                error('Unknown option: '..tostring(k))
+            end
+        end
+        local inaddr = inaddrOfHostname(opts.host)
+        local af
+        if inaddr:find('^%d+.%d+.%d+.%d+$') then af = AF_INET else af = AF_INET6 end
+        local sock = socket(af, SOCK_STREAM, IPPROTO_TCP)
+        sock:connect(inaddr, opts.port)
+        log:write("opts.useTLS "..tostring(opts.useTLS).." (Override to TRUE ...)\n")
+        opts.useTLS = true -- TODO why the heck is this needed? (I guess scriptlee bug?)
+        if opts.useTLS then
+            local sockUnderTls = sock
+            sock = newTlsClient{
+                cls = assert(sockUnderTls),
+                peerHostname = assert(opts.host),
+                onVerify = function( tlsIssues, sockUnderTls )
+                    if tlsIssues.CERT_NOT_TRUSTED then
+                        warn("TLS ignore CERT_NOT_TRUSTED");
+                        tlsIssues.CERT_NOT_TRUSTED = false
+                    end
+                end,
+                send = function( buf, sockUnderTls )
+                    local ret = sockUnderTls:write(buf)
+                    sockUnderTls:flush() -- TODO Why is this flush needed?
+                    return ret
+                end,
+                recv = function( sockUnderTls ) return sockUnderTls:read() end,
+                flush = function( sockUnderTls ) sockUnderTls:flush() end,
+                closeSnk = function( sockUnderTls ) sockUnderTls:closeSnk() end,
+            }
+            assert(not getmetatable(sock).release)
+            getmetatable(sock).release = function( t ) sockUnderTls:release() end;
+        end
+        return {
+            _sock = sock,
+            write = function(t, ...) return sock:write(...)end,
+            read = function(t, ...) return sock:read(...)end,
+            flush = function(t, ...) return sock:flush(...)end,
+        }
+    end
+    return{
+        openSock = openSock,
+        releaseSock = function(t, sockWrapr) t:closeSock(sockWrapr) end,
+        closeSock = function(t, sockWrapr) sockWrapr._sock:release() end,
+    }
+end
+
+
 function mod.main()
     local app = objectSeal{
-        http = newHttpClient{},
+        http = newHttpClient{
+            socketMgr = assert(mod.newSocketMgr()),
+        },
         mvnArtifacts = false,
         mvnPropsByArtifact = false,
         mvnDepsByArtifact = false,
