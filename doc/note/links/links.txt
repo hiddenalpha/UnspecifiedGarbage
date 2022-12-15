@@ -152,6 +152,7 @@ Links (Aka arguments)
 - [invalid java class name](https://gitit.post.ch/projects/ISA/repos/preflux/pull-requests/82/overview?commentId=39125)
 - [Formatters produce crap](https://gitit.post.ch/projects/ISA/repos/minetti/pull-requests/14/overview)
 - [Formatters produce crap](https://gitit.post.ch/projects/ISA/repos/veet/pull-requests/2/overview?commentId=233638)
+- [Suddenly NEW formatting rules in PaISA since 2021](https://gitit.post.ch/projects/ISA/repos/watson/pull-requests/1/overview?commentId=234597)
 - "https://gitit.post.ch/projects/ISA/repos/zarniwoop/pull-requests/20/overview?commentId=85912"
 - "https://gitit.post.ch/projects/ISA/repos/zarniwoop/pull-requests/21/overview?commentId=87250"
 - "https://gitit.post.ch/projects/ISA/repos/beeble/pull-requests/126/overview?commentId=70762"
@@ -168,6 +169,8 @@ Links (Aka arguments)
 ## Sonar is stupid
 - "https://gitit.post.ch/projects/ZEWAS/repos/zewas/browse/zewas-process/src/main/java/ch/post/it/zewas/process/reportgenerator/sql/SqlReportGenerator.java?at=refs%2Ftags%2Fzewas-17.10.00.17#385"
 - "https://gitit.post.ch/projects/ISA/repos/platform/pull-requests/156"
+- [Deprecated is a blocker](https://gitit.post.ch/projects/ISA/repos/preflux/pull-requests/562/overview?commentId=234158)
+- [Deprecated is a blocker](https://wikit.post.ch/pages/viewpage.action?pageId=716936486#ISASonarProfil-SuppressWarningsAnnotation)
 
 ## Plain Old Data (POD, POJO, DTO)
 - "https://de.wikipedia.org/wiki/Plain_Old_Data_structure#PODs_in_Java"
@@ -374,7 +377,7 @@ Links (Aka arguments)
 - "https://gitit.post.ch/projects/ISA/repos/preflux/pull-requests/119/overview?commentId=46245"
 
 ## Input validation
-- WontDo "https://gitit.post.ch/projects/ISA/repos/preflux/pull-requests/512/overview?commentId=222672"
+- [WontDo](https://gitit.post.ch/projects/ISA/repos/preflux/pull-requests/512/overview?commentId=222672)
 
 ## Git for windoof CRLF broken
 - "https://wikit.post.ch/display/ISA/Code+Formatting?focusedCommentId=791239536#comment-791239536"
@@ -401,6 +404,7 @@ Links (Aka arguments)
 
 ## Automatic variable dynamic version are evil
 - [Apikana broken by design](https://gitit.post.ch/projects/ISA/repos/notifications-api/pull-requests/7/overview?commentId=232144)
+- [Apikana broken by design](https://gitit.post.ch/projects/ISA/repos/deployment-playbook-api/pull-requests/11/overview?commentId=234691)
 
 ## Encoding mime application/octet-stream string utf8 unicode json payload data
 - [eagle queue browser](https://gitit.post.ch/projects/ISA/repos/eagle/pull-requests/331/overview?commentId=232322)
