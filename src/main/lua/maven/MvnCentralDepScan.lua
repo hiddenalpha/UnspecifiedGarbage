@@ -41,27 +41,49 @@ end
 function mod.parseArgs( app )
     local iA = 0
     local isExample = false
-::nextArg::
-    iA = iA + 1
-    local arg = _ENV.arg[iA]
-    if not arg then
-        goto endOfArgs
-    elseif arg == "--help" then
-        mod.printHelp() return -1
-    elseif arg == "--example" then
-        isExample = true
-    elseif arg == "--sqliteOut" then
+    while true do
         iA = iA + 1
-        arg = _ENV.arg[iA]
-        if not arg then log:write("Arg --sqliteOut needs value\n")return-1 end
-        app.sqliteOutFile = arg
-    else
-        log:write("Unexpected arg: "..tostring(arg).."\n")return -1
+        local arg = _ENV.arg[iA]
+        if not arg then
+            break
+        elseif arg == "--help" then
+            mod.printHelp() return -1
+        elseif arg == "--example" then
+            isExample = true
+        elseif arg == "--sqliteOut" then
+            iA = iA + 1
+            arg = _ENV.arg[iA]
+            if not arg then log:write("Arg --sqliteOut needs value\n")return-1 end
+            app.sqliteOutFile = arg
+        else
+            log:write("Unexpected arg: "..tostring(arg).."\n")return -1
+        end
     end
-    goto nextArg
-::endOfArgs::
     if not isExample then log:write("Bad Args\n") return -1 end
     return 0
+end
+
+
+function mod.newMvnArtifact()
+    return objectSeal{
+        dbId = false,
+        parentGroupId = false,
+        parentArtifactId = false,
+        parentVersion = false,
+        groupId = false,
+        artifactId = false,
+        version = false,
+    }
+end
+
+
+function mod.newMvnDependency()
+    return objectSeal{
+        dbId = false,
+        groupId = false,
+        artifactId = false,
+        version = false,
+    }
 end
 
 
@@ -88,11 +110,7 @@ function mod.processXmlValue( pomParser )
     end
     --log:write(xpath .."\n")
     local mvnArtifact = pomParser.mvnArtifact
-    local newMvnDependency = function()return objectSeal{
-        groupId = false,
-        artifactId = false,
-        version = false,
-    }end
+    local newMvnDependency = mod.newMvnDependency()
     if false then
     elseif xpath == "/project/parent/artifactId" then
         mvnArtifact.parentArtifactId = pomParser.currentValue
@@ -178,14 +196,7 @@ function mod.onGetPomRspHdr( msg, req )
         base = false,
         xmlElemStack = {},
         currentValue = false,
-        mvnArtifact = objectSeal{
-            parentGroupId = false,
-            parentArtifactId = false,
-            parentVersion = false,
-            groupId = false,
-            artifactId = false,
-            version = false,
-        },
+        mvnArtifact = mod.newMvnArtifact(),
         mvnDependency = false, -- the one we're currently parsing
         mvnMngdDependency = false, -- the one we're currently parsing
         write = function( t, buf ) t.base:write(buf) end,
@@ -378,6 +389,93 @@ function mod.printStuffAtEnd( app )
 end
 
 
+function mod.loadFromSqliteFile( app )
+    local db
+    db = newSqlite{
+        database = app.sqliteOutFile,
+    }
+    db:enhancePerf()
+    local stmtSelectString = db:prepare("SELECT id, str FROM String")
+    local strings = {}
+    -- Load stings
+    local rs = stmtSelectString:execute()
+    while rs:next() do
+        local stringKey, stringVal
+        for iCol=1, rs:numCols() do
+            local colName = rs:name(iCol)
+            if colName == "id" then
+                assert(rs:type(iCol) == "INTEGER")
+                stringKey = rs:value(iCol)
+            elseif colName == "str" then
+                assert(rs:type(iCol) == "TEXT")
+                stringVal = rs:value(iCol)
+            else
+                error("Unexpected col String."..tostring(rs:name(iCol)))
+            end
+        end
+        assert(stringKey)
+        assert(stringVal)
+        strings[stringKey] = stringVal
+    end
+    -- Load Artifacts
+    local stmtMvnArtifacts = db:prepare(""
+        .." SELECT id, groupId, artifactId, version, parentGroupId, parentArtifactId, parentVersion"
+        .." FROM MvnArtifact")
+    local mvnArtifactsByDbId = {}
+    local rs = stmtMvnArtifacts:execute()
+    assert(not app.mvnArtifacts)
+    app.mvnArtifacts = {}
+    while rs:next() do
+        local mvnArtif = mod.newMvnArtifact()
+        for iCol=1, rs:numCols() do
+            local colName = rs:name(iCol)
+            if colName == "id" then
+                mvnArtif.dbId = rs:value(iCol)
+            else
+                mvnArtif[colName] = (strings[rs:value(iCol)] or false)
+            end
+        end
+        app.mvnArtifacts[mod.getMvnArtifactKey(mvnArtif)] = mvnArtif;
+        --assert(mvnArtif)
+        --assert(type(mvnArtif) == "table")
+        --assert(mvnArtif.artifactId)
+        --assert(mvnArtif.artifactId)
+        assert(type(mvnArtif.dbId) == "number", mvnArtif.dbId)
+        log:write("mvnArtifactsByDbId[".. mvnArtif.dbId .."] = "..tostring(mvnArtif).."\n")
+        mvnArtifactsByDbId[mvnArtif.dbId] = mvnArtif
+    end
+    -- Load Dependencies
+    local stmtMvnDeps = db:prepare(""
+        .." SELECT id, mvnArtifactId, needsMvnArtifactId"
+        .." FROM MvnDependency")
+    local rs = stmtMvnDeps:execute()
+    while rs:next() do
+        local mvnDep = mod.newMvnDependency()
+        local mvnArtifId, mvnDepId
+        for iCol=1, rs:numCols() do
+            local colName = rs:name(iCol)
+            if colName == "id" then
+                mvnDep.dbId = assert(rs:value(iCol))
+            elseif colName == "mvnArtifactId" then
+                mvnArtifId = assert(rs:value(iCol))
+            elseif colName == "needsMvnArtifactId" then
+                mvnDepId = assert(rs:value(iCol))
+            else
+                error("TODO_20221215134407 ".. colName)
+            end
+        end
+        local artif = mvnArtifactsByDbId[mvnArtifId]
+        local dep = mvnArtifactsByDbId[mvnDepId]
+        assert(type(dep) == "table")
+        local deps = app.mvnDepsByArtifact[artif]
+        if not deps then deps = {} app.mvnDepsByArtifact[artif] = deps end
+        table.insert(deps, dep)
+    end
+    --
+    db:close()
+end
+
+
 function mod.storeAsSqliteFile( app )
     -- TODO could we cache our prepared queries?
     local db, stmt
@@ -391,9 +489,9 @@ function mod.storeAsSqliteFile( app )
     --   JOIN String GroupId ON GroupId.id = A.groupId
     --   JOIN String ArtifactId ON ArtifactId.id = A.artifactId
     --   JOIN String Version ON Version.id = A.version
-    --   JOIN String ParentGid ON ParentGid.id = A.parentGroupId
-    --   JOIN String ParentAid ON ParentAid.id = A.parentArtifactId
-    --   JOIN String ParentVersion ON ParentVersion.id = A.parentVersion
+    --   LEFT JOIN String ParentGid ON ParentGid.id = A.parentGroupId
+    --   LEFT JOIN String ParentAid ON ParentAid.id = A.parentArtifactId
+    --   LEFT JOIN String ParentVersion ON ParentVersion.id = A.parentVersion
     --
     -- Query to list dependencies:
     --   SELECT GroupId.str AS 'GID', ArtifactId.str AS 'AID', Version.str AS 'Version', DepGid.str AS 'Dependency GID', DepAid.str AS 'Dependnecy AID', DepVersion.str AS 'Dependency Version'
@@ -519,10 +617,17 @@ end
 
 
 function mod.run( app )
-    assert(not app.mvnArtifacts) app.mvnArtifacts = {}
     assert(not app.mvnPropsByArtifact) app.mvnPropsByArtifact = {}
     assert(not app.mvnDepsByArtifact) app.mvnDepsByArtifact = {}
     assert(not app.mvnMngdDepsByArtifact) app.mvnMngdDepsByArtifact = {}
+    if true or fileExists then -- TODO
+        mod.loadFromSqliteFile( app )
+    else
+        assert(not app.mvnArtifacts)
+        app.mvnArtifacts = {}
+    end
+    mod.printStuffAtEnd(app)
+    error("TODO_20221215104755")
     local pomSrc = mod.newPomUrlSrc(app)
     while true do
         local pomUrl = pomSrc:nextPomUrl()
@@ -575,43 +680,62 @@ function mod.newSocketMgr()
         local inaddr = inaddrOfHostname(opts.host)
         local af
         if inaddr:find('^%d+.%d+.%d+.%d+$') then af = AF_INET else af = AF_INET6 end
-        local sock = socket(af, SOCK_STREAM, IPPROTO_TCP)
-        sock:connect(inaddr, opts.port)
         log:write("opts.useTLS "..tostring(opts.useTLS).." (Override to TRUE ...)\n")
         opts.useTLS = true -- TODO why the heck is this needed? (I guess scriptlee bug?)
-        if opts.useTLS then
-            local sockUnderTls = sock
-            sock = newTlsClient{
-                cls = assert(sockUnderTls),
-                peerHostname = assert(opts.host),
-                onVerify = function( tlsIssues, sockUnderTls )
-                    if tlsIssues.CERT_NOT_TRUSTED then
-                        warn("TLS ignore CERT_NOT_TRUSTED");
-                        tlsIssues.CERT_NOT_TRUSTED = false
-                    end
-                end,
-                send = function( buf, sockUnderTls )
-                    local ret = sockUnderTls:write(buf)
-                    sockUnderTls:flush() -- TODO Why is this flush needed?
-                    return ret
-                end,
-                recv = function( sockUnderTls ) return sockUnderTls:read() end,
-                flush = function( sockUnderTls ) sockUnderTls:flush() end,
-                closeSnk = function( sockUnderTls ) sockUnderTls:closeSnk() end,
+        local key = inaddr.."\t"..opts.port.."\t"..tostring(opts.useTLS)
+        log:write("KEY wr '"..key.."'\n")
+        local existing = hosts[key]
+        if existing then
+            return table.remove(existing)
+        else
+            local sock = socket(af, SOCK_STREAM, IPPROTO_TCP)
+            sock:connect(inaddr, opts.port)
+            if opts.useTLS then
+                local sockUnderTls = sock
+                sock = newTlsClient{
+                    cls = assert(sockUnderTls),
+                    peerHostname = assert(opts.host),
+                    onVerify = function( tlsIssues, sockUnderTls )
+                        if tlsIssues.CERT_NOT_TRUSTED then
+                            warn("TLS ignore CERT_NOT_TRUSTED");
+                            tlsIssues.CERT_NOT_TRUSTED = false
+                        end
+                    end,
+                    send = function( buf, sockUnderTls )
+                        local ret = sockUnderTls:write(buf)
+                        sockUnderTls:flush() -- TODO Why is this flush needed?
+                        return ret
+                    end,
+                    recv = function( sockUnderTls ) return sockUnderTls:read() end,
+                    flush = function( sockUnderTls ) sockUnderTls:flush() end,
+                    closeSnk = function( sockUnderTls ) sockUnderTls:closeSnk() end,
+                }
+                assert(not getmetatable(sock).release)
+                getmetatable(sock).release = function( t ) sockUnderTls:release() end;
+            end
+            return {
+                _sock = assert(sock),
+                _host = assert(inaddr),
+                _port = assert(opts.port),
+                _useTLS = opts.useTLS;
+                write = function(t, ...) return sock:write(...)end,
+                read = function(t, ...) return sock:read(...)end,
+                flush = function(t, ...) return sock:flush(...)end,
             }
-            assert(not getmetatable(sock).release)
-            getmetatable(sock).release = function( t ) sockUnderTls:release() end;
         end
-        return {
-            _sock = sock,
-            write = function(t, ...) return sock:write(...)end,
-            read = function(t, ...) return sock:read(...)end,
-            flush = function(t, ...) return sock:flush(...)end,
-        }
+        error("unreachable")
+    end
+    local releaseSock = function( t, sockWrapr )
+        -- keep-alive (TODO only if header says so)
+        local key = sockWrapr._host.."\t"..sockWrapr._port.."\t"..tostring(sockWrapr._useTLS)
+        log:write("KEY rd '"..key.."'\n")
+        local host = hosts[key]
+        if not host then host = {} hosts[key] = host end
+        table.insert(host, sockWrapr)
     end
     return{
         openSock = openSock,
-        releaseSock = function(t, sockWrapr) t:closeSock(sockWrapr) end,
+        releaseSock = releaseSock,
         closeSock = function(t, sockWrapr) sockWrapr._sock:release() end,
     }
 end
