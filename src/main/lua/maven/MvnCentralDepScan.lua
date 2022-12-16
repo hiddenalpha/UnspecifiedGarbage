@@ -8,7 +8,9 @@ local AF_INET = require('scriptlee').posix.AF_INET
 local AF_INET6 = require('scriptlee').posix.AF_INET6
 local IPPROTO_TCP = require('scriptlee').posix.IPPROTO_TCP
 local SOCK_STREAM = require('scriptlee').posix.SOCK_STREAM
+--local async = require("scriptlee").reactor.async
 local inaddrOfHostname = require('scriptlee').posix.inaddrOfHostname
+--local newCond = require("scriptlee").posix.newCond  -- cannot use. Too buggy :(
 local newHttpClient = require("scriptlee").newHttpClient
 local newSqlite = require("scriptlee").newSqlite
 local newTlsClient = assert(require("scriptlee").newTlsClient)
@@ -209,8 +211,8 @@ end
 
 
 function mod.onGetPomRspHdr( msg, req )
-    log:write("< "..tostring(msg.proto) .." "..tostring(msg.status).." "..tostring(msg.phrase).."\n")
     if msg.status ~= 200 then
+        log:write("< "..tostring(msg.proto) .." "..tostring(msg.status).." "..tostring(msg.phrase).."\n")
         for i, h in ipairs(msg.headers) do
             log:write("< ".. h.key ..": ".. h.val .."\n")
         end
@@ -377,6 +379,9 @@ function mod.getPropValThroughParentChain( app, mvnArtifact, propKey, none )
     end
     if propKey == "project.version" then
         return mvnArtifact.version
+    end
+    if propKey == "project.groupId" then
+        return mvnArtifact.groupId
     end
     -- no luck in current artifact. Delegate to parent (if any)
     if  mvnArtifact.parentGroupId
@@ -622,9 +627,7 @@ function mod.storeAsSqliteFile( app )
     for _, mvnArtifact in pairs(app.mvnArtifacts) do
         local mvnDeps = app.mvnDepsByArtifact[mvnArtifact]
         for _, mvnDep in pairs(mvnDeps or {}) do
-            if not mvnDep.version then mvnDep.version = "TODO_5bbc0e87011e24d845136c5406302616" end
-            assert(mvnDep.version, mvnDep.artifactId)
-            assert(mvnDep.groupId and mvnDep.artifactId and mvnDep.version)
+            assert(mvnDep.groupId and mvnDep.artifactId)
             local bucket = mvnArtifactIdsByArtif[mvnDep.artifactId]
             local depId = nil
             for _,a in pairs(bucket or {}) do
@@ -635,6 +638,11 @@ function mod.storeAsSqliteFile( app )
                 end
             end
             if not depId then -- Artifact not stored yet. Do now.
+                if not mvnDep.version then
+                    -- TODO mvnDep.version CAN be missing. Eg via depMgnt of
+                    --      unknown parent or similar
+                    mvnDep.version = "TODO_40ba845c5a1bd8"
+                end
                 depId = insertMvnArtifact({
                     groupId = mvnDep.groupId,
                     artifactId = mvnDep.artifactId,
@@ -734,12 +742,12 @@ end
 
 function mod.newSocketMgr()
     local hosts = {}
+    -- TOO_BUGGY  local numConnActive, numConnActiveLimit = 0, 4
+    -- TOO_BUGGY  local numConnActiveCond = newCond()
     local openSock = function( t, opts )
         for k, v in pairs(opts) do
             if false then
-            elseif k=='host' or k=='port' then
-            elseif k=='useTLS' then
-                if v then error('TLS not impl') end
+            elseif k=='host' or k=='port' or k=='useTLS' then
             else
                 error('Unknown option: '..tostring(k))
             end
@@ -748,14 +756,19 @@ function mod.newSocketMgr()
         local af
         if inaddr:find('^%d+.%d+.%d+.%d+$') then af = AF_INET else af = AF_INET6 end
         log:write("opts.useTLS "..tostring(opts.useTLS).." (Override to TRUE ...)\n")
-        opts.useTLS = true -- TODO why the heck is this needed? (I guess scriptlee bug?)
+        opts.useTLS = true -- TODO remove as soon fixed scriptlee is available.
         local key = inaddr.."\t"..opts.port.."\t"..tostring(opts.useTLS)
         --log:write("KEY wr '"..key.."'\n")
         local existing = hosts[key]
+        -- TOO_BUGGY  numConnActive = numConnActive +1
         if existing then
             return table.remove(existing)
         else
-            sleep(.2) -- TODO rm
+            -- TOO_BUGGY  while numConnActive > numConnActiveLimit do
+            -- TOO_BUGGY      log:write("numConnActive is "..numConnActive..". Waiting ...\n")
+            -- TOO_BUGGY      numConnActiveCond:waitForever()
+            -- TOO_BUGGY  end
+            -- TOO_BUGGY  log:write("numConnActive is ".. numConnActive ..". Go\n")
             local sock = socket(af, SOCK_STREAM, IPPROTO_TCP)
             sock:connect(inaddr, opts.port)
             if opts.useTLS then
@@ -794,10 +807,9 @@ function mod.newSocketMgr()
         error("unreachable")
     end
     local releaseSock = function( t, sockWrapr )
-        t:closeSock(sockWrapr) return -- TODO rm
+        t:closeSock(sockWrapr) return -- TODO rm as soon fixed scriptlee available (aka >46)
 --        -- keep-alive (TODO only if header says so)
 --        local key = sockWrapr._host.."\t"..sockWrapr._port.."\t"..tostring(sockWrapr._useTLS)
---        log:write("KEY rd '"..key.."'\n")
 --        local host = hosts[key]
 --        if not host then host = {} hosts[key] = host end
 --        table.insert(host, sockWrapr)
@@ -805,7 +817,13 @@ function mod.newSocketMgr()
     return{
         openSock = openSock,
         releaseSock = releaseSock,
-        closeSock = function(t, sockWrapr) sockWrapr._sock:release() end,
+        closeSock = function(t, sockWrapr)
+            sockWrapr._sock:release()
+            -- TOO_BUGGY  numConnActive = numConnActive -1
+            -- TOO_BUGGY  log:write("numConnActive -1. Is now ".. numConnActive ..". Broadcast.\n")
+            -- TOO_BUGGY  numConnActiveCond:broadcast()
+        end,
+
     }
 end
 
@@ -899,6 +917,9 @@ end
 
 function mod.enrichFromUrls( app )
     local pomSrc = mod.newPomUrlSrc(app)
+    -- TOO_BUGGY  local numInProgress, numInProgressLimit = 0, 1
+    -- TOO_BUGGY  local numInProgressCond = newCond()
+    -- TOO_BUGGY  log:write("numInProgressCond ".. tostring(numInProgressCond).." ("..(debug.getinfo(1).currentline)..")\n");
     while true do
         local pomUrl = pomSrc:nextPomUrl()
         if not pomUrl then break end
@@ -909,23 +930,35 @@ function mod.enrichFromUrls( app )
         local url = pomUrl:match("^https?://[^/]+(.*)$")
         if port == 443 then isTLS = true end
         if not port then port = (isTLS and 443 or 80) end
-        log:write("> GET ".. proto .."://".. host ..":".. port .. url .."\n")
-        local req = objectSeal{
-            app = app,
-            base = false,
-            pomParser = false,
-        }
-        req.base = app.http:request{
-            cls = req,
-            host = assert(host), port = assert(port),
-            method = "GET", url = url,
-            --hdrs = ,
-            useTLS = isTLS,
-            onRspHdr = mod.onGetPomRspHdr,
-            onRspChunk = mod.onGetPomRspChunk,
-            onRspEnd = mod.onGetPomRspEnd,
-        }
-        req.base:closeSnk()
+        -- TOO_BUGGY  while numInProgress >= numInProgressLimit do
+        -- TOO_BUGGY      log:write("numInProgress is ".. numInProgress ..". Wait ...\n")
+        -- TOO_BUGGY      numInProgressCond:waitForever()
+        -- TOO_BUGGY  end
+        -- TOO_BUGGY  log:write("numInProgress is ".. numInProgress ..". Go!\n")
+        -- TOO_BUGGY  numInProgress = numInProgress +1
+        -- TOO_BUGGY  async(function()
+            log:write("> GET ".. proto .."://".. host ..":".. port .. url .."\n")
+            local req = objectSeal{
+                app = app,
+                base = false,
+                pomParser = false,
+            }
+            req.base = app.http:request{
+                cls = req,
+                host = assert(host), port = assert(port),
+                method = "GET", url = url,
+                --hdrs = ,
+                useTLS = isTLS,
+                onRspHdr = mod.onGetPomRspHdr,
+                onRspChunk = mod.onGetPomRspChunk,
+                onRspEnd = mod.onGetPomRspEnd,
+            }
+            req.base:closeSnk()
+        -- TOO_BUGGY      numInProgress = numInProgress -1
+        -- TOO_BUGGY      log:write("numInProgress DECR. Is now ".. numInProgress ..". broadcast.\n")
+        -- TOO_BUGGY      log:write("numInProgressCond ".. tostring(numInProgressCond).." ("..(debug.getinfo(1).currentline)..")\n");
+        -- TOO_BUGGY      numInProgressCond:broadcast()
+        -- TOO_BUGGY  end)
     end
     log:write("[INFO ] No more pom URLs\n")
     mod.resolveDependencyVersionsFromDepsMgmnt(app)
