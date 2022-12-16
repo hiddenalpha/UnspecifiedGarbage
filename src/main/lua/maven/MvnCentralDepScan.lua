@@ -31,16 +31,32 @@ function mod.printHelp()
         .."    --example\n"
         .."      WARN: only use if you know what you're doing!\n"
         .."\n"
-        .."    --sqliteOut <path>\n"
-        .."      Path where to export the result.\n"
+        .."    --state <path>\n"
+        .."      Data file to use for the action.\n"
         .."\n"
+        .."    --asCsv <what>\n"
+        .."      Prints requested data to stdout. <what> can be one of \"parents\"\n"
+        .."      or \"deps\".\n"
+        .."\n"
+        .."    --nullvalue <str>  (default is an empty string)\n"
+        .."      The string to use for NULL values in CSV exports.\n"
+        .."\n"
+        .."  Example  \"Export parents\"\n"
+        .."\n"
+        .."    --state foo --asCsv parents > parents.csv\n"
+        .."\n"
+        .."  Example  \"Export dependencies\"\n"
+        .."\n"
+        .."    --state foo --asCsv deps > dependencies.csv\n"
         .."\n")
 end
 
 
 function mod.parseArgs( app )
     local iA = 0
-    local isExample = false
+    app.isExample = false
+    app.statePath = false
+    app.nullvalue = ""
     while true do
         iA = iA + 1
         local arg = _ENV.arg[iA]
@@ -49,17 +65,29 @@ function mod.parseArgs( app )
         elseif arg == "--help" then
             mod.printHelp() return -1
         elseif arg == "--example" then
-            isExample = true
-        elseif arg == "--sqliteOut" then
+            app.isExample = true
+        elseif arg == "--state" then
             iA = iA + 1
             arg = _ENV.arg[iA]
             if not arg then log:write("Arg --sqliteOut needs value\n")return-1 end
-            app.sqliteOutFile = arg
+            app.statePath = arg
+        elseif arg == "--asCsv" then
+            iA = iA +1
+            arg = _ENV.arg[iA]
+            if arg ~= "parents" and arg ~= "deps" then
+                log:write("Illegal value for --asCsv: "..tostring(arg).."\n")return-1 end
+            app.asCsv = arg
+        elseif arg == "--nullvalue" then
+            iA = iA +1
+            arg = _ENV.arg[iA]
+            if not arg then log:write("Arg --nullvalue needs value\n")return-1 end
+            app.nullvalue = arg
         else
             log:write("Unexpected arg: "..tostring(arg).."\n")return -1
         end
     end
-    if not isExample then log:write("Bad Args\n") return -1 end
+    if not app.statePath then log:write("Arg --state missing\n") return -1 end
+    if not app.isExample and not app.asCsv then log:write("Bad Args\n") return -1 end
     return 0
 end
 
@@ -110,7 +138,6 @@ function mod.processXmlValue( pomParser )
     end
     --log:write(xpath .."\n")
     local mvnArtifact = pomParser.mvnArtifact
-    local newMvnDependency = mod.newMvnDependency()
     if false then
     elseif xpath == "/project/parent/artifactId" then
         mvnArtifact.parentArtifactId = pomParser.currentValue
@@ -125,13 +152,13 @@ function mod.processXmlValue( pomParser )
     elseif xpath == "/project/version" then
         mvnArtifact.version = pomParser.currentValue
     elseif xpath == "/project/dependencies/dependency/groupId" then
-        if not pomParser.mvnDependency then pomParser.mvnDependency = newMvnDependency() end
+        if not pomParser.mvnDependency then pomParser.mvnDependency = mod.newMvnDependency() end
         pomParser.mvnDependency.groupId = pomParser.currentValue
     elseif xpath == "/project/dependencies/dependency/artifactId" then
-        if not pomParser.mvnDependency then pomParser.mvnDependency = newMvnDependency() end
+        if not pomParser.mvnDependency then pomParser.mvnDependency = mod.newMvnDependency() end
         pomParser.mvnDependency.artifactId = pomParser.currentValue
     elseif xpath == "/project/dependencies/dependency/version" then
-        if not pomParser.mvnDependency then pomParser.mvnDependency = newMvnDependency() end
+        if not pomParser.mvnDependency then pomParser.mvnDependency = mod.newMvnDependency() end
         pomParser.mvnDependency.version = pomParser.currentValue
     elseif xpath == "/project/dependencies/dependency" then
         assert(pomParser.mvnDependency)
@@ -142,13 +169,13 @@ function mod.processXmlValue( pomParser )
         if not deps then deps = {} app.mvnDepsByArtifact[mvnArtifact] = deps end
         table.insert(deps, assert(mvnDependency))
     elseif xpath == "/project/dependencyManagement/dependencies/dependency/groupId" then
-        if not pomParser.mvnMngdDependency then pomParser.mvnMngdDependency = newMvnDependency() end
+        if not pomParser.mvnMngdDependency then pomParser.mvnMngdDependency = mod.newMvnDependency() end
         pomParser.mvnMngdDependency.groupId = pomParser.currentValue
     elseif xpath == "/project/dependencyManagement/dependencies/dependency/artifactId" then
-        if not pomParser.mvnMngdDependency then pomParser.mvnMngdDependency = newMvnDependency() end
+        if not pomParser.mvnMngdDependency then pomParser.mvnMngdDependency = mod.newMvnDependency() end
         pomParser.mvnMngdDependency.artifactId = pomParser.currentValue
     elseif xpath == "/project/dependencyManagement/dependencies/dependency/version" then
-        if not pomParser.mvnMngdDependency then pomParser.mvnMngdDependency = newMvnDependency() end
+        if not pomParser.mvnMngdDependency then pomParser.mvnMngdDependency = mod.newMvnDependency() end
         pomParser.mvnMngdDependency.version = pomParser.currentValue
     elseif xpath == "/project/dependencyManagement/dependencies/dependency" then
         assert(pomParser.mvnMngdDependency)
@@ -183,11 +210,11 @@ end
 
 function mod.onGetPomRspHdr( msg, req )
     log:write("< "..tostring(msg.proto) .." "..tostring(msg.status).." "..tostring(msg.phrase).."\n")
-    --for i, h in ipairs(msg.headers) do
-    --    log:write("< ".. h.key ..": ".. h.val .."\n")
-    --end
-    --log:write("< \n")
     if msg.status ~= 200 then
+        for i, h in ipairs(msg.headers) do
+            log:write("< ".. h.key ..": ".. h.val .."\n")
+        end
+        log:write("< \n")
         error("Unexpected HTTP ".. tostring(msg.status))
     end
     assert(not req.pomParser)
@@ -229,8 +256,22 @@ function mod.onGetPomRspHdr( msg, req )
             if not mvnArtifact.groupId then mvnArtifact.groupId = mvnArtifact.parentGroupId end
             if not mvnArtifact.version then mvnArtifact.version = mvnArtifact.parentVersion end
             local key = mod.getMvnArtifactKey(mvnArtifact)
-            assert(not app.mvnArtifacts[key])
-            app.mvnArtifacts[key] = mvnArtifact
+            if app.mvnArtifacts[key] then
+                local old = app.mvnArtifacts[key]
+                local oId = mod.getMvnArtifactKey(old)
+                local nId = mod.getMvnArtifactKey(mvnArtifact)
+                if oId ~= nId then
+                    print("Already exists BUT DIFFERS:")
+                    for k,v in pairs(old) do print("O",k,v) end
+                    print()
+                    for k,v in pairs(mvnArtifact) do print("N",k,v) end
+                    error("TODO_20221215150040")
+                else
+                    log:write("Already known. ReUse "..tostring(oId).."\n")
+                end
+            else
+                app.mvnArtifacts[key] = mvnArtifact
+            end
         end,
     }
 end
@@ -390,15 +431,13 @@ end
 
 
 function mod.loadFromSqliteFile( app )
-    local db
-    db = newSqlite{
-        database = app.sqliteOutFile,
-    }
-    db:enhancePerf()
-    local stmtSelectString = db:prepare("SELECT id, str FROM String")
-    local strings = {}
+    local db = mod.dbGetInstance(app)
+    local queryStr = "SELECT id, str FROM String"
+    local stmt = app.preparedStmts[queryStr]
+    if not stmt then stmt = db:prepare(queryStr) app.preparedStmts[queryStr] = stmt end
+    local strings = app.stringIdByStr
     -- Load stings
-    local rs = stmtSelectString:execute()
+    local rs = stmt:execute()
     while rs:next() do
         local stringKey, stringVal
         for iCol=1, rs:numCols() do
@@ -415,7 +454,7 @@ function mod.loadFromSqliteFile( app )
         end
         assert(stringKey)
         assert(stringVal)
-        strings[stringKey] = stringVal
+        app.stringIdByStr[stringKey] = stringVal
     end
     -- Load Artifacts
     local stmtMvnArtifacts = db:prepare(""
@@ -436,12 +475,7 @@ function mod.loadFromSqliteFile( app )
             end
         end
         app.mvnArtifacts[mod.getMvnArtifactKey(mvnArtif)] = mvnArtif;
-        --assert(mvnArtif)
-        --assert(type(mvnArtif) == "table")
-        --assert(mvnArtif.artifactId)
-        --assert(mvnArtif.artifactId)
         assert(type(mvnArtif.dbId) == "number", mvnArtif.dbId)
-        log:write("mvnArtifactsByDbId[".. mvnArtif.dbId .."] = "..tostring(mvnArtif).."\n")
         mvnArtifactsByDbId[mvnArtif.dbId] = mvnArtif
     end
     -- Load Dependencies
@@ -471,119 +505,120 @@ function mod.loadFromSqliteFile( app )
         if not deps then deps = {} app.mvnDepsByArtifact[artif] = deps end
         table.insert(deps, dep)
     end
-    --
-    db:close()
+end
+
+
+function mod.dbInsertMvnArtifact( app, mvnArtifact )
+    if mvnArtifact.dbId then warn("MvnArtifact already has dbId="..tostring(mvnArtifact.dbId)) end
+    local db = mod.dbGetInstance(app)
+    local queryStr = "INSERT INTO MvnArtifact"
+        .."    groupId,  artifactId,  version,  parentGroupId,  parentArtifactId,  parentVersion"
+        .." VALUES"
+        .."   :groupId, :artifactId, :version, :parentGroupId, :parentArtifactId, :parentVersion"
+        .." "
+    local stmt = app.preparedStmts[queryStr]
+    if not stmt then
+        stmt = db:prepare(queryStr)
+        app.preparedStmts[queryStr] = stmt
+    end
+    stmt:reset()
+    mod.bindMvnArtifactAll(app, stmt, mvnArtifact)
+    stmt:execute()
+    if db:lastInsertRowid() ~= 0 then
+        return db:lastInsertRowid()
+    end
+    local queryStr = "SELECT id FROM MvnArtifact"
+        .." WHERE artifactId = :artifactId"
+        .." AND groupId = :groupId"
+        .." AND version = :version"
+        .." AND parentGroupId = :parentGroupId"
+        .." AND parentArtifactId = :parentArtifactId"
+        .." AND parentVersion = :parentVersion"
+    local stmt = app.preparedStmts[queryStr]
+    stmt:reset()
+    mod.bindMvnArtifactAll(app, stmt, mvnArtifact)
+    local rs = stmt:execute()
+    if not rs:next() then error("TODO_20221215172430") end
+    mvnArtifact.dbId = assert(rs:value(1))
+    if rs:next() then error("TODO_20221215172435") end
+end
+
+
+function mod.dbBindMvnArtifactAll( app, stmt, mvnArtifact )
+    stmt:bind(":groupId", mvnArtifact.groupId)
+    stmt:bind(":artifactId", mvnArtifact.artifactId)
+    stmt:bind(":version", mvnArtifact.version)
+    stmt:bind(":parentGroupId", mvnArtifact.parentGroupId)
+    stmt:bind(":parentArtifactId", mvnArtifact.parentArtifactId)
+    stmt:bind(":parentVersion", mvnArtifact.parentVersion)
 end
 
 
 function mod.storeAsSqliteFile( app )
-    -- TODO could we cache our prepared queries?
-    local db, stmt
-    if not app.sqliteOutFile then
-        log:write("[INFO ] No sqliteOutFile provided. Skip export.\n")
-        return
-    end
-    -- Query to list Artifacts and their parents:
-    --   SELECT GroupId.str AS 'GID', ArtifactId.str AS 'AID', Version.str AS 'Version', ParentGid.str AS 'ParentGid', ParentAid.str AS 'ParentAid', ParentVersion.str AS 'ParentVersion'
-    --   FROM MvnArtifact AS A
-    --   JOIN String GroupId ON GroupId.id = A.groupId
-    --   JOIN String ArtifactId ON ArtifactId.id = A.artifactId
-    --   JOIN String Version ON Version.id = A.version
-    --   LEFT JOIN String ParentGid ON ParentGid.id = A.parentGroupId
-    --   LEFT JOIN String ParentAid ON ParentAid.id = A.parentArtifactId
-    --   LEFT JOIN String ParentVersion ON ParentVersion.id = A.parentVersion
-    --
-    -- Query to list dependencies:
-    --   SELECT GroupId.str AS 'GID', ArtifactId.str AS 'AID', Version.str AS 'Version', DepGid.str AS 'Dependency GID', DepAid.str AS 'Dependnecy AID', DepVersion.str AS 'Dependency Version'
-    --   FROM MvnArtifact AS A
-    --   JOIN MvnDependency AS Dep ON Dep.mvnArtifactId = A.id
-    --   JOIN MvnArtifact AS D ON Dep.needsMvnArtifactId = D.id
-    --   JOIN String GroupId ON GroupId.id = A.groupId
-    --   JOIN String ArtifactId ON ArtifactId.id = A.artifactId
-    --   JOIN String Version ON Version.id = A.version
-    --   JOIN String DepGid ON DepGid.id = D.groupId
-    --   JOIN String DepAid ON DepAid.id = D.artifactId
-    --   JOIN String DepVersion ON DepVersion.id = D.version
-    --
-    db = newSqlite{
-        database = app.sqliteOutFile,
-    }
-    db:enhancePerf()
-    db:prepare("CREATE TABLE String ("
-        .." id INTEGER PRIMARY KEY,"
-        .." str TEXT UNIQUE)"
-    ):execute()
-    db:prepare("CREATE TABLE MvnArtifact ("
-        .." id INTEGER PRIMARY KEY,"
-        .." groupId INT,"
-        .." artifactId INT,"
-        .." version INT,"
-        .." parentGroupId INT,"
-        .." parentArtifactId INT,"
-        .." parentVersion INT)"
-    ):execute()
-    db:prepare("CREATE TABLE MvnDependency ("
-        .." id INTEGER PRIMARY KEY,"
-        .." mvnArtifactId INT,"
-        .." needsMvnArtifactId INT)"
-    ):execute()
-    --db:prepare("CREATE TABLE MvnProperty ("
-    --    .." id INTEGER PRIMARY KEY,"
-    --    .." keyStringId INT,"
-    --    .." valStringId INT)"
-    --):execute()
+    local stmt
+    local db = mod.dbGetInstance(app)
     local mvnArtifactIds = {}
     local mvnArtifactIdsByArtif = {}
     local strings = {}
-    local getStringId = function( str ) -- create/reUse strings on-demand
-        if not str then return nil end
-        local stringId = strings[str]
-        if not stringId then
-            local stmt = db:prepare("INSERT INTO String (str)VALUES(:str)")
-            stmt:reset()
-            stmt:bind(":str", str)
-            stmt:execute()
-            stringId = db:lastInsertRowid()
-            strings[str] = stringId
-        end
-        return stringId
-    end
-    local stmtInsMvnArtifact = db:prepare("INSERT INTO MvnArtifact"
-        .."('groupId', 'artifactId', 'version', 'parentGroupId', 'parentArtifactId', 'parentVersion')"
-        .."VALUES"
-        .."(:groupId , :artifactId , :version , :parentGroupId , :parentArtifactId , :parentVersion )")
+    mod.dbInitTables(app)
+    local queryStr = "INSERT INTO MvnArtifact"
+        .."   ('groupId', 'artifactId', 'version', 'parentGroupId', 'parentArtifactId', 'parentVersion')"
+        .." VALUES"
+        .."   (:groupId , :artifactId , :version , :parentGroupId , :parentArtifactId , :parentVersion )"
+        .." ON CONFLICT DO NOTHING"
+    local stmt = app.preparedStmts[queryStr]
+    if not stmt then stmt = db:prepare(queryStr) app.preparedStmts[queryStr] = stmt end
     local insertMvnArtifact = function(a)
+        if a.dbId then
+            log:write("[WARN ] MvnArtifact "..tostring(a.dbId).." probably already exists. Insert it again\n")
+        end
         assert(a.groupId and a.artifactId and a.version)
         if a.parentGroupId then assert(a.parentArtifactId and a.parentVersion)
         else assert(not a.parentArtifactId and not a.parentVersion) end
-        stmtInsMvnArtifact:reset()
-        stmtInsMvnArtifact:bind(":groupId", getStringId(a.groupId))
-        stmtInsMvnArtifact:bind(":artifactId", getStringId(a.artifactId))
-        stmtInsMvnArtifact:bind(":version", getStringId(a.version))
-        stmtInsMvnArtifact:bind(":parentGroupId", getStringId(a.parentGroupId))
-        stmtInsMvnArtifact:bind(":parentArtifactId", getStringId(a.parentArtifactId))
-        stmtInsMvnArtifact:bind(":parentVersion", getStringId(a.parentVersion))
-        stmtInsMvnArtifact:execute()
+        stmt:reset()
+        stmt:bind(":groupId", mod.dbGetOrNewString(app, a.groupId))
+        stmt:bind(":artifactId", mod.dbGetOrNewString(app, a.artifactId))
+        stmt:bind(":version", mod.dbGetOrNewString(app, a.version))
+        stmt:bind(":parentGroupId", mod.dbGetOrNewString(app, a.parentGroupId))
+        stmt:bind(":parentArtifactId", mod.dbGetOrNewString(app, a.parentArtifactId))
+        stmt:bind(":parentVersion", mod.dbGetOrNewString(app, a.parentVersion))
+        stmt:execute()
         local dbId = db:lastInsertRowid()
+        if dbId == 0 then
+            -- Seems as entry already exists. So need to query its id separately.
+            local stmt = db:prepare("SELECT id FROM MvnArtifact"
+                .." WHERE groupId = :groupId AND artifactId = :artifactId AND version = :version"
+                .." AND parentGroupId = :parentGroupId AND parentArtifactId = :parentArtifactId AND parentVersion = :parentVersion")
+            stmt:reset()
+            stmt:bind(":groupId", mod.dbGetOrNewString(app, a.groupId))
+            stmt:bind(":artifactId", mod.dbGetOrNewString(app, a.artifactId))
+            stmt:bind(":version", mod.dbGetOrNewString(app, a.version))
+            stmt:bind(":parentGroupId", mod.dbGetOrNewString(app, a.parentGroupId))
+            stmt:bind(":parentArtifactId", mod.dbGetOrNewString(app, a.parentArtifactId))
+            stmt:bind(":parentVersion", mod.dbGetOrNewString(app, a.parentVersion))
+            local rs = stmt:execute()
+            dbId = rs:value(1)
+            assert(dbId)
+        end
         mvnArtifactIds[a] = dbId -- TODO MUST be byString
         local bucket = mvnArtifactIdsByArtif[assert(a.artifactId)]
         if not bucket then bucket = {} mvnArtifactIdsByArtif[a.artifactId] = bucket end
         table.insert(bucket, { dbId = dbId, mvnArtifact = a, })
         return dbId
     end
-    -- Store artifacts
+    -- Store new artifacts
     for _, mvnArtifact in pairs(app.mvnArtifacts) do
         insertMvnArtifact(mvnArtifact)
-        local mvnDeps = app.mvnDepsByArtifact[mvnArtifact] or {}
-        -- dependencies are nothing else than artifacts
-        for _, mvnDep in pairs(mvnDeps) do
+        if mvnArtifact.parentArtifactId then
         end
     end
     -- Store dependencies
-    local stmt = db:prepare("INSERT INTO MvnDependency"
-        .."('mvnArtifactId', 'needsMvnArtifactId')"
-        .."VALUES"
-        .."(:mvnArtifactId , :needsMvnArtifactId )")
+    local queryStr = "INSERT INTO MvnDependency"
+        .."    ( mvnArtifactId,  needsMvnArtifactId)"
+        .."  VALUES"
+        .."    ( :mvnArtifactId, :needsMvnArtifactId)"
+    local stmt = app.preparedStmts[queryStr]
+    if not stmt then stmt = db:prepare(queryStr) app.preparedStmts[queryStr] = stmt end
     for _, mvnArtifact in pairs(app.mvnArtifacts) do
         local mvnDeps = app.mvnDepsByArtifact[mvnArtifact]
         for _, mvnDep in pairs(mvnDeps or {}) do
@@ -612,56 +647,88 @@ function mod.storeAsSqliteFile( app )
             stmt:execute()
         end
     end
-    db:close()
 end
 
 
-function mod.run( app )
-    assert(not app.mvnPropsByArtifact) app.mvnPropsByArtifact = {}
-    assert(not app.mvnDepsByArtifact) app.mvnDepsByArtifact = {}
-    assert(not app.mvnMngdDepsByArtifact) app.mvnMngdDepsByArtifact = {}
-    if true or fileExists then -- TODO
-        mod.loadFromSqliteFile( app )
-    else
-        assert(not app.mvnArtifacts)
-        app.mvnArtifacts = {}
+-- returns dbId of the (new or existing) string
+function mod.dbGetOrNewString( app, str )
+    local db = mod.dbGetInstance(app)
+    local tryCnt = 0
+    --log:write("[DEBUG] Searching String ID for '"..tostring(str).."'\n")
+    if not str then return nil end
+::startOver::
+    -- Ask inMemory cache
+    local stringId = app.stringIdByStr[str]
+    if stringId then
+        --log:write("[DEBUG] Using String ".. stringId .." for '"..str.."'\n")
+        return stringId
     end
-    mod.printStuffAtEnd(app)
-    error("TODO_20221215104755")
-    local pomSrc = mod.newPomUrlSrc(app)
-    while true do
-        local pomUrl = pomSrc:nextPomUrl()
-        if not pomUrl then break end
-        local proto = pomUrl:match("^(https?)://")
-        local isTLS = (proto:upper() == "HTTPS")
-        local host = pomUrl:match("^https?://([^:/]+)[:/]")
-        local port = pomUrl:match("^https?://[^:/]+:(%d+)[^%d]")
-        local url = pomUrl:match("^https?://[^/]+(.*)$")
-        if port == 443 then isTLS = true end
-        if not port then port = (isTLS and 443 or 80) end
-        log:write("> GET ".. proto .."://".. host ..":".. port .. url .."\n")
-        local req = objectSeal{
-            app = app,
-            base = false,
-            pomParser = false,
-        }
-        req.base = app.http:request{
-            cls = req,
-            host = assert(host), port = assert(port),
-            method = "GET", url = url,
-            --hdrs = ,
-            useTLS = isTLS,
-            onRspHdr = mod.onGetPomRspHdr,
-            onRspChunk = mod.onGetPomRspChunk,
-            onRspEnd = mod.onGetPomRspEnd,
-        }
-        req.base:closeSnk()
+    -- Ask DB
+    local queryStr = "SELECT id FROM String WHERE str = :str"
+    local stmt = app.preparedStmts[queryStr]
+    if not stmt then stmt = db:prepare(queryStr) app.preparedStmts[queryStr] = stmt end
+    stmt:reset()
+    stmt:bind(":str", str)
+    local rs = stmt:execute()
+    if rs:next() then -- DB has an entry :)
+        stringId = assert(rs:value(1))
+        if rs:next() then log:write("[WARN ] DB string duplication: '"..tostring(str).."'\n") end
+        --log:write("[DEBUG] Using OLD String ".. stringId .."\n")
+        app.stringIdByStr[str] = stringId
+        return stringId
     end
-    log:write("[INFO ] No more pom URLs\n")
-    mod.resolveDependencyVersionsFromDepsMgmnt(app)
-    mod.resolveProperties(app)
-    mod.storeAsSqliteFile(app)
-    --mod.printStuffAtEnd(app)
+    stmt:close() app.preparedStmts[queryStr] = nil -- TODO WTF?!?
+    --log:write("[DEBUG] None in DB yet. Make sure it exists\n")
+    local queryStr = "INSERT INTO String (str)VALUES(:str) ON CONFLICT DO NOTHING"
+    local stmt = app.preparedStmts[queryStr]
+    if not stmt then stmt = db:prepare(queryStr) app.preparedStmts[queryStr] = stmt end
+    stmt:reset()
+    stmt:bind(":str", str)
+    stmt:execute()
+    stmt:close() app.preparedStmts[queryStr] = nil -- TODO WTF?!?
+    --log:write("[DEBUG] Then try again\n")
+    if tryCnt > 3 then error("TODO_20221215185428 fixme") end
+    tryCnt = tryCnt +1
+    goto startOver -- recursion stinks
+end
+
+
+function mod.dbInitTables( app )
+    local db = mod.dbGetInstance(app)
+    db:prepare("CREATE TABLE IF NOT EXISTS String ("
+        .." id INTEGER PRIMARY KEY,"
+        .." str TEXT UNIQUE)"
+    ):execute()
+    db:prepare("CREATE TABLE IF NOT EXISTS MvnArtifact ("
+        .." id INTEGER PRIMARY KEY,"
+        .." groupId INT,"
+        .." artifactId INT,"
+        .." version INT,"
+        .." parentGroupId INT,"
+        .." parentArtifactId INT,"
+        .." parentVersion INT)"
+    ):execute()
+    db:prepare("CREATE TABLE IF NOT EXISTS MvnDependency ("
+        .." id INTEGER PRIMARY KEY,"
+        .." mvnArtifactId INT,"
+        .." needsMvnArtifactId INT)"
+    ):execute()
+    --db:prepare("CREATE TABLE IF NOT EXISTS MvnProperty ("
+    --    .." id INTEGER PRIMARY KEY,"
+    --    .." keyStringId INT,"
+    --    .." valStringId INT)"
+    --):execute()
+end
+
+
+function mod.dbGetInstance( app )
+    local db = app.sqlite
+    if not db then
+        db = newSqlite{ database = app.statePath, }
+        db:enhancePerf()
+        app.sqlite = db
+    end
+    return db
 end
 
 
@@ -683,11 +750,12 @@ function mod.newSocketMgr()
         log:write("opts.useTLS "..tostring(opts.useTLS).." (Override to TRUE ...)\n")
         opts.useTLS = true -- TODO why the heck is this needed? (I guess scriptlee bug?)
         local key = inaddr.."\t"..opts.port.."\t"..tostring(opts.useTLS)
-        log:write("KEY wr '"..key.."'\n")
+        --log:write("KEY wr '"..key.."'\n")
         local existing = hosts[key]
         if existing then
             return table.remove(existing)
         else
+            sleep(.2) -- TODO rm
             local sock = socket(af, SOCK_STREAM, IPPROTO_TCP)
             sock:connect(inaddr, opts.port)
             if opts.useTLS then
@@ -726,12 +794,13 @@ function mod.newSocketMgr()
         error("unreachable")
     end
     local releaseSock = function( t, sockWrapr )
-        -- keep-alive (TODO only if header says so)
-        local key = sockWrapr._host.."\t"..sockWrapr._port.."\t"..tostring(sockWrapr._useTLS)
-        log:write("KEY rd '"..key.."'\n")
-        local host = hosts[key]
-        if not host then host = {} hosts[key] = host end
-        table.insert(host, sockWrapr)
+        t:closeSock(sockWrapr) return -- TODO rm
+--        -- keep-alive (TODO only if header says so)
+--        local key = sockWrapr._host.."\t"..sockWrapr._port.."\t"..tostring(sockWrapr._useTLS)
+--        log:write("KEY rd '"..key.."'\n")
+--        local host = hosts[key]
+--        if not host then host = {} hosts[key] = host end
+--        table.insert(host, sockWrapr)
     end
     return{
         openSock = openSock,
@@ -741,19 +810,177 @@ function mod.newSocketMgr()
 end
 
 
+function mod.printCsvParents( app )
+    local db = mod.dbGetInstance(app)
+    local queryStr = "" -- Query
+        .." SELECT"
+        .."   GroupId.str,"
+        .."   ArtifactId.str,"
+        .."   Version.str,"
+        .."   ParentGid.str,"
+        .."   ParentAid.str,"
+        .."   ParentVersion.str"
+        .." FROM MvnArtifact AS A"
+        .." JOIN String GroupId ON GroupId.id = A.groupId"
+        .." JOIN String ArtifactId ON ArtifactId.id = A.artifactId"
+        .." JOIN String Version ON Version.id = A.version"
+        .." LEFT JOIN String ParentGid ON ParentGid.id = A.parentGroupId"
+        .." LEFT JOIN String ParentAid ON ParentAid.id = A.parentArtifactId"
+        .." LEFT JOIN String ParentVersion ON ParentVersion.id = A.parentVersion"
+    local stmt = app.preparedStmts[queryStr]
+    if not stmt then stmt = db:prepare(queryStr) app.preparedStmts[queryStr] = stmt end
+    stmt:reset()
+    local rs = stmt:execute()
+    out:write("h;Created;"..mod.escapeCsvValue(os.date("%Y-%m-%d %H:%m:%S")).."\n")
+    out:write("c;GID;AID;Version;ParentGID;ParentAID;ParentVersion\n")
+    while rs:next() do
+        out:write("r;") out:write(mod.escapeCsvValue(rs:value(1) or app.nullvalue))
+        out:write(";") out:write(mod.escapeCsvValue(rs:value(2) or app.nullvalue))
+        out:write(";") out:write(mod.escapeCsvValue(rs:value(3) or app.nullvalue))
+        out:write(";") out:write(mod.escapeCsvValue(rs:value(4) or app.nullvalue))
+        out:write(";") out:write(mod.escapeCsvValue(rs:value(5) or app.nullvalue))
+        out:write(";") out:write(mod.escapeCsvValue(rs:value(6) or app.nullvalue))
+        out:write("\n")
+    end
+    out:write("t;status;OK\n")
+end
+
+
+function mod.printCsvDependencies( app )
+    local db = mod.dbGetInstance(app)
+    local queryStr = "" -- Query
+        .." SELECT"
+        .."   GroupId.str,"
+        .."   ArtifactId.str,"
+        .."   Version.str,"
+        .."   DepGid.str,"
+        .."   DepAid.str,"
+        .."   DepVersion.str"
+        .." FROM MvnArtifact AS A"
+        .." JOIN MvnDependency AS Dep ON Dep.mvnArtifactId = A.id"
+        .." JOIN MvnArtifact AS D ON Dep.needsMvnArtifactId = D.id"
+        .." JOIN String GroupId ON GroupId.id = A.groupId"
+        .." JOIN String ArtifactId ON ArtifactId.id = A.artifactId"
+        .." JOIN String Version ON Version.id = A.version"
+        .." JOIN String DepGid ON DepGid.id = D.groupId"
+        .." JOIN String DepAid ON DepAid.id = D.artifactId"
+        .." JOIN String DepVersion ON DepVersion.id = D.version"
+    local stmt = app.preparedStmts[queryStr]
+    if not stmt then stmt = db:prepare(queryStr) app.preparedStmts[queryStr] = stmt end
+    stmt:reset()
+    local rs = stmt:execute()
+    out:write("h;Created;"..mod.escapeCsvValue(os.date("%Y-%m-%d %H:%m:%S")).."\n")
+    out:write("c;GID;AID;Version;DepGID;DepAID;DepVersion\n")
+    while rs:next() do
+        local nilVal = "NULL"
+        out:write("r;") out:write(mod.escapeCsvValue(rs:value(1) or nilVal))
+        out:write(";") out:write(mod.escapeCsvValue(rs:value(2) or nilVal))
+        out:write(";") out:write(mod.escapeCsvValue(rs:value(3) or nilVal))
+        out:write(";") out:write(mod.escapeCsvValue(rs:value(4) or nilVal))
+        out:write(";") out:write(mod.escapeCsvValue(rs:value(5) or nilVal))
+        out:write(";") out:write(mod.escapeCsvValue(rs:value(6) or nilVal))
+        out:write("\n")
+    end
+    out:write("t;status;OK\n")
+end
+
+
+function mod.escapeCsvValue( str )
+    local typ = type(str)
+    if typ == "string" then
+        if str:find("[;\r\n\"]") then
+            str = '"'.. str:gsub('"', '""') ..'"' end
+    else
+        error("TODO_20221215181624 "..tostring(typ))
+    end
+    return str
+end
+
+
+function mod.enrichFromUrls( app )
+    local pomSrc = mod.newPomUrlSrc(app)
+    while true do
+        local pomUrl = pomSrc:nextPomUrl()
+        if not pomUrl then break end
+        local proto = pomUrl:match("^(https?)://")
+        local isTLS = (proto:upper() == "HTTPS")
+        local host = pomUrl:match("^https?://([^:/]+)[:/]")
+        local port = pomUrl:match("^https?://[^:/]+:(%d+)[^%d]")
+        local url = pomUrl:match("^https?://[^/]+(.*)$")
+        if port == 443 then isTLS = true end
+        if not port then port = (isTLS and 443 or 80) end
+        log:write("> GET ".. proto .."://".. host ..":".. port .. url .."\n")
+        local req = objectSeal{
+            app = app,
+            base = false,
+            pomParser = false,
+        }
+        req.base = app.http:request{
+            cls = req,
+            host = assert(host), port = assert(port),
+            method = "GET", url = url,
+            --hdrs = ,
+            useTLS = isTLS,
+            onRspHdr = mod.onGetPomRspHdr,
+            onRspChunk = mod.onGetPomRspChunk,
+            onRspEnd = mod.onGetPomRspEnd,
+        }
+        req.base:closeSnk()
+    end
+    log:write("[INFO ] No more pom URLs\n")
+    mod.resolveDependencyVersionsFromDepsMgmnt(app)
+    mod.resolveProperties(app)
+    mod.storeAsSqliteFile(app)
+    log:write("\n\nState DUMP:\n\n")
+    mod.printStuffAtEnd(app)
+end
+
+
+function mod.run( app )
+    assert(not app.mvnPropsByArtifact) app.mvnPropsByArtifact = {}
+    assert(not app.mvnDepsByArtifact) app.mvnDepsByArtifact = {}
+    assert(not app.mvnMngdDepsByArtifact) app.mvnMngdDepsByArtifact = {}
+    local fileExists = io.open(app.statePath, "rb")
+    if fileExists then
+        io.close(fileExists)
+        mod.loadFromSqliteFile( app )
+    else
+        assert(not app.mvnArtifacts)
+        app.mvnArtifacts = {}
+    end
+    if false then
+    elseif app.asCsv == "parents" then
+        mod.printCsvParents(app)
+    elseif app.asCsv == "deps" then
+        mod.printCsvDependencies(app)
+    elseif app.isExample then
+        mod.enrichFromUrls(app)
+    else
+        error("TODO_20221215175852")
+    end
+end
+
+
 function mod.main()
     local app = objectSeal{
         http = newHttpClient{
             socketMgr = assert(mod.newSocketMgr()),
         },
+        isExample = false,
+        asCsv = false,
+        nullvalue = false,
         mvnArtifacts = false,
         mvnPropsByArtifact = false,
         mvnDepsByArtifact = false,
         mvnMngdDepsByArtifact = false,
-        sqliteOutFile = false,
+        sqlite = false,
+        statePath = false,
+        preparedStmts = {},
+        stringIdByStr = {},
     }
     if mod.parseArgs(app) ~= 0 then os.exit(1) end
     mod.run(app)
+    if app.sqlite then app.sqlite:close() app.sqlite = false end
 end
 
 
