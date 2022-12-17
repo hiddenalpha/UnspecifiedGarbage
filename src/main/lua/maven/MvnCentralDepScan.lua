@@ -118,22 +118,29 @@ end
 
 
 function mod.newPomUrlSrc( app )
-    local urls = {
-        -- TODO insert URLs here!
+    local t = objectSeal{
+        fileWithLfSeparatedUrls = "tmp/isa-poms.list.short",
+        fd = false,
     }
     local m = {
-        nextPomUrl = function(t)
-            return table.remove(urls, 1)
+        nextPomUrl = function( t )
+            if not t.fd then
+                t.fd = io.open(t.fileWithLfSeparatedUrls, "rb")
+                if not t.fd then error("fopen("..tostring(t.fileWithLfSeparatedUrls)..")") end
+            end
+            local line = t.fd:read("l") -- lowerCase means TrimEol
+            if not line then io.close(t.fd) t.fd = false end
+            return line
         end,
         __index = false,
     }
     m.__index = m
-    return setmetatable({}, m)
+    return setmetatable(t, m)
 end
 
 
 function mod.processXmlValue( pomParser )
-    local app = pomParser.req.app
+    local app = pomParser.app
     local xpath = ""
     for i, stackElem in ipairs(pomParser.xmlElemStack) do
         xpath = xpath .."/".. stackElem.tag
@@ -221,13 +228,6 @@ function mod.onGetPomRspHdr( msg, req )
     end
     assert(not req.pomParser)
     req.pomParser = objectSeal{
-        req = req,
-        base = false,
-        xmlElemStack = {},
-        currentValue = false,
-        mvnArtifact = mod.newMvnArtifact(),
-        mvnDependency = false, -- the one we're currently parsing
-        mvnMngdDependency = false, -- the one we're currently parsing
         write = function( t, buf ) t.base:write(buf) end,
         closeSnk = function( t, buf ) t.base:closeSnk() end,
     }
@@ -276,16 +276,6 @@ function mod.onGetPomRspHdr( msg, req )
             end
         end,
     }
-end
-
-
-function mod.onGetPomRspChunk( buf, req )
-    req.pomParser:write(buf)
-end
-
-
-function mod.onGetPomRspEnd( req )
-    req.pomParser:closeSnk()
 end
 
 
@@ -755,8 +745,12 @@ function mod.newSocketMgr()
         local inaddr = inaddrOfHostname(opts.host)
         local af
         if inaddr:find('^%d+.%d+.%d+.%d+$') then af = AF_INET else af = AF_INET6 end
-        log:write("opts.useTLS "..tostring(opts.useTLS).." (Override to TRUE ...)\n")
-        opts.useTLS = true -- TODO remove as soon fixed scriptlee is available.
+        if false then
+            log:write("opts.useTLS "..tostring(opts.useTLS).." (Override to TRUE ...)\n")
+            opts.useTLS = true -- TODO remove as soon fixed scriptlee is available.
+        else
+            log:write("opts.useTLS is "..tostring(opts.useTLS).." (keep as-is)\n")
+        end
         local key = inaddr.."\t"..opts.port.."\t"..tostring(opts.useTLS)
         --log:write("KEY wr '"..key.."'\n")
         local existing = hosts[key]
@@ -823,7 +817,6 @@ function mod.newSocketMgr()
             -- TOO_BUGGY  log:write("numConnActive -1. Is now ".. numConnActive ..". Broadcast.\n")
             -- TOO_BUGGY  numConnActiveCond:broadcast()
         end,
-
     }
 end
 
@@ -831,7 +824,7 @@ end
 function mod.printCsvParents( app )
     local db = mod.dbGetInstance(app)
     local queryStr = "" -- Query
-        .." SELECT"
+        .." SELECT DISTINCT"
         .."   GroupId.str,"
         .."   ArtifactId.str,"
         .."   Version.str,"
@@ -867,7 +860,7 @@ end
 function mod.printCsvDependencies( app )
     local db = mod.dbGetInstance(app)
     local queryStr = "" -- Query
-        .." SELECT"
+        .." SELECT DISTINCT"
         .."   GroupId.str,"
         .."   ArtifactId.str,"
         .."   Version.str,"
@@ -915,28 +908,148 @@ function mod.escapeCsvValue( str )
 end
 
 
+function mod.enrichFromCbacks( app, opts )
+    local writeNextPomTo = assert(opts.writeNextPomTo)
+    local onParentPomMissing = assert(opts.onParentPomMissing)
+    opts = nil
+    local pomsToLoad = {
+        { aid = "preflux-web", gid = "ch.post.it.paisa.preflux", version = "00.00.01.02-SNAPSHOT", },
+        --{ aid = "preflux", gid = "ch.post.it.paisa.preflux", version = "00.00.01.02-SNAPSHOT", },
+    }
+    while #pomsToLoad > 0 do
+        local pomParser = false
+        local ok = writeNextPomTo(objectSeal{
+            write = function( t, buf, beg, len )
+                if not pomParser then
+                    pomParser = objectSeal{
+                        app = app,
+                        base = false,
+                        xmlElemStack = {},
+                        currentValue = false,
+                        mvnArtifact = mod.newMvnArtifact(),
+                        mvnDependency = false, -- the one we're currently parsing
+                        mvnMngdDependency = false, -- the one we're currently parsing
+                        write = function( t, buf, beg, len )
+                            assert(beg == 1)
+                            assert(buf:len() == len)
+                            return t.base:write(buf)
+                        end,
+                        closeSnk = function( t ) return t.base:closeSnk() end,
+                    }
+                    pomParser.base = newXmlParser{
+                        cls = pomParser,
+                        onElementBeg = function( tag, pomParser )
+                            table.insert(pomParser.xmlElemStack, { tag = tag, })
+                            pomParser.currentValue = false
+                        end,
+                        onElementEnd = function( tag, pomParser )
+                            mod.processXmlValue(pomParser)
+                            local elem = table.remove(pomParser.xmlElemStack)
+                            assert(elem.tag == tag);
+                        end,
+                        onChunk = function( buf, pomParser )
+                            if pomParser.currentValue then
+                                pomParser.currentValue = pomParser.currentValue .. buf
+                            else
+                                pomParser.currentValue = buf
+                            end
+                        end,
+                        onEnd = function( pomParser )
+                            assert(#pomParser.xmlElemStack == 0)
+                            local app = pomParser.app
+                            local mvnArtifact = pomParser.mvnArtifact
+                            pomParser.mvnArtifact = false
+                            if not mvnArtifact.groupId then
+                                mvnArtifact.groupId = mvnArtifact.parentGroupId end
+                            if not mvnArtifact.version then
+                                mvnArtifact.version = mvnArtifact.parentVersion end
+                            local key = mod.getMvnArtifactKey(mvnArtifact)
+                            if app.mvnArtifacts[key] then
+                                local old = app.mvnArtifacts[key]
+                                local oId = mod.getMvnArtifactKey(old)
+                                local nId = mod.getMvnArtifactKey(mvnArtifact)
+                                if oId ~= nId then
+                                    print("Already exists BUT DIFFERS:")
+                                    for k,v in pairs(old) do print("O",k,v) end
+                                    print()
+                                    for k,v in pairs(mvnArtifact) do print("N",k,v) end
+                                    error("TODO_20221215150040")
+                                else
+                                    log:write("Already known. ReUse "..tostring(oId).."\n")
+                                end
+                            else
+                                app.mvnArtifacts[key] = mvnArtifact
+                            end
+                            -- Check for missing poms.
+                            local key = mod.getMvnArtifactKey({
+                                artifactId = mvnArtifact.parentArtifactId,
+                                groupId = mvnArtifact.parentGroupId,
+                                version = mvnArtifact.parentVersion,
+                            })
+                            if not app.mvnArtifacts[key] then -- parent pom missing
+                                onParentPomMissing(
+                                    mvnArtifact.parentGroupId,
+                                    mvnArtifact.parentArtifactId,
+                                    mvnArtifact.parentVersion)
+                            end
+                        end,
+                    }
+                end
+                pomParser:write(buf, beg, len)
+            end,
+            closeSnk = function() pomParser:closeSnk() end,
+        })
+        if not ok then break end
+    end
+    log:write("[INFO ] No more pom URLs\n")
+    mod.resolveDependencyVersionsFromDepsMgmnt(app)
+    mod.resolveProperties(app)
+    mod.storeAsSqliteFile(app)
+    log:write("\n\nState DUMP:\n\n")
+    mod.printStuffAtEnd(app)
+end
+
+
+-- Deprecated. Use the callback variant
 function mod.enrichFromUrls( app )
     local pomSrc = mod.newPomUrlSrc(app)
-    -- TOO_BUGGY  local numInProgress, numInProgressLimit = 0, 1
-    -- TOO_BUGGY  local numInProgressCond = newCond()
-    -- TOO_BUGGY  log:write("numInProgressCond ".. tostring(numInProgressCond).." ("..(debug.getinfo(1).currentline)..")\n");
-    while true do
-        local pomUrl = pomSrc:nextPomUrl()
-        if not pomUrl then break end
-        local proto = pomUrl:match("^(https?)://")
-        local isTLS = (proto:upper() == "HTTPS")
-        local host = pomUrl:match("^https?://([^:/]+)[:/]")
-        local port = pomUrl:match("^https?://[^:/]+:(%d+)[^%d]")
-        local url = pomUrl:match("^https?://[^/]+(.*)$")
-        if port == 443 then isTLS = true end
-        if not port then port = (isTLS and 443 or 80) end
-        -- TOO_BUGGY  while numInProgress >= numInProgressLimit do
-        -- TOO_BUGGY      log:write("numInProgress is ".. numInProgress ..". Wait ...\n")
-        -- TOO_BUGGY      numInProgressCond:waitForever()
-        -- TOO_BUGGY  end
-        -- TOO_BUGGY  log:write("numInProgress is ".. numInProgress ..". Go!\n")
-        -- TOO_BUGGY  numInProgress = numInProgress +1
-        -- TOO_BUGGY  async(function()
+    local missingPoms, missingDone = {}, {}
+    mod.enrichFromCbacks(app, objectSeal{
+        onParentPomMissing = function( gid, aid, version )
+            local artif = mod.newMvnArtifact()
+            local url = "http://localhost:8080/isa-poms"
+            if false then
+            elseif aid == "paisa-api" then
+                url = url .. "/apis/".. aid .."/pom.xml"
+            elseif aid == "service" and gid == "ch.post.it.paisa.service" then
+                url = url .."/platform/poms/service/paisa-service-superpom/pom.xml"
+            else
+                log:write("Missing: ".. gid .."\t".. aid .."\t".. version .."\n")
+                return
+            end
+            if not missingDone[url] then missingPoms[url] = true end
+        end,
+        writeNextPomTo = function( snk )
+            local pomUrl = pomSrc:nextPomUrl()
+            if not pomUrl then
+                pomUrl, _ = pairs(missingPoms)(missingPoms)
+                if pomUrl then
+                    missingDone[pomUrl] = true
+                    missingPoms[pomUrl] = nil
+                    log:write("NeedAlso: ".. pomUrl .."\n")
+                end
+            end
+            if not pomUrl then
+                log:write("No more poms\n")
+                return false
+            end
+            local proto = pomUrl:match("^(https?)://")
+            local isTLS = (proto:upper() == "HTTPS")
+            local host = pomUrl:match("^https?://([^:/]+)[:/]")
+            local port = pomUrl:match("^https?://[^:/]+:(%d+)[^%d]")
+            local url = pomUrl:match("^https?://[^/]+(.*)$")
+            if port == 443 then isTLS = true end
+            if not port then port = (isTLS and 443 or 80) end
             log:write("> GET ".. proto .."://".. host ..":".. port .. url .."\n")
             local req = objectSeal{
                 app = app,
@@ -947,25 +1060,28 @@ function mod.enrichFromUrls( app )
                 cls = req,
                 host = assert(host), port = assert(port),
                 method = "GET", url = url,
-                --hdrs = ,
                 useTLS = isTLS,
-                onRspHdr = mod.onGetPomRspHdr,
-                onRspChunk = mod.onGetPomRspChunk,
-                onRspEnd = mod.onGetPomRspEnd,
+                onRspHdr = function( msg, req )
+                    if msg.status ~= 200 then
+                        log:write("< "..tostring(msg.proto) .." "..tostring(msg.status).." "..tostring(msg.phrase).."\n")
+                        for i, h in ipairs(msg.headers) do
+                            log:write("< ".. tostring(h[1]) ..": ".. tostring(h[2]) .."\n")
+                        end
+                        log:write("< \n")
+                        error("Unexpected HTTP ".. tostring(msg.status))
+                    end
+                end,
+                onRspChunk = function( buf, req )
+                    snk:write(buf, 1, buf:len())
+                end,
+                onRspEnd = function( req )
+                    snk:closeSnk()
+                end,
             }
             req.base:closeSnk()
-        -- TOO_BUGGY      numInProgress = numInProgress -1
-        -- TOO_BUGGY      log:write("numInProgress DECR. Is now ".. numInProgress ..". broadcast.\n")
-        -- TOO_BUGGY      log:write("numInProgressCond ".. tostring(numInProgressCond).." ("..(debug.getinfo(1).currentline)..")\n");
-        -- TOO_BUGGY      numInProgressCond:broadcast()
-        -- TOO_BUGGY  end)
-    end
-    log:write("[INFO ] No more pom URLs\n")
-    mod.resolveDependencyVersionsFromDepsMgmnt(app)
-    mod.resolveProperties(app)
-    mod.storeAsSqliteFile(app)
-    log:write("\n\nState DUMP:\n\n")
-    mod.printStuffAtEnd(app)
+            return true
+        end,
+    })
 end
 
 
@@ -991,6 +1107,7 @@ function mod.run( app )
     else
         error("TODO_20221215175852")
     end
+    if app.sqlite then app.sqlite:close() app.sqlite = false end
 end
 
 
@@ -1013,7 +1130,6 @@ function mod.main()
     }
     if mod.parseArgs(app) ~= 0 then os.exit(1) end
     mod.run(app)
-    if app.sqlite then app.sqlite:close() app.sqlite = false end
 end
 
 
