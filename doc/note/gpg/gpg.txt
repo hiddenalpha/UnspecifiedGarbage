@@ -53,6 +53,10 @@ you're doing! If you don't, you MUST NOT use those instructions!
 
 ## Import prepared subkeys on daily-use device
 
+  gpg --import keys-for-device
+  gpg --edit-key foo@example.com
+  gpg> trust
+  gpg> save
 
 
 ## Some other helpful places
