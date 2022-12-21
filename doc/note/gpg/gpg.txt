@@ -1,0 +1,67 @@
+
+How to GnuPG
+============
+
+WARN: You MUST only use those instructions if you know exactly what
+you're doing! If you don't, you MUST NOT use those instructions!
+
+
+## Prepare for a master key creation
+
+- Choose a storage medium which will keep the master key and will be
+  kept VERY SAVE somewhere (also think for some redundancy). WARN: If
+  you choose a medium which probably could fail, you will be screwed up
+  in a later point in time!
+- Choose how (or where?) to keep master passphrase.
+
+
+## Initialize a new master key
+
+  export GNUPGHOME=/mnt/your/master/.gnupg
+  gpg --full-gen-key
+
+
+## Add additional identities (as needed)
+
+  export GNUPGHOME=/mnt/your/master/.gnupg
+  gpg --edit-key foo@example.com
+  gpg> adduid
+  gpg> save
+
+
+## Create keys for some daily-use devices
+
+  export GNUPGHOME=/mnt/your/master/.gnupg
+  gpg --edit-key foo@example.com
+  # Add ONE shared encryption key
+  gpg> addkey    (then choose "encryp only")
+  # Add signing key foreach device you plan to use
+  gpg> addkey    (then choose "sign only")
+  gpg> addkey    (then choose "sign only")
+  gpg> addkey    (then choose "sign only")
+
+
+## Export subkeys for use on a daily-use device
+
+  export GNUPGHOME=/mnt/your/master/.gnupg
+  # Print list of what we have
+  gpg --edit-key foo@example.com quit
+  # For each device choose one encrypt and one sign key and replace F00 and BA5
+  # below with them.
+  gpg --export-secret-subkeys F00! BA5! > keys-for-device
+
+
+## Import prepared subkeys on daily-use device
+
+  gpg --import keys-for-device
+  gpg --edit-key foo@example.com
+  gpg> trust
+  gpg> save
+
+
+## Some other helpful places
+
+- "https://insight.o-o.studio/article/setting-up-gpg.html#encryption-key"
+- "https://davesteele.github.io/gpg/2014/09/20/anatomy-of-a-gpg-key/"
+- "https://gpg.wtf/"
+
