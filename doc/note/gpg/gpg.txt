@@ -62,6 +62,11 @@ you're doing! If you don't, you MUST NOT use those instructions!
   gpg> save
 
 
+## Sign a foreign key to express to the world that we trust it
+
+  gpgwin --sign-key foreignUser@example.com
+
+
 ## Some other helpful places
 
 - "https://insight.o-o.studio/article/setting-up-gpg.html#encryption-key"
