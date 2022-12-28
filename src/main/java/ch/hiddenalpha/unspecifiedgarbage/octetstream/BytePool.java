@@ -91,7 +91,7 @@ public class BytePool {
             long amountLong = oldVal - newVal;
             this.amount.set((int) amountLong);
             if( this.amount.get() != amountLong ){
-                throw new RuntimeException("A moron just tried to allocate " + amountLong + " bytes (more than INT_MAX)");
+                throw new RuntimeException("A moron just tried to allocate "+ amountLong +" bytes (more than INT_MAX)");
             }
         }
 
@@ -107,7 +107,7 @@ public class BytePool {
          *     // Don't know exactly how much we need. Make a guess.<br/>
          *     allocdBytes = pool.alloc(42);<br/>
          *     int actuallyNeeded = source.read(buf, 0, allocdBytes.getAmount());<br/>
-         *     // Now we know exactly how much we need and can free the rest.<br/>
+         *     // Now we know exactly how much we need and can release the rest.<br/>
          *     allocdBytes.shrinkTo(actuallyNeeded);<br/>
          * </code>
          */

@@ -13,9 +13,9 @@ public class CollectionUtils {
      * @param <T>
      *     Type of the elements we are working with.
      */
-    public static <T> boolean contains(T[] haystack, T needle, java.util.function.BiPredicate<T, T> equals) {
-        for (T t : haystack) {
-            if (equals.test(needle, t)) {
+    public static <T> boolean contains( T[] haystack, T needle, java.util.function.BiPredicate<T, T> equals ){
+        for( T t : haystack ){
+            if( equals.test(needle, t) ){
                 return true;
             }
         }

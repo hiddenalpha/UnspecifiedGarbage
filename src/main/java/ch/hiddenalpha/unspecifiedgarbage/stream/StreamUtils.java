@@ -1,5 +1,8 @@
 package ch.hiddenalpha.unspecifiedgarbage.stream;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -11,28 +14,29 @@ public class StreamUtils {
 
     /**
      * Copies 'is' to 'os' until end of 'is' is reached. (Blocking)
+     *
+     * <p>BTW: Using this function makes no longer sense in projects using java
+     * 9 or later. Just use {@link java.io.InputStream#transferTo(java.io.OutputStream)}
+     * instead.</p>
+     *
      * @return
      *      Count of copied bytes.
      */
-    public static long copy(java.io.InputStream is, java.io.OutputStream os) throws java.io.IOException {
-        byte[] buffer = new byte[1024];
+    public static long copy( java.io.InputStream is, java.io.OutputStream os ) throws java.io.IOException {
+        byte[] buffer = new byte[8192];
         long totalBytes = 0;
         int readLen;
         while( -1 != (readLen=is.read(buffer,0,buffer.length)) ){
             totalBytes += readLen;
-            os.write( buffer , 0 , readLen );
+            os.write(buffer, 0, readLen);
         }
         return totalBytes;
     }
 
-    public static <SRC,DST> java.util.Iterator<DST> map(java.util.Iterator<SRC> src , java.util.function.Function<SRC,DST> mapper) {
+    public static <SRC,DST> java.util.Iterator<DST> map( java.util.Iterator<SRC> src , java.util.function.Function<SRC,DST> mapper ) {
         return new Iterator<DST>() {
-            @Override public boolean hasNext() {
-                return src.hasNext();
-            }
-            @Override public DST next() {
-                return mapper.apply(src.next());
-            }
+            @Override public boolean hasNext() { return src.hasNext(); }
+            @Override public DST next() { return mapper.apply(src.next()); }
         };
     }
 
@@ -41,7 +45,7 @@ public class StreamUtils {
         return t -> seen.add(keyExtractor.apply(t));
     }
 
-    public static <T> Predicate<T> not(Predicate<T> p){
+    public static <T> Predicate<T> not( Predicate<T> p ){
         return e -> !p.test(e);
     }
 

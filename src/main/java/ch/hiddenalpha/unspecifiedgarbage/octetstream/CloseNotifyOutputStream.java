@@ -17,9 +17,9 @@ public class CloseNotifyOutputStream extends FilterOutputStream {
     private final Runnable onClose;
     private final AtomicBoolean isFired = new AtomicBoolean(false);
 
-    public CloseNotifyOutputStream(OutputStream out, Runnable onClose) {
+    public CloseNotifyOutputStream( OutputStream out, Runnable onClose ){
         super(out);
-        if(true) throw new UnsupportedOperationException("TODO need to delegate close call");/*TODO*/
+        if( true ) throw new UnsupportedOperationException("TODO need to delegate close call");/*TODO*/
         this.onClose = requireNonNull(onClose);
     }
 
@@ -28,6 +28,10 @@ public class CloseNotifyOutputStream extends FilterOutputStream {
         if (!isFired.getAndSet(true)) {
             onClose.run();
         }
+        // TODO Need to delegate to filtered stream.
+        //      Properly delegating requires to propery handle all the
+        //      special cases around exceptions. See also
+        //      CloseNotifyInputStream which does a similar task.
     }
 
 }
