@@ -15,7 +15,6 @@ readonly DIR_FROM="/home/${USER:?}/."
 readonly DST_PREFIX="${DIR_FROM:?}"
 readonly DIR_TO="/mnt/x/ROOT_DIR/bkup-rsync/tux-six"
 readonly BACKUP_PATH="${DIR_TO}/${NOW_SHORT}"
-readonly LATEST_LINK="${DIR_TO}/latest"
 
 
 printHelp () {
@@ -53,7 +52,7 @@ run () {
     fi
     mkdir -p "${BACKUP_PATH:?}/${DST_PREFIX:?}"
     rsync --archive --verbose \
-        --link-dest "${LATEST_LINK:?}/${DST_PREFIX:?}" \
+        --link-dest "${DIR_TO}/latest/${DST_PREFIX:?}" \
         --filter=':- .gitignore' \
         --exclude=".git/COMMIT_EDITMSG" \
         --exclude=".git/FETCH_HEAD" \
@@ -121,8 +120,10 @@ run () {
         "${DIR_FROM:?}" \
         "${BACKUP_PATH:?}/${DST_PREFIX}" \
         ;
-    rm "${LATEST_LINK}"
-    ln --symbolic "${BACKUP_PATH}" "${LATEST_LINK}"
+    (cd "${DIR_TO:?}" &&
+        rm -f latest &&
+        ln --symbolic "${NOW_SHORT:?}" latest
+    )
 }
 
 
