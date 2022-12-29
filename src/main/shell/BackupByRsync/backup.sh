@@ -13,7 +13,7 @@ set -o pipefail
 readonly NOW_SHORT="$(date -u '+%Y%m%d-%H%M%S')"
 readonly DIR_FROM="/home/${USER:?}/."
 readonly DST_PREFIX="${DIR_FROM:?}"
-readonly DIR_TO="/mnt/d/ssd512g/bkup-rsync/tux-six"
+readonly DIR_TO="/mnt/x/ROOT_DIR/bkup-rsync/tux-six"
 readonly BACKUP_PATH="${DIR_TO}/${NOW_SHORT}"
 readonly LATEST_LINK="${DIR_TO}/latest"
 
@@ -118,7 +118,6 @@ run () {
         --exclude="/tmp" \
         --exclude="/virtualbox-*" \
         --exclude="/vmshare" \
-        --exclude="/projects/my-backup-evaluation/20220718-try-one-manual-backup" \
         "${DIR_FROM:?}" \
         "${BACKUP_PATH:?}/${DST_PREFIX}" \
         ;
