@@ -12,8 +12,9 @@ set -o pipefail
 
 readonly NOW_SHORT="$(date -u '+%Y%m%d-%H%M%S')"
 readonly DIR_FROM="/home/${USER:?}/."
+readonly DST_PREFIX="${DIR_FROM:?}"
 readonly DIR_TO="/mnt/d/ssd512g/bkup-rsync/tux-six"
-readonly BACKUP_PATH="${DIR_TO}/${NOW_SHORT}/home/${USER:?}"
+readonly BACKUP_PATH="${DIR_TO}/${NOW_SHORT}"
 readonly LATEST_LINK="${DIR_TO}/latest"
 
 
@@ -46,13 +47,26 @@ parseArgs () {
 
 
 run () {
-    echo "WhatShouldIDo :)"
+    if [ ! -e "${DIR_TO:?}" ]; then
+        echo >&2 "Backup root dir does not exist. Abort."
+        return 1
+    fi
+    mkdir -p "${BACKUP_PATH:?}/${DST_PREFIX:?}"
     rsync --archive --verbose \
-        --link-dest "${LATEST_LINK:?}" \
+        --link-dest "${LATEST_LINK:?}/${DST_PREFIX:?}" \
         --filter=':- .gitignore' \
-        --exclude=".git" \
-        --include=".git/HEAD" \
-        --include=".git/refs/heads" \
+        --exclude=".git/COMMIT_EDITMSG" \
+        --exclude=".git/FETCH_HEAD" \
+        --exclude=".git/ORIG_HEAD" \
+        --exclude=".git/branches" \
+        --exclude=".git/hooks/*.sample" \
+        --exclude=".git/index" \
+        --exclude=".git/info" \
+        --exclude=".git/logs" \
+        --exclude=".git/objects" \
+        --exclude=".git/packed-refs" \
+        --exclude=".git/refs/remotes" \
+        --exclude=".git/refs/tags" \
         --exclude=".idea" \
         --exclude="/.NERDTreeBookmarks" \
         --exclude="/.Xauthority" \
@@ -86,7 +100,6 @@ run () {
         --exclude="/Downloads" \
         --exclude="/crashdumps" \
         --exclude="/images" \
-        --exclude="/projects/**/.git" \
         --exclude="/projects/apple/cups" \
         --exclude="/projects/gnu" \
         --exclude="/projects/lua" \
@@ -107,9 +120,10 @@ run () {
         --exclude="/vmshare" \
         --exclude="/projects/my-backup-evaluation/20220718-try-one-manual-backup" \
         "${DIR_FROM:?}" \
-        "${BACKUP_PATH:?}" \
+        "${BACKUP_PATH:?}/${DST_PREFIX}" \
         ;
-    ln --symbolic --force "${BACKUP_PATH}" "${LATEST_LINK}"
+    rm "${LATEST_LINK}"
+    ln --symbolic "${BACKUP_PATH}" "${LATEST_LINK}"
 }
 
 
