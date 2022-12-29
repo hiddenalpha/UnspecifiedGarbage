@@ -4,14 +4,16 @@
 # Inspired by:
 #   https://linuxconfig.org/how-to-create-incremental-backups-using-rsync-on-linux
 #
+# mount /dev/sdx1 /mnt/x
+#
 
 set -o errexit
 set -o pipefail
 
 readonly NOW_SHORT="$(date -u '+%Y%m%d-%H%M%S')"
-readonly DIR_FROM="${HOME:?}/."
-readonly DIR_TO="/home/andreas/tmp/my-psydo-bkup"
-readonly BACKUP_PATH="${DIR_TO}/${NOW_SHORT}"
+readonly DIR_FROM="/home/${USER:?}/."
+readonly DIR_TO="/mnt/d/ssd512g/bkup-rsync/tux-six"
+readonly BACKUP_PATH="${DIR_TO}/${NOW_SHORT}/home/${USER:?}"
 readonly LATEST_LINK="${DIR_TO}/latest"
 
 
@@ -49,6 +51,8 @@ run () {
         --link-dest "${LATEST_LINK:?}" \
         --filter=':- .gitignore' \
         --exclude=".git" \
+        --include=".git/HEAD" \
+        --include=".git/refs/heads" \
         --exclude=".idea" \
         --exclude="/.NERDTreeBookmarks" \
         --exclude="/.Xauthority" \
