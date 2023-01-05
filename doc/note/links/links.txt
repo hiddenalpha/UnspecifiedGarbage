@@ -1,5 +1,5 @@
 
-Links (Aka arguments)
+Links (Aka argument amplifiers)
 =====================
 
 ## Pro DI over serviceLocator
@@ -82,7 +82,7 @@ Links (Aka arguments)
 - SRP "https://blog.ndepend.com/solid-design-the-single-responsibility-principle-srp/"
 - OCP "https://blog.ndepend.com/solid-design-the-open-close-principle-ocp/"
 - LSP "https://blog.ndepend.com/solid-design-the-liskov-substitution-principle/"
-- DIP "https://stackify.com/dependency-inversion-principle/"
+- DIP "https://stackify.com/dependency-inversion-principle/#post-18184-_nuqaxpnmvpn7"
 
 ## Java how to handle InterruptedException:
 - "https://www.yegor256.com/2015/10/20/interrupted-exception.html"
