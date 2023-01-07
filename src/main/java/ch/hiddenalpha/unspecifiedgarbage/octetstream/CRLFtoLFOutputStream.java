@@ -8,9 +8,7 @@ import org.slf4j.ILoggerFactory;
 import org.slf4j.Logger;
 
 
-/**
- * Filter to fix broken newlines.
- */
+/** Filters away broken newlines. */
 public class CRLFtoLFOutputStream extends FilterOutputStream {
 
     private static final int EMPTY = -42;
