@@ -1,5 +1,5 @@
 
-Links (Aka arguments)
+Links (Aka argument amplifiers)
 =====================
 
 ## Pro DI over serviceLocator
@@ -82,7 +82,7 @@ Links (Aka arguments)
 - SRP "https://blog.ndepend.com/solid-design-the-single-responsibility-principle-srp/"
 - OCP "https://blog.ndepend.com/solid-design-the-open-close-principle-ocp/"
 - LSP "https://blog.ndepend.com/solid-design-the-liskov-substitution-principle/"
-- DIP "https://stackify.com/dependency-inversion-principle/"
+- DIP "https://stackify.com/dependency-inversion-principle/#post-18184-_nuqaxpnmvpn7"
 
 ## Java how to handle InterruptedException:
 - "https://www.yegor256.com/2015/10/20/interrupted-exception.html"
@@ -154,6 +154,7 @@ Links (Aka arguments)
 - [Spotless produces crap](https://gitit.post.ch/projects/ISA/repos/minetti/pull-requests/14/overview)
 - [Spotless produces crap](https://gitit.post.ch/projects/ISA/repos/veet/pull-requests/2/overview?commentId=233638)
 - [Spotless produces crap](https://gitit.post.ch/projects/ISA/repos/trin/pull-requests/79)
+- [Linter produces crap](https://gitit.post.ch/projects/ISA/repos/preflux/pull-requests/567/overview?commentId=237627)
 - [Suddenly NEW formatting rules in PaISA since 2021](https://gitit.post.ch/projects/ISA/repos/watson/pull-requests/1/overview?commentId=234597)
 - "https://gitit.post.ch/projects/ISA/repos/zarniwoop/pull-requests/20/overview?commentId=85912"
 - "https://gitit.post.ch/projects/ISA/repos/zarniwoop/pull-requests/21/overview?commentId=87250"
@@ -301,6 +302,7 @@ Links (Aka arguments)
 
 ## Command Escaping And Injection
 - "https://jira.post.ch/browse/SDCISA-3602"
+- [My hopefully bullet-proove shell escaping](https://gitit.post.ch/projects/ISA/repos/jenkins-shared-libraries/pull-requests/82/overview?commentId=237165)
 
 ## logger noise spam verbose
 - [fix the REAL problem please](https://jira.post.ch/browse/SDCISA-3637?focusedCommentId=1252741&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-1252741)
@@ -312,6 +314,7 @@ Links (Aka arguments)
 
 ## YAGNI (but also KISS and DRY)
 - "https://medium.com/swlh/yagni-and-dry-the-kiss-of-death-for-your-software-project-cfd44b0654b6#fc82"
+- [eagle queue json only](https://gitit.post.ch/projects/ISA/repos/eagle/pull-requests/331/overview?commentId=236944)
 
 ## How to format method parameters
 - "https://gitit.post.ch/projects/ISA/repos/god-backend/pull-requests/281/overview?commentId=210650"
@@ -415,4 +418,7 @@ Links (Aka arguments)
 - [_](https://www.vice.com/en/article/d3m8ga/i-stopped-using-a-computer-mouse-for-a-week)
 - [_](https://medium.com/ae-studio/save-a-month-of-your-life-by-using-these-keyboard-shortcuts-a07fdba5dc6e)
 - [_](https://blog.superhuman.com/keyboard-vs-mouse/)
+
+## How to get real InputStream from RestTemplate
+- [java spring http web InputStream RestTemplate body](https://stackoverflow.com/a/62649586/4415884)
 
