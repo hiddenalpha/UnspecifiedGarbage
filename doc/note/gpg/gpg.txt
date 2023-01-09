@@ -73,3 +73,10 @@ you're doing! If you don't, you MUST NOT use those instructions!
 - "https://davesteele.github.io/gpg/2014/09/20/anatomy-of-a-gpg-key/"
 - "https://gpg.wtf/"
 
+
+## Start/stop gpg-agent
+
+  gpgconf --kill gpg-agent
+  gpgconf --launch gpg-agent
+
+
