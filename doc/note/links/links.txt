@@ -121,7 +121,7 @@ Links (Aka argument amplifiers)
 ## Why I Have Given Up On Coding Standards
 - "http://www.richardrodger.com/2012/11/03/why-i-have-given-up-on-coding-standards/"
 
-## slf4j logger dos and donts0
+## slf4j logger dos and donts
 - [case SO](https://stackoverflow.com/questions/1417190/should-a-static-final-logger-be-declared-in-upper-case)
 - [case java-styleguide](https://web.archive.org/web/20120911192801if_/http://developers.sun.com/sunstudio/products/archive/whitepapers/java-style.pdf#G3.5426)
 - [case slf4j](http://www.slf4j.org/api/org/slf4j/Logger.html)
@@ -421,4 +421,8 @@ Links (Aka argument amplifiers)
 
 ## How to get real InputStream from RestTemplate
 - [java spring http web InputStream RestTemplate body](https://stackoverflow.com/a/62649586/4415884)
+
+## Stone age deprecated obsolete for years
+- [API using naming deprecated for 7 years](https://gitit.post.ch/projects/ISA/repos/notifications-api/pull-requests/7/overview?commentId=238160)
+
 
