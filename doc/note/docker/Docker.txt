@@ -57,6 +57,17 @@ Side-Mount tcpdump into container where it does not exist
   docker run --rm -ti --network container:"${CNTNR_TO_DUMP:?}" -v "/tmp/foo:/work" "${IMG_WITH_TCPDUMP_EG_BASEIMG:?}" bash
 
 
+## Inspect failing docker-build
+
+See "https://stackoverflow.com/a/26222636/4415884"
+
+  docker run --rm -ti 42424242 sh
+
+HINT: Use the line which looks like:
+"---> 42424242"
+and NOT the one like:
+"---> Running in 42424242"
+
 
 ## Publish custom images to artifactory
 
