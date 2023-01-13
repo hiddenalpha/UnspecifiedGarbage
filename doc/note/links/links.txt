@@ -425,4 +425,7 @@ Links (Aka argument amplifiers)
 ## Stone age deprecated obsolete for years
 - [API using naming deprecated for 7 years](https://gitit.post.ch/projects/ISA/repos/notifications-api/pull-requests/7/overview?commentId=238160)
 
+## ImageMagic
+- [Bulk resize pictures](https://stackoverflow.com/questions/36986436/how-to-batch-resize-millions-of-images-to-fit-a-max-width-and-height)
+- [mogrify bulk changes](https://www.lostsaloon.com/technology/resize-multiple-images-batch-command-line-linux/)
 
