@@ -429,3 +429,6 @@ Links (Aka argument amplifiers)
 - [Bulk resize pictures](https://stackoverflow.com/questions/36986436/how-to-batch-resize-millions-of-images-to-fit-a-max-width-and-height)
 - [mogrify bulk changes](https://www.lostsaloon.com/technology/resize-multiple-images-batch-command-line-linux/)
 
+## Windoof
+- [Enable w32 crashdump](https://learn.microsoft.com/en-us/windows/win32/wer/collecting-user-mode-dumps?source=recommendations)
+
