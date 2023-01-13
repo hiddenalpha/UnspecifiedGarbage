@@ -2,14 +2,17 @@
 
   Initially written using scriptlee 0.0.5-46-G .
 
+  Begun experimenting with scriptlee 0.0.5-55-G but there's a stack overflow
+  bug in the XML parser somewhere.
+
   ]====================================================================]
 
-local AF_INET = require('scriptlee').posix.AF_INET
-local AF_INET6 = require('scriptlee').posix.AF_INET6
-local IPPROTO_TCP = require('scriptlee').posix.IPPROTO_TCP
-local SOCK_STREAM = require('scriptlee').posix.SOCK_STREAM
+--local AF_INET = require('scriptlee').posix.AF_INET
+--local AF_INET6 = require('scriptlee').posix.AF_INET6
+--local IPPROTO_TCP = require('scriptlee').posix.IPPROTO_TCP
+--local SOCK_STREAM = require('scriptlee').posix.SOCK_STREAM
 --local async = require("scriptlee").reactor.async
-local inaddrOfHostname = require('scriptlee').posix.inaddrOfHostname
+--local inaddrOfHostname = require('scriptlee').posix.inaddrOfHostname
 --local newCond = require("scriptlee").posix.newCond  -- cannot use. Too buggy :(
 local newHttpClient = require("scriptlee").newHttpClient
 local newSqlite = require("scriptlee").newSqlite
@@ -17,7 +20,7 @@ local newTlsClient = assert(require("scriptlee").newTlsClient)
 local newXmlParser = require("scriptlee").newXmlParser
 local objectSeal = require("scriptlee").objectSeal
 local sleep = require("scriptlee").posix.sleep
-local socket = require('scriptlee').posix.socket
+--local socket = require('scriptlee').posix.socket
 local startOrExecute = require("scriptlee").reactor.startOrExecute
 
 local out, log = io.stdout, io.stderr
@@ -34,7 +37,8 @@ function mod.printHelp()
         .."      WARN: only use if you know what you're doing!\n"
         .."\n"
         .."    --state <path>\n"
-        .."      Data file to use for the action.\n"
+        .."      Data file to use for the action. Will be created if it does not\n"
+        .."      yet exist.\n"
         .."\n"
         .."    --asCsv <what>\n"
         .."      Prints requested data to stdout. <what> can be one of \"parents\"\n"
@@ -119,7 +123,7 @@ end
 
 function mod.newPomUrlSrc( app )
     local t = objectSeal{
-        fileWithLfSeparatedUrls = "tmp/isa-poms.list.short",
+        fileWithLfSeparatedUrls = "C:/work/tmp/isa-poms.list.short",
         fd = false,
     }
     local m = {
@@ -730,95 +734,95 @@ function mod.dbGetInstance( app )
 end
 
 
-function mod.newSocketMgr()
-    local hosts = {}
-    -- TOO_BUGGY  local numConnActive, numConnActiveLimit = 0, 4
-    -- TOO_BUGGY  local numConnActiveCond = newCond()
-    local openSock = function( t, opts )
-        for k, v in pairs(opts) do
-            if false then
-            elseif k=='host' or k=='port' or k=='useTLS' then
-            else
-                error('Unknown option: '..tostring(k))
-            end
-        end
-        local inaddr = inaddrOfHostname(opts.host)
-        local af
-        if inaddr:find('^%d+.%d+.%d+.%d+$') then af = AF_INET else af = AF_INET6 end
-        if false then
-            log:write("opts.useTLS "..tostring(opts.useTLS).." (Override to TRUE ...)\n")
-            opts.useTLS = true -- TODO remove as soon fixed scriptlee is available.
-        else
-            log:write("opts.useTLS is "..tostring(opts.useTLS).." (keep as-is)\n")
-        end
-        local key = inaddr.."\t"..opts.port.."\t"..tostring(opts.useTLS)
-        --log:write("KEY wr '"..key.."'\n")
-        local existing = hosts[key]
-        -- TOO_BUGGY  numConnActive = numConnActive +1
-        if existing then
-            return table.remove(existing)
-        else
-            -- TOO_BUGGY  while numConnActive > numConnActiveLimit do
-            -- TOO_BUGGY      log:write("numConnActive is "..numConnActive..". Waiting ...\n")
-            -- TOO_BUGGY      numConnActiveCond:waitForever()
-            -- TOO_BUGGY  end
-            -- TOO_BUGGY  log:write("numConnActive is ".. numConnActive ..". Go\n")
-            local sock = socket(af, SOCK_STREAM, IPPROTO_TCP)
-            sock:connect(inaddr, opts.port)
-            if opts.useTLS then
-                local sockUnderTls = sock
-                sock = newTlsClient{
-                    cls = assert(sockUnderTls),
-                    peerHostname = assert(opts.host),
-                    onVerify = function( tlsIssues, sockUnderTls )
-                        if tlsIssues.CERT_NOT_TRUSTED then
-                            warn("TLS ignore CERT_NOT_TRUSTED");
-                            tlsIssues.CERT_NOT_TRUSTED = false
-                        end
-                    end,
-                    send = function( buf, sockUnderTls )
-                        local ret = sockUnderTls:write(buf)
-                        sockUnderTls:flush() -- TODO Why is this flush needed?
-                        return ret
-                    end,
-                    recv = function( sockUnderTls ) return sockUnderTls:read() end,
-                    flush = function( sockUnderTls ) sockUnderTls:flush() end,
-                    closeSnk = function( sockUnderTls ) sockUnderTls:closeSnk() end,
-                }
-                assert(not getmetatable(sock).release)
-                getmetatable(sock).release = function( t ) sockUnderTls:release() end;
-            end
-            return {
-                _sock = assert(sock),
-                _host = assert(inaddr),
-                _port = assert(opts.port),
-                _useTLS = opts.useTLS;
-                write = function(t, ...) return sock:write(...)end,
-                read = function(t, ...) return sock:read(...)end,
-                flush = function(t, ...) return sock:flush(...)end,
-            }
-        end
-        error("unreachable")
-    end
-    local releaseSock = function( t, sockWrapr )
-        t:closeSock(sockWrapr) return -- TODO rm as soon fixed scriptlee available (aka >46)
---        -- keep-alive (TODO only if header says so)
---        local key = sockWrapr._host.."\t"..sockWrapr._port.."\t"..tostring(sockWrapr._useTLS)
---        local host = hosts[key]
---        if not host then host = {} hosts[key] = host end
---        table.insert(host, sockWrapr)
-    end
-    return{
-        openSock = openSock,
-        releaseSock = releaseSock,
-        closeSock = function(t, sockWrapr)
-            sockWrapr._sock:release()
-            -- TOO_BUGGY  numConnActive = numConnActive -1
-            -- TOO_BUGGY  log:write("numConnActive -1. Is now ".. numConnActive ..". Broadcast.\n")
-            -- TOO_BUGGY  numConnActiveCond:broadcast()
-        end,
-    }
-end
+-- OBSOLETE  function mod.newSocketMgr()
+-- OBSOLETE      local hosts = {}
+-- OBSOLETE      -- TOO_BUGGY  local numConnActive, numConnActiveLimit = 0, 4
+-- OBSOLETE      -- TOO_BUGGY  local numConnActiveCond = newCond()
+-- OBSOLETE      local openSock = function( t, opts )
+-- OBSOLETE          for k, v in pairs(opts) do
+-- OBSOLETE              if false then
+-- OBSOLETE              elseif k=='host' or k=='port' or k=='useTLS' then
+-- OBSOLETE              else
+-- OBSOLETE                  error('Unknown option: '..tostring(k))
+-- OBSOLETE              end
+-- OBSOLETE          end
+-- OBSOLETE          local inaddr = inaddrOfHostname(opts.host)
+-- OBSOLETE          local af
+-- OBSOLETE          if inaddr:find('^%d+.%d+.%d+.%d+$') then af = AF_INET else af = AF_INET6 end
+-- OBSOLETE          if false then
+-- OBSOLETE              log:write("opts.useTLS "..tostring(opts.useTLS).." (Override to TRUE ...)\n")
+-- OBSOLETE              opts.useTLS = true -- TODO remove as soon fixed scriptlee is available.
+-- OBSOLETE          else
+-- OBSOLETE              log:write("opts.useTLS is "..tostring(opts.useTLS).." (keep as-is)\n")
+-- OBSOLETE          end
+-- OBSOLETE          local key = inaddr.."\t"..opts.port.."\t"..tostring(opts.useTLS)
+-- OBSOLETE          --log:write("KEY wr '"..key.."'\n")
+-- OBSOLETE          local existing = hosts[key]
+-- OBSOLETE          -- TOO_BUGGY  numConnActive = numConnActive +1
+-- OBSOLETE          if existing then
+-- OBSOLETE              return table.remove(existing)
+-- OBSOLETE          else
+-- OBSOLETE              -- TOO_BUGGY  while numConnActive > numConnActiveLimit do
+-- OBSOLETE              -- TOO_BUGGY      log:write("numConnActive is "..numConnActive..". Waiting ...\n")
+-- OBSOLETE              -- TOO_BUGGY      numConnActiveCond:waitForever()
+-- OBSOLETE              -- TOO_BUGGY  end
+-- OBSOLETE              -- TOO_BUGGY  log:write("numConnActive is ".. numConnActive ..". Go\n")
+-- OBSOLETE              local sock = socket(af, SOCK_STREAM, IPPROTO_TCP)
+-- OBSOLETE              sock:connect(inaddr, opts.port)
+-- OBSOLETE              if opts.useTLS then
+-- OBSOLETE                  local sockUnderTls = sock
+-- OBSOLETE                  sock = newTlsClient{
+-- OBSOLETE                      cls = assert(sockUnderTls),
+-- OBSOLETE                      peerHostname = assert(opts.host),
+-- OBSOLETE                      onVerify = function( tlsIssues, sockUnderTls )
+-- OBSOLETE                          if tlsIssues.CERT_NOT_TRUSTED then
+-- OBSOLETE                              warn("TLS ignore CERT_NOT_TRUSTED");
+-- OBSOLETE                              tlsIssues.CERT_NOT_TRUSTED = false
+-- OBSOLETE                          end
+-- OBSOLETE                      end,
+-- OBSOLETE                      send = function( buf, sockUnderTls )
+-- OBSOLETE                          local ret = sockUnderTls:write(buf)
+-- OBSOLETE                          sockUnderTls:flush() -- TODO Why is this flush needed?
+-- OBSOLETE                          return ret
+-- OBSOLETE                      end,
+-- OBSOLETE                      recv = function( sockUnderTls ) return sockUnderTls:read() end,
+-- OBSOLETE                      flush = function( sockUnderTls ) sockUnderTls:flush() end,
+-- OBSOLETE                      closeSnk = function( sockUnderTls ) sockUnderTls:closeSnk() end,
+-- OBSOLETE                  }
+-- OBSOLETE                  assert(not getmetatable(sock).release)
+-- OBSOLETE                  getmetatable(sock).release = function( t ) sockUnderTls:release() end;
+-- OBSOLETE              end
+-- OBSOLETE              return {
+-- OBSOLETE                  _sock = assert(sock),
+-- OBSOLETE                  _host = assert(inaddr),
+-- OBSOLETE                  _port = assert(opts.port),
+-- OBSOLETE                  _useTLS = opts.useTLS;
+-- OBSOLETE                  write = function(t, ...) return sock:write(...)end,
+-- OBSOLETE                  read = function(t, ...) return sock:read(...)end,
+-- OBSOLETE                  flush = function(t, ...) return sock:flush(...)end,
+-- OBSOLETE              }
+-- OBSOLETE          end
+-- OBSOLETE          error("unreachable")
+-- OBSOLETE      end
+-- OBSOLETE      local releaseSock = function( t, sockWrapr )
+-- OBSOLETE          t:closeSock(sockWrapr) return -- TODO rm as soon fixed scriptlee available (aka >46)
+-- OBSOLETE  --        -- keep-alive (TODO only if header says so)
+-- OBSOLETE  --        local key = sockWrapr._host.."\t"..sockWrapr._port.."\t"..tostring(sockWrapr._useTLS)
+-- OBSOLETE  --        local host = hosts[key]
+-- OBSOLETE  --        if not host then host = {} hosts[key] = host end
+-- OBSOLETE  --        table.insert(host, sockWrapr)
+-- OBSOLETE      end
+-- OBSOLETE      return{
+-- OBSOLETE          openSock = openSock,
+-- OBSOLETE          releaseSock = releaseSock,
+-- OBSOLETE          closeSock = function(t, sockWrapr)
+-- OBSOLETE              sockWrapr._sock:release()
+-- OBSOLETE              -- TOO_BUGGY  numConnActive = numConnActive -1
+-- OBSOLETE              -- TOO_BUGGY  log:write("numConnActive -1. Is now ".. numConnActive ..". Broadcast.\n")
+-- OBSOLETE              -- TOO_BUGGY  numConnActiveCond:broadcast()
+-- OBSOLETE          end,
+-- OBSOLETE      }
+-- OBSOLETE  end
 
 
 function mod.printCsvParents( app )
@@ -929,12 +933,14 @@ function mod.enrichFromCbacks( app, opts )
                         mvnArtifact = mod.newMvnArtifact(),
                         mvnDependency = false, -- the one we're currently parsing
                         mvnMngdDependency = false, -- the one we're currently parsing
-                        write = function( t, buf, beg, len )
+                        write = function( pomParser, buf, beg, len )
                             assert(beg == 1)
                             assert(buf:len() == len)
-                            return t.base:write(buf)
+                            return pomParser.base:write(buf)
                         end,
-                        closeSnk = function( t ) return t.base:closeSnk() end,
+                        closeSnk = function( pomParser )
+                            return pomParser.base:closeSnk()
+                        end,
                     }
                     pomParser.base = newXmlParser{
                         cls = pomParser,
@@ -997,7 +1003,9 @@ function mod.enrichFromCbacks( app, opts )
                 end
                 pomParser:write(buf, beg, len)
             end,
-            closeSnk = function() pomParser:closeSnk() end,
+            closeSnk = function()
+                pomParser:closeSnk()
+            end,
         })
         if not ok then break end
     end
@@ -1092,7 +1100,7 @@ function mod.run( app )
     local fileExists = io.open(app.statePath, "rb")
     if fileExists then
         io.close(fileExists)
-        mod.loadFromSqliteFile( app )
+        mod.loadFromSqliteFile(app)
     else
         assert(not app.mvnArtifacts)
         app.mvnArtifacts = {}
@@ -1114,7 +1122,7 @@ end
 function mod.main()
     local app = objectSeal{
         http = newHttpClient{
-            socketMgr = assert(mod.newSocketMgr()),
+            -- OBSOLETE  socketMgr = assert(mod.newSocketMgr()),
         },
         isExample = false,
         asCsv = false,
