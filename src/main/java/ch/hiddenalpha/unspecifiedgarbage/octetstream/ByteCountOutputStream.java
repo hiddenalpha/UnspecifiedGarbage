@@ -31,13 +31,9 @@ public class ByteCountOutputStream extends OutputStream {
     }
 
     @Override
-    public void flush() throws IOException {
-        origin.flush();
-    }
+    public void flush() throws IOException { origin.flush(); }
 
     @Override
-    public void close() throws IOException {
-        origin.close();
-    }
+    public void close() throws IOException { origin.close(); }
 
 }

@@ -2,7 +2,6 @@
 ffmpeg
 ================
 
-j
 ## Extract Audio From webm
 
 Lookup format of audio stream with:
@@ -17,8 +16,20 @@ Then use that knowlege to extract that (audio) stream:
 
 ## Convert Formats
 
-ffmpeg -i in.opus out.wav
+  ffmpeg -i in.opus out.wav
 
+
+## Fine-tune audio codec
+
+[See also](https://slhck.info/video/2017/02/24/vbr-settings.html)
+
+Use  -codec:v copy  to keep video, or -codec:v no  for audio-only.
+
+  -codec:a aac        -q:a 1.3   (min=0.1, good=1.3 max=2)
+  -codec:a aac        -b:a 96k
+  -codec:a libmp3lame -q:a 2
+  -codec:a libopus
+  -filter:a lowpass=f=16000
 
 
 ## Record Desktop

@@ -38,8 +38,8 @@ public class ByteChunkOStream extends OutputStream {
                 len -= appendedBytes;
             }else if( remainingBytes == 0 ){
                 break; // Done :)
-            }else {
-                throw new UnsupportedOperationException("Huh?!? why is remainingBytes " + remainingBytes + "?");
+            }else{
+                throw new UnsupportedOperationException("Huh?!? why is remainingBytes "+ remainingBytes +"?");
             }
         }
     }
@@ -117,11 +117,11 @@ public class ByteChunkOStream extends OutputStream {
 
     /** Inspired by {@link java.util.function.Consumer} */
     public static interface ChunkHandler {
-        void accept(byte[] bytes) throws IOException;
+        void accept( byte[] bytes ) throws IOException;
     }
 
 
-    /** Inspired by {@link Runnable#run()} */
+    /** Inspired by {@link java.util.function.Runnable#run()} */
     public static interface EndHandler {
         void run() throws IOException;
     }

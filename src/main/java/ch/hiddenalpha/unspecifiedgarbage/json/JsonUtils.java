@@ -24,18 +24,18 @@ public class JsonUtils {
      */
     public static
     <TreeToValueFunc extends ObjectCodecIface<JsonNode, Map>, JsonNode, K, V>
-    Map<K, V> decodeMap(TreeToValueFunc treeToValueFunc, JsonNode mapNode, Class<K> keyType, Class<V> valueType) throws IOException {
+    Map<K, V> decodeMap( TreeToValueFunc treeToValueFunc, JsonNode mapNode, Class<K> keyType, Class<V> valueType ) throws IOException {
         final Map<K, V> envVars;
-        if (mapNode == null) {
+        if( mapNode == null ){
             envVars = new LinkedHashMap<>();
-        } else {
+        }else{
             envVars = treeToValueFunc.treeToValue(mapNode, Map.class);
         }
         return envVars;
     }
 
     public static interface ObjectCodecIface<TreeNode, Value> {
-        Value treeToValue(TreeNode input, Class<Map> returnType) throws IOException;
+        Value treeToValue( TreeNode input, Class<Map> returnType ) throws IOException;
     }
 
 

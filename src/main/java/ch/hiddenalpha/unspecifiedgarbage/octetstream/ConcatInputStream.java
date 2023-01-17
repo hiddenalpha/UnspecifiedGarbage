@@ -57,12 +57,13 @@ public class ConcatInputStream extends InputStream {
     public void close() throws IOException {
         // Close all remaining sources.
         Exception firstException = null;
-        for( int i = iSrc; i < sources.length; ++i ){
+        for( int i = iSrc ; i < sources.length ; ++i ){
             try{
                 sources[i].close();
             }catch( IOException|RuntimeException ex ){
                 if( firstException == null ){
-                    // Track the exception. But we need to close the remaining ones.
+                    // Track the exception. But we have to close the
+                    // remaining streams regardless of early exceptions.
                     firstException = ex;
                 }else if( firstException != ex ){
                     firstException.addSuppressed(ex);
@@ -72,7 +73,7 @@ public class ConcatInputStream extends InputStream {
         sources = null; // Allow GC
         // Bubble exception if we had any.
         if( firstException instanceof RuntimeException ){
-            throw (RuntimeException) firstException;
+            throw (RuntimeException)firstException;
         }else if( firstException != null ){
             throw (IOException)firstException;
         }
@@ -83,6 +84,8 @@ public class ConcatInputStream extends InputStream {
             InputStream oldSrc = sources[iSrc];
             sources[iSrc] = null;
             iSrc += 1;
+            // Calling close as last step to prevent trouble with our
+            // state as it potentially could throw.
             oldSrc.close();
         }
     }
