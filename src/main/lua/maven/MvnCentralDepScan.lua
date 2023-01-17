@@ -208,9 +208,9 @@ end
 
 
 function mod.getMvnArtifactKey( mvnArtifact )
-    assert(mvnArtifact.artifactId)
-    assert(mvnArtifact.groupId)
-    assert(mvnArtifact.version)
+    assert(type(mvnArtifact.artifactId) == "string", mvnArtifact.artifactId)
+    assert(type(mvnArtifact.groupId) == "string", mvnArtifact.groupId)
+    assert(type(mvnArtifact.version) == "string", mvnArtifact.version)
     return       mvnArtifact.groupId
         .."\t".. mvnArtifact.artifactId
         .."\t".. mvnArtifact.version
@@ -240,7 +240,7 @@ function mod.onGetPomRspHdr( msg, req )
         onElementEnd = function( tag, pomParser )
             mod.processXmlValue(pomParser)
             local elem = table.remove(pomParser.xmlElemStack)
-            assert(elem.tag == tag);
+            assert(elem.tag == tag)
         end,
         onChunk = function( buf, pomParser )
             if pomParser.currentValue then
@@ -292,7 +292,7 @@ function mod.resolveDependencyVersionsFromDepsMgmnt( app )
             if  mvnDependency.groupId == mngdDep.groupId
             and mvnDependency.artifactId == mngdDep.artifactId
             then
-                mvnDependency.version = assert(mngdDep.version);
+                mvnDependency.version = assert(mngdDep.version)
                 break
             end
         end
@@ -333,9 +333,8 @@ function mod.resolveProperties( app )
         return str:match("^%$%{([^}]+)%}$")
     end
     for _, mvnArtifact in pairs(mvnArtifacts) do
-        local set = nil
         local depsToEnrich = {}
-        set = mvnDepsByArtifact[mvnArtifact]
+        local set = mvnDepsByArtifact[mvnArtifact]
         if set then for _, d in pairs(set) do
             table.insert(depsToEnrich, d) end end
         set = mvnMngdDepsByArtifact[mvnArtifact]
@@ -495,7 +494,6 @@ function mod.loadFromSqliteFile( app )
         end
         local artif = mvnArtifactsByDbId[mvnArtifId]
         local dep = mvnArtifactsByDbId[mvnDepId]
-        assert(type(dep) == "table")
         local deps = app.mvnDepsByArtifact[artif]
         if not deps then deps = {} app.mvnDepsByArtifact[artif] = deps end
         table.insert(deps, dep)
@@ -1017,7 +1015,7 @@ function mod.enrichFromUrls( app )
     mod.enrichFromCbacks(app, objectSeal{
         onParentPomMissing = function( gid, aid, version )
             local artif = mod.newMvnArtifact()
-            local url = "http://localhost:8080/isa-poms"
+            local url = "http://127.0.0.1:8080/isa-poms"
             if false then
             elseif aid == "paisa-api" then
                 url = url .. "/apis/".. aid .."/pom.xml"
