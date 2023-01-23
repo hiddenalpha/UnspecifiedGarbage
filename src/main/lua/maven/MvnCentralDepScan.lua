@@ -7,20 +7,13 @@
 
   ]====================================================================]
 
---local AF_INET = require('scriptlee').posix.AF_INET
---local AF_INET6 = require('scriptlee').posix.AF_INET6
---local IPPROTO_TCP = require('scriptlee').posix.IPPROTO_TCP
---local SOCK_STREAM = require('scriptlee').posix.SOCK_STREAM
---local async = require("scriptlee").reactor.async
---local inaddrOfHostname = require('scriptlee').posix.inaddrOfHostname
 --local newCond = require("scriptlee").posix.newCond  -- cannot use. Too buggy :(
 local newHttpClient = require("scriptlee").newHttpClient
 local newSqlite = require("scriptlee").newSqlite
-local newTlsClient = assert(require("scriptlee").newTlsClient)
+local newTlsClient = require("scriptlee").newTlsClient
 local newXmlParser = require("scriptlee").newXmlParser
 local objectSeal = require("scriptlee").objectSeal
 local sleep = require("scriptlee").posix.sleep
---local socket = require('scriptlee').posix.socket
 local startOrExecute = require("scriptlee").reactor.startOrExecute
 
 local out, log = io.stdout, io.stderr
@@ -212,12 +205,15 @@ end
 
 
 function mod.getMvnArtifactKey( mvnArtifact )
-    assert(type(mvnArtifact.artifactId) == "string", mvnArtifact.artifactId)
-    assert(type(mvnArtifact.groupId) == "string", mvnArtifact.groupId)
-    assert(type(mvnArtifact.version) == "string", mvnArtifact.version)
+    if type(mvnArtifact.artifactId) ~= "string" then error(tostring(mvnArtifact.artifactId))end
+    if type(mvnArtifact.groupId) ~= "string" then error(tostring(mvnArtifact.groupId))end
+    local version = mvnArtifact.version
+    local isVersionOk = (type(version) == "string")
+    if not isVersionOk then warn("Bad version: "..mvnArtifact.groupId.."  "..mvnArtifact.artifactId
+        .."  " ..tostring(version)) end
     return       mvnArtifact.groupId
         .."\t".. mvnArtifact.artifactId
-        .."\t".. mvnArtifact.version
+        .."\t".. (isVersionOk and version or "")
 end
 
 
@@ -569,13 +565,15 @@ function mod.storeAsSqliteFile( app )
         if a.dbId then
             log:write("[WARN ] MvnArtifact "..tostring(a.dbId).." probably already exists. Insert it again\n")
         end
-        assert(a.groupId and a.artifactId and a.version)
+        assert(a.groupId and a.artifactId)
+        if not a.version then warn("a.version missing: "..a.groupId.."  "..a.artifactId) end
         if a.parentGroupId then assert(a.parentArtifactId and a.parentVersion)
         else assert(not a.parentArtifactId and not a.parentVersion) end
+        local versionDbId = (a.version and mod.dbGetOrNewString(app, a.version) or nil)
         stmt:reset()
         stmt:bind(":groupId", mod.dbGetOrNewString(app, a.groupId))
         stmt:bind(":artifactId", mod.dbGetOrNewString(app, a.artifactId))
-        stmt:bind(":version", mod.dbGetOrNewString(app, a.version))
+        stmt:bind(":version", versionDbId)
         stmt:bind(":parentGroupId", mod.dbGetOrNewString(app, a.parentGroupId))
         stmt:bind(":parentArtifactId", mod.dbGetOrNewString(app, a.parentArtifactId))
         stmt:bind(":parentVersion", mod.dbGetOrNewString(app, a.parentVersion))
@@ -589,7 +587,7 @@ function mod.storeAsSqliteFile( app )
             stmt:reset()
             stmt:bind(":groupId", mod.dbGetOrNewString(app, a.groupId))
             stmt:bind(":artifactId", mod.dbGetOrNewString(app, a.artifactId))
-            stmt:bind(":version", mod.dbGetOrNewString(app, a.version))
+            stmt:bind(":version", versionDbId)
             stmt:bind(":parentGroupId", mod.dbGetOrNewString(app, a.parentGroupId))
             stmt:bind(":parentArtifactId", mod.dbGetOrNewString(app, a.parentArtifactId))
             stmt:bind(":parentVersion", mod.dbGetOrNewString(app, a.parentVersion))
@@ -630,15 +628,12 @@ function mod.storeAsSqliteFile( app )
                 end
             end
             if not depId then -- Artifact not stored yet. Do now.
-                if not mvnDep.version then
-                    -- TODO mvnDep.version CAN be missing. Eg via depMgnt of
-                    --      unknown parent or similar
-                    mvnDep.version = "TODO_40ba845c5a1bd8"
-                end
                 depId = insertMvnArtifact({
-                    groupId = mvnDep.groupId,
-                    artifactId = mvnDep.artifactId,
-                    version = mvnDep.version,
+                    groupId = assert(mvnDep.groupId),
+                    artifactId = assert(mvnDep.artifactId),
+                    -- mvnDep.version MAY be missing. Eg via depMgnt of
+                    --      unknown parent or similar
+                    version = (mvnDep.version),
                 })
             end
             stmt:reset()
@@ -846,13 +841,14 @@ function mod.printCsvParents( app )
     local rs = stmt:execute()
     out:write("h;Created;"..mod.escapeCsvValue(os.date("%Y-%m-%d %H:%m:%S")).."\n")
     out:write("c;GID;AID;Version;ParentGID;ParentAID;ParentVersion\n")
+    local nilVal = app.nullvalue
     while rs:next() do
-        out:write("r;") out:write(mod.escapeCsvValue(rs:value(1) or app.nullvalue))
-        out:write(";") out:write(mod.escapeCsvValue(rs:value(2) or app.nullvalue))
-        out:write(";") out:write(mod.escapeCsvValue(rs:value(3) or app.nullvalue))
-        out:write(";") out:write(mod.escapeCsvValue(rs:value(4) or app.nullvalue))
-        out:write(";") out:write(mod.escapeCsvValue(rs:value(5) or app.nullvalue))
-        out:write(";") out:write(mod.escapeCsvValue(rs:value(6) or app.nullvalue))
+        out:write("r;") out:write(mod.escapeCsvValue(rs:value(1) or nilVal))
+        out:write(";") out:write(mod.escapeCsvValue(rs:value(2) or nilVal))
+        out:write(";") out:write(mod.escapeCsvValue(rs:value(3) or nilVal))
+        out:write(";") out:write(mod.escapeCsvValue(rs:value(4) or nilVal))
+        out:write(";") out:write(mod.escapeCsvValue(rs:value(5) or nilVal))
+        out:write(";") out:write(mod.escapeCsvValue(rs:value(6) or nilVal))
         out:write("\n")
     end
     out:write("t;status;OK\n")
@@ -871,21 +867,21 @@ function mod.printCsvDependencies( app )
         .."   DepVersion.str"
         .." FROM MvnArtifact AS A"
         .." JOIN MvnDependency AS Dep ON Dep.mvnArtifactId = A.id"
-        .." JOIN MvnArtifact AS D ON Dep.needsMvnArtifactId = D.id"
-        .." JOIN String GroupId ON GroupId.id = A.groupId"
-        .." JOIN String ArtifactId ON ArtifactId.id = A.artifactId"
-        .." JOIN String Version ON Version.id = A.version"
-        .." JOIN String DepGid ON DepGid.id = D.groupId"
-        .." JOIN String DepAid ON DepAid.id = D.artifactId"
-        .." JOIN String DepVersion ON DepVersion.id = D.version"
+        .." LEFT JOIN MvnArtifact AS D ON Dep.needsMvnArtifactId = D.id"
+        .." LEFT JOIN String GroupId ON GroupId.id = A.groupId"
+        .." LEFT JOIN String ArtifactId ON ArtifactId.id = A.artifactId"
+        .." LEFT JOIN String Version ON Version.id = A.version"
+        .." LEFT JOIN String DepGid ON DepGid.id = D.groupId"
+        .." LEFT JOIN String DepAid ON DepAid.id = D.artifactId"
+        .." LEFT JOIN String DepVersion ON DepVersion.id = D.version"
     local stmt = app.preparedStmts[queryStr]
     if not stmt then stmt = db:prepare(queryStr) app.preparedStmts[queryStr] = stmt end
     stmt:reset()
     local rs = stmt:execute()
     out:write("h;Created;"..mod.escapeCsvValue(os.date("%Y-%m-%d %H:%m:%S")).."\n")
     out:write("c;GID;AID;Version;DepGID;DepAID;DepVersion\n")
+    local nilVal = app.nullvalue
     while rs:next() do
-        local nilVal = "NULL"
         out:write("r;") out:write(mod.escapeCsvValue(rs:value(1) or nilVal))
         out:write(";") out:write(mod.escapeCsvValue(rs:value(2) or nilVal))
         out:write(";") out:write(mod.escapeCsvValue(rs:value(3) or nilVal))
@@ -985,16 +981,18 @@ function mod.enrichFromCbacks( app, opts )
                                 app.mvnArtifacts[key] = mvnArtifact
                             end
                             -- Check for missing poms.
-                            local key = mod.getMvnArtifactKey({
-                                artifactId = mvnArtifact.parentArtifactId,
-                                groupId = mvnArtifact.parentGroupId,
-                                version = mvnArtifact.parentVersion,
-                            })
-                            if not app.mvnArtifacts[key] then -- parent pom missing
-                                onParentPomMissing(
-                                    mvnArtifact.parentGroupId,
-                                    mvnArtifact.parentArtifactId,
-                                    mvnArtifact.parentVersion)
+                            if mvnArtifact.parentArtifactId then
+                                local key = mod.getMvnArtifactKey({
+                                    artifactId = mvnArtifact.parentArtifactId,
+                                    groupId = mvnArtifact.parentGroupId,
+                                    version = mvnArtifact.parentVersion,
+                                })
+                                if not app.mvnArtifacts[key] then -- parent pom missing
+                                    onParentPomMissing(
+                                        mvnArtifact.parentGroupId,
+                                        mvnArtifact.parentArtifactId,
+                                        mvnArtifact.parentVersion)
+                                end
                             end
                         end,
                     }
