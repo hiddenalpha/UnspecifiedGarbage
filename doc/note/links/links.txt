@@ -435,3 +435,6 @@ Links (Aka argument amplifiers)
 ## Cloud is bullshit
 - [onedrive down 2023 jan](https://answers.microsoft.com/en-us/msoffice/forum/all/cant-sign-into-onedrive-something-went-wrong-on/b0273ef6-29a3-4fbd-87cc-5b1fea4a62a0)
 
+## Spathetti code
+- [public constants](https://gitit.post.ch/projects/ISA/repos/preflux/pull-requests/550/overview?commentId=232843)
+
