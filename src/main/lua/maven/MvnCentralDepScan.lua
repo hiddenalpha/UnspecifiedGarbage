@@ -27,15 +27,12 @@ function mod.printHelp()
         .."\n"
         .."  Options:\n"
         .."\n"
-        .."    --example\n"
-        .."      WARN: only use if you know what you're doing!\n"
-        .."\n"
         .."    --state <path>\n"
         .."      Data file to use for the action. Will be created if it does not\n"
         .."      yet exist.\n"
         .."\n"
         .."    --asCsv <what>\n"
-        .."      Prints requested data to stdout. <what> can be one of \"parents\"\n"
+        .."      Exports requested data to stdout. <what> can be one of \"parents\"\n"
         .."      or \"deps\".\n"
         .."\n"
         .."    --nullvalue <str>  (default is an empty string)\n"
@@ -48,21 +45,31 @@ function mod.printHelp()
         .."      {version}. Placeholders can be used multiple times. Example:\n"
         .."      http://example.com/repo/{gid}/{aid}/{aid}-{version}-pom.xml\n"
         .."\n"
+        .."    --csvToFetch\n"
+        .."      CSV listing the artifacts which should be merged into the state\n"
+        .."      file. Example:\n"
+        .."\n"
+        .."        c;groupId;artifactId;version\n"
+        .."        r;com.example;foo-toolz;1.2.3\n"
+        .."\n"
         .."\n"
         .."  Example  \"Export parents\"\n"
         .."\n"
-        .."    --state foo --asCsv parents > parents.csv\n"
+        .."    --state theFile --asCsv parents > parents.csv\n"
         .."\n"
         .."  Example  \"Export dependencies\"\n"
         .."\n"
-        .."    --state foo --asCsv deps > dependencies.csv\n"
+        .."    --state theFile --asCsv deps > dependencies.csv\n"
+        .."\n"
+        .."  Example  \"Fetch info from listed POMs and merge them into state file\"\n"
+        .."\n"
+        .."    --state theFile --csvToFetch the.csv --uripat http://example.com/{aid}.xml\n"
         .."\n")
 end
 
 
 function mod.parseArgs( app )
     local iA = 0
-    app.isExample = false
     app.statePath = false
     app.nullvalue = ""
     while true do
@@ -72,8 +79,6 @@ function mod.parseArgs( app )
             break
         elseif arg == "--help" then
             mod.printHelp() return -1
-        elseif arg == "--example" then
-            app.isExample = true
         elseif arg == "--state" then
             iA = iA + 1
             arg = _ENV.arg[iA]
@@ -95,13 +100,18 @@ function mod.parseArgs( app )
             arg = _ENV.arg[iA]
             if not arg then log:write("Arg --uripat needs value\n")return-1 end
             app.uripat = arg
+        elseif arg == "--csvToFetch" then
+            iA = iA +1
+            arg = _ENV.arg[iA]
+            if not arg then log:write("Arg --csvToFetch needs value\n")return-1 end
+            app.csvToFetch = arg
         else
             log:write("Unexpected arg: "..tostring(arg).."\n")return -1
         end
     end
     if not app.statePath then log:write("Arg --state missing\n") return -1 end
-    if not app.isExample and not app.asCsv then log:write("Bad Args\n") return -1 end
-    if app.isExample and not app.uripat then log:write("Arg --uripat missing\n") return -1 end
+    if not app.csvToFetch and not app.asCsv then log:write("Bad Args\n") return -1 end
+    if app.csvToFetch and not app.uripat then log:write("Arg --uripat missing\n") return -1 end
     return 0
 end
 
@@ -131,7 +141,7 @@ end
 
 function mod.newPomUrlSrc( app )
     local t = objectSeal{
-        csvWithArtifactsToFetch = "C:/work/tmp/isa-poms.list.short",
+        app = app,
         remainingArtifacts = false,
     }
     local m = {
@@ -163,8 +173,8 @@ function mod.newPomUrlSrc( app )
                         end
                     end,
                 }
-                local fd = io.open(t.csvWithArtifactsToFetch, "rb")
-                if not fd then error("fopen("..tostring(t.csvWithArtifactsToFetch)..")") end
+                local fd = io.open(t.app.csvToFetch, "rb")
+                if not fd then error("fopen("..tostring(t.app.csvToFetch)..")") end
                 t.remainingArtifacts = {}
                 while true do
                     local buf = fd:read(1<<14)
@@ -183,6 +193,14 @@ function mod.newPomUrlSrc( app )
     }
     m.__index = m
     return setmetatable(t, m)
+end
+
+
+function mod.pomFilepathByArtifact( app, pomArtifact )
+    local a = pomArtifact
+    return assert(os.getenv("HOME")) .."/.m2/repository"
+        .."/".. a.groupId:gsub("%.", "/") .."/".. a.artifactId .."/".. a.version
+        .."/".. a.artifactId .."-".. a.version ..".pom"
 end
 
 
@@ -423,7 +441,11 @@ function mod.resolveProperties( app )
                     if not propVal or not propVal:find("${",0,true) then break end
                     -- there's a property-in-property. Hangle one further.
                     propKey = getPropKey(propVal)
-                    assert(propKey)
+                    if not propKey then
+                        if app.warnIsError then error("Property resolver struggles with "..tostring(propVal)) end
+                        log:write("[WARN ] Cannot resolve property '".. tostring(propVal) .."'\n") -- TODO
+                        break
+                    end
                 end
                 if propVal then
                     mvnDependency.version = propVal
@@ -579,6 +601,30 @@ function mod.loadFromSqliteFile( app )
         if not deps then deps = {} app.mvnDepsByArtifact[artif] = deps end
         table.insert(deps, dep)
     end
+    -- Load properties
+    local queryStr = "SELECT mvnArtifactId, keyStringId, valStringId FROM MvnProperty"
+    local stmt = app.preparedStmts[queryStr]
+    if not stmt then stmt = db:prepare(queryStr); app.preparedStmts[queryStr] = stmt end
+    local rs = stmt:execute()
+    while rs:next() do
+        local prop = { key = false, val = false, }
+        local mvnArtifactId = false
+        for iCol=1, rs:numCols() do
+            local colName = rs:name(iCol)
+            if false then
+            elseif colName == "mvnArtifactId" then
+                mvnArtifactId = rs:value(iCol)
+            elseif colName == "keyStringId" then
+                prop.key = assert(strings[rs:value(iCol)])
+            elseif colName == "valStringId" then
+                prop.val = assert(strings[rs:value(iCol)])
+            else
+                error("TODO_20230127134303 ".. tostring(colName))
+            end
+        end
+        local mvnArtifact = assert(mvnArtifactsByDbId[mvnArtifactId])
+        app.mvnPropsByArtifact[mvnArtifact] = assert(prop)
+    end
 end
 
 
@@ -644,10 +690,11 @@ function mod.storeAsSqliteFile( app )
     if not stmt then stmt = db:prepare(queryStr) app.preparedStmts[queryStr] = stmt end
     local insertMvnArtifact = function(a)
         if a.dbId then
-            log:write("[WARN ] MvnArtifact "..tostring(a.dbId).." probably already exists. Insert it again\n")
+            -- TODO analyze this case.
+            --log:write("[WARN ] MvnArtifact "..tostring(a.dbId).." probably already exists. Insert it again\n")
         end
         assert(a.groupId and a.artifactId)
-        if not a.version then warn("a.version missing: "..a.groupId.."  "..a.artifactId) end
+        if not a.version then warn("version missing of "..a.groupId.."  "..a.artifactId) end
         if a.parentGroupId then assert(a.parentArtifactId and a.parentVersion)
         else assert(not a.parentArtifactId and not a.parentVersion) end
         local versionDbId = (a.version and mod.dbGetOrNewString(app, a.version) or nil)
@@ -686,6 +733,7 @@ function mod.storeAsSqliteFile( app )
     for _, mvnArtifact in pairs(app.mvnArtifacts) do
         insertMvnArtifact(mvnArtifact)
         if mvnArtifact.parentArtifactId then
+            -- TODO? maybe?
         end
     end
     -- Store dependencies
@@ -722,6 +770,29 @@ function mod.storeAsSqliteFile( app )
             stmt:bind(":needsMvnArtifactId", assert(depId, mvnDep.artifactId))
             stmt:execute()
         end
+    end
+    -- Store properties
+    local queryStr = "INSERT INTO MvnProperty"
+        .."    (  mvnArtifactId,  keyStringId,  valStringId )"
+        .."  VALUES"
+        .."    ( :mvnArtifactId, :keyStringId, :valStringId )"
+    local stmt = app.preparedStmts[queryStr]
+    if not stmt then stmt = db:prepare(queryStr); app.preparedStmts[queryStr] = stmt end
+    for _, mvnArtifact in pairs(app.mvnArtifacts) do
+        assert(type(mvnArtifact) == "table")
+        local dbId = mvnArtifactIds[mvnArtifact]
+        local mvnProps = app.mvnPropsByArtifact[mvnArtifact]
+        if not mvnProps then goto nextArtifact end
+        assert(type(mvnProps) == "table")
+        for _, mvnProp in ipairs(mvnProps) do
+            stmt:reset()
+            stmt:bind(":mvnArtifactId", assert(dbId))
+            stmt:bind(":keyStringId", mod.dbGetOrNewString(app, assert(mvnProp.key)))
+            stmt:bind(":valStringId", mod.dbGetOrNewString(app, assert(mvnProp.val)))
+            stmt:execute()
+            --local dbId = db:lastInsertRowid()
+        end
+        ::nextArtifact::
     end
 end
 
@@ -789,11 +860,12 @@ function mod.dbInitTables( app )
         .." mvnArtifactId INT,"
         .." needsMvnArtifactId INT)"
     ):execute()
-    --db:prepare("CREATE TABLE IF NOT EXISTS MvnProperty ("
-    --    .." id INTEGER PRIMARY KEY,"
-    --    .." keyStringId INT,"
-    --    .." valStringId INT)"
-    --):execute()
+    db:prepare("CREATE TABLE IF NOT EXISTS MvnProperty ("
+        .." id INTEGER PRIMARY KEY,"
+        .." mvnArtifactId INTEGER,"
+        .." keyStringId INTEGER,"
+        .." valStringId INTEGER)"
+    ):execute()
 end
 
 
@@ -987,11 +1059,7 @@ function mod.enrichFromCbacks( app, opts )
     local writeNextPomTo = assert(opts.writeNextPomTo)
     local onParentPomMissing = assert(opts.onParentPomMissing)
     opts = nil
-    local pomsToLoad = {
-        { aid = "preflux-web", gid = "ch.post.it.paisa.preflux", version = "00.00.01.02-SNAPSHOT", },
-        --{ aid = "preflux", gid = "ch.post.it.paisa.preflux", version = "00.00.01.02-SNAPSHOT", },
-    }
-    while #pomsToLoad > 0 do
+    while true do -- TODO is this loop reall what we want?
         local pomParser = false
         local ok = writeNextPomTo(objectSeal{
             write = function( t, buf, beg, len )
@@ -1094,6 +1162,14 @@ function mod.enrichFromCbacks( app, opts )
 end
 
 
+function mod.fileExists( pomFilepath )
+    local fd = io.open(pomFilepath)
+    local exists = not not fd
+    fd:close()
+    return exists
+end
+
+
 -- Deprecated. Use the callback variant
 function mod.enrichFromUrls( app )
     local pomSrc = mod.newPomUrlSrc(app)
@@ -1125,6 +1201,27 @@ function mod.enrichFromUrls( app )
                 log:write("No more poms\n")
                 return false
             end
+            local pomFilepath = mod.pomFilepathByArtifact(app, pomArtifact)
+            local fd = io.open(pomFilepath, "rb")
+            -- MUST NOT use local cache for mvn SNAPSHOTs
+            -- MUST NOT try to read server-placholder '[RELEASE]' from local cache
+            if fd and not pomFilepath:find("SNAPSHOT",0,true) and not pomFilepath:find("RELEASE",0,true) then
+                log:write("> fread(".. pomFilepath ..")\n")
+                local file = io.open(pomFilepath, "rb")
+                while true do
+                    local buf = file:read(1<<14)
+                    if buf then
+                        snk:write(buf, 1, buf:len())
+                    else
+                        file:close()
+                        snk:closeSnk()
+                        return true
+                    end
+                end
+            --else
+            --    log:write("[DEBUG] NoSuchFile ".. pomFilepath .."\n")
+            end
+            -- No local file. Go the HTTP way.
             local pomUrl = mod.urlByArtifact(app, pomArtifact)
             local proto = pomUrl:match("^(https?)://")
             local isTLS = (proto:upper() == "HTTPS")
@@ -1138,6 +1235,8 @@ function mod.enrichFromUrls( app )
                 app = app,
                 base = false,
                 pomParser = false,
+                pomArtifact = pomArtifact,
+                responseIsOk = false,
             }
             req.base = app.http:request{
                 cls = req,
@@ -1151,11 +1250,15 @@ function mod.enrichFromUrls( app )
                             log:write("< ".. tostring(h[1]) ..": ".. tostring(h[2]) .."\n")
                         end
                         log:write("< \n")
-                        error("Unexpected HTTP ".. tostring(msg.status))
+                        local a = req.pomArtifact
+                        local msg = "Unexpected HTTP ".. tostring(msg.status) .." for ".. a.groupId .."  ".. a.artifactId .."  ".. a.version
+                        if app.warnIsError then error(msg) else log:write("[WARN ] ".. msg .."\n") end
+                    else
+                        req.responseIsOk = true
                     end
                 end,
                 onRspChunk = function( buf, req )
-                    snk:write(buf, 1, buf:len())
+                    if req.responseIsOk then snk:write(buf, 1, buf:len()) end
                 end,
                 onRspEnd = function( req )
                     snk:closeSnk()
@@ -1194,7 +1297,7 @@ function mod.run( app )
         mod.printCsvParents(app)
     elseif app.asCsv == "deps" then
         mod.printCsvDependencies(app)
-    elseif app.isExample then
+    elseif app.csvToFetch then
         mod.enrichFromUrls(app)
     else
         error("TODO_20221215175852")
@@ -1208,7 +1311,8 @@ function mod.main()
         http = newHttpClient{
             socketMgr = assert(mod.newSocketMgr()),
         },
-        isExample = false,
+        warnIsError = false,
+        csvToFetch = false,
         uripat = false,
         asCsv = false,
         nullvalue = false,
