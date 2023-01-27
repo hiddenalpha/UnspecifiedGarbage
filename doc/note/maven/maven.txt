@@ -1,0 +1,5 @@
+
+## Print effective-pom
+
+  mvn help:effective-pom -Doutput="the-effective-pom.xml"
+
