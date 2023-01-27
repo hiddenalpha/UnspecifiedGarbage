@@ -31,4 +31,9 @@
   <!--   </dependencies> -->
   <!-- </dependencyManagement> -->
 
+  <!-- <modules> -->
+  <!--   <module>foo</module> -->
+  <!--   <module>bar</module> -->
+  <!-- </modules> -->
+
 </project>
