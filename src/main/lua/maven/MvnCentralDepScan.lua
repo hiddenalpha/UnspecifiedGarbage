@@ -8,6 +8,7 @@
   ]====================================================================]
 
 --local newCond = require("scriptlee").posix.newCond  -- cannot use. Too buggy :(
+local newCsvRecrdInStream = require("scriptlee").newCsvRecrdInStream
 local newHttpClient = require("scriptlee").newHttpClient
 local newSqlite = require("scriptlee").newSqlite
 local newTlsClient = require("scriptlee").newTlsClient
@@ -39,6 +40,14 @@ function mod.printHelp()
         .."\n"
         .."    --nullvalue <str>  (default is an empty string)\n"
         .."      The string to use for NULL values in CSV exports.\n"
+        .."\n"
+        .."    --uripat <str>\n"
+        .."      URI pattern where the poms can be downloaded from. Use\n"
+        .."      placeholders in curly braces to tell where to put misc parts.\n"
+        .."      Available placeholders are: {aid}, {gid}, {gidWithSlashes} and\n"
+        .."      {version}. Placeholders can be used multiple times. Example:\n"
+        .."      http://example.com/repo/{gid}/{aid}/{aid}-{version}-pom.xml\n"
+        .."\n"
         .."\n"
         .."  Example  \"Export parents\"\n"
         .."\n"
@@ -81,12 +90,18 @@ function mod.parseArgs( app )
             arg = _ENV.arg[iA]
             if not arg then log:write("Arg --nullvalue needs value\n")return-1 end
             app.nullvalue = arg
+        elseif arg == "--uripat" then
+            iA = iA +1
+            arg = _ENV.arg[iA]
+            if not arg then log:write("Arg --uripat needs value\n")return-1 end
+            app.uripat = arg
         else
             log:write("Unexpected arg: "..tostring(arg).."\n")return -1
         end
     end
     if not app.statePath then log:write("Arg --state missing\n") return -1 end
     if not app.isExample and not app.asCsv then log:write("Bad Args\n") return -1 end
+    if app.isExample and not app.uripat then log:write("Arg --uripat missing\n") return -1 end
     return 0
 end
 
@@ -116,23 +131,72 @@ end
 
 function mod.newPomUrlSrc( app )
     local t = objectSeal{
-        fileWithLfSeparatedUrls = "C:/work/tmp/isa-poms.list.short",
-        fd = false,
+        csvWithArtifactsToFetch = "C:/work/tmp/isa-poms.list.short",
+        remainingArtifacts = false,
     }
     local m = {
-        nextPomUrl = function( t )
-            if not t.fd then
-                t.fd = io.open(t.fileWithLfSeparatedUrls, "rb")
-                if not t.fd then error("fopen("..tostring(t.fileWithLfSeparatedUrls)..")") end
+        nextPomArtifact = function( t )
+            if not t.remainingArtifacts then
+                local csvParser = newCsvRecrdInStream{
+                    cls = t,
+                    delimCol = ";",
+                    onRecord = function( recrd, t )
+                        local recrdType = recrd[1]
+                        if recrdType == "r" then
+                            local artif = mod.newMvnArtifact()
+                            artif.groupId = assert(recrd[2])
+                            artif.artifactId = assert(recrd[3])
+                            artif.version = assert(recrd[4])
+                            table.insert(t.remainingArtifacts, artif)
+                        elseif recrdType == "h" or recrdType == "t" then
+                            log:write("CSV")
+                            for i=1, #recrd do log:write("  ".. recrd[i]) end
+                            log:write("\n")
+                        elseif recrdType == "c" then
+                            assert(recrd[2] == "groupId")
+                            assert(recrd[3] == "artifactId")
+                            assert(recrd[4] == "version")
+                        else
+                            print("Record:")
+                            for iCol, val in ipairs(recrd) do print(" -> ", iCol, val) end
+                            error("TODO_20230127110829")
+                        end
+                    end,
+                }
+                local fd = io.open(t.csvWithArtifactsToFetch, "rb")
+                if not fd then error("fopen("..tostring(t.csvWithArtifactsToFetch)..")") end
+                t.remainingArtifacts = {}
+                while true do
+                    local buf = fd:read(1<<14)
+                    if buf then
+                        csvParser:write(buf)
+                    else
+                        fd:close()
+                        csvParser:closeSnk()
+                        break
+                    end
+                end
             end
-            local line = t.fd:read("l") -- lowerCase means TrimEol
-            if not line then io.close(t.fd) t.fd = false end
-            return line
+            return table.remove(t.remainingArtifacts)
         end,
         __index = false,
     }
     m.__index = m
     return setmetatable(t, m)
+end
+
+
+function mod.urlByArtifact(app, artifact)
+    local a = artifact
+    assert(type(a.artifactId) == "string", tostring(a.artifactId))
+    assert(type(a.groupId) == "string", tostring(a.groupId))
+    assert(type(a.version) == "string", tostring(a.version))
+    local url = assert(app.uripat)
+    url = url:gsub("{aid}", a.artifactId)
+    url = url:gsub("{gid}", a.groupId)
+    url = url:gsub("{gidWithSlashes}", a.groupId:gsub("%.", "/"))
+    url = url:gsub("{version}", a.version)
+    return url
 end
 
 
@@ -214,6 +278,16 @@ function mod.getMvnArtifactKey( mvnArtifact )
     return       mvnArtifact.groupId
         .."\t".. mvnArtifact.artifactId
         .."\t".. (isVersionOk and version or "")
+end
+
+
+function mod.getMvnArtifactByKey( app, key )
+    local gid, aid, version = key:match("^([^\t]+)\t([^\t]+)\t([^\t]+).*$")
+    local a = mod.newMvnArtifact()
+    a.artifactId = assert(aid, key)
+    a.groupId = assert(gid, key)
+    a.version = version
+    return a
 end
 
 
@@ -343,7 +417,14 @@ function mod.resolveProperties( app )
         for _, mvnDependency in pairs(depsToEnrich) do
             local propKey = getPropKey(mvnDependency.version)
             if propKey then
-                local propVal = mod.getPropValThroughParentChain(app, mvnArtifact, propKey)
+                local propVal
+                while true do
+                    propVal = mod.getPropValThroughParentChain(app, mvnArtifact, propKey)
+                    if not propVal or not propVal:find("${",0,true) then break end
+                    -- there's a property-in-property. Hangle one further.
+                    propKey = getPropKey(propVal)
+                    assert(propKey)
+                end
                 if propVal then
                     mvnDependency.version = propVal
                 end
@@ -727,95 +808,91 @@ function mod.dbGetInstance( app )
 end
 
 
--- OBSOLETE  function mod.newSocketMgr()
--- OBSOLETE      local hosts = {}
--- OBSOLETE      -- TOO_BUGGY  local numConnActive, numConnActiveLimit = 0, 4
--- OBSOLETE      -- TOO_BUGGY  local numConnActiveCond = newCond()
--- OBSOLETE      local openSock = function( t, opts )
--- OBSOLETE          for k, v in pairs(opts) do
--- OBSOLETE              if false then
--- OBSOLETE              elseif k=='host' or k=='port' or k=='useTLS' then
--- OBSOLETE              else
--- OBSOLETE                  error('Unknown option: '..tostring(k))
--- OBSOLETE              end
--- OBSOLETE          end
--- OBSOLETE          local inaddr = inaddrOfHostname(opts.host)
--- OBSOLETE          local af
--- OBSOLETE          if inaddr:find('^%d+.%d+.%d+.%d+$') then af = AF_INET else af = AF_INET6 end
--- OBSOLETE          if false then
--- OBSOLETE              log:write("opts.useTLS "..tostring(opts.useTLS).." (Override to TRUE ...)\n")
--- OBSOLETE              opts.useTLS = true -- TODO remove as soon fixed scriptlee is available.
--- OBSOLETE          else
--- OBSOLETE              log:write("opts.useTLS is "..tostring(opts.useTLS).." (keep as-is)\n")
--- OBSOLETE          end
--- OBSOLETE          local key = inaddr.."\t"..opts.port.."\t"..tostring(opts.useTLS)
--- OBSOLETE          --log:write("KEY wr '"..key.."'\n")
--- OBSOLETE          local existing = hosts[key]
--- OBSOLETE          -- TOO_BUGGY  numConnActive = numConnActive +1
--- OBSOLETE          if existing then
--- OBSOLETE              return table.remove(existing)
--- OBSOLETE          else
--- OBSOLETE              -- TOO_BUGGY  while numConnActive > numConnActiveLimit do
--- OBSOLETE              -- TOO_BUGGY      log:write("numConnActive is "..numConnActive..". Waiting ...\n")
--- OBSOLETE              -- TOO_BUGGY      numConnActiveCond:waitForever()
--- OBSOLETE              -- TOO_BUGGY  end
--- OBSOLETE              -- TOO_BUGGY  log:write("numConnActive is ".. numConnActive ..". Go\n")
--- OBSOLETE              local sock = socket(af, SOCK_STREAM, IPPROTO_TCP)
--- OBSOLETE              sock:connect(inaddr, opts.port)
--- OBSOLETE              if opts.useTLS then
--- OBSOLETE                  local sockUnderTls = sock
--- OBSOLETE                  sock = newTlsClient{
--- OBSOLETE                      cls = assert(sockUnderTls),
--- OBSOLETE                      peerHostname = assert(opts.host),
--- OBSOLETE                      onVerify = function( tlsIssues, sockUnderTls )
--- OBSOLETE                          if tlsIssues.CERT_NOT_TRUSTED then
--- OBSOLETE                              warn("TLS ignore CERT_NOT_TRUSTED");
--- OBSOLETE                              tlsIssues.CERT_NOT_TRUSTED = false
--- OBSOLETE                          end
--- OBSOLETE                      end,
--- OBSOLETE                      send = function( buf, sockUnderTls )
--- OBSOLETE                          local ret = sockUnderTls:write(buf)
--- OBSOLETE                          sockUnderTls:flush() -- TODO Why is this flush needed?
--- OBSOLETE                          return ret
--- OBSOLETE                      end,
--- OBSOLETE                      recv = function( sockUnderTls ) return sockUnderTls:read() end,
--- OBSOLETE                      flush = function( sockUnderTls ) sockUnderTls:flush() end,
--- OBSOLETE                      closeSnk = function( sockUnderTls ) sockUnderTls:closeSnk() end,
--- OBSOLETE                  }
--- OBSOLETE                  assert(not getmetatable(sock).release)
--- OBSOLETE                  getmetatable(sock).release = function( t ) sockUnderTls:release() end;
--- OBSOLETE              end
--- OBSOLETE              return {
--- OBSOLETE                  _sock = assert(sock),
--- OBSOLETE                  _host = assert(inaddr),
--- OBSOLETE                  _port = assert(opts.port),
--- OBSOLETE                  _useTLS = opts.useTLS;
--- OBSOLETE                  write = function(t, ...) return sock:write(...)end,
--- OBSOLETE                  read = function(t, ...) return sock:read(...)end,
--- OBSOLETE                  flush = function(t, ...) return sock:flush(...)end,
--- OBSOLETE              }
--- OBSOLETE          end
--- OBSOLETE          error("unreachable")
--- OBSOLETE      end
--- OBSOLETE      local releaseSock = function( t, sockWrapr )
--- OBSOLETE          t:closeSock(sockWrapr) return -- TODO rm as soon fixed scriptlee available (aka >46)
--- OBSOLETE  --        -- keep-alive (TODO only if header says so)
--- OBSOLETE  --        local key = sockWrapr._host.."\t"..sockWrapr._port.."\t"..tostring(sockWrapr._useTLS)
--- OBSOLETE  --        local host = hosts[key]
--- OBSOLETE  --        if not host then host = {} hosts[key] = host end
--- OBSOLETE  --        table.insert(host, sockWrapr)
--- OBSOLETE      end
--- OBSOLETE      return{
--- OBSOLETE          openSock = openSock,
--- OBSOLETE          releaseSock = releaseSock,
--- OBSOLETE          closeSock = function(t, sockWrapr)
--- OBSOLETE              sockWrapr._sock:release()
--- OBSOLETE              -- TOO_BUGGY  numConnActive = numConnActive -1
--- OBSOLETE              -- TOO_BUGGY  log:write("numConnActive -1. Is now ".. numConnActive ..". Broadcast.\n")
--- OBSOLETE              -- TOO_BUGGY  numConnActiveCond:broadcast()
--- OBSOLETE          end,
--- OBSOLETE      }
--- OBSOLETE  end
+-- Using custom impl because builtin cannot do connection pooling yet
+function mod.newSocketMgr()
+    local AF_INET = require('scriptlee').posix.AF_INET
+    local AF_INET6 = require('scriptlee').posix.AF_INET6
+    local IPPROTO_TCP = require('scriptlee').posix.IPPROTO_TCP
+    local SOCK_STREAM = require('scriptlee').posix.SOCK_STREAM
+    local inaddrOfHostname = require('scriptlee').posix.inaddrOfHostname
+    local newTlsClient = require('scriptlee').newTlsClient
+    local socket = require('scriptlee').posix.socket
+    local S = {}
+    local idleSocketsBySockaddr = {}
+
+    local openSock = function(t, opts)
+        for k, v in pairs(opts) do
+            if false then
+            elseif k=='host' or k=='port' or k=='useTLS' then
+                -- ok
+            else
+                error('Unknown option: '..tostring(k))
+            end
+        end
+
+        local inaddr = inaddrOfHostname(opts.host)
+        local af
+        if inaddr:find('^%d+.%d+.%d+.%d+$') then af = AF_INET else af = AF_INET6 end
+        local sockaddr = inaddr ..":".. (opts.port or "-1")
+        local poolForThisHost = idleSocketsBySockaddr[sockaddr]
+        local sock = poolForThisHost and table.remove(poolForThisHost) or false
+        if not sock then
+            -- no sock from pool. Create new one.
+            sock = socket(af, SOCK_STREAM, IPPROTO_TCP)
+            sock:connect(inaddr, opts.port)
+            if opts.useTLS then
+                local sockUnderTls = sock
+                sock = newTlsClient{
+                    cls = sockUnderTls,
+                    peerHostname = opts.host,
+                    onVerify = function( tlsIssues, sockUnderTls )
+                        if tlsIssues.CERT_NOT_TRUSTED then
+                            warn('TLS ignore CERT_NOT_TRUSTED');
+                            tlsIssues.CERT_NOT_TRUSTED = false
+                        end
+                    end,
+                    send = function( buf, sockUnderTls )
+                        local ret = sockUnderTls:write(buf)
+                        sockUnderTls:flush()
+                        return ret
+                    end,
+                    recv = function( sockUnderTls ) return sockUnderTls:read() end,
+                    flush = function( sockUnderTls ) sockUnderTls:flush() end,
+                    closeSnk = function( sockUnderTls ) sockUnderTls:closeSnk() end,
+                }
+                assert(not getmetatable(sock).release)
+                getmetatable(sock).release = function( t ) sockUnderTls:release() end;
+            end
+        end
+        return{
+            [S] = sock,
+            _sockaddr = sockaddr,
+            write = function(t, ...)return sock:write(...)end,
+            read = function(t, ...)return sock:read(...)end,
+            flush = function(t, ...)return sock:flush(...)end,
+        }
+    end
+
+    local releaseSock = function( t, mySock )
+        -- TODO just ignroe cleanup for now because we have no connection pooling yet.
+        local poolForThisHost = idleSocketsBySockaddr[mySock._sockaddr]
+        if not poolForThisHost then
+            poolForThisHost = {}
+            idleSocketsBySockaddr[mySock._sockaddr] = poolForThisHost
+        end
+        table.insert(poolForThisHost, assert(mySock[S]))
+    end
+
+    local closeSock = function( t, mySock )
+        mySock[S]:release()
+    end
+
+    return{
+        openSock = openSock,
+        releaseSock = releaseSock,
+        closeSock = closeSock,
+    }
+end
 
 
 function mod.printCsvParents( app )
@@ -1000,6 +1077,9 @@ function mod.enrichFromCbacks( app, opts )
                 pomParser:write(buf, beg, len)
             end,
             closeSnk = function()
+                if not pomParser then
+                    return -- can happen on 404 because empty body (see also close in http rsp handler)
+                end
                 pomParser:closeSnk()
             end,
         })
@@ -1020,33 +1100,32 @@ function mod.enrichFromUrls( app )
     local missingPoms, missingDone = {}, {}
     mod.enrichFromCbacks(app, objectSeal{
         onParentPomMissing = function( gid, aid, version )
-            local artif = mod.newMvnArtifact()
-            local url = "http://127.0.0.1:8080/isa-poms"
-            if false then
-            elseif aid == "paisa-api" then
-                url = url .. "/apis/".. aid .."/pom.xml"
-            elseif aid == "service" and gid == "ch.post.it.paisa.service" then
-                url = url .."/platform/poms/service/paisa-service-superpom/pom.xml"
-            else
-                log:write("Missing: ".. gid .."\t".. aid .."\t".. version .."\n")
-                return
-            end
-            if not missingDone[url] then missingPoms[url] = true end
+            local a = mod.newMvnArtifact()
+            a.artifactId = aid
+            a.groupId = gid
+            a.version = version
+            local artifactKey = mod.getMvnArtifactKey(a)
+            local url = mod.urlByArtifact(app, a)
+            assert(artifactKey)
+            if not missingDone[artifactKey] then missingPoms[artifactKey] = true end
         end,
         writeNextPomTo = function( snk )
-            local pomUrl = pomSrc:nextPomUrl()
-            if not pomUrl then
-                pomUrl, _ = pairs(missingPoms)(missingPoms)
-                if pomUrl then
-                    missingDone[pomUrl] = true
-                    missingPoms[pomUrl] = nil
-                    log:write("NeedAlso: ".. pomUrl .."\n")
+            local pomArtifact = pomSrc:nextPomArtifact()
+            local pomKey = nil
+            if not pomArtifact then
+                pomKey, _ = pairs(missingPoms)(missingPoms)
+                if pomKey then
+                    pomArtifact = mod.getMvnArtifactByKey(app, pomKey)
+                    missingDone[pomKey] = true
+                    missingPoms[pomKey] = nil
+                    log:write("NeedAlso: ".. pomKey .."\n")
                 end
             end
-            if not pomUrl then
+            if not pomArtifact then
                 log:write("No more poms\n")
                 return false
             end
+            local pomUrl = mod.urlByArtifact(app, pomArtifact)
             local proto = pomUrl:match("^(https?)://")
             local isTLS = (proto:upper() == "HTTPS")
             local host = pomUrl:match("^https?://([^:/]+)[:/]")
@@ -1082,7 +1161,16 @@ function mod.enrichFromUrls( app )
                     snk:closeSnk()
                 end,
             }
-            req.base:closeSnk()
+            local ok, emsg = pcall(req.base.closeSnk, req.base)
+            if not ok then
+                if tostring(emsg) == "ENOMSG" then
+                    -- This is a bug in scriptlee. It should report 404.
+                    log:write(tostring(emsg).."\n")
+                    snk:closeSnk()
+                else
+                    error(emsg)
+                end
+            end
             return true
         end,
     })
@@ -1118,9 +1206,10 @@ end
 function mod.main()
     local app = objectSeal{
         http = newHttpClient{
-            -- OBSOLETE  socketMgr = assert(mod.newSocketMgr()),
+            socketMgr = assert(mod.newSocketMgr()),
         },
         isExample = false,
+        uripat = false,
         asCsv = false,
         nullvalue = false,
         mvnArtifacts = false,
