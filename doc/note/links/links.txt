@@ -438,3 +438,6 @@ Links (Aka argument amplifiers)
 ## Spathetti code
 - [public constants](https://gitit.post.ch/projects/ISA/repos/preflux/pull-requests/550/overview?commentId=232843)
 
+## Authentication passowrd 2FA
+- [2FA failed](https://www.techradar.com/news/2fa-compromise-led-to-cryptocom-hack)
+
