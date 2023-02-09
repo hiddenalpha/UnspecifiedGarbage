@@ -1,6 +1,6 @@
 
 Links (Aka argument amplifiers)
-=====================
+===============================
 
 ## Pro DI over serviceLocator
 - "http://blog.ploeh.dk/2010/02/03/ServiceLocatorisanAnti-Pattern/"
@@ -139,7 +139,7 @@ Links (Aka argument amplifiers)
 - "https://gitit.post.ch/projects/ISA/repos/zarquon/pull-requests/2/overview?commentId=61255"
 
 ## CodeLeichen
-- [no think no brain stupid adopt](https://gitit.post.ch/projects/ISA/repos/zarquon/pull-requests/2/overview?commentId=61313
+- [no think no brain stupid adopt](https://gitit.post.ch/projects/ISA/repos/zarquon/pull-requests/2/overview?commentId=61313)
 
 ## Java Instance initializer (Constructor Alternative)
 - "https://gitit.post.ch/projects/ISA/repos/zarquon/pull-requests/2/overview?commentId=61316"
@@ -188,7 +188,7 @@ Links (Aka argument amplifiers)
 - "https://blog.codinghorror.com/dont-reinvent-the-wheel-unless-you-plan-on-learning-more-about-wheels/"
 
 ## Misc
-- (Java Anti-Patterns) "https://www.odi.ch/prog/design/newbies.php"
+- [Java Anti-Patterns](https://www.odi.ch/prog/design/newbies.php)
 
 ## Java Memory
 - "youtube.com/watch?v=f2aNWtt0QRo"
@@ -225,6 +225,9 @@ Links (Aka argument amplifiers)
 - "https://jira.post.ch/browse/SDCISA-2876"
 - "https://jira.post.ch/browse/SDCISA-9059"
 - [vortex too slow](https://jira.post.ch/browse/SDCISA-9990)
+
+## Performance is not an issue ...
+- ...
 
 ## Performance clang micro benchmarking
 - "https://m.youtube.com/watch?v=nXaxk27zwlk"
@@ -315,6 +318,7 @@ Links (Aka argument amplifiers)
 ## YAGNI (but also KISS and DRY)
 - "https://medium.com/swlh/yagni-and-dry-the-kiss-of-death-for-your-software-project-cfd44b0654b6#fc82"
 - [eagle queue json only](https://gitit.post.ch/projects/ISA/repos/eagle/pull-requests/331/overview?commentId=236944)
+- [Uncle Bob - Why Are Programmers slow](https://youtu.be/G6HyEeEcB-w)
 
 ## How to format method parameters
 - "https://gitit.post.ch/projects/ISA/repos/god-backend/pull-requests/281/overview?commentId=210650"
@@ -357,7 +361,7 @@ Links (Aka argument amplifiers)
 - "https://m.youtube.com/watch?v=_dAtdSVeiLM"
 
 ## MultiThreading vertx gateleen
-- "https://jira.post.ch/browse/SDCISA-9845?focusedCommentId=1617020&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-1617020
+- [](https://jira.post.ch/browse/SDCISA-9845?focusedCommentId=1617020&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-1617020)
 
 ## MultiThreading concurrency atomic volatile
 - "https://gitit.post.ch/projects/ISA/repos/halfrunt/pull-requests/27/overview?commentId=105019"
@@ -366,9 +370,6 @@ Links (Aka argument amplifiers)
 
 ## MultiThreading Dead Lock
 - [Zarquon IO stream read write](https://gitit.post.ch/projects/ISA/repos/zarquon/pull-requests/2/overview?commentId=61285)
-
-## Uncle Bob - Why Are Programmers slow
-- "https://youtu.be/G6HyEeEcB-w"
 
 ## Backward compatible Support old systems
 - (32-bit CPU) "https://itsfoss.com/32-bit-os-list/"
@@ -440,4 +441,7 @@ Links (Aka argument amplifiers)
 
 ## Authentication passowrd 2FA
 - [2FA failed](https://www.techradar.com/news/2fa-compromise-led-to-cryptocom-hack)
+
+## How to use Jenkinsfiles. Reduce dependency to groovy
+- [_](https://www.jenkins.io/doc/book/pipeline/pipeline-best-practices/)
 
