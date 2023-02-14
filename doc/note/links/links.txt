@@ -445,3 +445,9 @@ Links (Aka argument amplifiers)
 ## How to use Jenkinsfiles. Reduce dependency to groovy
 - [_](https://www.jenkins.io/doc/book/pipeline/pipeline-best-practices/)
 
+## Downstream VS upstream request response
+- [terms explained](https://softwareengineering.stackexchange.com/questions/312401)
+
+## Properties in paisa service git repositories gets forced
+- [I've warned. Not my problem anymore](https://gitit.post.ch/projects/ISA/repos/preflux/pull-requests/582/overview?commentId=245258)
+
