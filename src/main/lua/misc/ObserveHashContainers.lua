@@ -22,16 +22,20 @@ end
 
 function mod.parseArgs( app )
     local iA = 0
+    local isDoit = false
     while true do iA = iA + 1
         local arg = _ENV.arg[iA]
         if not arg then
             break
         elseif arg == "--help" then
             mod.printHelp() return -1
+        elseif arg == "--doit" then -- TODO rm
+            isDoit = true
         else
             log:write("Unexpected arg: "..tostring(arg).."\n") return -1
         end
     end
+    if not isDoit then log:write("Bad Args\n") return -1 end
     return 0
 end
 
