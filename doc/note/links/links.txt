@@ -306,6 +306,7 @@ Links (Aka argument amplifiers)
 ## Command Escaping And Injection
 - "https://jira.post.ch/browse/SDCISA-3602"
 - [My hopefully bullet-proove shell escaping](https://gitit.post.ch/projects/ISA/repos/jenkins-shared-libraries/pull-requests/82/overview?commentId=237165)
+- [do NOT use silly replacements](https://jira.post.ch/browse/SDCISA-11235?focusedCommentId=1686016&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-1686016)
 
 ## logger noise spam verbose
 - [fix the REAL problem please](https://jira.post.ch/browse/SDCISA-3637?focusedCommentId=1252741&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-1252741)
