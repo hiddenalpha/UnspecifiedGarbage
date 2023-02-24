@@ -40,19 +40,32 @@ function mod.parseArgs( app )
 end
 
 
-function mod.run( app )
+function mod.dockerPs( app, host )
+    local cmdLine = 'ssh "'.. host ..'" -- sh -c "true && docker ps'
+        -- TODO also exclude "up 1-3 Hours"
+        ..' | egrep -v \'(^CONTAINER ID |  About a minute ago  |  [0-9]+ minutes ago  |  42 seconds ago  )\'"'
+    log:write("[INFO ] ".. cmdLine .."\n")
     local cmd = newShellcmd{
-        cmd = "printf 'guguseli\n'",
+        cmd = cmdLine,
+        onStdout = function( buf ) if buf then io.stdout:write(buf) end end,
     }
     cmd:start()
     cmd:closeSnk()
     while true do
-        local exit, signal = cmd:join(1000)
-        log:write("exit:   "..tostring(exit).."\n")
-        log:write("signal: "..tostring(signal).."\n")
-        sleep(1)
+        local exit, signal = cmd:join(3000)
+        if exit == 0 then break end
+        if exit then log:write(" exitCode="..tostring(exit)) end
+        if signal then log:write(" signal="..tostring(signal)) end
+        if exit or signal then log:write(": ".. cmdLine .."\n") return -1 end
+        log:write("Waiting for cmd: ".. cmdLine .."\n")
     end
-    log:write("TODO not impl yet\n")
+end
+
+
+function mod.run( app )
+    for _,host in pairs{"teddie01", "teddie05", "teddie06"} do
+        mod.dockerPs(app, host)
+    end
 end
 
 
