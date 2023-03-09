@@ -5,15 +5,15 @@ const Agent = require("http").Agent;
 const N = null;
 const URL = require("url").URL;
 const assert = require("assert");
+const fs = require("fs");
 const http = require("http");
 const isArray = Array.isArray;
+const isBuffer = Buffer.isBuffer;
+const isInteger = Number.isInteger;
 const log = process.stderr;
 
 const MODE_PULL = 1;
 const MODE_PUSH = 2;
-
-
-setTimeout(main);
 
 
 function printHelp( app ){
@@ -44,8 +44,7 @@ function printHelp( app ){
         +"          Use stdio instead of 'file'.\n"
         +"  \n"
         +"      --file <path.tar>\n"
-        +"          (optional) Path to archive file to read/write. Defaults to\n"
-        +"          stdin/stdout.\n"
+        +"          (optional) Path to archive to read/write.\n"
         +"\n");
 }
 
@@ -72,8 +71,8 @@ function parseArgs( app, argv ){
         }else if( arg == "--stdio" ){
             app.isStdio = true;
         }else if( arg == "--file" ){
-            app.file = argv[++iA];
-            if( !app.file ){ dst.write("Arg --file needs value\n"); return -1; }
+            app.archivePath = argv[++iA];
+            if( !app.archivePath ){ dst.write("Arg --file needs value\n"); return -1; }
         }else{
             dst.write("Unexpected arg: "+ arg +"\n");
             return -1;
@@ -87,7 +86,7 @@ function parseArgs( app, argv ){
         dst.write("Arg --url missing.\n");
         return -1;
     }
-    if( !app.file && !app.isStdio ){
+    if( !app.archivePath && !app.isStdio ){
         dst.write("Arg --stdio or --file missing. Don't know where to keep data.\n");
         return -1;
     }
@@ -130,7 +129,7 @@ function fetchCollection( app, node ){
     });
     log.write("> GET "+ node.url +"\n");
     collection.base = http.get(node.url, {agent:app.httpAgent}, onCollectionResponseHdr.bind(N, collection));
-    collection.base.on("error", function( ex ){ console.error(ex); });
+    collection.base.on("error", function( ex ){ throw ex; });
     collection.base.end();
 }
 
@@ -180,6 +179,7 @@ function onCollectionResponseEnd( collection ){
         child.isLeaf = (childName.endsWith("/") == false);
         childNodes.push(child);
     });
+    assert(node.childNodes == null);
     node.childNodes = childNodes;
 
     // Recurse into childs
@@ -195,18 +195,72 @@ function onCollectionResponseEnd( collection ){
         while( rootNode.parentNode != null ){
             rootNode = rootNode.parentNode;
         }
-        streamResources(app, rootNode);
+        packResourcesIntoTar(app, rootNode);
     }
 }
 
 
-function streamResources( app, rootNode ){
-    const iter = newPreAndPostOrderIterator( app, rootNode );
-    for( const holder=[null] ; iter.next(holder) ;){
-        const node = holder[0];
-        console.log(node.url);
+function packResourcesIntoTar( app, rootNode ){
+    if( app.isStdio ){
+        onTarArchiveFdOpened(app, rootNode, process.stdout.fd);
+    }else{
+        fs.open(app.archivePath, "wb", onTarArchiveFdOpened.bind(N, app, rootNode));
     }
-    throw Error("TODO_20230309144518");
+}
+
+
+function onTarArchiveFdOpened( app, rootNode, fd ){
+    assert(app.archiveFd === null);
+    app.archiveFd = fd;
+    const tar = newTarWriter( app, {
+        cls: app,
+        onChunk: onTarChunk,
+        onEnd: onTarEnd,
+    });
+    // Overcount by one to have the whole process itself covered too. Gets
+    // decremented in onTarEnd.
+    app.numPendingTarWriteRequests += 1;
+    const iter = newPreAndPostOrderIterator(app, rootNode);
+    const holder = [null];
+    (function loop(){
+        while( iter.next(holder) ){
+            const node = holder[0];
+            if( ! node.isLeaf ){
+                continue; // We only care about resources. Collections have no relevance.
+            }
+            var path = node.url;
+            path = path.substring(rootNode.url.length);
+            while( path.charAt(0) == "/" ){ path = path.substring(1); }
+            assert(path.indexOf("?") === -1);
+            tar.writeHdr({
+                path: path,
+                size: 42, // TODO
+            });
+        }
+        throw Error("TODO_20230309172911");
+    }());
+}
+
+
+function onTarChunk( buf, app ){
+    app.numPendingTarWriteRequests += 1;
+    fs.write(app.archiveFd, buf, function(err, bytesWritten){
+        if( --app.numPendingTarWriteRequests == 0 ){
+            onTarWritten(app);
+        }
+    });
+}
+
+
+function onTarEnd( app ){
+    if( --app.numPendingTarWriteRequests ){
+        onTarWritten(app);
+    }
+}
+
+
+function onTarWritten( app ){
+    throw Error("TODO_20230309190730");
 }
 
 
@@ -231,32 +285,42 @@ const newPreAndPostOrderIterator = (function(){
 
     function next( iterCls, dstArr ){
         assert(isArray(dstArr));
-        const frame = iterCls.stack[iterCls.stack.length - 1];
-        if( ! frame ){
-            return false; // No more elements. EndOfIteration reached.
+        while(true){
+            const frame = iterCls.stack[iterCls.stack.length - 1];
+            if( ! frame ){
+                return false; // No more elements. EndOfIteration reached.
+            }
+            if( frame.node.isLeaf === true ){
+                // Just publish ourself as leaf.
+                dstArr[0] = frame.node;
+                iterCls.stack.pop(); // Prepare next turn
+                assert(dstArr[0]);
+                return true;
+            }
+            if( frame.currentChild == -1 ){
+                // preOrder. Aka publish node itself
+                dstArr[0] = frame.node;
+                frame.currentChild += 1;
+                assert(dstArr[0]);
+                return true;
+            }
+            if( frame.currentChild < frame.node.childNodes.length ){
+                // publish next child (recursively)
+                const childFrame = newFrame();
+                childFrame.node = frame.node.childNodes[frame.currentChild];
+                frame.currentChild += 1;
+                iterCls.stack.push(childFrame);
+                continue;
+            }else{
+                // No more childs. Publish postOrder, aka node itself.
+                dstArr[0] = frame.node;
+                // Then step one level back of our recursion.
+                iterCls.stack.pop();
+                assert(dstArr[0]);
+                return true;
+            }
+            throw Error("TODO_20230309161935");
         }
-        if( frame.currentChild == -1 ){
-            // preOrder. Aka publish node itself
-            dstArr[0] = frame.node;
-            frame.currentChild += 1;
-            assert(dstArr[0]);
-            return true;
-        }
-        if( frame.currentChild < frame.node.childNodes.length ){
-            // publish next child
-            dstArr[0] = frame.node.childNodes[frame.currentChild];
-            frame.currentChild += 1;
-            assert(dstArr[0]);
-            return true;
-        }else{
-            // No more childs. Publish postOrder, aka node itself.
-            dstArr[0] = frame.node;
-            // Then step one level back of our recursion.
-            iterCls.stack.pop();
-            assert(dstArr[0]);
-            return true;
-        }
-        throw Error("TODO_20230309161935");
     }
 
     function newFrame(){
@@ -271,20 +335,124 @@ const newPreAndPostOrderIterator = (function(){
 }());
 
 
-function main(){
+const newTarWriter = (function(){
+    return function( app, opts ){
+        assert(opts.onChunk);
+        const tarCls = Object.seal({
+            handle: {},
+            remainingBodyBytes: 0,
+            bytesToFillForAlignment: 0,
+            cb_cls: opts.cls,
+            cb_onChunk: opts.onChunk,
+            cb_onEnd: opts.onEnd,
+        });
+        Object.defineProperties(tarCls.handle, {
+            "writeHdr": { value: writeHdr.bind(N, tarCls) },
+            "writeBodyChunk": { value: writeBodyChunk.bind(N, tarCls) },
+            "closeSnk": { value: closeSnk.bind(N, tarCls) },
+        });
+        return tarCls.handle;
+    };
+
+    function writeHdr( tarCls, opts ){
+        var tmp;
+        const path = opts.path;
+        const size = opts.size;
+        assert(tarCls.remainingBodyBytes == 0);
+        assert(typeof(path) == "string");
+        assert(typeof(size) == "number");
+        assert(size >= 0 && isInteger(size));
+        const path_len = lengthInUtf8Bytes(path);
+        assert(path_len <= 100); // TODO use gnu extension to allow longer names.
+        const hdr = Buffer.alloc(512, 0);
+        hdr.write(path, 0);
+        hdr.write("0000644\0", 100, 8); // mode
+        hdr.write("0000000\0", 108, 8); // userId
+        hdr.write("0000000\0", 116, 8); // groupId
+        tmp = ("000000000000"+ size.toString(8)).slice(-11) +"\0";
+        hdr.write(tmp, 124, 12); // File size in bytes
+        tmp = Math.floor(Date.now() / 1000);
+        tmp = ("000000000000"+ tmp.toString(8)).slice(-11) +"\0";
+        hdr.write(tmp, 136, 12); // mtime epochSec
+        hdr.write(" 0", 155, 2); // Link indicator (0="regular file")
+        hdr.write("ustar  \0", 257, 8); // magic
+        /* checksum */ {
+            tmp = 0;
+            for( const byt of hdr ){
+                tmp += byt;
+            }
+            while( tmp >= 0x1FFFF ){ tmp -= 0x1FFFF; } // TODO don't be silly
+            tmp = ("0000000"+ tmp).slice(-6) +"\0";
+            hdr.write(tmp, 148, 6); // Checksum
+        }
+        // Align before write header
+        fillZeroUpToBlockBoundary(tarCls);
+        tarCls.remainingBodyBytes = size;
+        tarCls.bytesToFillForAlignment = size;
+        while( tarCls.bytesToFillForAlignment >= 512 ){ // TODO don't be silly
+            tarCls.bytesToFillForAlignment -= 512;
+        }
+        publishBuf(tarCls, hdr);
+    }
+
+    function writeBodyChunk( tarCls, buf ){
+        assert(isBuffer(buf));
+        tarCls.remainingBodyBytes -= len;
+        assert(tarCls.remainingBodyBytes >= 0);
+        publishBuf(tarCls, buf);
+    }
+
+    function closeSnk( tarCls ){
+        fillZeroUpToBlockBoundary(tarCls);
+        for( var i=0 ; i < 2 ; ++i ){
+            var zeroBuf = Buffer.alloc(512);
+            publishBuf(tarCls, zeroBuf);
+        }
+        tarCls.cb_onEnd(tarCls.cb_cls);
+    }
+
+    function fillZeroUpToBlockBoundary( tarCls ){
+        var tmp = tarCls.bytesToFillForAlignment;
+        tarCls.bytesToFillForAlignment = 0;
+        if( tmp != 0 ){
+            const align = Buffer.alloc(tmp);
+            tarCls.cb_onChunk(align, tarCls.cb_cls);
+        }
+    }
+
+    function publishBuf( tarCls, buf ){
+        tarCls.cb_onChunk(buf, tarCls.cb_cls);
+    }
+
+}());
+
+
+// Source: https://stackoverflow.com/a/5515960/4415884
+function lengthInUtf8Bytes( str ){
+    // Matches only the 10.. bytes that are non-initial characters in a multi-byte sequence.
+    var m = encodeURIComponent(str).match(/%[89ABab]/g);
+    return str.length + (m ? m.length : 0);
+}
+
+
+function main( argv ){
     var app = Object.seal({
         isHelp: false,
         mode: null,
         url: null,
         isStdio: false,
-        file: null,
+        archivePath: null,
+        archiveFd: null,
         httpAgent: null,
         numPendingCollectionRequests: 0,
+        numPendingTarWriteRequests: 0,
     });
-    if( parseArgs(app,process.argv) != 0 ){ process.exit(1); }
+    if( parseArgs(app, argv) != 0 ){ process.exit(1); }
     if( app.isHelp ){ printHelp(app); return 0; }
     run(app);
 }
 
+
+setTimeout(main, 0, process.argv);
 
 }());
