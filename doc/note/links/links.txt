@@ -347,9 +347,9 @@ Links (Aka argument amplifiers)
 - "https://m.youtube.com/watch?v=3fh9qm-ljA8"
 
 ## java slf4j parameterized logging log4shell
-- "https://www.tutorialspoint.com/slf4j/slf4j_parameterized_logging.htm"
-- "https://beaglesecurity.com/blog/vulnerability/format-string-vulnerability.html"
-- "https://nvd.nist.gov/vuln/detail/CVE-2021-44228"
+- [slf4j parameterized logging](https://www.tutorialspoint.com/slf4j/slf4j_parameterized_logging.htm)
+- [Format string vulnerability](https://beaglesecurity.com/blog/vulnerability/format-string-vulnerability.html)
+- [slf4shell](https://nvd.nist.gov/vuln/detail/CVE-2021-44228)
 
 ## slf4j logger logging paisa platform alice
 - logger fail "https://jira.post.ch/browse/SDCISA-9903"
