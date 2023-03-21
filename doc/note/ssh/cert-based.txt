@@ -1,0 +1,14 @@
+
+Cert Based SSH in PaISA
+=======================
+
+
+Notes from rothol.
+
+Tool ist in "go".
+Env var sagt wo agent ist.
+oli dok -> "https://wikit.post.ch/x/giKpPQ"
+oli repo -> "https://gitit.post.ch/users/rothol/repos/vault-ssh-agent/browse"
+
+  ssh-add my_private_key
+
