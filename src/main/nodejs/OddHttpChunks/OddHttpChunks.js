@@ -16,24 +16,25 @@
 
     function printHelp(){
         out.write("\n"
-            +"  Send oddly splitted multiget requests.\n"
+            +"  Send unluckily splitted multiget responses.\n"
             +"\n"
             +"  Options:\n"
             +"\n"
             +"    --host <str>\n"
-            //+"        Nsync peer host where to send messages to.\n"
-            +"        Where to listen for nsync requests. Defaults to 'localhost'.\n"
+            +"        Where to listen for nsync requests. Default 'localhost'.\n"
             +"\n"
             +"    --port <int>\n"
-            //+"        Nsync peer port where to send messages to.\n"
-            +"        Server port to listen on.\n"
+            +"        Server port to listen on. Default '8080'.\n"
             +"\n"
             +"\n");
     }
 
 
     function parseArgs( app, argv ){
+        // defaults
         app.listenHost = "127.0.0.1";
+        app.listenPort = 8080;
+        //
         for( var iArg=2 ; iArg < argv.length ; ++iArg ){
             var arg = argv[iArg];
             if( !arg ){
@@ -61,21 +62,18 @@
 
 
     function run( app ){
-        //app.sock = createConnection({
-        //    host: app.peerHost,
-        //    port: app.peerPort,
-        //});
-        //app.sock.on('connect', onSocketConnect.bind(N, app));
-        //app.sock.on('data', onSocketData.bind(N, app));
         app.server = createServer();
-        app.server.on("request", onIncomingHttpRequest.bind(N, app));
-        app.server.listen(app.listenPort, app.listenHost, function(){
-            log.write("Listening on "+ app.listenHost +":"+ app.listenPort +"\n");
-        });
+        app.server.on("request", onServerIncomingHttpRequest.bind(N, app));
+        app.server.listen(app.listenPort, app.listenHost, onServerReady.bind(N, app));
     }
 
 
-    function onIncomingHttpRequest( app, req, rsp ){
+    function onServerReady( app ){
+        log.write("Listening on "+ app.listenHost +":"+ app.listenPort +"\n");
+    }
+
+
+    function onServerIncomingHttpRequest( app, req, rsp ){
         log.write("< "+ req.method +" "+ req.url +"\n");
         var iBuf = 0;
         var chunk;
@@ -100,39 +98,20 @@
             +"Content-Type: application/multiget-response\r\n"
             +"Content-Length: "+ iBuf +"\r\n"
             +"\r\n");
-        // But then we ensure that resources are split unluckily in middle of
-        // content chunk on TCP layer.
+        // But now we ensure that resources are split unluckily in middle of
+        // content chunk. This increases probability that the internal buffers
+        // binally arriving in our client application are split in a similar
+        // way.
         var splitOne = 14;
         var splitTwo = 34;
+        var delayMs = 100;
         sock.write(buf.slice(0, splitOne));
-        sock.write(buf.slice(splitOne, splitTwo));
-        sock.write(buf.slice(splitTwo, iBuf));
-    }
-
-
-    function onSocketConnect( app ){
-        app.sock.write("HTTP/1.1 200 OK\r\n"
-            //+"Host: "+ app.peerHost +":"+ app.peerPort +"\r\n"
-            +"Content-Type: application/multiget-response\r\n"
-            +"\r\n");
-        var enc = app.multigetEncoder = newMultigetEncoder({
-            onChunk: function( buf ){ app.sock.write(buf); },
-            onFlush: function(){ app.sock.flush(); }
-        });
-        enc.writePathFull("/guguseli");
-        var chunk = Buffer.from("This-is-the-body\n");
-        enc.beginContent(chunk.length);
-        enc.writeBodyChunk(chunk);
-        //
-        enc.writePathFull("/gagageli");
-        var chunk = Buffer.from("My-funny-json\n");
-        enc.beginContent(chunk.length);
-        enc.writeBodyChunk(chunk);
-    }
-
-
-    function onSocketData( app, buf ){
-        out.write(buf);
+        setTimeout(function(){
+            sock.write(buf.slice(splitOne, splitTwo));
+        }, delayMs);
+        setTimeout(function(){
+            sock.write(buf.slice(splitTwo, iBuf));
+        }, 2*delayMs);
     }
 
 
@@ -179,6 +158,10 @@
             mGetEnc.cb_onChunk(buf, mGetEnc.cb_cls);
         }
     }());
+
+
+    //function sendSyncRegistration( app ){
+    //}
 
 
     function main(){
