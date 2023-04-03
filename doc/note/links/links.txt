@@ -366,6 +366,7 @@ Links (Aka argument amplifiers)
 
 ## MultiThreading vertx gateleen
 - [](https://jira.post.ch/browse/SDCISA-9845?focusedCommentId=1617020&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-1617020)
+- [Vertx concurrency model event-loop single threaded](https://stackoverflow.com/a/26875206/4415884)
 
 ## MultiThreading concurrency atomic volatile
 - "https://gitit.post.ch/projects/ISA/repos/halfrunt/pull-requests/27/overview?commentId=105019"
@@ -463,4 +464,8 @@ Links (Aka argument amplifiers)
 
 ## Java JDK Tools
 - [Pure java 1.6 HttpServer](https://stackoverflow.com/a/3732328/4415884)
+
+## security
+- [SDCISA-4808] Security flaw due to no-security-if-no-identity policy Open
+- [Make ISA secure (again?)](https://wikit.post.ch/x/n984Mg)
 
