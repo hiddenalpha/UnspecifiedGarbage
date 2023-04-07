@@ -5,12 +5,12 @@ ARG PARENT_IMAGE=alpine:3.16.0
 FROM $PARENT_IMAGE
 
 ARG ZLIB_VERSION="1.2.11"
-ARG PKGS_TO_ADD="curl gcc-mingw-w64 make tar ca-certificates"
+ARG PKGS_TO_ADD="curl mingw-w64-gcc make tar ca-certificates"
 ARG PKGS_TO_DEL=""
 ARG PKG_INIT="true"
 ARG PKG_ADD="apk add "
 ARG PKG_DEL="apk del"
-ARG PKG_CLEAN="apk clean"
+ARG PKG_CLEAN="true"
 
 RUN true \
     && WORKDIR="/work" \
