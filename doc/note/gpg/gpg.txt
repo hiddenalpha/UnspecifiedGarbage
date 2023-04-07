@@ -49,7 +49,7 @@ you're doing! If you don't, you MUST NOT use those instructions!
   # I suggest to use a different passphrase than the master key has.
   # (HINT: just ignore error about missing private key. it works anyway)
   gpg --edit-key foo@example.com passwd quit
-  # For each device choose one encrypt and one sign key and replace F00 and BA5
+  # Choose one encrypt and one sign key and replace F00 and BA5
   # below with them.
   gpg --export-secret-subkeys F00! BA5! > keys-for-device
 
