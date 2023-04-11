@@ -1,0 +1,26 @@
+
+Maven
+================
+
+mvn dependency:help -Ddetail=true
+
+mvn versions:set -DgenerateBackupPoms=false -DnewVersion=
+
+mvn versions:set -DgenerateBackupPoms=false -DnextSnapshot
+
+mvn versions:update-parent -DparentVersion=
+
+mvn versions:set-property -Dproperty=foo.bar -DnewVersion=gugus
+
+
+## Deploy paisa snapshot
+mvn deploy -DaltDeploymentRepository=artifactory-snapshots::default::https://artifactory.tools.pnet.ch/artifactory/libs-snapshot-local
+
+
+## Deploy paisa release
+mvn deploy -Dcmake.generate.skip=true -Dcmake.compile.skip=true -DaltDeploymentRepository=artifactory-releases::default::https://artifactory.tools.pnet.ch/artifactory/libs-release-local
+
+
+## Run e2e locally
+mvn verify -U -DSelBaseUrl=http://localhost:7012/apigateway/services/foo/index.html -Dskip.tests=false -Dserver.host=localhost -Dserver.port=7012 -Ptestsuite
+
