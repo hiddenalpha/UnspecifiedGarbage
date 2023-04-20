@@ -1,0 +1,30 @@
+
+Dash
+================
+
+## Links
+
+- "https://git.kernel.org/pub/scm/utils/dash/dash.git"
+
+
+## Setup Build Env
+
+  true &&
+    PKGINIT="apt-get update" &&
+    PKGADD="apt-get install --no-install-recommends -y" &&
+    $PKGADD automake gcc make libc6-dev &&
+    true
+
+
+## Build Dash
+
+  true &&
+    aclocal &&
+    autoconf &&
+    autoreconf --install &&
+    automake &&
+    ./configure &&
+    make clean &&
+    make &&
+    true
+

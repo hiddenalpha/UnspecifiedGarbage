@@ -1,0 +1,36 @@
+
+Dash For Windoof
+================
+
+WARN: Does not work. Doof systems don't have signals.
+
+
+## Links
+
+- "https://git.kernel.org/pub/scm/utils/dash/dash.git"
+
+
+## Setup Build Env
+
+  true &&
+    PKGINIT="true" &&
+    PKGADD="apk add" &&
+    $PKGADD autoconf automake mingw-w64-gcc gcc libc-dev make &&
+    true
+
+
+## Build Dash
+
+  true &&
+    aclocal &&
+    autoconf &&
+    autoreconf --install &&
+    automake &&
+    ./configure &&
+    make clean &&
+    (cd src && make mknodes) &&
+    ./configure --prefix="/dash-files" --host "x86_64-w64-mingw32" \
+        CC=x86_64-w64-mingw32-gcc &&
+    make &&
+    true
+
