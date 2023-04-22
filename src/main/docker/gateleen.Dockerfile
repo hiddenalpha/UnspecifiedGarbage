@@ -5,7 +5,7 @@
 ARG PARENT_IMAGE=alpine:3.16.0
 FROM $PARENT_IMAGE
 
-ARG GATELEEN_GIT_TAG=v1.3.19
+ARG GATELEEN_GIT_TAG=v1.3.28
 ARG UID=1000
 ARG GID=1000
 ARG PKGS_TO_ADD="maven nodejs npm curl redis openjdk11-jre-headless"
