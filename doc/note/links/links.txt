@@ -87,6 +87,8 @@ Links (Aka argument amplifiers)
 ## Java how to handle InterruptedException:
 - "https://www.yegor256.com/2015/10/20/interrupted-exception.html"
 - "https://stackoverflow.com/questions/3976344/handling-interruptedexception-in-java"
+- [is-it-ok-to-ignore-interruptedexception-if-nobody-calls-interrupt](https://stackoverflow.com/questions/28544867)
+- [Ignore InterruptedException](https://github.com/swisspost/vertx-redisques/pull/115#discussion_r1176396149)
 - "https://gitit.post.ch/projects/ISA/repos/preflux/pull-requests/39/overview?commentId=33603"
 - "https://gitit.post.ch/projects/ISA/repos/zarquon/pull-requests/3/overview?commentId=62065"
 - "https://jira.post.ch/browse/SDCISA-5624"
@@ -151,6 +153,7 @@ Links (Aka argument amplifiers)
 - [warning about formatters](https://gitit.post.ch/projects/ISA/repos/trin/pull-requests/79/overview?commentId=235667)
 - [static final java uppercase](https://gitit.post.ch/projects/ISA/repos/preflux/pull-requests/82/overview?commentId=39126)
 - [invalid java class name](https://gitit.post.ch/projects/ISA/repos/preflux/pull-requests/82/overview?commentId=39125)
+- [Spotless produces crap](https://gitit.post.ch/projects/ISA/repos/poodoo/pull-requests/40/overview?commentId=263122)
 - [Spotless produces crap](https://gitit.post.ch/projects/ISA/repos/minetti/pull-requests/14/overview)
 - [Spotless produces crap](https://gitit.post.ch/projects/ISA/repos/veet/pull-requests/2/overview?commentId=233638)
 - [Spotless produces crap](https://gitit.post.ch/projects/ISA/repos/trin/pull-requests/79)
