@@ -1,0 +1,61 @@
+
+Some personal notes about jssc
+==============================
+
+# Try To build it
+
+HINT: Only works for paisa fork most probably due to company firewall.
+
+  SSH_USER=$USERNAME
+  BUILD_HOST=eddie09815
+
+  true \
+  && mvn clean \
+  && mvn compile -Dcmake.generate.skip -Dcmake.compile.skip \
+  && echo '#define JSSC_VERSION "'`(git describe --tags|sed 's,^v,,')`'"' > src/main/cpp/version.h \
+  && ssh ${SSH_USER}@${BUILD_HOST:?} -- "if [" -e jssc-build "] ;then echo 'WARN: DIR ALREADY EXISTS'; exit 1; else mkdir -p jssc-build/src/main/cpp; fi" \
+  && scp -rp src/main/cpp ${SSH_USER}@${BUILD_HOST:?}:jssc-build/src/main/. \
+  && ssh ${SSH_USER}@${BUILD_HOST:?} -- cd jssc-build "&&" mkdir -p src/main/resources-precompiled/natives/linux_64 "&&" sudo docker run --rm --user '$(id -u):$(id -g)' -v '"$PWD"':/blubb -w /blubb gcc:4.8 g++ -Wall -pedantic -Werror -Wno-error=long-long -Wno-error=sign-compare -Wno-error=variadic-macros -Wno-long-long -Isrc/main/cpp/extracted-jni-headers -Isrc/main/cpp -fPIC -shared -o src/main/resources-precompiled/natives/linux_64/libjssc.so src/main/cpp/_nix_based/jssc.cpp \
+  && scp -r ${SSH_USER}@${BUILD_HOST:?}:jssc-build/src . \
+  && ssh ${BUILD_HOST:?} -- rm jssc-build -rf \
+  && mvn verify -Dcmake.generate.skip=true -Dcmake.compile.skip=true \
+  && true
+
+
+## Get JNI headers
+
+jdk8
+
+  javah -d src/main/cpp -cp src/main/java jssc.SerialNativeInterface
+
+jdk11 (Source: "https://stackoverflow.com/q/60619961/4415884")
+
+  javac -h src/main/cpp -sourcepath src/main/java -d target/classes \
+      src/main/java/jssc/SerialNativeInterface.java \
+      -cp "$HOME/.m2/repository/org/slf4j/slf4j-api/1.7.30/slf4j-api-1.7.30.jar"
+
+jdk11 (another way)
+
+  true \
+  && docker run --rm openjdk:11 cat /usr/local/openjdk-11/include/jni.h > jni.h \
+  && docker run --rm openjdk:11 cat /usr/local/openjdk-11/include/linux/jni_md.h > jni_md.h \
+  && true
+
+
+## Deploy to artifactory
+
+Snapshot
+
+  ARTIFACTORY_ROOT="https://example.com/artifactory/libs-snapshot-local"
+  mvn deploy -Dcmake.generate.skip=true -Dcmake.compile.skip=true -DaltDeploymentRepository=artifactory-snapshots::default::$ARTIFACTORY_ROOT
+
+Release
+
+  ARTIFACTORY_ROOT="https://example.com/artifactory/libs-release-local"
+  mvn deploy -Dcmake.generate.skip=true -Dcmake.compile.skip=true -DaltDeploymentRepository=artifactory-releases::default::$ARTIFACTORY_ROOT
+
+Verify loaded version
+
+  ls -al /usr/local/jetty/lib/ext | grep -E 'jssc|native' 
+
+
