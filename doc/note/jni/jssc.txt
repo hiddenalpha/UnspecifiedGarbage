@@ -6,8 +6,10 @@ Some personal notes about jssc
 
 HINT: Only works for paisa fork most probably due to company firewall.
 
-  SSH_USER=$USERNAME
-  BUILD_HOST=eddie09815
+  true \
+  && SSH_USER=$USERNAME \
+  && BUILD_HOST=eddie09815 \
+  && true
 
   true \
   && mvn clean \
