@@ -1,0 +1,23 @@
+
+JNI Error handling
+==================
+
+[Jni exception handling intro](https://www.developer.com/open-source/exception-handling-in-jni/)
+
+
+Simple way is to check return value. Some return NULL on error. If so, we just
+can return NULL ourself. As we do not touch the exception status, it will be
+thrown into the calling java code.
+
+  Foo val = env->bar();
+  if( val == NULL ) return NULL;
+
+In some cases we cannot use the return code. May there is no return value or
+NULL may be a valid return value. In such a case we have to ask if an exception
+happened. Then we just return nothing (or NULL) and exception will be thrown
+into java code.
+
+  env->bar();
+  if( env->ExceptionCheck() ) return NULL;
+
+
