@@ -91,15 +91,10 @@ function mod.putStatus( app, eddieName, statusJsonStr )
     local method, path = "PUT", mod.getStatusPathForEddie(app, eddieName)
     log:write(eddieName ..": ".. method .." ".. statusJsonStr .."\n")
     do -- Würgaround because scriptlee is too buggy
-        local gagaFilePath = "C:/work/tmp/gaga.json"
-        local gagaFile = io.open(gagaFilePath, "wb")
-        gagaFile:write(statusJsonStr)
-        gagaFile:close()
         local ok, how, num = os.execute("curl -sS -X".. method
-            .." --data-binary \"@".. gagaFilePath .."\""
+            .." --data-binary \"".. statusJsonStr:gsub('"', '\\"') .."\""
             .." \"http://".. app.houstonHost ..":".. app.houstonPort .. path .."\"")
         if not ok then error(how .." ".. tostring(num)) end
-        os.remove(gagaFilePath)
     end
     -- TODO use  goat.base = app.http:request{
     -- TODO use      cls = goat,
@@ -153,9 +148,9 @@ function mod.run( app )
         assert(type(body.message:value()) == "string")
         assert(#body == 3)
         mod.putStatus(app, eddieName, '{'
-            ..  '"timestamp":"'.. body.timestamp:value() ..'",'
+            ..  '"timestamp":"'.. os.date("%Y-%m-%dT%H:%M:%S.000+02:00") ..'",'
             ..  '"status":"ERROR_RETRY",'
-            ..  '"message":"Definition broken (probably due to eagle update). Manually scheduled to fix it again"'
+            ..  '"message":"Definition fixed at '.. body.timestamp:value() ..'. But broken again due to eagle update!"'
             ..'}')
         ::nextEddie::
     end
