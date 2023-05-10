@@ -469,7 +469,13 @@ Links (Aka argument amplifiers)
 ## Java JDK Tools
 - [Pure java 1.6 HttpServer](https://stackoverflow.com/a/3732328/4415884)
 
+## Java IntelliJ PaISA import settings code format
+- [IntelliJ Settings](https://gitit.post.ch/projects/ISA/repos/houston/pull-requests/451/overview?commentId=265197)
+
 ## security
 - [SDCISA-4808] Security flaw due to no-security-if-no-identity policy Open
 - [Make ISA secure (again?)](https://wikit.post.ch/x/n984Mg)
+
+## Bus Factor Faktor
+- [Bus factor definition wikipedia](https://en.wikipedia.org/wiki/Bus_factor)
 
