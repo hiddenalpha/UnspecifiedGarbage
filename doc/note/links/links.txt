@@ -225,6 +225,8 @@ Links (Aka argument amplifiers)
 ## Performance DOES matter
 - "https://github.com/swisspush/gateleen/pull/456#discussion_r844865066"
 - [examples](https://m.youtube.com/watch?v=EpYr3T5VP6w)
+- [Performance Excuses Debunked](https://m.youtube.com/watch?v=x2EOOJg8FkA )
+- [Simple Code, High Performance](https://m.youtube.com/watch?v=Ge3aKEmZcqY )
 - [houston storage request timed out large json](https://jira.post.ch/browse/SDCISA-11294)
 - "https://jira.post.ch/browse/SDCISA-4714"
 - "https://jira.post.ch/browse/SDCISA-8136"
@@ -317,6 +319,8 @@ Links (Aka argument amplifiers)
 
 ## logger noise spam verbose
 - [fix the REAL problem please](https://jira.post.ch/browse/SDCISA-3637?focusedCommentId=1252741&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-1252741)
+- [log spam "is not an issue"](https://jira.post.ch/browse/SDCISA-11145?focusedCommentId=1698730&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-1698730)
+- [log spam "is not an issue"](https://jira.post.ch/browse/SDCISA-11146?focusedCommentId=1745308&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-1745308)
 
 ## Bashisms
 - "https://askubuntu.com/questions/1059265/whats-the-problem-with-bashisms"
