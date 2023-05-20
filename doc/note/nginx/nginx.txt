@@ -1,0 +1,38 @@
+
+
+## Delegate requests to custom scripts via fcgiwrap
+
+  true \
+  && CGI_DIR="/fcgiwrap-webroot" \
+  && VHOST="fcgiwrap" \
+  && HOSTNAME="example.com" \
+  && LOCATION="/" \
+  && NGINX_HTTPD_DIR="/etc/nginx/sites-available" \
+  && ENABLE_SITE="ln -s ${NGINX_HTTPD_DIR:?}/${VHOST:?} /etc/nginx/sites-enabled/." \
+  && INIT_SCRIPT="/etc/init.d/fcgiwrap" \
+  && PKGINIT="apt update" \
+  && PKGADD="apt install -y --no-install-recommends" \
+  && PKGSTOADD="nginx fcgiwrap" \
+  && FASTCGI_PARAMS="/etc/nginx/fastcgi_params" \
+  && true \
+  && ${PKGINIT} \
+  && ${PKGADD:?} ${PKGSTOADD:?} \
+  && (  echo 'server {' \
+     && echo "  listen 80;" \
+     && echo "  listen [::]:80;" \
+     && echo '' \
+     && echo "  server_name ${HOSTNAME:?};" \
+     && echo '' \
+     && echo '  location /cgi-bin/ {' \
+     && echo '    gzip off;' \
+     && echo '    root ${CGI_DIR:?};' \
+     && echo '    fastcgi_pass  unix:/var/run/fcgiwrap.socket;' \
+     && echo "    include ${FASTCGI_PARAMS:?};" \
+     && echo '    fastcgi_param SCRIPT_FILENAME  /usr/lib$fastcgi_script_name;' \
+     && echo '  }' \
+     && echo '' \
+     && echo '}' \
+     ) >"${NGINX_HTTPD_DIR:?}/${VHOST:?}" \
+  && ${ENABLE_SITE:?} \
+  && true
+
