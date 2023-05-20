@@ -1,0 +1,52 @@
+
+Setup raspberry pi 4
+====================
+
+TODO: Full contents could not yet be verified.
+
+https://raspi.debian.net/
+
+
+## Flash
+
+USE "bs=4M" (raspberrypi.stackexchange.com/a/26443/154841) do NOT trust
+debian page which says 64k.
+
+  xzcat foo.xz | dd bs=4M of=/dev/sd_
+
+
+## Create ssh user
+
+  # Prepare a password
+  mkpasswd --method=sha-512 --stdin
+
+  true \
+  && USERNAME="andreas" \
+  && PASS="$6$0n6e1TqxljRLFR6M$1agoflSwKbDO6W6hW49vCwUpL54Z2lgT2WPxvWLLaS8/X7pI4T53Dm7yZCU29wqApUU696IlGpY4OC7dn3JHv0" \
+  && USERID="1000" \
+  && PUB_KEY_FILE="/home/andreas/.ssh/pub/id_m.pub.ssh2" \
+  && CHROOT="/mnt/d" \
+  && true \
+  && SSHD_CONFIG="${CHROOT:?}/etc/ssh/sshd_config" \
+  && if grep -q ":${USERID:?}:" "${CHROOT:?}/etc/passwd"; then echo "User ${USERNAME} already exists"; false; fi \
+  && echo "${USERNAME:?}:x:${USERID:?}:${USERID:?}::/home/${USERNAME:?}:/bin/bash" | tee -a "${CHROOT:?}/etc/passwd" >/dev/null \
+  && if grep -q ":${USERID:?}:" "${CHROOT:?}/etc/group"; then echo "Group ${USERID} already exists"; false; fi \
+  && echo "${USERNAME:?}:x:${USERID:?}:" | tee -a "${CHROOT:?}/etc/group" >/dev/null \
+  && if grep -q ":${USERID:?}:" "${CHROOT:?}/etc/shadow"; then echo "Password for ${USERNAME} already exists"; false; fi \
+  && echo "${USERNAME:?}:${PASS:?}:::::::" | tee -a "${CHROOT:?}/etc/shadow" >/dev/null \
+  && if ! pwck --read-only --root "${CHROOT:?}"; then echo "HINT: I don't care ..."; sleep 5; fi \
+  && mkdir "${CHROOT:?}/home/${USERNAME:?}" \
+  && mkdir "${CHROOT:?}/home/${USERNAME:?}/.ssh" \
+  && sed -i -E 's_^#(Port 22)$_\1_' "${SSHD_CONFIG:?}" \
+  && sed -i -E 's_^#(AddressFamily any)$_\1_' "${SSHD_CONFIG:?}" \
+  && sed -i -E 's_^#(ListenAddress 0.0.0.0)$_\1_' "${SSHD_CONFIG:?}" \
+  && sed -i -E 's_^#(ListenAddress ::)$_\1_' "${SSHD_CONFIG:?}" \
+  && sed -i -E 's_^#(PasswordAuthentication )(yes)$_\1no_' "${SSHD_CONFIG:?}" \
+  && cat "${PUB_KEY_FILE:?}" | tee -a "${CHROOT:?}/home/${USERNAME:?}/.ssh/authorized_keys" >/dev/null \
+  && find "${CHROOT:?}/home/${USERNAME}" -exec chown "${USERNAME:?}:${USERNAME:?}" {} + \
+  && find "${CHROOT:?}/home/${USERNAME}" -type d -exec chmod 755 {} + \
+  && find "${CHROOT:?}/home/${USERNAME}" -type f -exec chmod 644 {} + \
+  && find "${CHROOT:?}/home/${USERNAME}/.ssh" -type d -exec chmod 700 {} + \
+  && find "${CHROOT:?}/home/${USERNAME}/.ssh" -type f -exec chmod 600 {} + \
+  && true
+

@@ -1,0 +1,26 @@
+
+Bash
+================
+
+## Links
+
+- "https://git.savannah.gnu.org/git/bash.git"
+
+
+## Setup Build Env
+
+  true &&
+    PKGINIT="apt-get update" &&
+    PKGADD="apt-get install --no-install-recommends -y" &&
+    $PKGADD gcc make libc6-dev &&
+    true
+
+
+## Build Dash
+
+  true &&
+    ./configure &&
+    make clean &&
+    make &&
+    true
+

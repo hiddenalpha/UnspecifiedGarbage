@@ -3,13 +3,12 @@
 ## Delegate requests to custom scripts via fcgiwrap
 
   true \
-  && CGI_DIR="/fcgiwrap-webroot" \
+  && CGI_DIR="/var/www/cgi-bin" \
   && VHOST="fcgiwrap" \
   && HOSTNAME="example.com" \
-  && LOCATION="/" \
+  && LOCATION="/cgi-bin" \
   && NGINX_HTTPD_DIR="/etc/nginx/sites-available" \
   && ENABLE_SITE="ln -s ${NGINX_HTTPD_DIR:?}/${VHOST:?} /etc/nginx/sites-enabled/." \
-  && INIT_SCRIPT="/etc/init.d/fcgiwrap" \
   && PKGINIT="apt update" \
   && PKGADD="apt install -y --no-install-recommends" \
   && PKGSTOADD="nginx fcgiwrap" \
@@ -17,6 +16,10 @@
   && true \
   && ${PKGINIT} \
   && ${PKGADD:?} ${PKGSTOADD:?} \
+  && if [ -e "${NGINX_HTTPD_DIR:?}/${VHOST:?}" ]; then \
+         echo "File already exists: ${NGINX_HTTPD_DIR:?}/${VHOST:?}"; \
+         false; \
+     fi; \
   && (  echo 'server {' \
      && echo "  listen 80;" \
      && echo "  listen [::]:80;" \
@@ -35,4 +38,5 @@
      ) >"${NGINX_HTTPD_DIR:?}/${VHOST:?}" \
   && ${ENABLE_SITE:?} \
   && true
+
 
