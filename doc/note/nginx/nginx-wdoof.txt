@@ -1,0 +1,40 @@
+
+Setup nginx on windoof
+======================
+
+Download "https://nginx.org/en/download.html"
+
+Unpack wherever you want. This tuto assumes APP_DIR.
+
+  APP_DIR="C:\Users\%USERNAME%\.opt\nginx-VERSION\"
+
+Bakup original config file to "nginx.conf.skel".
+
+Replace config file by:
+
+worker_processes  1;
+error_log  log/error.log;
+events {
+  worker_connections  1024;
+}
+http {
+  include       mime.types;
+  default_type  application/octet-stream;
+  sendfile        on;
+  keepalive_timeout  65;
+  server {
+      listen       127.0.0.1:8080;
+      server_name  localhost;
+      location / {
+          root   srv/html;
+          index  index.html index.htm;
+      }
+  }
+}
+
+Make sure dirs chosen in config do exist. nginx won't start bcause he
+cannot find the files due to the dirs are missing.
+
+Start server by launching "nginx.exe". HINT: working dir MUST be same
+dir where the exe file resides.
+
