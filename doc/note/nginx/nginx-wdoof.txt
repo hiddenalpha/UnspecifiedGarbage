@@ -13,7 +13,7 @@ Bakup original config file to "nginx.conf.skel".
 Replace config file by:
 
 worker_processes  1;
-error_log  log/error.log;
+error_log  logs/error.log;
 events {
   worker_connections  1024;
 }
