@@ -446,6 +446,7 @@ Links (Aka argument amplifiers)
 
 ## Windoof
 - [Enable w32 crashdump](https://learn.microsoft.com/en-us/windows/win32/wer/collecting-user-mode-dumps?source=recommendations)
+- [FOSS alternative software](https://www.opensourcealternative.to/)
 
 ## Cloud is bullshit
 - [onedrive down 2023 jan](https://answers.microsoft.com/en-us/msoffice/forum/all/cant-sign-into-onedrive-something-went-wrong-on/b0273ef6-29a3-4fbd-87cc-5b1fea4a62a0)
