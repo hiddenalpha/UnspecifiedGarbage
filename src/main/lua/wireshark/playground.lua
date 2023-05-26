@@ -1,0 +1,163 @@
+
+if false then -- yell env to stdout
+    local dst = io.stdout
+    local bsti = { -- aka BullshitToIgnore
+        ["Address"]=1, ["ByteArray"]=1, ["Column"]=1, ["Dissector"]=1, ["DissectorTable"]=1,
+        ["Field"]=1, ["File"]=1, ["FileHandler"]=1, ["FrameInfo"]=1, ["FrameInfoConst"]=1,
+        ["Int64"]=1, ["Listener"]=1, ["NSTime"]=1, ["ProgDlg"]=1, ["Proto"]=1, ["ProtoExpert"]=1,
+        ["ProtoField"]=1, ["TextWindow"]=1, ["TextWindow"]=1, ["TreeItem"]=1, ["Tvb"]=1,
+        ["TvbRange"]=1, ["UInt64"]=1,
+    }
+    for k,v in pairs(_ENV) do
+        dst:write("E\t".. tostring(k) .."\t"..((bsti[k])and("")or(tostring(v))).."\n")
+    end
+end
+
+--local mod = {}
+--
+--
+--function mod.main()
+--    if gui_enabled() then
+--        mod.registerMenuGugus()
+--    end
+--end
+--
+--
+--function mod.registerMenuGugus()
+--    register_menu( "Hiddenalpha/Gugus", mod.onGugusOpen, MENU_TOOLS_UNSORTED );
+--    register_menu( "Hiddenalpha/MyListener Open", mod.onListenerMenuOpen, MENU_TOOLS_UNSORTED );
+--end
+--
+--
+--function mod.onGugusOpen()
+--    local gugus = {
+--        DBG = "THIS_IS_GUGUS",
+--    }
+--    new_dialog( "Gugus", function(...)mod.onGugusFoo(...)end, "One", "Two", "Three" );
+--end
+--
+--
+--function mod.onGugusFoo( a1, a2, a3, a4 )
+--    print( "a1", a1 )
+--    print( "a2", a2 )
+--    print( "a3", a3 )
+--    print( "a4", a4 )
+--end
+--
+--
+---------------------------------------------------------------------------------
+---- Example listener
+---------------------------------------------------------------------------------
+--
+--function mod.onListenerMenuOpen()
+--    mod.newListener()
+--end
+--
+--
+--function mod.newListener()
+--    local listener, l, win
+--    listener = {
+--        isInProgress = false,
+--        cntFrames = nil,
+--        cntBytes = nil,
+--        frameFirstTime = nil,
+--        frameLastTime = nil,
+--    }
+--    win = TextWindow.new("HiddenalphaListener")
+--    win:add_button("Refresh", function()mod.onListenerRefresh(listener) end)
+--    win:set_atclose(function()mod.onListenerClose(listener)end )
+--    win:set( "\nInitializing ..." )
+--    listener.win = win
+--    l = Listener.new()
+--    l.packet = function(...)return mod.onListenerPacket(listener,...)end
+--    l.draw = function(...)return mod.onListenerDraw(listener,...) end
+--    l.reset = function(...)return mod.onListenerReset(listener,...) end
+--    listener.l = l
+--    mod.onListenerDraw( listener ) -- <-- init
+--    return listener
+--end
+--
+--
+--function mod.onListenerRefresh( listener )
+--    listener.isInProgress = true
+--    listener.cntFrames = nil
+--    listener.cntBytes = nil
+--    listener.frameFirstTime = nil
+--    listener.frameLastTime = nil
+--    mod.onListenerDraw( listener )
+--    retap_packets()
+--end
+--
+--
+--function mod.onListenerClose( listener )
+--    if listener.l then
+--        listener.l:remove()
+--        listener.l = nil
+--    end
+--end
+--
+--
+--function mod.onListenerPacket( listener, pinfo, tvb, tapinfo )
+--    if not listener.cntFrames then listener.cntFrames = 0 end
+--    if not listener.cntBytes then listener.cntBytes = 0 end
+--    listener.cntFrames = listener.cntFrames + 1
+--    listener.cntBytes = listener.cntBytes + pinfo.len
+--    if not listener.frameFirstTime then
+--        listener.frameFirstTime = pinfo.abs_ts
+--    end
+--    listener.frameLastTime = pinfo.abs_ts
+--end
+--
+--
+--function mod.onListenerDraw( listener )
+--    local str, durationSec, toDateStr
+--    str = ""
+--    toDateStr = function(d)
+--        local sec = math.floor(d)
+--        local msec = math.modf((d-sec)*1000)
+--        return string.format("%s.%3.0f", os.date("%Y-%m-%d %H:%M:%S",sec), msec)
+--    end
+--    if listener.frameFirstTime
+--        then str = string.format("%sframeFirstTime  %s\n", str, toDateStr(listener.frameFirstTime))
+--        else str = string.format("%sframeFirstTime  N/A\n", str) end
+--    if listener.frameLastTime
+--        then str = string.format("%sframeLastTime . %s\n", str, toDateStr(listener.frameLastTime))
+--        else str = string.format("%sframeLastTime . N/A\n", str) end
+--    if listener.cntFrames
+--        then str = string.format("%scntFrames . . . %9d\n", str, listener.cntFrames)
+--        else str = string.format("%scntFrames . . . N/A\n", str) end
+--    if listener.cntBytes
+--        then str = string.format("%scntBytes  . . . %9d\n", str, listener.cntBytes)
+--        else str = string.format("%scntBytes  . . . N/A\n", str) end
+--    if listener.frameFirstTime and listener.frameLastTime then
+--        durationSec = listener.frameLastTime - listener.frameFirstTime
+--        str = string.format(     "%sDuration  . . . %9.3f sec\n", str, durationSec)
+--    end
+--    if durationSec then
+--        local avgByps = listener.cntBytes / durationSec
+--        local unit = "Bytes/sec"
+--        if avgByps > 999999999 then
+--            avgByps = avgByps / 1000000000
+--            unit = "GB/s"
+--        elseif avgByps > 999999 then
+--            avgByps = avgByps / 1000000
+--            unit = "MB/s"
+--        elseif avgByps > 999 then
+--            avgByps = avgByps / 1000
+--            unit = "kB/s"
+--        end
+--        str = string.format(     "%sThroughput  . . %9.3f %s (average)\n", str, avgByps, unit)
+--    end
+--    str = str .."\n".. (listener.isInProgress and"Processing ..."or"Ready").."\n"
+--    listener.win:set( str )
+--end
+--
+--
+--function mod.onListenerReset( listener )
+--    listener.isInProgress = false
+--end
+--
+---------------------------------------------------------------------------------
+--
+--
+--mod.main()
