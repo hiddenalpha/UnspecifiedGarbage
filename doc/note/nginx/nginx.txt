@@ -3,9 +3,10 @@
 ## Delegate requests to custom scripts via fcgiwrap
 
   true \
-  && CGI_DIR="/var/www/cgi-bin" \
+  && DOCUMENT_ROOT="/var/www" \
+  && CGI_DIR="${DOCUMENT_ROOT:?}/cgi-bin" \
   && VHOST="fcgiwrap" \
-  && HOSTNAME="example.com" \
+  && HOSTNAME="localhost" \
   && LOCATION="/cgi-bin" \
   && NGINX_HTTPD_DIR="/etc/nginx/sites-available" \
   && ENABLE_SITE="ln -s ${NGINX_HTTPD_DIR:?}/${VHOST:?} /etc/nginx/sites-enabled/." \
@@ -28,10 +29,10 @@
      && echo '' \
      && echo '  location /cgi-bin/ {' \
      && echo '    gzip off;' \
-     && echo '    root ${CGI_DIR:?};' \
+     && echo "    root ${DOCUMENT_ROOT:?};" \
      && echo '    fastcgi_pass  unix:/var/run/fcgiwrap.socket;' \
      && echo "    include ${FASTCGI_PARAMS:?};" \
-     && echo '    fastcgi_param SCRIPT_FILENAME  /usr/lib$fastcgi_script_name;' \
+     && echo '    fastcgi_param SCRIPT_FILENAME  '"${CGI_DIR:?}"'$fastcgi_script_name;' \
      && echo '  }' \
      && echo '' \
      && echo '}' \
