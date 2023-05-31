@@ -15,6 +15,13 @@ debian page which says 64k.
   xzcat foo.xz | dd bs=4M of=/dev/sd_
 
 
+## General update
+
+  true \
+  && apt update \
+  && apt upgrade \
+  && true
+
 ## Create ssh user
 
   # Prepare a password
@@ -54,7 +61,43 @@ debian page which says 64k.
 ## Prefer IPv4
 
   true \
-  && sed -iE 's_^#(precedence ::ffff:0:0/96  100)$_\1_' /etc/gai.conf \
-  && sed -iE 's_^#(scopev4 ::ffff:0.0.0.0/96       14)$_\1_' /etc/gai.conf \
+  && sed -i -E 's_^#(precedence ::ffff:0:0/96  100)$_\1_' /etc/gai.conf \
+  && sed -i -E 's_^#(scopev4 ::ffff:0.0.0.0/96       14)$_\1_' /etc/gai.conf \
+  && true
+
+
+## mDNS
+
+  true \
+  && HOSTNAME="example.local" \
+  && FILE="/etc/avahi/services/nginx.xml" \
+  && true \
+  && apt install -y --no-install-recommends avahi-daemon libnss-mdns \
+  && echo "${HOSTNAME:?}" > /etc/hostname \
+  && printf "127.0.0.1\t%s\n" "${HOSTNAME:?}" >> /etc/hosts \
+  && if [ -e "${FILE:?}" ]; then echo "ALREADY EXISTS: ${FILE:?}"; false; fi \
+  && (  echo '<?xml version="1.0" standalone="no"?>' \
+     && echo '<!DOCTYPE service-group SYSTEM "avahi-service.dtd">' \
+     && echo '<service-group>' \
+     && echo '  <name replace-wildcards="yes">%h</name>' \
+     && echo '  <service>' \
+     && echo '    <type>_http._tcp</type>' \
+     && echo '    <port>80</port>' \
+     && echo '  </service>' \
+     && echo '  <service>' \
+     && echo '    <type>_https._tcp</type>' \
+     && echo '    <port>443</port>' \
+     && echo '  </service>' \
+     && echo '</service-group>' \
+     ) > "${FILE:?}" \
+  && true
+
+
+## Install packages due to personal preference
+
+I guess MUST be run on the actual target machine.
+
+  true \
+  && apt install -y --no-install-recommends net-tools vim nginx \
   && true
 
