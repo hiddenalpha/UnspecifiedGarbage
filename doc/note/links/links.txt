@@ -366,9 +366,12 @@ Links (Aka argument amplifiers)
 - logger fail "https://jira.post.ch/browse/SDCISA-9903"
 
 ## java assert
-- how to enable "https://stackoverflow.com/a/68893479/4415884"
-- what are they for "https://stackoverflow.com/a/298933/4415884"
-- I dont care "https://gitit.post.ch/projects/ISA/repos/preflux/pull-requests/505/overview?commentId=219173"
+- [how to enable](https://stackoverflow.com/a/68893479/4415884)
+- [What are they for](https://stackoverflow.com/a/298933/4415884)
+- [What are they for](https://en.wikipedia.org/wiki/Assertion_(software_development)#Assertions_for_run-time_checking)
+- [How and when to use them](https://docs.oracle.com/javase/8/docs/technotes/guides/language/assert.html)
+- [When to use them](https://softwareengineering.stackexchange.com/questions/15515/when-to-use-assertions-and-when-to-use-exceptions)
+- [I dont care](https://gitit.post.ch/projects/ISA/repos/preflux/pull-requests/505/overview?commentId=219173)
 
 ## Mensch verblödet, modern tech, IQ, dumm, test
 - "https://m.youtube.com/watch?v=_dAtdSVeiLM"
