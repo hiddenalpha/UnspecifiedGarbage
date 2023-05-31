@@ -22,7 +22,7 @@ debian page which says 64k.
 
   true \
   && USERNAME="andreas" \
-  && PASS="$6$0n6e1TqxljRLFR6M$1agoflSwKbDO6W6hW49vCwUpL54Z2lgT2WPxvWLLaS8/X7pI4T53Dm7yZCU29wqApUU696IlGpY4OC7dn3JHv0" \
+  && PASS="TODO_insertYourPwHashHere" \
   && USERID="1000" \
   && PUB_KEY_FILE="/home/andreas/.ssh/pub/id_m.pub.ssh2" \
   && CHROOT="/mnt/d" \
@@ -48,5 +48,13 @@ debian page which says 64k.
   && find "${CHROOT:?}/home/${USERNAME}" -type f -exec chmod 644 {} + \
   && find "${CHROOT:?}/home/${USERNAME}/.ssh" -type d -exec chmod 700 {} + \
   && find "${CHROOT:?}/home/${USERNAME}/.ssh" -type f -exec chmod 600 {} + \
+  && true
+
+
+## Prefer IPv4
+
+  true \
+  && sed -iE 's_^#(precedence ::ffff:0:0/96  100)$_\1_' /etc/gai.conf \
+  && sed -iE 's_^#(scopev4 ::ffff:0.0.0.0/96       14)$_\1_' /etc/gai.conf \
   && true
 
