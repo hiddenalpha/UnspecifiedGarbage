@@ -220,6 +220,7 @@ Links (Aka argument amplifiers)
 ## Backward compatibility, Breaking Changes
 - "https://www.redstar.be/backward-compatibility-in-software-development-what-and-why/"
 - [UserInformation SAP 2023](https://gitit.post.ch/projects/ISA/repos/user-information-api/pull-requests/20/overview?commentId=270157)
+- [new mandatory fields](https://gitit.post.ch/projects/ISA/repos/vehicleoperation-recording-api/pull-requests/36/overview?commentId=272214)
 - [thor-DasUnheilNaht](https://gitit.post.ch/projects/ISA/repos/fis-masterdata-api/pull-requests/17/overview?commentId=227703)
 - [thor-DerBlizHatEingeschlagen](https://gitit.post.ch/projects/ISA/repos/fis-masterdata-api/pull-requests/18/overview)
 
@@ -488,6 +489,8 @@ Links (Aka argument amplifiers)
 ## Bus Factor Faktor
 - [Bus factor definition wikipedia](https://en.wikipedia.org/wiki/Bus_factor)
 
+## identifiers (IDs) MUST be unique
+- [paisa masterdatas still do bullsh**](https://gitit.post.ch/projects/ISA/repos/deployment-artifact-api/pull-requests/1/overview?commentId=272726)
 
 
 
