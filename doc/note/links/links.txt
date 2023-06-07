@@ -124,6 +124,7 @@ Links (Aka argument amplifiers)
 - "http://www.richardrodger.com/2012/11/03/why-i-have-given-up-on-coding-standards/"
 
 ## slf4j logger dos and donts
+- [Parameterized logging with exceptions](https://www.slf4j.org/faq.html#paramException)
 - [case SO](https://stackoverflow.com/questions/1417190/should-a-static-final-logger-be-declared-in-upper-case)
 - [case java-styleguide](https://web.archive.org/web/20120911192801if_/http://developers.sun.com/sunstudio/products/archive/whitepapers/java-style.pdf#G3.5426)
 - [case slf4j](http://www.slf4j.org/api/org/slf4j/Logger.html)
