@@ -15,7 +15,7 @@ debian page which says 64k.
   xzcat foo.xz | dd bs=4M of=/dev/sd_
 
 
-## Create ssh user
+## Create sudo ssh user
 
   # Prepare a password
   mkpasswd --method=sha-512 --stdin
@@ -33,7 +33,7 @@ debian page which says 64k.
   && if grep -q ":${USERID:?}:" "${CHROOT:?}/etc/group"; then echo "Group ${USERID} already exists"; false; fi \
   && echo "${USERNAME:?}:x:${USERID:?}:" | tee -a "${CHROOT:?}/etc/group" >/dev/null \
   && if grep -q ":${USERID:?}:" "${CHROOT:?}/etc/shadow"; then echo "Password for ${USERNAME} already exists"; false; fi \
-  && echo "${USERNAME:?}:${PASS:?}:::::::" | tee -a "${CHROOT:?}/etc/shadow" >/dev/null \
+  && echo "${USERNAME:?}::0::::::" | tee -a "${CHROOT:?}/etc/shadow" >/dev/null \
   && if ! pwck --read-only --root "${CHROOT:?}"; then echo "HINT: I don't care ..."; sleep 5; fi \
   && mkdir "${CHROOT:?}/home/${USERNAME:?}" \
   && mkdir "${CHROOT:?}/home/${USERNAME:?}/.ssh" \
@@ -48,6 +48,7 @@ debian page which says 64k.
   && find "${CHROOT:?}/home/${USERNAME}" -type f -exec chmod 644 {} + \
   && find "${CHROOT:?}/home/${USERNAME}/.ssh" -type d -exec chmod 700 {} + \
   && find "${CHROOT:?}/home/${USERNAME}/.ssh" -type f -exec chmod 600 {} + \
+  && sed -i -E 's_^(sudo:x:([0-9]+):)$_\1'${USERNAME:?}'_' /etc/group \
   && true
 
 
@@ -150,6 +151,13 @@ debian page which says 64k.
 I guess MUST be run on the actual target machine.
 
   true \
-  && apt install -y --no-install-recommends net-tools vim nginx fcgiwrap \
+  && apt install -y --no-install-recommends sudo net-tools vim nginx fcgiwrap ntfs-3g \
+  && true
+
+
+## Set timezone
+
+  true \
+  && ln -sf /usr/share/zoneinfo/Europe/Zurich /etc/localtime \
   && true
 
