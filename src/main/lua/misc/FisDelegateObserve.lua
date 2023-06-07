@@ -52,6 +52,7 @@ function mod.getDefinition( app, eddieName )
         rspBody = "",
     }
     local ok, emsg = pcall(function()
+        mod.assertHostIsCorrect(app, eddieName)
         eddie.request = app.http:request{
             cls = eddie,
             host = eddieName,  port = 7012,
@@ -69,11 +70,13 @@ function mod.getDefinition( app, eddieName )
                     eddie.rspBody = eddie.rspBody .. (buf and buf or"")
                 end
             end,
-            onRspEnd = function( eddie )
-            end,
+            onRspEnd = function( eddie ) end,
         }
     end)
     if not ok then
+        -- Make message more userfriendly
+        if emsg:find("^EAI_NONAME getaddrinfo()") or emsg:find("ETIMEDOUT connect%(\"") then
+            emsg = "Offline" end
         return emsg
     end
     eddie.request:closeSnk()
@@ -81,6 +84,48 @@ function mod.getDefinition( app, eddieName )
         return (eddie.emsg or "ERROR")
     end
     return nil, eddie.rspBody
+end
+
+
+function mod.assertHostIsCorrect( app, eddieName )
+    local eddie = objectSeal{
+        base = false,
+        app = app,
+        request = false,
+        rspStatus = false,
+        rspBody = "",
+    }
+    local url = "/eagle/server/info"
+    eddie.request = app.http:request{
+        cls = eddie,
+        host = eddieName,  port = 7012, method = "GET", url = url,
+        onRspHdr = function( hdr, eddie )
+            eddie.rspStatus = hdr.status
+            if eddie.rspStatus ~= 200 then
+                log:write(eddieName ..": HTTP ".. eddie.rspStatus .."\n")
+            end
+        end,
+        onRspChunk = function( buf, eddie )
+            if eddie.rspStatus ~= 200 then
+                log:write(buf and buf or "\n")
+            else
+                eddie.rspBody = eddie.rspBody .. (buf and buf or"")
+            end
+        end,
+        onRspEnd = function( eddie )
+            if eddie.rspStatus ~= 200 then error("HTTP "..tostring(eddie.rspStatus).." "..url) end
+            local rspBody = parseJSON(eddie.rspBody)
+            local reportedHost = rspBody.host:value()
+            if reportedHost ~= eddieName then
+                error("Asked DNS for ".. eddieName .." but he gave us ".. reportedHost .."")
+            end
+            local reportedEnv = rspBody.environment:value()
+            if not app.allowedEnvs[reportedEnv:upper()] then
+                error("Refuse to work on PAISA_ENV '".. reportedEnv .."'")
+            end
+        end,
+    }
+    eddie.request:closeSnk()
 end
 
 
@@ -104,7 +149,7 @@ function mod.getMismatchAsStr( app, definitionJson )
         requestFound = true
         ::nextEntry::
     end
-    if not emsg and not requestFound then emsg = "Request missing" end
+    if not emsg and not requestFound then emsg = "Needs Work" end
     return emsg
 end
 
@@ -127,7 +172,7 @@ function mod.onEddie( app, eddieName )
     if not emsg then emsg = "OK" end
     out:write("r;".. eddieName ..";".. nowStr ..";".. emsg .."\n")
     out:flush()
-    sleep(0.1)
+    --sleep(0.1) -- TODO why is this here?
     ::nextEddie::
 end
 
@@ -147,6 +192,10 @@ function mod.main()
     local app = objectSeal{
         isHelp = false,
         http = newHttpClient{},
+        allowedEnvs = {
+            --PROD = true,
+            --INT = true,
+        },
     }
     if mod.parseArgs(app) ~= 0 then os.exit(1) end
     if app.isHelp then mod.printHelp() return end
@@ -154,4 +203,4 @@ function mod.main()
 end
 
 
-startOrExecute(nil, mod.main)
+startOrExecute(mod.main)
