@@ -5,6 +5,8 @@ local newShellcmd = SL.newShellcmd
 local objectSeal = SL.objectSeal
 local parseJSON = SL.parseJSON
 local sleep = SL.posix.sleep
+local newCond = SL.posix.newCond
+local async = SL.reactor.async
 local startOrExecute = SL.reactor.startOrExecute
 --for k,v in pairs(SL)do print("SL",k,v)end os.exit(1)
 SL = nil
@@ -149,7 +151,7 @@ function mod.getMismatchAsStr( app, definitionJson )
         requestFound = true
         ::nextEntry::
     end
-    if not emsg and not requestFound then emsg = "Needs Work" end
+    if not emsg and not requestFound then emsg = "NeedsWork" end
     return emsg
 end
 
@@ -178,12 +180,30 @@ end
 
 
 function mod.run( app )
-    while true do
-        local eddieName = inn:read("l")
-        if not eddieName then break end
-        eddieName = eddieName:gsub("\r$", "")
-        if not eddieName:find("^eddie[0-9]+$") then error("Strange eddieName: ".. eddieName) end
-        mod.onEddie(app, eddieName)
+    local scheduler = objectSeal{
+        numFreeSlots = 1,
+        numFreeSlotsCond = newCond(),
+        hasMoreEddies = true,
+    }
+    while scheduler.hasMoreEddies do
+        while scheduler.numFreeSlots <= 0 do scheduler.numFreeSlotsCond:waitForever() end
+        scheduler.numFreeSlots = scheduler.numFreeSlots - 1
+        --log:write("Trigger new. Remain slots ".. scheduler.numFreeSlots .."\n")
+        async(function( app, scheduler )
+            local ok, emsg = pcall(function( app, scheduler )
+                local eddieName = inn:read("l")
+                if not eddieName then scheduler.hasMoreEddies = false return end
+                eddieName = eddieName:gsub("\r$", "")
+                if not eddieName:find("^eddie[0-9]+$") then error("Strange eddieName: ".. eddieName) end
+                mod.onEddie(app, eddieName)
+                return eddieName
+            end, app, scheduler)
+            scheduler.numFreeSlots = scheduler.numFreeSlots + 1
+            scheduler.numFreeSlotsCond:broadcast()
+            if not ok then error(emsg) end
+            local eddieName = emsg
+            --log:write("Eddie '"..tostring(eddieName).."' done. Release a slot\n")
+        end, app, scheduler)
     end
 end
 
