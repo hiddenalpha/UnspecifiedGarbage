@@ -492,6 +492,6 @@ Links (Aka argument amplifiers)
 
 ## identifiers (IDs) MUST be unique
 - [paisa masterdatas still do bullsh**](https://gitit.post.ch/projects/ISA/repos/deployment-artifact-api/pull-requests/1/overview?commentId=272726)
-
+- [ID ownership/responsible](https://gitit.post.ch/projects/ISA/repos/organization-information-api/pull-requests/12/overview?commentId=274738)
 
 
