@@ -18,28 +18,28 @@ readonly BACKUP_PATH="${DIR_TO:?}/${NOW_SHORT:?}"
 
 printHelp () {
     printf "\n\
-  TODO write help page\n\
+  Sorry, no help page. Dig into source to see what happens\n\
   \n";
 }
 
 
 parseArgs () {
     local arg0="$0"
-    local isExample="false"
+    local isYolo="false"
     while [ $# -gt 0 ]; do
         local arg="$1"
         if false; then
             true
-        elif [ "$arg" == "--help" ]; then
+        elif [ "$arg" = "--help" ]; then
             printHelp; return 1
-        elif [ "$arg" == "--example" ]; then
-            isExample="true";
+        elif [ "$arg" = "--yolo" ]; then
+            isYolo="true";
         else
             echo "Unexpected arg: $arg"; return 1
         fi
         shift 1
     done
-    if ! $isExample; then echo >&2 "Bad args"; return 1; fi
+    if ! $isYolo; then echo >&2 "Bad args"; return 1; fi
     return 0
 }
 
