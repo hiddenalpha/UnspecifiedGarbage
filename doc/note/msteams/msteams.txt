@@ -15,23 +15,16 @@ https://www.gnu.org/proprietary/malware-microsoft.html
 Messages updated.  Microsoft Teams
 
 Hi, ___
-
 Your teammates are trying to reach you via E-Mail.
-
 Andreas sent a message via E-Mail
-
 ___
-
 See More
 
 Install whatever E-Mail client you wish without any shiny vendor lockins.
+
 iOS Icon - Android Icon
-
 This message was sent from an unmonitored teams chat.
-
 © 2023 Microsoft Corporation, One Microsoft Way, Redmond WA 98052-7329
-
 Read our privacy policy
 ------------------------------------------------------------------------
-
 
