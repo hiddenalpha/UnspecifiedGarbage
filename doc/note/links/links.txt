@@ -238,7 +238,8 @@ Links (Aka argument amplifiers)
 - [vortex too slow](https://jira.post.ch/browse/SDCISA-9990)
 
 ## Performance is not an issue ...
-- ...
+- [Houston OOM 2023-06-27](https://wikit.post.ch/x/_Bv6Rw)
+- [Houston OOM 2023-01-20](https://wikit.post.ch/x/iRepPQ)
 
 ## Performance clang micro benchmarking
 - "https://m.youtube.com/watch?v=nXaxk27zwlk"
