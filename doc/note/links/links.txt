@@ -227,19 +227,20 @@ Links (Aka argument amplifiers)
 
 ## Performance DOES matter
 - "https://github.com/swisspush/gateleen/pull/456#discussion_r844865066"
-- [examples](https://m.youtube.com/watch?v=EpYr3T5VP6w)
-- [Performance Excuses Debunked](https://m.youtube.com/watch?v=x2EOOJg8FkA )
-- [Simple Code, High Performance](https://m.youtube.com/watch?v=Ge3aKEmZcqY )
-- [houston storage request timed out large json](https://jira.post.ch/browse/SDCISA-11294)
-- "https://jira.post.ch/browse/SDCISA-4714"
-- "https://jira.post.ch/browse/SDCISA-8136"
-- "https://jira.post.ch/browse/SDCISA-2876"
-- "https://jira.post.ch/browse/SDCISA-9059"
+- [Is writing performant code too expensive?](https://m.youtube.com/watch?v=EpYr3T5VP6w)
+- [Performance Excuses Debunked](https://m.youtube.com/watch?v=x2EOOJg8FkA)
+- [Simple Code, High Performance](https://m.youtube.com/watch?v=Ge3aKEmZcqY)
+- [Houston storage request timed out large json](https://jira.post.ch/browse/SDCISA-11294)
+- [Preflux Garbage Collection issues](https://jira.post.ch/browse/SDCISA-4714)
+- [Preflux Gatherfacts läuft in Timeout](https://jira.post.ch/browse/SDCISA-8136)
+- [Houston Optimize EnqueuePatrol](https://jira.post.ch/browse/SDCISA-2876)
+- [Update beim Fahrzeughersteller dauert zu lange](https://jira.post.ch/browse/SDCISA-9059)
 - [vortex too slow](https://jira.post.ch/browse/SDCISA-9990)
 
 ## Performance is not an issue ...
 - [Houston OOM 2023-06-27](https://wikit.post.ch/x/_Bv6Rw)
 - [Houston OOM 2023-01-20](https://wikit.post.ch/x/iRepPQ)
+- [Houston OOM Killed](https://jira.post.ch/browse/SDCISA-10871)
 
 ## Performance clang micro benchmarking
 - "https://m.youtube.com/watch?v=nXaxk27zwlk"
