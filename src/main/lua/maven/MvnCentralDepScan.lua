@@ -32,8 +32,8 @@ function mod.printHelp()
         .."    --example\n"
         .."      WARN: only use if you know what you're doing!\n"
         .."\n"
-        .."    --sqliteOut <path>\n"
-        .."      Path where to export the result.\n"
+        .."    --state <path>\n"
+        .."      Data file to update.\n"
         .."\n"
         .."\n")
 end
@@ -51,11 +51,11 @@ function mod.parseArgs( app )
         mod.printHelp() return -1
     elseif arg == "--example" then
         isExample = true
-    elseif arg == "--sqliteOut" then
+    elseif arg == "--state" then
         iA = iA + 1
         arg = _ENV.arg[iA]
         if not arg then log:write("Arg --sqliteOut needs value\n")return-1 end
-        app.sqliteOutFile = arg
+        app.sqliteFile = arg
     else
         log:write("Unexpected arg: "..tostring(arg).."\n")return -1
     end
@@ -66,19 +66,23 @@ function mod.parseArgs( app )
 end
 
 
-function mod.getUrlBy( app, thingy )
-    if type(thingy) == "table" then
-        local aid = assert(thingy.artifactId)
-        local v = assert(thingy.version)
-        local gid = assert(thingy.groupId)
-        return "http://127.0.0.1:8081/tmp/artifactory/paisa/".. gid:gsub('%.','/') .."/".. aid .."/".. v .."/".. aid .."-".. v ..".pom"
+function mod.triggerFetchByPomSourceNr( app, nr, mvnArtifact )
+    assert(type(nr) == "number")
+    local pomSrc = app.pomSources[nr]
+    if not pomSrc then
+        mod.onNoMorePomSources(app, mvnArtifact) -- TODO impl
+        return
     end
-    error("Whops?!? ".. type(thingy))
+    if false then
+    --elseif pomSrc.type == "local-file-cache" then
+    else
+        error("Whops. pomSources[i].type is ".. pomSrc.type)
+    end
 end
 
 
 function mod.processXmlValue( pomParser )
-    local app = pomParser.req.app
+    local app = pomParser.app
     local xpath = {}
     for i, stackElem in ipairs(pomParser.xmlElemStack) do
         table.insert(xpath, "/")
@@ -180,23 +184,92 @@ function mod.onMvnArtifactThatShouldBeFetched( app, mvnArtifact )
 end
 
 
-function mod.fetchAnotherMvnArtifact( app )
-::findNextArtifactToFetch::
-    local mvnArtifact
-    mvnArtifact = table.remove(app.currentUrlsToFetch, 1)
-    if not mvnArtifact then
-        assert(#app.currentUrlsToFetch == 0)
-        if #app.nextUrlsToFetch > 0 then -- switch to next set to process
-            LOGDBG("currentUrlsToFetch drained. Continue with nextUrlsToFetch\n")
-            app.currentUrlsToFetch = app.nextUrlsToFetch
-            app.nextUrlsToFetch = {}
-            goto findNextArtifactToFetch
-        end
-        table.insert(app.taskQueue, function() mod.onNoMorePomsToFetch(app) end)
+function mod.newPomParser( app, cls )
+    local pomParser = objectSeal{
+        app = app,
+        outerCls = cls,
+        base = false,
+        xmlElemStack = {},
+        currentValue = false,
+        mvnArtifact = objectSeal{
+            parentGroupId = false,
+            parentArtifactId = false,
+            parentVersion = false,
+            groupId = false,
+            artifactId = false,
+            version = false,
+        },
+        mvnDependency = false, -- the one we're currently parsing
+        mvnMngdDependency = false, -- the one we're currently parsing
+        write = function( t, buf ) t.base:write(buf) end,
+        closeSnk = function( t, buf ) t.base:closeSnk() end,
+    }
+    pomParser.base = newXmlParser{
+        cls = pomParser,
+        onElementBeg = function( tag, pomParser )
+            table.insert(pomParser.xmlElemStack, { tag = tag, })
+            pomParser.currentValue = false
+        end,
+        onElementEnd = function( tag, pomParser )
+            if type(pomParser.currentValue) == "table" then
+                pomParser.currentValue = table.concat(pomParser.currentValue)
+            end
+            mod.processXmlValue(pomParser)
+            local elem = table.remove(pomParser.xmlElemStack)
+            assert(elem.tag == tag);
+        end,
+        onChunk = function( buf, pomParser )
+            if type(pomParser.currentValue) ~= "table" then
+                pomParser.currentValue = { buf }
+            else
+                table.insert(pomParser.currentValue, buf)
+            end
+        end,
+        onEnd = function( pomParser )
+            assert(#pomParser.xmlElemStack == 0)
+            local app = pomParser.app
+            local mvnArtifact = pomParser.mvnArtifact
+            pomParser.mvnArtifact = false
+            if not mvnArtifact.groupId then mvnArtifact.groupId = mvnArtifact.parentGroupId end
+            if not mvnArtifact.version then mvnArtifact.version = mvnArtifact.parentVersion end
+            local key = mod.getMvnArtifactKey(mvnArtifact)
+            assert(not app.mvnArtifacts[key])
+            app.mvnArtifacts[key] = mvnArtifact
+            table.insert(app.taskQueue, function()
+                mod.onNewArtifactGotFetched(app, mvnArtifact)
+            end)
+        end,
+    }
+    return pomParser
+end
+
+
+function mod.fetchMvnArtifactFromFileOrElseSrcNr( app, mvnArtifact, repoDir, pomSrcNrFallback )
+    local path = repoDir
+        .."/".. mvnArtifact.groupId:gsub('%.','/')
+        .."/".. mvnArtifact.artifactId
+        .."/".. mvnArtifact.version
+        .."/".. mvnArtifact.artifactId .."-".. mvnArtifact.version
+        ..".pom"
+    local fd = io.open(path, "rb")
+    if not fd then
+        log:write("ENOENT ".. path .."\n")
+        table.insert(app.taskQueue, function()
+            mod.fetchFromSourceNr(app, mvnArtifact, pomSrcNrFallback)
+        end)
         return
     end
+    log:write("fopen(\"".. path .."\", \"rb\")\n")
+    error("TODO impl")
+end
 
-    local pomUrl = mod.getUrlBy(app, mvnArtifact)
+
+function mod.fetchMvnArtifactFromWebserverOrElseSrcNr( app, mvnArtifact, baseUrl, pomSrcNrFallback )
+    local aid = assert(mvnArtifact.artifactId)
+    local ver = assert(mvnArtifact.version)
+    local gid = assert(mvnArtifact.groupId)
+    local pomUrl = baseUrl .."/paisa/".. gid:gsub('%.','/')
+        .."/".. aid .."/".. ver .."/".. aid .."-".. ver ..".pom"
     local proto = pomUrl:match("^(https?)://")
     local isTLS = (proto:upper() == "HTTPS")
     local host = pomUrl:match("^https?://([^:/]+)[:/]")
@@ -209,9 +282,9 @@ function mod.fetchAnotherMvnArtifact( app )
         app = app,
         base = false,
         pomParser = false,
-        artifactId = mvnArtifact.artifactId, -- so we know what we're trying to fetch
-        version = mvnArtifact.version, -- so we know what we're trying to fetch
-        groupId = mvnArtifact.groupId, -- so we know what we're trying to fetch
+        artifactId = aid, -- so we know what we're trying to fetch
+        version = ver, -- so we know what we're trying to fetch
+        groupId = gid, -- so we know what we're trying to fetch
     }
     req.base = app.http:request{
         cls = req,
@@ -224,6 +297,46 @@ function mod.fetchAnotherMvnArtifact( app )
         onRspEnd = function( req ) if req.pomParser then req.pomParser:closeSnk() end end,
     }
     req.base:closeSnk()
+end
+
+
+function mod.fetchFromSourceNr( app, mvnArtifact, pomSrcNr )
+    if not pomSrcNr then pomSrcNr = 1 end
+    local pomSrc = app.pomSources[pomSrcNr]
+    if not pomSrc then
+        mod.onNoMorePomSources(app, mvnArtifact)
+    end
+    -- pom source ready to use
+    if false then
+    elseif pomSrc.type == "local-file-cache" then
+        --LOGDBG("Fetch from local file cache\n")
+        mod.fetchMvnArtifactFromFileOrElseSrcNr(app, mvnArtifact, pomSrc.repoDir, pomSrcNr + 1)
+    elseif pomSrc.type == "webserver" then
+        --LOGDBG("Fetch from webserver\n")
+        mod.fetchMvnArtifactFromWebserverOrElseSrcNr(app, mvnArtifact, pomSrc.baseUrl, pomSrcNr + 1)
+    else
+        error("Whops. pomSources[i].type is ".. pomSrc.type)
+    end
+end
+
+
+function mod.fetchAnotherMvnArtifact( app, pomSrcNr )
+::findNextArtifactToFetch::
+    local mvnArtifact
+    mvnArtifact = table.remove(app.currentUrlsToFetch, 1)
+    if not mvnArtifact then
+        assert(#app.currentUrlsToFetch == 0)
+        if #app.nextUrlsToFetch > 0 then -- switch to next set to process
+            --LOGDBG("currentUrlsToFetch drained. Continue with nextUrlsToFetch\n")
+            app.currentUrlsToFetch = app.nextUrlsToFetch
+            app.nextUrlsToFetch = {}
+            goto findNextArtifactToFetch
+        end
+        table.insert(app.taskQueue, function() mod.onNoMorePomsToFetch(app) end)
+        return
+    end
+    assert(mvnArtifact)
+    mod.fetchFromSourceNr(app, mvnArtifact, 1)
 end
 
 
@@ -244,8 +357,8 @@ function mod.enqueueMissingDependencies( app, mvnArtifact )
         })
         local parent = app.mvnArtifacts[parentKey]
         if not parent then
-            LOGDBG("Enqueue parent:  aid=".. mvnArtifact.parentArtifactId
-                .."  v=".. mvnArtifact.parentVersion.."  gid=".. mvnArtifact.parentGroupId .."\n")
+            --LOGDBG("Enqueue parent:  aid=".. mvnArtifact.parentArtifactId
+            --    .."  v=".. mvnArtifact.parentVersion.."  gid=".. mvnArtifact.parentGroupId .."\n")
             table.insert(app.taskQueue, function()
                 mod.onMvnArtifactThatShouldBeFetched(app, objectSeal{
                     artifactId = mvnArtifact.parentArtifactId,
@@ -257,8 +370,8 @@ function mod.enqueueMissingDependencies( app, mvnArtifact )
     end
     local deps = app.mvnDepsByArtifact[mvnArtifact]
     if not deps then
-        LOGDBG("Has no dependencies:  aid="..tostring(mvnArtifact.artifactId)
-            ..", ver="..tostring(mvnArtifact.version)..", gid="..tostring(mvnArtifact.groupId).."\n")
+        --LOGDBG("Has no dependencies:  aid="..tostring(mvnArtifact.artifactId)
+        --    ..", ver="..tostring(mvnArtifact.version)..", gid="..tostring(mvnArtifact.groupId).."\n")
         return
     end
     for _,dep in pairs(deps) do
@@ -268,8 +381,8 @@ function mod.enqueueMissingDependencies( app, mvnArtifact )
             hasUnresolvedMvnProps = (dep.artifactId:find("${",0,true) or dep.version:find("${",0,true) or dep.groupId:find("${",0,true))
         end
         if isIncomplete or hasUnresolvedMvnProps then
-            LOGDBG("Incomplete. Give up  aid="..tostring(dep.artifactId)
-                .."  v="..tostring(dep.version).."  gid="..tostring(dep.groupId).."\n")
+            --LOGDBG("Incomplete. Give up  aid="..tostring(dep.artifactId)
+            --    .."  v="..tostring(dep.version).."  gid="..tostring(dep.groupId).."\n")
         else
             LOGDBG("Enqueue dependency:  aid="..tostring(dep.artifactId)
                 .."  v="..tostring(dep.version).."  gid="..tostring(dep.groupId).."\n")
@@ -302,61 +415,7 @@ function mod.onGetPomRspHdr( msg, req )
         error("Unexpected HTTP ".. tostring(msg.status))
     end
     assert(not req.pomParser)
-    req.pomParser = objectSeal{
-        req = req,
-        base = false,
-        xmlElemStack = {},
-        currentValue = false,
-        mvnArtifact = objectSeal{
-            parentGroupId = false,
-            parentArtifactId = false,
-            parentVersion = false,
-            groupId = false,
-            artifactId = false,
-            version = false,
-        },
-        mvnDependency = false, -- the one we're currently parsing
-        mvnMngdDependency = false, -- the one we're currently parsing
-        write = function( t, buf ) t.base:write(buf) end,
-        closeSnk = function( t, buf ) t.base:closeSnk() end,
-    }
-    req.pomParser.base = newXmlParser{
-        cls = req.pomParser,
-        onElementBeg = function( tag, pomParser )
-            table.insert(pomParser.xmlElemStack, { tag = tag, })
-            pomParser.currentValue = false
-        end,
-        onElementEnd = function( tag, pomParser )
-            if type(pomParser.currentValue) == "table" then
-                pomParser.currentValue = table.concat(pomParser.currentValue)
-            end
-            mod.processXmlValue(pomParser)
-            local elem = table.remove(pomParser.xmlElemStack)
-            assert(elem.tag == tag);
-        end,
-        onChunk = function( buf, pomParser )
-            if type(pomParser.currentValue) ~= "table" then
-                pomParser.currentValue = { buf }
-            else
-                table.insert(pomParser.currentValue, buf)
-            end
-        end,
-        onEnd = function( pomParser )
-            assert(#pomParser.xmlElemStack == 0)
-            local req = pomParser.req
-            local app = req.app
-            local mvnArtifact = pomParser.mvnArtifact
-            pomParser.mvnArtifact = false
-            if not mvnArtifact.groupId then mvnArtifact.groupId = mvnArtifact.parentGroupId end
-            if not mvnArtifact.version then mvnArtifact.version = mvnArtifact.parentVersion end
-            local key = mod.getMvnArtifactKey(mvnArtifact)
-            assert(not app.mvnArtifacts[key])
-            app.mvnArtifacts[key] = mvnArtifact
-            table.insert(app.taskQueue, function()
-                mod.onNewArtifactGotFetched(app, mvnArtifact)
-            end)
-        end,
-    }
+    req.pomParser = mod.newPomParser(app, req)
 end
 
 
@@ -409,8 +468,7 @@ function mod.resolveDependencyVersionsFromDepsMgmnt( app )
     function funcs.resolveForArtifact( mvnArtifact )
         --LOGDBG("resolveForArtifact("..mvnArtifact.artifactId..", ".. mvnArtifact.version ..")\n")
         local mvnDeps = mvnDepsByArtifact[mvnArtifact]
-        if not mvnDeps then LOGDBG("No mvnDeps\n") return end
-        if not (#mvnDeps > 0) then LOGDBG("mvnDeps empty\n") end
+        if not mvnDeps then return end
         for _, mvnDependency in pairs(mvnDeps) do
             funcs.resolveForDependency(mvnArtifact, mvnDependency)
         end
@@ -519,14 +577,104 @@ function mod.printStuffAtEnd( app )
 end
 
 
+function mod.getOrNewStringId( app, str )
+    -- serve from memory if possible
+    if not str then return nil end
+    local stringId = app.cachedStringIds[str]
+    if stringId then return stringId end
+    -- serve from DB if possible
+    local db = app.db
+    local stmtStr = "SELECT id FROM String WHERE str = :str"
+    local stmt = app.stmtCache[stmtStr]
+    if not stmt then stmt = db:prepare(stmtStr); app.stmtCache[stmtStr] = stmt end
+    stmt:reset()  stmt:bind(":str", str)
+    local rs = stmt:execute()
+    if rs:next() then -- already exists. re-use
+        rs = rs:value(1)
+        app.cachedStringIds[str] = rs
+        return rs
+    end
+    -- no such string yet. create.
+    local stmtStr = "INSERT INTO String (str) VALUES (:str)"
+    local stmt = app.stmtCache[stmtStr]
+    if not stmt then stmt = db:prepare(stmtStr); app.stmtCache[stmtStr] = stmt end
+    stmt:reset();  stmt:bind(":str", str);  stmt:execute()
+    stringId = db:lastInsertRowid()
+    app.cachedStringIds[str] = stringId
+    return stringId
+end
+
+
+
+function mod.insertMvnArtifact( app, mvnArtifact )
+    local a = mvnArtifact
+    assert(a.groupId and a.artifactId and a.version)
+    if a.parentGroupId then assert(a.parentArtifactId and a.parentVersion)
+    else assert(not a.parentArtifactId and not a.parentVersion) end
+    -- Get needed string IDs
+    local gid = mod.getOrNewStringId(app, a.groupId)
+    local aid = mod.getOrNewStringId(app, a.artifactId)
+    local ver = mod.getOrNewStringId(app, a.version)
+    local pgid = mod.getOrNewStringId(app, a.parentGroupId)
+    local paid = mod.getOrNewStringId(app, a.parentArtifactId)
+    local pver = mod.getOrNewStringId(app, a.parentVersion)
+    -- look if it already exists
+    local db = app.db
+    local stmtStr = "SELECT id from MvnArtifact"
+        .." WHERE artifactId = :aid AND version = :ver AND groupId = :gid"
+        .."   AND parentArtifactId = :paid AND parentVersion = :pver AND parentGroupId = :pgid"
+    local stmt = app.stmtCache[stmtStr]
+    if not stmt then stmt = db:prepare(stmtStr); app.stmtCache[stmtStr] = stmt end
+    stmt:reset()
+    stmt:bind(":aid", aid) stmt:bind(":ver", ver) stmt:bind(":gid", gid)
+    stmt:bind(":paid", paid) stmt:bind(":pver", pver) stmt:bind(":pgid", pgid)
+    local rs = stmt:execute()
+    local dbId
+    if rs:next() then
+        -- Already exists
+        dbId = assert(rs:value(1))
+    else
+        -- no such record. create it.
+        local stmtStr = "INSERT INTO MvnArtifact"
+            .."('groupId', 'artifactId', 'version', 'parentGroupId', 'parentArtifactId', 'parentVersion')"
+            .."VALUES"
+            .."(:groupId , :artifactId , :version , :parentGroupId , :parentArtifactId , :parentVersion )"
+        local stmt = app.stmtCache[stmtStr]
+        if not stmt then stmt = db:prepare(stmtStr); app.stmtCache[stmtStr] = stmt end
+        stmt:reset()
+        stmt:bind(":groupId", mod.getOrNewStringId(app, a.groupId))
+        stmt:bind(":artifactId", mod.getOrNewStringId(app, a.artifactId))
+        stmt:bind(":version", mod.getOrNewStringId(app, a.version))
+        stmt:bind(":parentGroupId", mod.getOrNewStringId(app, a.parentGroupId))
+        stmt:bind(":parentArtifactId", mod.getOrNewStringId(app, a.parentArtifactId))
+        stmt:bind(":parentVersion", mod.getOrNewStringId(app, a.parentVersion))
+        stmt:execute()
+        dbId = assert(db:lastInsertRowid())
+    end
+    app.cachedMvnArtifactDbIds[a] = dbId
+    local bucket = app.mvnArtifactIdsByArtif[assert(a.artifactId)]
+    if not bucket then bucket = {} app.mvnArtifactIdsByArtif[a.artifactId] = bucket end
+    table.insert(bucket, { dbId = dbId, mvnArtifact = a, })
+    return dbId
+end
+
+
 function mod.storeAsSqliteFile( app )
-    -- TODO could we cache our prepared queries?
-    local db, stmt
-    if not app.sqliteOutFile then
-        log:write("[INFO ] No sqliteOutFile provided. Skip export.\n")
+    local stmt
+    if not app.sqliteFile then
+        log:write("[INFO ] No state file provided. Skip export.\n")
         return
     end
-    -- Query to list Artifacts and their parents:
+    local db = app.db
+    -- Query:  List artifacts
+    --   SELECT GroupId.str AS 'GID', ArtifactId.str AS 'AID', Version.str AS 'Version'
+    --   FROM MvnArtifact AS A
+    --   JOIN String GroupId ON GroupId.id = A.groupId
+    --   JOIN String ArtifactId ON ArtifactId.id = A.artifactId
+    --   JOIN String Version ON Version.id = A.version
+    --   ORDER BY GroupId.str, ArtifactId.str, Version.str
+    --   ;
+    -- Query:  List Artifacts with parents:
     --   SELECT GroupId.str AS 'GID', ArtifactId.str AS 'AID', Version.str AS 'Version', ParentGid.str AS 'ParentGid', ParentAid.str AS 'ParentAid', ParentVersion.str AS 'ParentVersion'
     --   FROM MvnArtifact AS A
     --   JOIN String GroupId ON GroupId.id = A.groupId
@@ -535,8 +683,9 @@ function mod.storeAsSqliteFile( app )
     --   JOIN String ParentGid ON ParentGid.id = A.parentGroupId
     --   JOIN String ParentAid ON ParentAid.id = A.parentArtifactId
     --   JOIN String ParentVersion ON ParentVersion.id = A.parentVersion
-    --
-    -- Query to list dependencies:
+    --   ORDER BY GroupId.str, ArtifactId.str, Version.str
+    --   ;
+    -- Query:  List dependencies:
     --   SELECT GroupId.str AS 'GID', ArtifactId.str AS 'AID', Version.str AS 'Version', DepGid.str AS 'Dependency GID', DepAid.str AS 'Dependnecy AID', DepVersion.str AS 'Dependency Version'
     --   FROM MvnArtifact AS A
     --   JOIN MvnDependency AS Dep ON Dep.mvnArtifactId = A.id
@@ -547,93 +696,25 @@ function mod.storeAsSqliteFile( app )
     --   JOIN String DepGid ON DepGid.id = D.groupId
     --   JOIN String DepAid ON DepAid.id = D.artifactId
     --   JOIN String DepVersion ON DepVersion.id = D.version
-    --
-    db = newSqlite{
-        database = app.sqliteOutFile,
-    }
-    db:enhancePerf()
-    db:prepare("CREATE TABLE String ("
-        .." id INTEGER PRIMARY KEY,"
-        .." str TEXT UNIQUE)"
-    ):execute()
-    db:prepare("CREATE TABLE MvnArtifact ("
-        .." id INTEGER PRIMARY KEY,"
-        .." groupId INT,"
-        .." artifactId INT,"
-        .." version INT,"
-        .." parentGroupId INT,"
-        .." parentArtifactId INT,"
-        .." parentVersion INT)"
-    ):execute()
-    db:prepare("CREATE TABLE MvnDependency ("
-        .." id INTEGER PRIMARY KEY,"
-        .." mvnArtifactId INT,"
-        .." needsMvnArtifactId INT)"
-    ):execute()
-    --db:prepare("CREATE TABLE MvnProperty ("
-    --    .." id INTEGER PRIMARY KEY,"
-    --    .." keyStringId INT,"
-    --    .." valStringId INT)"
-    --):execute()
-    local mvnArtifactIds = {}
-    local mvnArtifactIdsByArtif = {}
-    local strings = {}
-    local getStringId = function( str ) -- create/reUse strings on-demand
-        if not str then return nil end
-        local stringId = strings[str]
-        if not stringId then
-            local stmt = db:prepare("INSERT INTO String (str)VALUES(:str)")
-            stmt:reset()
-            stmt:bind(":str", str)
-            stmt:execute()
-            stringId = db:lastInsertRowid()
-            strings[str] = stringId
-        end
-        return stringId
-    end
-    local stmtInsMvnArtifact = db:prepare("INSERT INTO MvnArtifact"
-        .."('groupId', 'artifactId', 'version', 'parentGroupId', 'parentArtifactId', 'parentVersion')"
-        .."VALUES"
-        .."(:groupId , :artifactId , :version , :parentGroupId , :parentArtifactId , :parentVersion )")
-    local insertMvnArtifact = function(a)
-        assert(a.groupId and a.artifactId and a.version)
-        if a.parentGroupId then assert(a.parentArtifactId and a.parentVersion)
-        else assert(not a.parentArtifactId and not a.parentVersion) end
-        stmtInsMvnArtifact:reset()
-        stmtInsMvnArtifact:bind(":groupId", getStringId(a.groupId))
-        stmtInsMvnArtifact:bind(":artifactId", getStringId(a.artifactId))
-        stmtInsMvnArtifact:bind(":version", getStringId(a.version))
-        stmtInsMvnArtifact:bind(":parentGroupId", getStringId(a.parentGroupId))
-        stmtInsMvnArtifact:bind(":parentArtifactId", getStringId(a.parentArtifactId))
-        stmtInsMvnArtifact:bind(":parentVersion", getStringId(a.parentVersion))
-        stmtInsMvnArtifact:execute()
-        local dbId = db:lastInsertRowid()
-        mvnArtifactIds[a] = dbId -- TODO MUST be byString
-        local bucket = mvnArtifactIdsByArtif[assert(a.artifactId)]
-        if not bucket then bucket = {} mvnArtifactIdsByArtif[a.artifactId] = bucket end
-        table.insert(bucket, { dbId = dbId, mvnArtifact = a, })
-        return dbId
-    end
+    --   ORDER BY GroupId.str, ArtifactId.str, Version.str
+    --   ;
     -- Store artifacts
     for _, mvnArtifact in pairs(app.mvnArtifacts) do
-        insertMvnArtifact(mvnArtifact)
+        mod.insertMvnArtifact(app, mvnArtifact)
         local mvnDeps = app.mvnDepsByArtifact[mvnArtifact] or {}
         -- dependencies are nothing else than artifacts
         for _, mvnDep in pairs(mvnDeps) do
+            -- TODO?!?
         end
     end
     -- Store dependencies
-    local stmt = db:prepare("INSERT INTO MvnDependency"
-        .."('mvnArtifactId', 'needsMvnArtifactId')"
-        .."VALUES"
-        .."(:mvnArtifactId , :needsMvnArtifactId )")
     for _, mvnArtifact in pairs(app.mvnArtifacts) do
         local mvnDeps = app.mvnDepsByArtifact[mvnArtifact]
         for _, mvnDep in pairs(mvnDeps or {}) do
             if not mvnDep.version then mvnDep.version = "TODO_5bbc0e87011e24d845136c5406302616" end
             assert(mvnDep.version, mvnDep.artifactId)
             assert(mvnDep.groupId and mvnDep.artifactId and mvnDep.version)
-            local bucket = mvnArtifactIdsByArtif[mvnDep.artifactId]
+            local bucket = app.mvnArtifactIdsByArtif[mvnDep.artifactId]
             local depId = nil
             for _,a in pairs(bucket or {}) do
                 if  mvnDep.groupId == a.mvnArtifact.groupId
@@ -643,24 +724,40 @@ function mod.storeAsSqliteFile( app )
                 end
             end
             if not depId then -- Artifact not stored yet. Do now.
-                depId = insertMvnArtifact({
+                depId = mod.insertMvnArtifact(app, {
                     groupId = mvnDep.groupId,
                     artifactId = mvnDep.artifactId,
                     version = mvnDep.version,
                 })
             end
+            -- maybe already in db?
+            local stmtStr = "SELECT id FROM MvnDependency"
+                .." WHERE mvnArtifactId = :mvnArtifactId AND needsMvnArtifactId = :needsMvnArtifactId"
+            local stmt = app.stmtCache[stmtStr];
+            if not stmt then stmt = db:prepare(stmtStr); app.stmtCache[stmtStr] = stmt end
             stmt:reset()
-            stmt:bind(":mvnArtifactId", assert(mvnArtifactIds[mvnArtifact]))
-            stmt:bind(":needsMvnArtifactId", assert(depId, mvnDep.artifactId))
-            stmt:execute()
+            stmt:bind(":mvnArtifactId", app.cachedMvnArtifactDbIds[mvnArtifact])
+            stmt:bind(":needsMvnArtifactId", depId)
+            local rs = stmt:execute()
+            if not rs:next() then -- not yet in db. create.
+                local stmtStr = "INSERT INTO MvnDependency"
+                    .."('mvnArtifactId', 'needsMvnArtifactId')"
+                    .."VALUES"
+                    .."(:mvnArtifactId , :needsMvnArtifactId )"
+                local stmt = app.stmtCache[stmtStr]
+                if not stmt then stmt = db:prepare(stmtStr); app.stmtCache[stmtStr] = stmt end
+                stmt:reset()
+                stmt:bind(":mvnArtifactId", assert(app.cachedMvnArtifactDbIds[mvnArtifact]))
+                stmt:bind(":needsMvnArtifactId", assert(depId, mvnDep.artifactId))
+                stmt:execute()
+            end
         end
     end
-    db:close()
 end
 
 
 function mod.onNoMorePomsToFetch( app )
-    log:write("[INFO ] No more POMs to fetch\n")
+    LOGDBG("No more POMs to fetch\n")
     mod.resolveDependencyVersionsFromDepsMgmnt(app)
     mod.resolveProperties(app)
     if #app.currentUrlsToFetch > 0 or #app.nextUrlsToFetch > 0 then
@@ -668,12 +765,54 @@ function mod.onNoMorePomsToFetch( app )
         table.insert(app.taskQueue, function()mod.fetchAnotherMvnArtifact(app)end)
         return 
     end
-    --mod.storeAsSqliteFile(app)
     mod.printStuffAtEnd(app)
+    mod.storeAsSqliteFile(app)
+end
+
+
+function mod.dbOpen( app )
+    assert(not app.db)
+    app.db = newSqlite{
+        database = app.sqliteFile,
+    }
+    local db = app.db
+    db:prepare("BEGIN TRANSACTION"):execute()
+    db:enhancePerf()
+    db:prepare("CREATE TABLE IF NOT EXISTS String ("
+        .." id INTEGER PRIMARY KEY,"
+        .." str TEXT UNIQUE)"
+    ):execute()
+    db:prepare("CREATE TABLE IF NOT EXISTS MvnArtifact ("
+        .." id INTEGER PRIMARY KEY,"
+        .." groupId INT,"
+        .." artifactId INT,"
+        .." version INT,"
+        .." parentGroupId INT,"
+        .." parentArtifactId INT,"
+        .." parentVersion INT)"
+    ):execute()
+    db:prepare("CREATE TABLE IF NOT EXISTS MvnDependency ("
+        .." id INTEGER PRIMARY KEY,"
+        .." mvnArtifactId INT,"
+        .." needsMvnArtifactId INT)"
+    ):execute()
+    --db:prepare("CREATE TABLE MvnProperty ("
+    --    .." id INTEGER PRIMARY KEY,"
+    --    .." keyStringId INT,"
+    --    .." valStringId INT)"
+    --):execute()
+end
+
+
+function mod.dbCommit( app )
+    app.db:prepare("END TRANSACTION"):execute()
+    app.db:close()
+    app.db = nil
 end
 
 
 function mod.run( app )
+    mod.dbOpen(app)
     table.insert(app.taskQueue, function()mod.fetchAnotherMvnArtifact(app)end)
     while true do
         local task = table.remove(app.taskQueue, 1)
@@ -681,6 +820,7 @@ function mod.run( app )
         task()
     end
     mod.onNoMorePomsToFetch(app)
+    mod.dbCommit(app)
 end
 
 
@@ -689,11 +829,21 @@ function mod.main()
         http = newHttpClient{},
         mvnArtifacts = {},
         mvnArtifactsNotFound = {},
+        mvnArtifactIdsByArtif = {},
         mvnPropsByArtifact = {},
         mvnDepsByArtifact = {},
         mvnMngdDepsByArtifact = {},
         taskQueue = {},
-        sqliteOutFile = false,
+        db = false,
+        sqliteFile = false,
+        stmtCache = {},
+        cachedMvnArtifactDbIds = {},
+        cachedStringIds = {},
+        pomSources = {
+            objectSeal{ type = "local-file-cache", repoDir = "C:/Users/fankhauseand/.m2/repository", },
+            objectSeal{ type = "webserver", baseUrl = "http://127.0.0.1:8081/tmp/artifactory", },
+            --objectSeal{ type = "webserver", baseUrl = "https://artifactory.pnet.ch/artifactory", },
+        },
         -- Set of URLs that are currently processed
         currentUrlsToFetch = {},
         -- Set of URLs that need to be fetchet later (eg bcause dependency not fetched yet)
