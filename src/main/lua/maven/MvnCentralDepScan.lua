@@ -20,6 +20,7 @@ local startOrExecute = require("scriptlee").reactor.startOrExecute
 
 local out, log = io.stdout, io.stderr
 local mod = {}
+local LOGDBG = (true)and(function(msg)log:write("[DEBUG] "..msg)end)or(function()end)
 
 
 function mod.printHelp()
@@ -65,27 +66,25 @@ function mod.parseArgs( app )
 end
 
 
-function mod.newPomUrlSrc( app )
-    local urls = {
-        -- TODO insert URLs here!
-    }
-    local m = {
-        nextPomUrl = function(t)
-            return table.remove(urls, 1)
-        end,
-        __index = false,
-    }
-    m.__index = m
-    return setmetatable({}, m)
+function mod.getUrlBy( app, thingy )
+    if type(thingy) == "table" then
+        local aid = assert(thingy.artifactId)
+        local v = assert(thingy.version)
+        local gid = assert(thingy.groupId)
+        return "http://127.0.0.1:8081/tmp/artifactory/paisa/".. gid:gsub('%.','/') .."/".. aid .."/".. v .."/".. aid .."-".. v ..".pom"
+    end
+    error("Whops?!? ".. type(thingy))
 end
 
 
 function mod.processXmlValue( pomParser )
     local app = pomParser.req.app
-    local xpath = ""
+    local xpath = {}
     for i, stackElem in ipairs(pomParser.xmlElemStack) do
-        xpath = xpath .."/".. stackElem.tag
+        table.insert(xpath, "/")
+        table.insert(xpath, stackElem.tag)
     end
+    xpath = table.concat(xpath)
     --log:write(xpath .."\n")
     local mvnArtifact = pomParser.mvnArtifact
     local newMvnDependency = function()return objectSeal{
@@ -163,13 +162,143 @@ function mod.getMvnArtifactKey( mvnArtifact )
 end
 
 
+function mod.onMvnArtifactThatShouldBeFetched( app, mvnArtifact )
+    assert(type(mvnArtifact.artifactId) == "string")
+    assert(type(mvnArtifact.version) == "string")
+    assert(type(mvnArtifact.groupId) == "string")
+    local key = mod.getMvnArtifactKey(mvnArtifact)
+    if app.mvnArtifactsNotFound[key] then
+        LOGDBG("do NOT enqueue bcause 404: ".. mvnArtifact.artifactId .." ".. mvnArtifact.version .."\n")
+        return
+    end
+    table.insert(app.nextUrlsToFetch, {
+        artifactId = mvnArtifact.artifactId,
+        version = mvnArtifact.version,
+        groupId = mvnArtifact.groupId,
+    })
+    table.insert(app.taskQueue, function()mod.fetchAnotherMvnArtifact(app)end)
+end
+
+
+function mod.fetchAnotherMvnArtifact( app )
+::findNextArtifactToFetch::
+    local mvnArtifact
+    mvnArtifact = table.remove(app.currentUrlsToFetch, 1)
+    if not mvnArtifact then
+        assert(#app.currentUrlsToFetch == 0)
+        if #app.nextUrlsToFetch > 0 then -- switch to next set to process
+            LOGDBG("currentUrlsToFetch drained. Continue with nextUrlsToFetch\n")
+            app.currentUrlsToFetch = app.nextUrlsToFetch
+            app.nextUrlsToFetch = {}
+            goto findNextArtifactToFetch
+        end
+        table.insert(app.taskQueue, function() mod.onNoMorePomsToFetch(app) end)
+        return
+    end
+
+    local pomUrl = mod.getUrlBy(app, mvnArtifact)
+    local proto = pomUrl:match("^(https?)://")
+    local isTLS = (proto:upper() == "HTTPS")
+    local host = pomUrl:match("^https?://([^:/]+)[:/]")
+    local port = pomUrl:match("^https?://[^:/]+:(%d+)[^%d]")
+    local url = pomUrl:match("^https?://[^/]+(.*)$")
+    if port == 443 then isTLS = true end
+    if not port then port = (isTLS and 443 or 80) end
+    log:write("> GET ".. proto .."://".. host ..":".. port .. url .."\n")
+    local req = objectSeal{
+        app = app,
+        base = false,
+        pomParser = false,
+        artifactId = mvnArtifact.artifactId, -- so we know what we're trying to fetch
+        version = mvnArtifact.version, -- so we know what we're trying to fetch
+        groupId = mvnArtifact.groupId, -- so we know what we're trying to fetch
+    }
+    req.base = app.http:request{
+        cls = req,
+        host = assert(host), port = assert(port),
+        method = "GET", url = url,
+        --hdrs = ,
+        useTLS = isTLS,
+        onRspHdr = mod.onGetPomRspHdr,
+        onRspChunk = function( buf, req ) if req.pomParser then req.pomParser:write(buf) end end,
+        onRspEnd = function( req ) if req.pomParser then req.pomParser:closeSnk() end end,
+    }
+    req.base:closeSnk()
+end
+
+
+function mod.onMvnArtifactThatShouldBeScannedForDeps( app, mvnArtifact )
+    assert(type(mvnArtifact.artifactId) == "string")
+    assert(type(mvnArtifact.version) == "string")
+    assert(type(mvnArtifact.groupId) == "string")
+end
+
+
+function mod.enqueueMissingDependencies( app, mvnArtifact )
+    local hasParent = (not not mvnArtifact.parentArtifactId)
+    if hasParent then
+        local parentKey = mod.getMvnArtifactKey({
+            artifactId = mvnArtifact.parentArtifactId,
+            version = mvnArtifact.parentVersion,
+            groupId = mvnArtifact.parentGroupId,
+        })
+        local parent = app.mvnArtifacts[parentKey]
+        if not parent then
+            LOGDBG("Enqueue parent:  aid=".. mvnArtifact.parentArtifactId
+                .."  v=".. mvnArtifact.parentVersion.."  gid=".. mvnArtifact.parentGroupId .."\n")
+            table.insert(app.taskQueue, function()
+                mod.onMvnArtifactThatShouldBeFetched(app, objectSeal{
+                    artifactId = mvnArtifact.parentArtifactId,
+                    version = mvnArtifact.parentVersion,
+                    groupId = mvnArtifact.parentGroupId,
+                })
+            end)
+        end
+    end
+    local deps = app.mvnDepsByArtifact[mvnArtifact]
+    if not deps then
+        LOGDBG("Has no dependencies:  aid="..tostring(mvnArtifact.artifactId)
+            ..", ver="..tostring(mvnArtifact.version)..", gid="..tostring(mvnArtifact.groupId).."\n")
+        return
+    end
+    for _,dep in pairs(deps) do
+        local isIncomplete = (not dep.artifactId or not dep.version or not dep.groupId)
+        local hasUnresolvedMvnProps = false
+        if not isIncomplete then
+            hasUnresolvedMvnProps = (dep.artifactId:find("${",0,true) or dep.version:find("${",0,true) or dep.groupId:find("${",0,true))
+        end
+        if isIncomplete or hasUnresolvedMvnProps then
+            LOGDBG("Incomplete. Give up  aid="..tostring(dep.artifactId)
+                .."  v="..tostring(dep.version).."  gid="..tostring(dep.groupId).."\n")
+        else
+            LOGDBG("Enqueue dependency:  aid="..tostring(dep.artifactId)
+                .."  v="..tostring(dep.version).."  gid="..tostring(dep.groupId).."\n")
+            table.insert(app.taskQueue, function()
+                mod.onMvnArtifactThatShouldBeFetched(app, objectSeal{
+                    artifactId = dep.artifactId,
+                    version = dep.version,
+                    groupId = dep.groupId,
+                })
+            end)
+        end
+    end
+end
+
+
 function mod.onGetPomRspHdr( msg, req )
+    local app = req.app
     log:write("< "..tostring(msg.proto) .." "..tostring(msg.status).." "..tostring(msg.phrase).."\n")
-    --for i, h in ipairs(msg.headers) do
-    --    log:write("< ".. h.key ..": ".. h.val .."\n")
-    --end
-    --log:write("< \n")
-    if msg.status ~= 200 then
+    if msg.status == 404 then
+        log:write("HTTP 404. Ignore aid='".. req.artifactId .."' v='".. req.version .."' gid='".. req.groupId .."'.\n")
+        local key = assert(mod.getMvnArtifactKey(req))
+        app.mvnArtifactsNotFound[key] = true
+        table.insert(app.taskQueue, function() mod.fetchAnotherMvnArtifact(app) end)
+        return
+    elseif msg.status ~= 200 then
+        for i, h in ipairs(msg.headers) do
+            log:write("< ".. h.key ..": ".. h.val .."\n")
+        end
+        log:write("< \n")
         error("Unexpected HTTP ".. tostring(msg.status))
     end
     assert(not req.pomParser)
@@ -198,15 +327,18 @@ function mod.onGetPomRspHdr( msg, req )
             pomParser.currentValue = false
         end,
         onElementEnd = function( tag, pomParser )
+            if type(pomParser.currentValue) == "table" then
+                pomParser.currentValue = table.concat(pomParser.currentValue)
+            end
             mod.processXmlValue(pomParser)
             local elem = table.remove(pomParser.xmlElemStack)
             assert(elem.tag == tag);
         end,
         onChunk = function( buf, pomParser )
-            if pomParser.currentValue then
-                pomParser.currentValue = pomParser.currentValue .. buf
+            if type(pomParser.currentValue) ~= "table" then
+                pomParser.currentValue = { buf }
             else
-                pomParser.currentValue = buf
+                table.insert(pomParser.currentValue, buf)
             end
         end,
         onEnd = function( pomParser )
@@ -220,18 +352,18 @@ function mod.onGetPomRspHdr( msg, req )
             local key = mod.getMvnArtifactKey(mvnArtifact)
             assert(not app.mvnArtifacts[key])
             app.mvnArtifacts[key] = mvnArtifact
+            table.insert(app.taskQueue, function()
+                mod.onNewArtifactGotFetched(app, mvnArtifact)
+            end)
         end,
     }
 end
 
 
-function mod.onGetPomRspChunk( buf, req )
-    req.pomParser:write(buf)
-end
-
-
-function mod.onGetPomRspEnd( req )
-    req.pomParser:closeSnk()
+function mod.onNewArtifactGotFetched( app, mvnArtifact )
+    mod.resolveProperties(app) -- TODO IMHO we shouldn't call that so often
+    mod.resolveDependencyVersionsFromDepsMgmnt(app) -- TODO IMHO we shouldn't call that so often
+    mod.enqueueMissingDependencies(app, mvnArtifact)
 end
 
 
@@ -241,34 +373,44 @@ function mod.resolveDependencyVersionsFromDepsMgmnt( app )
     local mvnMngdDepsByArtifact = app.mvnMngdDepsByArtifact
     local funcs = {}
     function funcs.resolveForDependency( mvnArtifact, mvnDependency )
+        assert(mvnArtifact)
+        assert(mvnDependency)
+        --LOGDBG("resolveForDependency(".. mvnArtifact.artifactId .."-".. mvnArtifact.version ..", "
+        --    .. mvnDependency.artifactId .."-"..tostring(mvnDependency.version)..")\n")
+        -- Nothing to do if its already set
         if mvnDependency.version then return end
+        -- Do we have deps management available?
         local mngdDeps = mvnMngdDepsByArtifact[mvnArtifact]
-        if not mngdDeps then return end
-        for _, mngdDep in pairs(mngdDeps) do
-            if  mvnDependency.groupId == mngdDep.groupId
-            and mvnDependency.artifactId == mngdDep.artifactId
-            then
-                mvnDependency.version = assert(mngdDep.version);
-                break
+        if mngdDeps then
+            -- Lookup our own deps management for a version
+            for _, mngdDep in pairs(mngdDeps) do
+                if  mvnDependency.groupId == mngdDep.groupId
+                and mvnDependency.artifactId == mngdDep.artifactId
+                then
+                    -- Version found :)
+                    mvnDependency.version = assert(mngdDep.version);
+                    return
+                end
             end
         end
+        assert(not mvnDependency.version)
+        -- no deps management? Maybe parent has?
         local hasParent = (mvnArtifact.parentArtifactId)
-        if not mvnDependency.version and hasParent then
-            -- Cannot resolve. Delegate to parent.
-            local parent = mvnArtifacts[mod.getMvnArtifactKey{
-                groupId = mvnArtifact.parentGroupId,
-                artifactId = mvnArtifact.parentArtifactId,
-                version = mvnArtifact.parentVersion,
-            }];
-            if parent then
-                funcs.resolveForDependency(parent, mvnDependency)
-            end
+        local parent = mvnArtifacts[mod.getMvnArtifactKey{
+            groupId = mvnArtifact.parentGroupId,
+            artifactId = mvnArtifact.parentArtifactId,
+            version = mvnArtifact.parentVersion,
+        }];
+        local parentExists = (not not parent)
+        if parentExists then
+            funcs.resolveForDependency(parent, mvnDependency)
         end
     end
     function funcs.resolveForArtifact( mvnArtifact )
+        --LOGDBG("resolveForArtifact("..mvnArtifact.artifactId..", ".. mvnArtifact.version ..")\n")
         local mvnDeps = mvnDepsByArtifact[mvnArtifact]
-        if not mvnDeps then return end
-        if not mvnMngdDepsByArtifact[mvnArtifact] then return end
+        if not mvnDeps then LOGDBG("No mvnDeps\n") return end
+        if not (#mvnDeps > 0) then LOGDBG("mvnDeps empty\n") end
         for _, mvnDependency in pairs(mvnDeps) do
             funcs.resolveForDependency(mvnArtifact, mvnDependency)
         end
@@ -360,19 +502,18 @@ function mod.printStuffAtEnd( app )
         return false
     end)
     for _, mvnArtifact in ipairs(mvnArtifacts) do
-        log:write("ARTIFACT  "..tostring(mvnArtifact.groupId)
-            .."  "..tostring(mvnArtifact.artifactId)
-            .."  "..tostring(mvnArtifact.version).."\n")
-        log:write("  PARENT  ".. tostring(mvnArtifact.parentGroupId)
-            .."  ".. tostring(mvnArtifact.parentArtifactId)
-            .."  ".. tostring(mvnArtifact.parentVersion) .."\n")
+        log:write(string.format("ARTIFACT  %-30s %-13s %s\n",
+            mvnArtifact.artifactId, mvnArtifact.version, mvnArtifact.groupId))
+        log:write(string.format("  PARENT  %-30s %-13s %s\n",
+            mvnArtifact.parentArtifactId, mvnArtifact.parentVersion, mvnArtifact.parentGroupId))
         local deps = app.mvnDepsByArtifact[mvnArtifact]
-        local mvnProps = app.mvnPropsByArtifact[mvnArtifact]
+        --local mvnProps = app.mvnPropsByArtifact[mvnArtifact]
         --if mvnProps then for _, mvnProp in pairs(mvnProps) do
-        --    log:write("  PROP  ".. mvnProp.key .."=".. mvnProp.val .."\n")
+        --    log:write(string.format("    PROP  %-44s  %s\n", mvnProp.key, mvnProp.val))
         --end end
         if deps then for _, mvnDependency in pairs(deps) do
-            log:write("  DEP  ".. mvnDependency.artifactId .."  "..tostring(mvnDependency.version).."\n")
+            log:write(string.format("     DEP  %-30s %-13s %s\n",
+                mvnDependency.artifactId, mvnDependency.version, mvnDependency.groupId))
         end end
     end
 end
@@ -518,119 +659,53 @@ function mod.storeAsSqliteFile( app )
 end
 
 
-function mod.run( app )
-    assert(not app.mvnArtifacts) app.mvnArtifacts = {}
-    assert(not app.mvnPropsByArtifact) app.mvnPropsByArtifact = {}
-    assert(not app.mvnDepsByArtifact) app.mvnDepsByArtifact = {}
-    assert(not app.mvnMngdDepsByArtifact) app.mvnMngdDepsByArtifact = {}
-    local pomSrc = mod.newPomUrlSrc(app)
-    while true do
-        local pomUrl = pomSrc:nextPomUrl()
-        if not pomUrl then break end
-        local proto = pomUrl:match("^(https?)://")
-        local isTLS = (proto:upper() == "HTTPS")
-        local host = pomUrl:match("^https?://([^:/]+)[:/]")
-        local port = pomUrl:match("^https?://[^:/]+:(%d+)[^%d]")
-        local url = pomUrl:match("^https?://[^/]+(.*)$")
-        if port == 443 then isTLS = true end
-        if not port then port = (isTLS and 443 or 80) end
-        log:write("> GET ".. proto .."://".. host ..":".. port .. url .."\n")
-        local req = objectSeal{
-            app = app,
-            base = false,
-            pomParser = false,
-        }
-        req.base = app.http:request{
-            cls = req,
-            host = assert(host), port = assert(port),
-            method = "GET", url = url,
-            --hdrs = ,
-            useTLS = isTLS,
-            onRspHdr = mod.onGetPomRspHdr,
-            onRspChunk = mod.onGetPomRspChunk,
-            onRspEnd = mod.onGetPomRspEnd,
-        }
-        req.base:closeSnk()
-    end
-    log:write("[INFO ] No more pom URLs\n")
+function mod.onNoMorePomsToFetch( app )
+    log:write("[INFO ] No more POMs to fetch\n")
     mod.resolveDependencyVersionsFromDepsMgmnt(app)
     mod.resolveProperties(app)
-    mod.storeAsSqliteFile(app)
-    --mod.printStuffAtEnd(app)
+    if #app.currentUrlsToFetch > 0 or #app.nextUrlsToFetch > 0 then
+        log.write("[INFO ] Huh?!? ".. app.currentUrlsToFetch .." ".. app.nextUrlsToFetch .."\n")
+        table.insert(app.taskQueue, function()mod.fetchAnotherMvnArtifact(app)end)
+        return 
+    end
+    --mod.storeAsSqliteFile(app)
+    mod.printStuffAtEnd(app)
 end
 
 
-function mod.newSocketMgr()
-    local hosts = {}
-    local openSock = function( t, opts )
-        for k, v in pairs(opts) do
-            if false then
-            elseif k=='host' or k=='port' then
-            elseif k=='useTLS' then
-                if v then error('TLS not impl') end
-            else
-                error('Unknown option: '..tostring(k))
-            end
-        end
-        local inaddr = inaddrOfHostname(opts.host)
-        local af
-        if inaddr:find('^%d+.%d+.%d+.%d+$') then af = AF_INET else af = AF_INET6 end
-        local sock = socket(af, SOCK_STREAM, IPPROTO_TCP)
-        sock:connect(inaddr, opts.port)
-        log:write("opts.useTLS "..tostring(opts.useTLS).." (Override to TRUE ...)\n")
-        opts.useTLS = true -- TODO why the heck is this needed? (I guess scriptlee bug?)
-        if opts.useTLS then
-            local sockUnderTls = sock
-            sock = newTlsClient{
-                cls = assert(sockUnderTls),
-                peerHostname = assert(opts.host),
-                onVerify = function( tlsIssues, sockUnderTls )
-                    if tlsIssues.CERT_NOT_TRUSTED then
-                        warn("TLS ignore CERT_NOT_TRUSTED");
-                        tlsIssues.CERT_NOT_TRUSTED = false
-                    end
-                end,
-                send = function( buf, sockUnderTls )
-                    local ret = sockUnderTls:write(buf)
-                    sockUnderTls:flush() -- TODO Why is this flush needed?
-                    return ret
-                end,
-                recv = function( sockUnderTls ) return sockUnderTls:read() end,
-                flush = function( sockUnderTls ) sockUnderTls:flush() end,
-                closeSnk = function( sockUnderTls ) sockUnderTls:closeSnk() end,
-            }
-            assert(not getmetatable(sock).release)
-            getmetatable(sock).release = function( t ) sockUnderTls:release() end;
-        end
-        return {
-            _sock = sock,
-            write = function(t, ...) return sock:write(...)end,
-            read = function(t, ...) return sock:read(...)end,
-            flush = function(t, ...) return sock:flush(...)end,
-        }
+function mod.run( app )
+    table.insert(app.taskQueue, function()mod.fetchAnotherMvnArtifact(app)end)
+    while true do
+        local task = table.remove(app.taskQueue, 1)
+        if not task then break end
+        task()
     end
-    return{
-        openSock = openSock,
-        releaseSock = function(t, sockWrapr) t:closeSock(sockWrapr) end,
-        closeSock = function(t, sockWrapr) sockWrapr._sock:release() end,
-    }
+    mod.onNoMorePomsToFetch(app)
 end
 
 
 function mod.main()
     local app = objectSeal{
-        http = newHttpClient{
-            socketMgr = assert(mod.newSocketMgr()),
-        },
-        mvnArtifacts = false,
-        mvnPropsByArtifact = false,
-        mvnDepsByArtifact = false,
-        mvnMngdDepsByArtifact = false,
+        http = newHttpClient{},
+        mvnArtifacts = {},
+        mvnArtifactsNotFound = {},
+        mvnPropsByArtifact = {},
+        mvnDepsByArtifact = {},
+        mvnMngdDepsByArtifact = {},
+        taskQueue = {},
         sqliteOutFile = false,
+        -- Set of URLs that are currently processed
+        currentUrlsToFetch = {},
+        -- Set of URLs that need to be fetchet later (eg bcause dependency not fetched yet)
+        nextUrlsToFetch = {
+            -- TODO place URLs here (bcause there's no API to do this yet)
+            { artifactId = "trin-web", version = "02.01.07.00", groupId = "ch.post.it.paisa.trin" },
+        },
     }
     if mod.parseArgs(app) ~= 0 then os.exit(1) end
     mod.run(app)
 end
 
 
-startOrExecute(nil, mod.main)
+--startOrExecute(nil, mod.main)
+startOrExecute(mod.main)
