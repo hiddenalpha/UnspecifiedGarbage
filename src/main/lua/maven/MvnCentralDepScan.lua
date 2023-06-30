@@ -20,7 +20,7 @@ local startOrExecute = require("scriptlee").reactor.startOrExecute
 
 local out, log = io.stdout, io.stderr
 local mod = {}
-local LOGDBG = (true)and(function(msg)log:write("[DEBUG] "..msg)end)or(function()end)
+local LOGDBG = (false)and(function(msg)log:write("[DEBUG] "..msg)end)or(function()end)
 
 
 function mod.printHelp()
@@ -66,18 +66,9 @@ function mod.parseArgs( app )
 end
 
 
-function mod.triggerFetchByPomSourceNr( app, nr, mvnArtifact )
-    assert(type(nr) == "number")
-    local pomSrc = app.pomSources[nr]
-    if not pomSrc then
-        mod.onNoMorePomSources(app, mvnArtifact) -- TODO impl
-        return
-    end
-    if false then
-    --elseif pomSrc.type == "local-file-cache" then
-    else
-        error("Whops. pomSources[i].type is ".. pomSrc.type)
-    end
+function mod.strTrim( str )
+    if not str then return str end
+    return str:gsub("^%s+", ""):gsub("%s+$", "")
 end
 
 
@@ -125,6 +116,10 @@ function mod.processXmlValue( pomParser )
         pomParser.mvnDependency = false
         local deps = app.mvnDepsByArtifact[mvnArtifact]
         if not deps then deps = {} app.mvnDepsByArtifact[mvnArtifact] = deps end
+        -- need to trim values
+        mvnArtifact.groupId = mod.strTrim(mvnArtifact.groupId)
+        mvnArtifact.artifactId = mod.strTrim(mvnArtifact.artifactId)
+        mvnArtifact.version = mod.strTrim(mvnArtifact.version)
         table.insert(deps, assert(mvnDependency))
     elseif xpath == "/project/dependencyManagement/dependencies/dependency/groupId" then
         if not pomParser.mvnMngdDependency then pomParser.mvnMngdDependency = newMvnDependency() end
@@ -175,12 +170,16 @@ function mod.onMvnArtifactThatShouldBeFetched( app, mvnArtifact )
         LOGDBG("do NOT enqueue bcause 404: ".. mvnArtifact.artifactId .." ".. mvnArtifact.version .."\n")
         return
     end
+    if app.mvnArtifactsAlreadyParsed[key] then
+        LOGDBG("do NOT enqueue bcause have already: ".. mvnArtifact.artifactId .." ".. mvnArtifact.version .."\n")
+        return
+    end
+    app.mvnArtifactsAlreadyParsed[key] = true -- TODO maybe should do this in another place
     table.insert(app.nextUrlsToFetch, {
         artifactId = mvnArtifact.artifactId,
         version = mvnArtifact.version,
         groupId = mvnArtifact.groupId,
     })
-    table.insert(app.taskQueue, function()mod.fetchAnotherMvnArtifact(app)end)
 end
 
 
@@ -258,9 +257,7 @@ function mod.fetchMvnArtifactFromFileOrElseSrcNr( app, mvnArtifact, repoDir, pom
     local fd = io.open(path, "rb")
     if not fd then
         log:write("ENOENT ".. path .."\n")
-        table.insert(app.taskQueue, function()
-            mod.fetchFromSourceNr(app, mvnArtifact, pomSrcNrFallback)
-        end)
+        mod.fetchFromSourceNr(app, mvnArtifact, pomSrcNrFallback)
         return
     end
     log:write("fopen(\"".. path .."\", \"rb\")\n")
@@ -272,7 +269,16 @@ function mod.fetchMvnArtifactFromFileOrElseSrcNr( app, mvnArtifact, repoDir, pom
     while true do
         local buf = fd:read(1<<16)
         if not buf then break end
-        file.pomParser:write(buf)
+        local ok, emsg = pcall(file.pomParser.write, file.pomParser, buf)
+        if not ok then
+            log:write("EMSG:\n".. emsg .."\n\n")
+            if emsg:find("^%[[^]]+%]:%d+: XMLParseError .+ unknown encoding") then
+                log:write("[ERROR] Ignore: ".. emsg .."\n")
+                sleep(3)
+                return
+            end
+            error(emsg)
+        end
     end
     file.pomParser:closeSnk()
 end
@@ -291,6 +297,7 @@ function mod.fetchMvnArtifactFromWebserverOrElseSrcNr( app, mvnArtifact, baseUrl
     local url = pomUrl:match("^https?://[^/]+(.*)$")
     if port == 443 then isTLS = true end
     if not port then port = (isTLS and 443 or 80) end
+::doHttpRequest::
     log:write("> GET ".. proto .."://".. host ..":".. port .. url .."\n")
     local req = objectSeal{
         app = app,
@@ -310,7 +317,14 @@ function mod.fetchMvnArtifactFromWebserverOrElseSrcNr( app, mvnArtifact, baseUrl
         onRspChunk = function( buf, req ) if req.pomParser then req.pomParser:write(buf) end end,
         onRspEnd = function( req ) if req.pomParser then req.pomParser:closeSnk() end end,
     }
-    req.base:closeSnk()
+    local ok, emsg = pcall(req.base.closeSnk, req.base)
+    if not ok then
+        if emsg:find("^ENOMSG") then
+            log:write("ENOMSG Artifactory closed connection appruptly?!? Retry in a few seconds ....\n"); sleep(7)
+            goto doHttpRequest
+        end
+        error(emsg)
+    end
 end
 
 
@@ -346,7 +360,6 @@ function mod.fetchAnotherMvnArtifact( app, pomSrcNr )
             app.nextUrlsToFetch = {}
             goto findNextArtifactToFetch
         end
-        table.insert(app.taskQueue, function() mod.onNoMorePomsToFetch(app) end)
         return
     end
     assert(mvnArtifact)
@@ -373,13 +386,11 @@ function mod.enqueueMissingDependencies( app, mvnArtifact )
         if not parent then
             --LOGDBG("Enqueue parent:  aid=".. mvnArtifact.parentArtifactId
             --    .."  v=".. mvnArtifact.parentVersion.."  gid=".. mvnArtifact.parentGroupId .."\n")
-            table.insert(app.taskQueue, function()
-                mod.onMvnArtifactThatShouldBeFetched(app, objectSeal{
-                    artifactId = mvnArtifact.parentArtifactId,
-                    version = mvnArtifact.parentVersion,
-                    groupId = mvnArtifact.parentGroupId,
-                })
-            end)
+            mod.onMvnArtifactThatShouldBeFetched(app, objectSeal{
+                artifactId = mvnArtifact.parentArtifactId,
+                version = mvnArtifact.parentVersion,
+                groupId = mvnArtifact.parentGroupId,
+            })
         end
     end
     local deps = app.mvnDepsByArtifact[mvnArtifact]
@@ -400,13 +411,17 @@ function mod.enqueueMissingDependencies( app, mvnArtifact )
         else
             LOGDBG("Enqueue dependency:  aid="..tostring(dep.artifactId)
                 .."  v="..tostring(dep.version).."  gid="..tostring(dep.groupId).."\n")
-            table.insert(app.taskQueue, function()
-                mod.onMvnArtifactThatShouldBeFetched(app, objectSeal{
-                    artifactId = dep.artifactId,
-                    version = dep.version,
-                    groupId = dep.groupId,
-                })
-            end)
+            --if dep.artifactId:find("\n") or dep.version:find("\n") or dep.groupId:find("\n") then
+            --    log:write("Wanted by  aid="..tostring(mvnArtifact.artifactId)
+            --        ..", ver="..tostring(mvnArtifact.version)
+            --        ..", gid="..tostring(mvnArtifact.groupId).."\n");
+            --    error("WTF?!?")
+            --end
+            mod.onMvnArtifactThatShouldBeFetched(app, objectSeal{
+                artifactId = dep.artifactId,
+                version = dep.version,
+                groupId = dep.groupId,
+            })
         end
     end
 end
@@ -419,11 +434,10 @@ function mod.onGetPomRspHdr( msg, req )
         log:write("HTTP 404. Ignore aid='".. req.artifactId .."' v='".. req.version .."' gid='".. req.groupId .."'.\n")
         local key = assert(mod.getMvnArtifactKey(req))
         app.mvnArtifactsNotFound[key] = true
-        table.insert(app.taskQueue, function() mod.fetchAnotherMvnArtifact(app) end)
         return
     elseif msg.status ~= 200 then
         for i, h in ipairs(msg.headers) do
-            log:write("< ".. h.key ..": ".. h.val .."\n")
+            log:write("< ".. h[1] ..": ".. h[2] .."\n")
         end
         log:write("< \n")
         error("Unexpected HTTP ".. tostring(msg.status))
@@ -468,14 +482,15 @@ function mod.resolveDependencyVersionsFromDepsMgmnt( app )
         end
         assert(not mvnDependency.version)
         -- no deps management? Maybe parent has?
-        local hasParent = (mvnArtifact.parentArtifactId)
-        local parent = mvnArtifacts[mod.getMvnArtifactKey{
-            groupId = mvnArtifact.parentGroupId,
-            artifactId = mvnArtifact.parentArtifactId,
-            version = mvnArtifact.parentVersion,
-        }];
-        local parentExists = (not not parent)
-        if parentExists then
+        local parent
+        if mvnArtifact.parentArtifactId then -- has its parent declared
+            parent = mvnArtifacts[mod.getMvnArtifactKey{
+                groupId = mvnArtifact.parentGroupId,
+                artifactId = mvnArtifact.parentArtifactId,
+                version = mvnArtifact.parentVersion,
+            }];
+        end
+        if parent then -- parent exists
             funcs.resolveForDependency(parent, mvnDependency)
         end
     end
@@ -516,7 +531,7 @@ function mod.resolveProperties( app )
             if propKey then
                 local propVal = mod.getPropValThroughParentChain(app, mvnArtifact, propKey)
                 if propVal then
-                    mvnDependency.version = propVal
+                    mvnDependency.version = mod.strTrim(propVal)
                 end
             end
         end
@@ -552,7 +567,7 @@ function mod.getPropValThroughParentChain( app, mvnArtifact, propKey, none )
         }]
     end
     if not parent then
-        log:write("[INFO ] Cannot resolve ${"..propKey.."}\n")
+        LOGDBG("Cannot resolve ${"..propKey.."}\n")
         return nil
     end
     return mod.getPropValThroughParentChain(app, parent, propKey)
@@ -560,6 +575,7 @@ end
 
 
 function mod.printStuffAtEnd( app )
+    if true then return end
     local mvnArtifacts = {}
     for _, mvnArtifact in pairs(app.mvnArtifacts) do
         table.insert(mvnArtifacts, mvnArtifact)
@@ -778,21 +794,6 @@ function mod.storeAsSqliteFile( app )
 end
 
 
-function mod.onNoMorePomsToFetch( app )
-    LOGDBG("No more POMs to fetch\n")
-    mod.resolveDependencyVersionsFromDepsMgmnt(app)
-    mod.resolveProperties(app)
-    if #app.currentUrlsToFetch > 0 or #app.nextUrlsToFetch > 0 then
-        log:write("[WARN ] Huh?!? ".. #app.currentUrlsToFetch .." ".. #app.nextUrlsToFetch
-            ..". Why are there still entries? Go back again.\n")
-        table.insert(app.taskQueue, function()mod.fetchAnotherMvnArtifact(app)end)
-        return 
-    end
-    mod.printStuffAtEnd(app)
-    mod.storeAsSqliteFile(app)
-end
-
-
 function mod.dbOpen( app )
     assert(not app.db)
     app.db = newSqlite{
@@ -840,16 +841,31 @@ function mod.run( app )
     while true do
         local task = table.remove(app.taskQueue, 1)
         if not task then
-            mod.onNoMorePomsToFetch(app)
+            if #app.currentUrlsToFetch > 0 or #app.nextUrlsToFetch > 0 then
+                log:write("[WARN ] Huh2?!? ".. #app.currentUrlsToFetch .." ".. #app.nextUrlsToFetch
+                    ..". Why are there still entries? Keep looping.\n")
+                table.insert(app.taskQueue, function()mod.fetchAnotherMvnArtifact(app)end)
+                goto nextTask
+            end
             if #app.taskQueue > 0 then -- TODO fix this würgaround
-                goto nextTaks
+                goto nextTask
             else
                 break
             end
         end
         task()
-        ::nextTaks::
+        ::nextTask::
     end
+    mod.resolveDependencyVersionsFromDepsMgmnt(app)
+    mod.resolveProperties(app)
+    if #app.currentUrlsToFetch > 0 or #app.nextUrlsToFetch > 0 then
+        log:write("[WARN ] ".. #app.currentUrlsToFetch .." ".. #app.nextUrlsToFetch
+            ..". Why are there entries again?!?.\n")
+        error("WTF?!?")
+        return
+    end
+    mod.printStuffAtEnd(app)
+    mod.storeAsSqliteFile(app)
     mod.dbCommit(app)
 end
 
@@ -858,6 +874,7 @@ function mod.main()
     local app = objectSeal{
         http = newHttpClient{},
         mvnArtifacts = {},
+        mvnArtifactsAlreadyParsed = {},
         mvnArtifactsNotFound = {},
         mvnArtifactIdsByArtif = {},
         mvnPropsByArtifact = {},
@@ -880,7 +897,6 @@ function mod.main()
         nextUrlsToFetch = {
             -- TODO place URLs here (bcause there's no API to do this yet)
             --{ artifactId = "trin-web", version = "02.01.07.00", groupId = "ch.post.it.paisa.trin" },
-
         },
     }
     if mod.parseArgs(app) ~= 0 then os.exit(1) end
