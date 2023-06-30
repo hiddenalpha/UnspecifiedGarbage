@@ -119,15 +119,19 @@ end
 function mod.onArtifactSubdirFoundInArtifactory( app, path )
     assert(not path:find("/$"), path)
     path = path .."/"
-    -- TODO drop this debugging condition
     --if path:len() > 37 and not path:find("^/artifactory/paisa/ch/post/it/paisa/preflux") then goto skipThisPath end
-    --
-    if path:find("^/artifactory/paisa/ch/post/it/paisa/alice") then goto skipThisPath end
-    if path:find("^/artifactory/paisa/ch/post/it/paisa/data/resources/paisa%-data%-resources%-") then goto skipThisPath end
-    if path:find("^/artifactory/paisa/ch/post/it/paisa/data/transformer/") then goto skipThisPath end
     if path:find("^/artifactory/paisa/ch/post/it/paisa/[^/]+/[^-]+%-config/") then goto skipThisPath end
     if path:find("^/artifactory/paisa/ch/post/it/paisa/[^/]+/[^-]+%-domain/") then goto skipThisPath end
     if path:find("^/artifactory/paisa/ch/post/it/paisa/[^/]+/[^-]+%-test/") then goto skipThisPath end
+    if path:find("^/artifactory/paisa/ch/post/it/paisa/alice") then goto skipThisPath end
+    if path:find("^/artifactory/paisa/ch/post/it/paisa/aseed") then goto skipThisPath end
+    if path:find("^/artifactory/paisa/ch/post/it/paisa/data/resources/paisa%-data%-resources%-") then goto skipThisPath end
+    if path:find("^/artifactory/paisa/ch/post/it/paisa/data/transformer/") then goto skipThisPath end
+    if path:find("^/artifactory/paisa/ch/post/it/paisa/paisa-devpack") then goto skipThisPath end
+    if path:find("^/artifactory/paisa/ch/post/it/paisa/paisa-pom") then goto skipThisPath end
+    if path:find("^/artifactory/paisa/ch/post/it/paisa/paisa-superpom") then goto skipThisPath end
+    if path:find("^/artifactory/paisa/ch/post/it/paisa/tragula") then goto skipThisPath end
+    if path:find("^/artifactory/paisa/ch/post/it/paisa/tyro") then goto skipThisPath end
     goto doHttpRequest
 ::skipThisPath::
     --LOGDBG("ignore '".. path .."'\n")
