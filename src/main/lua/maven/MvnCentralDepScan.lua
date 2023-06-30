@@ -29,7 +29,7 @@ function mod.printHelp()
         .."\n"
         .."  Options:\n"
         .."\n"
-        .."    --example\n"
+        .."    --yolo\n"
         .."      WARN: only use if you know what you're doing!\n"
         .."\n"
         .."    --state <path>\n"
@@ -41,7 +41,7 @@ end
 
 function mod.parseArgs( app )
     local iA = 0
-    local isExample = false
+    local isYolo = false
 ::nextArg::
     iA = iA + 1
     local arg = _ENV.arg[iA]
@@ -49,8 +49,8 @@ function mod.parseArgs( app )
         goto endOfArgs
     elseif arg == "--help" then
         mod.printHelp() return -1
-    elseif arg == "--example" then
-        isExample = true
+    elseif arg == "--yolo" then
+        isYolo = true
     elseif arg == "--state" then
         iA = iA + 1
         arg = _ENV.arg[iA]
@@ -61,7 +61,7 @@ function mod.parseArgs( app )
     end
     goto nextArg
 ::endOfArgs::
-    if not isExample then log:write("Bad Args\n") return -1 end
+    if not isYolo then log:write("Bad Args\n") return -1 end
     return 0
 end
 
@@ -233,7 +233,11 @@ function mod.newPomParser( app, cls )
             if not mvnArtifact.groupId then mvnArtifact.groupId = mvnArtifact.parentGroupId end
             if not mvnArtifact.version then mvnArtifact.version = mvnArtifact.parentVersion end
             local key = mod.getMvnArtifactKey(mvnArtifact)
-            assert(not app.mvnArtifacts[key])
+            if app.mvnArtifacts[key] then
+                log:write("[WARN ] Already have  aid=".. mvnArtifact.artifactId
+                    ..", ver=".. mvnArtifact.version ..", gid=".. mvnArtifact.groupId .."\n")
+                return
+            end
             app.mvnArtifacts[key] = mvnArtifact
             table.insert(app.taskQueue, function()
                 mod.onNewArtifactGotFetched(app, mvnArtifact)
@@ -260,7 +264,17 @@ function mod.fetchMvnArtifactFromFileOrElseSrcNr( app, mvnArtifact, repoDir, pom
         return
     end
     log:write("fopen(\"".. path .."\", \"rb\")\n")
-    error("TODO impl")
+    local file = objectSeal{
+        base = false,
+        pomParser = false,
+    }
+    file.pomParser = mod.newPomParser(app, false)
+    while true do
+        local buf = fd:read(1<<16)
+        if not buf then break end
+        file.pomParser:write(buf)
+    end
+    file.pomParser:closeSnk()
 end
 
 
@@ -578,32 +592,40 @@ end
 
 
 function mod.getOrNewStringId( app, str )
+    local err -- serves as tmp and retval
+    local db, ok, emsg, rs, stringId, stmt, stmtStr
     -- serve from memory if possible
-    if not str then return nil end
-    local stringId = app.cachedStringIds[str]
-    if stringId then return stringId end
-    -- serve from DB if possible
-    local db = app.db
-    local stmtStr = "SELECT id FROM String WHERE str = :str"
-    local stmt = app.stmtCache[stmtStr]
+    if not str then err = nil; goto endFn end
+    stringId = app.cachedStringIds[str]
+    if stringId then err = stringId; goto endFn end
+    -- serve from DB if possible.
+    db = app.db
+    stmtStr = "SELECT id FROM String WHERE str = :str"
+    stmt = app.stmtCache[stmtStr]
     if not stmt then stmt = db:prepare(stmtStr); app.stmtCache[stmtStr] = stmt end
     stmt:reset()  stmt:bind(":str", str)
-    local rs = stmt:execute()
+    rs = stmt:execute()
     if rs:next() then -- already exists. re-use
-        rs = rs:value(1)
-        app.cachedStringIds[str] = rs
-        return rs
+        err = rs:value(1)
+        app.cachedStringIds[str] = err
+        goto endFn
     end
     -- no such string yet. create.
-    local stmtStr = "INSERT INTO String (str) VALUES (:str)"
-    local stmt = app.stmtCache[stmtStr]
+    stmtStr = "INSERT INTO String (str) VALUES (:str)"
+    stmt = app.stmtCache[stmtStr]
     if not stmt then stmt = db:prepare(stmtStr); app.stmtCache[stmtStr] = stmt end
-    stmt:reset();  stmt:bind(":str", str);  stmt:execute()
-    stringId = db:lastInsertRowid()
-    app.cachedStringIds[str] = stringId
-    return stringId
+    stmt:reset();  stmt:bind(":str", str);
+    ok, emsg = pcall(stmt.execute, stmt)
+    if not ok then
+        log:write("String: \"".. str .."\"\n")
+        error(emsg)
+    end
+    err = db:lastInsertRowid()
+    app.cachedStringIds[str] = err
+::endFn::
+    --LOGDBG("dbStr(\""..tostring(str).."\") -> "..tostring(err).."\n");
+    return err
 end
-
 
 
 function mod.insertMvnArtifact( app, mvnArtifact )
@@ -642,12 +664,12 @@ function mod.insertMvnArtifact( app, mvnArtifact )
         local stmt = app.stmtCache[stmtStr]
         if not stmt then stmt = db:prepare(stmtStr); app.stmtCache[stmtStr] = stmt end
         stmt:reset()
-        stmt:bind(":groupId", mod.getOrNewStringId(app, a.groupId))
-        stmt:bind(":artifactId", mod.getOrNewStringId(app, a.artifactId))
-        stmt:bind(":version", mod.getOrNewStringId(app, a.version))
-        stmt:bind(":parentGroupId", mod.getOrNewStringId(app, a.parentGroupId))
-        stmt:bind(":parentArtifactId", mod.getOrNewStringId(app, a.parentArtifactId))
-        stmt:bind(":parentVersion", mod.getOrNewStringId(app, a.parentVersion))
+        stmt:bind(":groupId", gid)
+        stmt:bind(":artifactId", aid)
+        stmt:bind(":version", ver)
+        stmt:bind(":parentGroupId", pgid)
+        stmt:bind(":parentArtifactId", paid)
+        stmt:bind(":parentVersion", pver)
         stmt:execute()
         dbId = assert(db:lastInsertRowid())
     end
@@ -761,7 +783,8 @@ function mod.onNoMorePomsToFetch( app )
     mod.resolveDependencyVersionsFromDepsMgmnt(app)
     mod.resolveProperties(app)
     if #app.currentUrlsToFetch > 0 or #app.nextUrlsToFetch > 0 then
-        log.write("[INFO ] Huh?!? ".. app.currentUrlsToFetch .." ".. app.nextUrlsToFetch .."\n")
+        log:write("[WARN ] Huh?!? ".. #app.currentUrlsToFetch .." ".. #app.nextUrlsToFetch
+            ..". Why are there still entries? Go back again.\n")
         table.insert(app.taskQueue, function()mod.fetchAnotherMvnArtifact(app)end)
         return 
     end
@@ -816,10 +839,17 @@ function mod.run( app )
     table.insert(app.taskQueue, function()mod.fetchAnotherMvnArtifact(app)end)
     while true do
         local task = table.remove(app.taskQueue, 1)
-        if not task then break end
+        if not task then
+            mod.onNoMorePomsToFetch(app)
+            if #app.taskQueue > 0 then -- TODO fix this würgaround
+                goto nextTaks
+            else
+                break
+            end
+        end
         task()
+        ::nextTaks::
     end
-    mod.onNoMorePomsToFetch(app)
     mod.dbCommit(app)
 end
 
@@ -849,7 +879,8 @@ function mod.main()
         -- Set of URLs that need to be fetchet later (eg bcause dependency not fetched yet)
         nextUrlsToFetch = {
             -- TODO place URLs here (bcause there's no API to do this yet)
-            { artifactId = "trin-web", version = "02.01.07.00", groupId = "ch.post.it.paisa.trin" },
+            --{ artifactId = "trin-web", version = "02.01.07.00", groupId = "ch.post.it.paisa.trin" },
+
         },
     }
     if mod.parseArgs(app) ~= 0 then os.exit(1) end
