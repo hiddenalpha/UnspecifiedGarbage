@@ -496,4 +496,10 @@ Links (Aka argument amplifiers)
 - [paisa masterdatas still do bullsh**](https://gitit.post.ch/projects/ISA/repos/deployment-artifact-api/pull-requests/1/overview?commentId=272726)
 - [ID ownership/responsible](https://gitit.post.ch/projects/ISA/repos/organization-information-api/pull-requests/12/overview?commentId=274738)
 
+## wlan kabel kaufen shop
+- [Wlan kabel kaufen](https://etel-tuning.eu/produkt/wlan-kabel/)
+- [Alles ist (Un)möglich! – Der Fake-Shop im Netz](https://traumshop.net/)
+
+
+- [Portable QEMU VM cross-platform](https://www.willhaley.com/blog/simple-portable-linux-qemu-vm-usb/)
 
