@@ -24,3 +24,11 @@ mvn deploy -Dcmake.generate.skip=true -Dcmake.compile.skip=true -DaltDeploymentR
 ## Run e2e locally
 mvn verify -U -DSelBaseUrl=http://localhost:7012/apigateway/services/foo/index.html -Dskip.tests=false -Dserver.host=localhost -Dserver.port=7012 -Ptestsuite
 
+
+## Fill local cache with artifacts (TODO verify)
+
+  mvn dependency:go-offline
+
+(See als "https://maven.apache.org/plugins/maven-dependency-plugin/go-offline-mojo.html")
+
+
