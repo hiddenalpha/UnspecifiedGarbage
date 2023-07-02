@@ -1,4 +1,18 @@
 
+## fCGI keep alive backend connections
+
+upstream myFancyBackend {
+    server unix:/tmp/fastcgi/socket1;
+    server ;
+    keepalive 4;
+} 
+server {
+    location /foo/bar {
+        fastcgi_pass myFancyBackend;
+        fastcgi_keep_conn on;
+    }
+}
+
 
 ## Delegate requests to custom scripts via fcgiwrap
 
@@ -32,7 +46,7 @@
      && echo "    root ${DOCUMENT_ROOT:?};" \
      && echo '    fastcgi_pass  unix:/var/run/fcgiwrap.socket;' \
      && echo "    include ${FASTCGI_PARAMS:?};" \
-     && echo '    fastcgi_param SCRIPT_FILENAME  '"${CGI_DIR:?}"'$fastcgi_script_name;' \
+     && echo '    #fastcgi_param SCRIPT_FILENAME  '"${CGI_DIR:?}"'$fastcgi_script_name;' \
      && echo '  }' \
      && echo '' \
      && echo '}' \
