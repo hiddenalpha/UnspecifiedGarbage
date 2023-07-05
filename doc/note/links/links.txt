@@ -68,7 +68,8 @@ Links (Aka argument amplifiers)
 - "https://delicious-insights.com/en/posts/getting-solid-at-git-rebase-vs-merge/"
 
 ## Git is NOT an artifact storage
-- "https://devops.stackexchange.com/q/452"
+- [](https://devops.stackexchange.com/q/452)
+- [Git store CI builds](https://stackoverflow.com/questions/14489684/should-git-be-used-to-store-continuous-integration-builds)
 
 ## Pro FailFast, dont ignore errors:
 - "https://softwareengineering.stackexchange.com/a/190535"
