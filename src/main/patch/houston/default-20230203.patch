@@ -1,0 +1,52 @@
+
+  My custom patch ready-to-apply to have an "usable" houston.
+  
+  Contains:
+  - Simplelogger
+  - Listen localhost only
+  - Queue-Retry every 5 seconds.
+
+diff --git a/houston-process/pom.xml b/houston-process/pom.xml
+index fff9c178..960c0098 100644
+--- a/houston-process/pom.xml
++++ b/houston-process/pom.xml
+@@ -20,6 +20,26 @@
+         <skip.node.install>true</skip.node.install>
+ 	</properties>
+ 	<dependencies>
++    <dependency>                              <!-- TODO: Remove -->
++      <groupId>org.slf4j</groupId>            <!-- TODO: Remove -->
++      <artifactId>slf4j-api</artifactId>      <!-- TODO: Remove -->
++      <version>1.7.25</version>               <!-- TODO: Remove -->
++    </dependency>                             <!-- TODO: Remove -->
++    <dependency>                              <!-- TODO: Remove -->
++      <groupId>org.slf4j</groupId>            <!-- TODO: Remove -->
++      <artifactId>slf4j-simple</artifactId>   <!-- TODO: Remove -->
++      <version>1.7.25</version>               <!-- TODO: Remove -->
++    </dependency>                             <!-- TODO: Remove -->
++    <dependency>                              <!-- TODO: Remove -->
++      <groupId>org.slf4j</groupId>            <!-- TODO: Remove -->
++      <artifactId>jcl-over-slf4j</artifactId> <!-- TODO: Remove -->
++      <version>1.7.25</version>               <!-- TODO: Remove -->
++    </dependency>                             <!-- TODO: Remove -->
++    <dependency>                              <!-- TODO: Remove -->
++      <groupId>org.slf4j</groupId>            <!-- TODO: Remove -->
++      <artifactId>jul-to-slf4j</artifactId>   <!-- TODO: Remove -->
++      <version>1.7.25</version>               <!-- TODO: Remove -->
++    </dependency>                             <!-- TODO: Remove -->
+ 		<!-- project -->
+ 		<dependency>
+ 			<groupId>ch.post.it.paisa.houston</groupId>
+diff --git a/houston-process/src/main/java/ch/post/it/paisa/houston/process/main/Deployer.java b/houston-process/src/main/java/ch/post/it/paisa/houston/process/main/Deployer.java
+index ee7d8b02..b28ae8d6 100644
+--- a/houston-process/src/main/java/ch/post/it/paisa/houston/process/main/Deployer.java
++++ b/houston-process/src/main/java/ch/post/it/paisa/houston/process/main/Deployer.java
+@@ -256,7 +256,7 @@ public class Deployer {
+                 qc.add(new QueueConfiguration().withPattern("brox-from-vehicles-.*").withRetryIntervals(10, 20, 30, 60, 120)
+                         .withEnqueueDelayMillisPerSize(10).withEnqueueMaxDelayMillis(10_000));
+                 // All other queues (typically to backend services) with a slow-down pattern after failed delivery
+-                qc.add(new QueueConfiguration().withPattern(".*").withRetryIntervals(10, 20, 30, 60, 120));
++                qc.add(new QueueConfiguration().withPattern(".*").withRetryIntervals(5));/*TODO revert*/
+
+                 RedisquesConfiguration redisquesConfig = RedisquesConfiguration.with()
+                         .address(Address.redisquesAddress())

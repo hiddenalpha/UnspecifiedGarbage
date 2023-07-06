@@ -1,0 +1,64 @@
+
+  Custom houston patch to have a "usable" service at all.
+
+  Patch based on "develop" aka
+  "3b1275e123c2b7aa2ffaa34270a5e1a373a65993" from "2023-04-27".
+
+
+diff --git a/pom.xml b/pom.xml
+index 0ed4f7f3..b44c5693 100644
+--- a/pom.xml
++++ b/pom.xml
+@@ -72,8 +72,6 @@
+         <skip.wagon>false</skip.wagon>
+         <skip.copy-dependencies>false</skip.copy-dependencies>
+ 
+-        <!-- spotless -->
+-        <source.format.apply.phase>compile</source.format.apply.phase>
+     </properties>
+ 
+     <scm>
+diff --git a/houston-process/pom.xml b/houston-process/pom.xml
+index 374dcb97..3c24937c 100644
+--- a/houston-process/pom.xml
++++ b/houston-process/pom.xml
+@@ -25,6 +25,26 @@
+     </properties>
+
+     <dependencies>
++        <dependency>                              <!-- TODO: Remove -->
++          <groupId>org.slf4j</groupId>            <!-- TODO: Remove -->
++          <artifactId>slf4j-api</artifactId>      <!-- TODO: Remove -->
++          <version>2.0.1</version>                <!-- TODO: Remove -->
++        </dependency>                             <!-- TODO: Remove -->
++        <dependency>                              <!-- TODO: Remove -->
++          <groupId>org.slf4j</groupId>            <!-- TODO: Remove -->
++          <artifactId>slf4j-simple</artifactId>   <!-- TODO: Remove -->
++          <version>2.0.1</version>                <!-- TODO: Remove -->
++        </dependency>                             <!-- TODO: Remove -->
++        <dependency>                              <!-- TODO: Remove -->
++          <groupId>org.slf4j</groupId>            <!-- TODO: Remove -->
++          <artifactId>jcl-over-slf4j</artifactId> <!-- TODO: Remove -->
++          <version>2.0.1</version>                <!-- TODO: Remove -->
++        </dependency>                             <!-- TODO: Remove -->
++        <dependency>                              <!-- TODO: Remove -->
++          <groupId>org.slf4j</groupId>            <!-- TODO: Remove -->
++          <artifactId>jul-to-slf4j</artifactId>   <!-- TODO: Remove -->
++          <version>2.0.1</version>                <!-- TODO: Remove -->
++        </dependency>                             <!-- TODO: Remove -->
+         <!-- project -->
+         <dependency>
+             <groupId>ch.post.it.paisa.houston</groupId>
+diff --git a/houston-process/src/main/java/ch/post/it/paisa/houston/process/main/Deployer.java b/houston-process/src/main/java/ch/post/it/paisa/houston/process/main/Deployer.java
+index 432efb01..d1729fe9 100644
+--- a/houston-process/src/main/java/ch/post/it/paisa/houston/process/main/Deployer.java
++++ b/houston-process/src/main/java/ch/post/it/paisa/houston/process/main/Deployer.java
+@@ -378,7 +378,7 @@ public class Deployer {
+                 // All other queues (typically to backend services) with a slow-down pattern after
+                 // failed delivery
+                 qc.add(
+-                    new QueueConfiguration().withPattern(".*").withRetryIntervals(standardDelays));
++                    new QueueConfiguration().withPattern(".*").withRetryIntervals(5/*TODO revert*/));
+
+                 RedisquesConfiguration redisquesConfig =
+                     RedisquesConfiguration.with()
