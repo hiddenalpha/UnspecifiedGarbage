@@ -1,16 +1,8 @@
 
---local AF_INET = require('scriptlee').posix.AF_INET
---local AF_INET6 = require('scriptlee').posix.AF_INET6
---local IPPROTO_TCP = require('scriptlee').posix.IPPROTO_TCP
---local SOCK_STREAM = require('scriptlee').posix.SOCK_STREAM
---local inaddrOfHostname = require('scriptlee').posix.inaddrOfHostname
 local newHttpClient = require("scriptlee").newHttpClient
---local newSqlite = require("scriptlee").newSqlite
 local newTlsClient = assert(require("scriptlee").newTlsClient)
---local newXmlParser = require("scriptlee").newXmlParser
 local objectSeal = require("scriptlee").objectSeal
 local sleep = require("scriptlee").posix.sleep
---local socket = require('scriptlee').posix.socket
 local startOrExecute = require("scriptlee").reactor.startOrExecute
 
 local out, log = io.stdout, io.stderr

@@ -177,6 +177,7 @@ Links (Aka argument amplifiers)
 - "https://wikit.post.ch/display/ISA/Code+Formatting?focusedCommentId=791239536#comment-791239536"
 
 ## Sonar is stupid
+- [Sorry sonar, you're wrong](https://gitit.post.ch/projects/ISA/repos/houston/pull-requests/461/overview?commentId=281647)
 - "https://gitit.post.ch/projects/ZEWAS/repos/zewas/browse/zewas-process/src/main/java/ch/post/it/zewas/process/reportgenerator/sql/SqlReportGenerator.java?at=refs%2Ftags%2Fzewas-17.10.00.17#385"
 - "https://gitit.post.ch/projects/ISA/repos/platform/pull-requests/156"
 - [Deprecated is a blocker](https://gitit.post.ch/projects/ISA/repos/preflux/pull-requests/562/overview?commentId=234158)

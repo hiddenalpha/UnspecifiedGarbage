@@ -29,19 +29,31 @@ function mod.printHelp()
         .."\n"
         .."  Options:\n"
         .."\n"
-        .."    --yolo\n"
-        .."      WARN: only use if you know what you're doing!\n"
+        .."    --export-artifacts\n"
+        .."      Export all known artifacts as CSV to stdout.\n"
+        .."\n"
+        .."    --export-parents\n"
+        .."      Export all known parent relations as CSV to stdout.\n"
+        .."\n"
+        .."    --export-parents-latest\n"
+        .."      Export parent relations only of the latest known releases as CSV\n"
+        .."      to stdout.\n"
+        .."\n"
+        .."    --export-deps\n"
+        .."      Export all known dependency relations as CSV to stdout.\n"
+        .."\n"
+        .."    --export-deps-latest\n"
+        .."      Export dependency relations only of the latest known releases as\n"
+        .."      CSV to stdout.\n"
         .."\n"
         .."    --state <path>\n"
-        .."      Data file to update.\n"
-        .."\n"
+        .."      Data file to use for this operation.\n"
         .."\n")
 end
 
 
 function mod.parseArgs( app )
     local iA = 0
-    local isYolo = false
 ::nextArg::
     iA = iA + 1
     local arg = _ENV.arg[iA]
@@ -49,8 +61,18 @@ function mod.parseArgs( app )
         goto endOfArgs
     elseif arg == "--help" then
         mod.printHelp() return -1
+    elseif arg == "--export-artifacts" then
+        app.operation = "export-artifacts"
+    elseif arg == "--export-parents" then
+        app.operation = "export-parents"
+    elseif arg == "--export-parents-latest" then
+        app.operation = "export-parents-latest"
+    elseif arg == "--export-deps" then
+        app.operation = "export-deps"
+    elseif arg == "--export-deps-latest" then
+        app.operation = "export-deps-latest"
     elseif arg == "--yolo" then
-        isYolo = true
+        app.isYolo = true
     elseif arg == "--state" then
         iA = iA + 1
         arg = _ENV.arg[iA]
@@ -61,7 +83,8 @@ function mod.parseArgs( app )
     end
     goto nextArg
 ::endOfArgs::
-    if not isYolo then log:write("Bad Args\n") return -1 end
+    if not app.sqliteFile then log:write("Arg  --state  missing\n") return-1 end
+    if not app.isYolo and not app.operation then log:write("Bad Args\n") return -1 end
     return 0
 end
 
@@ -69,6 +92,42 @@ end
 function mod.strTrim( str )
     if not str then return str end
     return str:gsub("^%s+", ""):gsub("%s+$", "")
+end
+
+
+function mod.compareVersion(a, b)
+    local semverFmt = "^(%d+)%.(%d+)%.(%d+)"
+    local gagaFmt   = "^(%d+)%.(%d+)%.(%d+)%.(%d+)"
+    local fuckitFmt = "^(.*)$"
+    local isGaga, isFuckit = false, false
+    -- parse
+    local amaj, amin, apat, abui = a:match(semverFmt)
+    if not amaj then amaj, amin, apat, abui = a:match(gagaFmt); isGaga=true end
+    if not amaj then isFuckit=true end
+    local bmaj, bmin, bpat, bbui = b:match(semverFmt)
+    if not bmaj then bmaj, bmin, bpat, bbui = b:match(gagaFmt) isGaga=true end
+    if not bmaj then isFuckit=true end
+    if isFuckit then isGaga = false end -- reset
+    -- compare
+    --LOGDBG("CMP "..tostring(a).."  VS  "..tostring(b).."\n")
+    local diff
+    if isFuckit then -- give a sh*t of proper comparison for ugly versions.
+        if a > b then return 1 end
+        if a < b then return -1 end
+        return 0
+    end
+    diff = amaj - bmaj
+    if diff ~= 0 then return diff end
+    diff = amin - bmin
+    if diff ~= 0 then return diff end
+    diff = apat - bpat
+    if diff ~= 0 then return diff end
+    if abui and not bbui then return  1 end
+    if not abui and bbui then return -1 end
+    if not abui and not bbui then return 0 end
+    diff = abui - bbui
+    if diff ~= 0 then return diff end
+    return 0
 end
 
 
@@ -256,11 +315,11 @@ function mod.fetchMvnArtifactFromFileOrElseSrcNr( app, mvnArtifact, repoDir, pom
         ..".pom"
     local fd = io.open(path, "rb")
     if not fd then
-        log:write("ENOENT ".. path .."\n")
+        --LOGDBG("ENOENT ".. path .."\n")
         mod.fetchFromSourceNr(app, mvnArtifact, pomSrcNrFallback)
         return
     end
-    log:write("fopen(\"".. path .."\", \"rb\")\n")
+    --log:write("fopen(\"".. path .."\", \"rb\")\n")
     local file = objectSeal{
         base = false,
         pomParser = false,
@@ -271,7 +330,6 @@ function mod.fetchMvnArtifactFromFileOrElseSrcNr( app, mvnArtifact, repoDir, pom
         if not buf then break end
         local ok, emsg = pcall(file.pomParser.write, file.pomParser, buf)
         if not ok then
-            log:write("EMSG:\n".. emsg .."\n\n")
             if emsg:find("^%[[^]]+%]:%d+: XMLParseError .+ unknown encoding") then
                 log:write("[ERROR] Ignore: ".. emsg .."\n")
                 sleep(3)
@@ -409,8 +467,8 @@ function mod.enqueueMissingDependencies( app, mvnArtifact )
             --LOGDBG("Incomplete. Give up  aid="..tostring(dep.artifactId)
             --    .."  v="..tostring(dep.version).."  gid="..tostring(dep.groupId).."\n")
         else
-            LOGDBG("Enqueue dependency:  aid="..tostring(dep.artifactId)
-                .."  v="..tostring(dep.version).."  gid="..tostring(dep.groupId).."\n")
+            --LOGDBG("Enqueue dependency:  aid="..tostring(dep.artifactId)
+            --    .."  v="..tostring(dep.version).."  gid="..tostring(dep.groupId).."\n")
             --if dep.artifactId:find("\n") or dep.version:find("\n") or dep.groupId:find("\n") then
             --    log:write("Wanted by  aid="..tostring(mvnArtifact.artifactId)
             --        ..", ver="..tostring(mvnArtifact.version)
@@ -429,13 +487,13 @@ end
 
 function mod.onGetPomRspHdr( msg, req )
     local app = req.app
-    log:write("< "..tostring(msg.proto) .." "..tostring(msg.status).." "..tostring(msg.phrase).."\n")
     if msg.status == 404 then
         log:write("HTTP 404. Ignore aid='".. req.artifactId .."' v='".. req.version .."' gid='".. req.groupId .."'.\n")
         local key = assert(mod.getMvnArtifactKey(req))
         app.mvnArtifactsNotFound[key] = true
         return
     elseif msg.status ~= 200 then
+        log:write("< "..tostring(msg.proto) .." "..tostring(msg.status).." "..tostring(msg.phrase).."\n")
         for i, h in ipairs(msg.headers) do
             log:write("< ".. h[1] ..": ".. h[2] .."\n")
         end
@@ -704,38 +762,6 @@ function mod.storeAsSqliteFile( app )
         return
     end
     local db = app.db
-    -- Query:  List artifacts
-    --   SELECT GroupId.str AS 'GID', ArtifactId.str AS 'AID', Version.str AS 'Version'
-    --   FROM MvnArtifact AS A
-    --   JOIN String GroupId ON GroupId.id = A.groupId
-    --   JOIN String ArtifactId ON ArtifactId.id = A.artifactId
-    --   JOIN String Version ON Version.id = A.version
-    --   ORDER BY GroupId.str, ArtifactId.str, Version.str
-    --   ;
-    -- Query:  List Artifacts with parents:
-    --   SELECT GroupId.str AS 'GID', ArtifactId.str AS 'AID', Version.str AS 'Version', ParentGid.str AS 'ParentGid', ParentAid.str AS 'ParentAid', ParentVersion.str AS 'ParentVersion'
-    --   FROM MvnArtifact AS A
-    --   JOIN String GroupId ON GroupId.id = A.groupId
-    --   JOIN String ArtifactId ON ArtifactId.id = A.artifactId
-    --   JOIN String Version ON Version.id = A.version
-    --   JOIN String ParentGid ON ParentGid.id = A.parentGroupId
-    --   JOIN String ParentAid ON ParentAid.id = A.parentArtifactId
-    --   JOIN String ParentVersion ON ParentVersion.id = A.parentVersion
-    --   ORDER BY GroupId.str, ArtifactId.str, Version.str
-    --   ;
-    -- Query:  List dependencies:
-    --   SELECT GroupId.str AS 'GID', ArtifactId.str AS 'AID', Version.str AS 'Version', DepGid.str AS 'Dependency GID', DepAid.str AS 'Dependnecy AID', DepVersion.str AS 'Dependency Version'
-    --   FROM MvnArtifact AS A
-    --   JOIN MvnDependency AS Dep ON Dep.mvnArtifactId = A.id
-    --   JOIN MvnArtifact AS D ON Dep.needsMvnArtifactId = D.id
-    --   JOIN String GroupId ON GroupId.id = A.groupId
-    --   JOIN String ArtifactId ON ArtifactId.id = A.artifactId
-    --   JOIN String Version ON Version.id = A.version
-    --   JOIN String DepGid ON DepGid.id = D.groupId
-    --   JOIN String DepAid ON DepAid.id = D.artifactId
-    --   JOIN String DepVersion ON DepVersion.id = D.version
-    --   ORDER BY GroupId.str, ArtifactId.str, Version.str
-    --   ;
     -- Store artifacts
     for _, mvnArtifact in pairs(app.mvnArtifacts) do
         mod.insertMvnArtifact(app, mvnArtifact)
@@ -835,7 +861,212 @@ function mod.dbCommit( app )
 end
 
 
-function mod.run( app )
+function mod.exportArtifacts(app)
+    mod.dbOpen(app)
+    local db = app.db
+    local stmtStr = ""
+        .." SELECT"
+            .." GroupId.str AS 'gid',"
+            .." ArtifactId.str AS 'aid',"
+            .." Version.str AS 'ver'"
+        .." FROM MvnArtifact AS A"
+        .." JOIN String GroupId ON GroupId.id = A.groupId"
+        .." JOIN String ArtifactId ON ArtifactId.id = A.artifactId"
+        .." JOIN String Version ON Version.id = A.version"
+        .." ORDER BY ArtifactId.str, Version.str"
+    local stmt = app.stmtCache[stmtStr]
+    if not stmt then stmt = db:prepare(stmtStr) app.stmtCache[stmtStr] = stmt end
+    local rs = stmt:execute()
+    out:write("h;Title;List of Artifacts\n")
+    out:write("h;ExportedAt;".. os.date("!%Y-%m-%d_%H:%M:%SZ") .."\n")
+    out:write("c;GroupId;ArtifactId;Version\n")
+    while rs:next() do
+        out:write("r;".. rs:value(1) ..";".. rs:value(2) ..";".. rs:value(3) .."\n")
+    end
+    out:write("t;status;OK\n")
+end
+
+
+function mod.exportParents(app)
+    mod.dbOpen(app)
+    local db = app.db
+    local stmtStr = ""
+        .." SELECT"
+            .." GroupId.str AS 'GID',"
+            .." ArtifactId.str AS 'AID',"
+            .." Version.str AS 'Version',"
+            .." ParentGid.str AS 'ParentGid',"
+            .." ParentAid.str AS 'ParentAid',"
+            .." ParentVersion.str AS 'ParentVersion'"
+        .." FROM MvnArtifact AS A"
+        .." JOIN String GroupId ON GroupId.id = A.groupId"
+        .." JOIN String ArtifactId ON ArtifactId.id = A.artifactId"
+        .." JOIN String Version ON Version.id = A.version"
+        .." JOIN String ParentGid ON ParentGid.id = A.parentGroupId"
+        .." JOIN String ParentAid ON ParentAid.id = A.parentArtifactId"
+        .." JOIN String ParentVersion ON ParentVersion.id = A.parentVersion"
+        .." ORDER BY ParentAid.str, ParentVersion.str, ArtifactId.str, Version.str"
+    local stmt = app.stmtCache[stmtStr]
+    if not stmt then stmt = db:prepare(stmtStr) app.stmtCache[stmtStr] = stmt end
+    local rs = stmt:execute()
+    out:write("h;Title;Parent relations\n")
+    out:write("h;ExportedAt;".. os.date("!%Y-%m-%d_%H:%M:%SZ") .."\n")
+    out:write("c;GroupId;ArtifactId;Version;ParentGid;ParentAid;ParentVersion\n")
+    while rs:next() do
+        out:write("r;".. rs:value(1) ..";".. rs:value(2) ..";".. rs:value(3)
+            ..";".. rs:value(4) ..";".. rs:value(5) ..";".. rs:value(6) .."\n")
+    end
+    out:write("t;status;OK\n")
+end
+
+
+function mod.exportParentsLatest(app)
+    mod.dbOpen(app)
+    local db = app.db
+    local stmtStr = ""
+        .." SELECT"
+            .." GroupId.str AS 'GID',"
+            .." ArtifactId.str AS 'AID',"
+            .." Version.str AS 'Version',"
+            .." ParentGid.str AS 'ParentGid',"
+            .." ParentAid.str AS 'ParentAid',"
+            .." ParentVersion.str AS 'ParentVersion'"
+        .." FROM MvnArtifact AS A"
+        .." JOIN String GroupId ON GroupId.id = A.groupId"
+        .." JOIN String ArtifactId ON ArtifactId.id = A.artifactId"
+        .." JOIN String Version ON Version.id = A.version"
+        .." JOIN String ParentGid ON ParentGid.id = A.parentGroupId"
+        .." JOIN String ParentAid ON ParentAid.id = A.parentArtifactId"
+        .." JOIN String ParentVersion ON ParentVersion.id = A.parentVersion"
+    local stmt = app.stmtCache[stmtStr]
+    if not stmt then stmt = db:prepare(stmtStr) app.stmtCache[stmtStr] = stmt end
+    local rs = stmt:execute()
+    out:write("h;Title;Parent relations (latest only)\n")
+    out:write("h;ExportedAt;".. os.date("!%Y-%m-%d_%H:%M:%SZ") .."\n")
+    out:write("c;GroupId;ArtifactId;Version;ParentGid;ParentAid;ParentVersion\n")
+    -- Need to filter out the older artifacts.
+    local all = {}
+    while rs:next() do
+        local gid, aid, ver = rs:value(1), rs:value(2), rs:value(3)
+        local key = aid .."\t".. gid;
+        local entry = all[key]
+        local diff = (not entry)and -1 or mod.compareVersion(entry.ver, ver)
+        if diff > 0 then -- existing is newer. Keep it and ignore newer one.
+            goto nextRecord
+        else -- Either no entry yet or found a newer one.
+            local entry = { gid=false, aid=false, ver=false, pgid=false, paid=false, pver=false }
+            entry.gid = gid
+            entry.aid = aid
+            entry.ver = ver
+            entry.pgid = rs:value(4)
+            entry.paid = rs:value(5)
+            entry.pver = rs:value(6)
+            all[key] = entry
+        end
+::nextRecord::
+    end
+    -- Print
+    for _, entry in pairs(all) do
+        out:write("r;".. entry.gid ..";".. entry.aid ..";".. entry.ver
+            ..";".. entry.pgid ..";".. entry.paid ..";".. entry.pver .."\n")
+    end
+    out:write("t;status;OK\n")
+end
+
+
+function mod.exportDeps(app)
+    mod.dbOpen(app)
+    local db = app.db
+    local stmtStr = ""
+        .." SELECT"
+            .." GroupId.str AS 'GID',"
+            .." ArtifactId.str AS 'AID',"
+            .." Version.str AS 'Version',"
+            .." DepGid.str AS 'Dependency GID',"
+            .." DepAid.str AS 'Dependnecy AID',"
+            .." DepVersion.str AS 'Dependency Version'"
+        .." FROM MvnArtifact AS A"
+        .." JOIN MvnDependency AS Dep ON Dep.mvnArtifactId = A.id"
+        .." JOIN MvnArtifact AS D ON Dep.needsMvnArtifactId = D.id"
+        .." JOIN String GroupId ON GroupId.id = A.groupId"
+        .." JOIN String ArtifactId ON ArtifactId.id = A.artifactId"
+        .." JOIN String Version ON Version.id = A.version"
+        .." JOIN String DepGid ON DepGid.id = D.groupId"
+        .." JOIN String DepAid ON DepAid.id = D.artifactId"
+        .." JOIN String DepVersion ON DepVersion.id = D.version"
+    local stmt = app.stmtCache[stmtStr]
+    if not stmt then stmt = db:prepare(stmtStr) app.stmtCache[stmtStr] = stmt end
+    local rs = stmt:execute()
+    out:write("h;Title;Dependencies (all known)\n")
+    out:write("h;ExportedAt;".. os.date("!%Y-%m-%d_%H:%M:%SZ") .."\n")
+    out:write("c;GroupId;ArtifactId;Version;Dependency GID;Dependency AID;Dependency Version\n")
+    while rs:next() do
+        out:write("r;".. rs:value(1) ..";".. rs:value(2) ..";".. rs:value(3)
+            ..";".. rs:value(4) ..";".. rs:value(5) ..";".. rs:value(6) .."\n")
+    end
+    out:write("t;status;OK\n")
+end
+
+
+function mod.exportDepsLatest(app)
+    mod.dbOpen(app)
+    local db = app.db
+    local stmtStr = ""
+        .." SELECT"
+            .." GroupId.str AS 'GID',"
+            .." ArtifactId.str AS 'AID',"
+            .." Version.str AS 'Version',"
+            .." DepGid.str AS 'Dependency GID',"
+            .." DepAid.str AS 'Dependnecy AID',"
+            .." DepVersion.str AS 'Dependency Version'"
+        .." FROM MvnArtifact AS A"
+        .." JOIN MvnDependency AS Dep ON Dep.mvnArtifactId = A.id"
+        .." JOIN MvnArtifact AS D ON Dep.needsMvnArtifactId = D.id"
+        .." JOIN String GroupId ON GroupId.id = A.groupId"
+        .." JOIN String ArtifactId ON ArtifactId.id = A.artifactId"
+        .." JOIN String Version ON Version.id = A.version"
+        .." JOIN String DepGid ON DepGid.id = D.groupId"
+        .." JOIN String DepAid ON DepAid.id = D.artifactId"
+        .." JOIN String DepVersion ON DepVersion.id = D.version"
+    local stmt = app.stmtCache[stmtStr]
+    if not stmt then stmt = db:prepare(stmtStr) app.stmtCache[stmtStr] = stmt end
+    local rs = stmt:execute()
+    out:write("h;Title;Dependencies (of latest only)\n")
+    out:write("h;ExportedAt;".. os.date("!%Y-%m-%d_%H:%M:%SZ") .."\n")
+    out:write("c;GroupId;ArtifactId;Version;Dependency GID;Dependency AID;Dependency Version\n")
+    -- Need to filter out the older artifacts.
+    local all = {}
+    local entry, key, gid, aid, ver, diff
+::nextRecord::
+    if not rs:next() then goto endFiltering end
+    gid, aid, ver = rs:value(1), rs:value(2), rs:value(3)
+    key = aid .."\t".. gid;
+    entry = all[key]
+    diff = (not entry)and -1 or mod.compareVersion(entry.ver, ver)
+    if diff > 0 then -- existing is newer. Keep it and ignore newer one.
+        goto nextRecord
+    else -- Either no entry yet or found a newer one.
+        local entry = { gid=false, aid=false, ver=false, dgid=false, daid=false, dver=false }
+        entry.gid = gid
+        entry.aid = aid
+        entry.ver = ver
+        entry.dgid = rs:value(4)
+        entry.daid = rs:value(5)
+        entry.dver = rs:value(6)
+        all[key] = entry
+    end
+    goto nextRecord
+::endFiltering::
+    -- Print
+    for _, entry in pairs(all) do
+        out:write("r;".. entry.gid ..";".. entry.aid ..";".. entry.ver
+            ..";".. entry.dgid ..";".. entry.daid ..";".. entry.dver .."\n")
+    end
+    out:write("t;status;OK\n")
+end
+
+
+function mod.scan( app )
     mod.dbOpen(app)
     table.insert(app.taskQueue, function()mod.fetchAnotherMvnArtifact(app)end)
     while true do
@@ -870,11 +1101,34 @@ function mod.run( app )
 end
 
 
+function mod.run( app )
+    if false then
+    elseif app.operation == "export-artifacts" then
+        mod.exportArtifacts(app)
+    elseif app.operation == "export-parents" then
+        mod.exportParents(app)
+    elseif app.operation == "export-parents-latest" then
+        mod.exportParentsLatest(app)
+    elseif app.operation == "export-deps" then
+        mod.exportDeps(app)
+    elseif app.operation == "export-deps-latest" then
+        mod.exportDepsLatest(app)
+    elseif app.operation == "yolo" then
+        assert(app.isYolo)
+        mod.scan(app)
+    else
+        log:write("InternalError '"..tostring(app.operation).."'\n")
+    end
+end
+
+
 function mod.main()
     local app = objectSeal{
+        isYolo = false,
+        operation = false,
         http = newHttpClient{},
         mvnArtifacts = {},
-        mvnArtifactsAlreadyParsed = {},
+        mvnArtifactsAlreadyParsed = {}, -- if we already tried to fetch it (no matter what outcome)
         mvnArtifactsNotFound = {},
         mvnArtifactIdsByArtif = {},
         mvnPropsByArtifact = {},
