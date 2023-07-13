@@ -1,12 +1,14 @@
 ;(function(){ "use strict";
 
 
-const Agent = require("http").Agent;
+const HttpAgent = require("http").Agent;
+const HttpsAgent = require("https").Agent;
 const N = null;
 const URL = require("url").URL;
 const assert = require("assert");
 const fs = require("fs");
 const http = require("http");
+const https = require("https");
 const isArray = Array.isArray;
 const isBuffer = Buffer.isBuffer;
 const isInteger = Number.isInteger;
@@ -96,10 +98,15 @@ function parseArgs( app, argv ){
 
 function run( app ){
     assert(app.httpAgent == null);
-    app.httpAgent = new Agent({
+    app.httpAgent = new HttpAgent({
         keepAlive: true,
         maxSockets: 4, // DON'T kill houston
     });
+    assert(app.httpsAgent == null);
+    app.httpsAgent = new HttpsAgent({
+        keepAlive: true,
+        maxSockets: 4, // DON'T kill houston
+    })
     const rootNode = newNode();
     rootNode.url = app.url;
     fetchCollection(app, rootNode);
@@ -128,7 +135,9 @@ function fetchCollection( app, node ){
         bodyChunks: [],
     });
     log.write("> GET "+ node.url +"\n");
-    collection.base = http.get(node.url, {agent:app.httpAgent}, onCollectionResponseHdr.bind(N, collection));
+    var client = (node.url.startsWith("https://") ? https : http);
+    var agent = (node.url.startsWith("https://") ? app.httpsAgent : http.agent);
+    collection.base = client.get(node.url, {agent:agent}, onCollectionResponseHdr.bind(N, collection));
     collection.base.on("error", function( ex ){ throw ex; });
     collection.base.end();
 }
@@ -136,7 +145,7 @@ function fetchCollection( app, node ){
 
 function onCollectionResponseHdr( collection, rsp ){
     if( rsp.statusCode != 200 ){
-        log.write("< HTTP "+ rsp.statusCode +"\n");
+        log.write("< HTTP "+ rsp.statusCode +" "+ rsp.statusMessage +"\n");
         Object.keys(rsp.headers).forEach(function( key ){
             log.write("< "+ key +": "+ rsp.headers[key] +"\n");
         });
@@ -444,6 +453,7 @@ function main( argv ){
         archivePath: null,
         archiveFd: null,
         httpAgent: null,
+        httpsAgent: null,
         numPendingCollectionRequests: 0,
         numPendingTarWriteRequests: 0,
     });
