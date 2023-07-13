@@ -53,12 +53,22 @@ diff --git a/houston-process/src/main/java/ch/post/it/paisa/houston/process/main
 index 432efb01..d1729fe9 100644
 --- a/houston-process/src/main/java/ch/post/it/paisa/houston/process/main/Deployer.java
 +++ b/houston-process/src/main/java/ch/post/it/paisa/houston/process/main/Deployer.java
+@@ -68,6 +68,9 @@ public class Deployer {
+   private static final Logger LOGGER = LoggerFactory.getLogger(Deployer.class);
+ 
+   public static void main(String[] args) throws Exception {
++    boolean isAssertIsEnabled = false;
++    assert isAssertIsEnabled = true;
++    if (!isAssertIsEnabled) throw new UnsupportedOperationException("Enable assertions to fix this problem -> https://stackoverflow.com/a/68893479/4415884");
+     setStartupProperties();
+     Props.prepare();
+ 
 @@ -378,7 +378,7 @@ public class Deployer {
                  // All other queues (typically to backend services) with a slow-down pattern after
                  // failed delivery
                  qc.add(
 -                    new QueueConfiguration().withPattern(".*").withRetryIntervals(standardDelays));
 +                    new QueueConfiguration().withPattern(".*").withRetryIntervals(5/*TODO revert*/));
-
+ 
                  RedisquesConfiguration redisquesConfig =
                      RedisquesConfiguration.with()
