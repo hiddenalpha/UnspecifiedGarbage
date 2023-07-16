@@ -39,6 +39,12 @@ Use  -codec:v copy  to keep video, or -codec:v no  for audio-only.
       -pix_fmt yuv420p "output-$(date +%Y%m%d-%H%M%S).mp4"
 
 
+## Trim video
+
+  -i INFILE -ss <pos> -t <dur> OUTFILE
+  -i INFILE -ss <pos> -to <pos> OUTFILE
+
+
 ## Rotate Portrait
 
   -i INFILE -vf "transpose=2" OUTFILE
