@@ -72,7 +72,7 @@ Links (Aka argument amplifiers)
 - [Git store CI builds](https://stackoverflow.com/questions/14489684/should-git-be-used-to-store-continuous-integration-builds)
 
 ## Pro FailFast, dont ignore errors:
-- "https://softwareengineering.stackexchange.com/a/190535"
+- [Should a program fail on errors or silently ignore them](https://softwareengineering.stackexchange.com/a/190535)
 - [Ignore Return IllegalThreadStateException](https://gitit.post.ch/projects/ISA/repos/zarquon/pull-requests/2/overview?commentId=61293)
 
 ## Contra Java Optional:
@@ -160,6 +160,7 @@ Links (Aka argument amplifiers)
 - [spotless produces crap](https://gitit.post.ch/projects/ISA/repos/veet/pull-requests/2/overview?commentId=233638)
 - [spotless produces crap](https://gitit.post.ch/projects/ISA/repos/trin/pull-requests/79)
 - [spotless produces crap](https://gitit.post.ch/projects/ISA/repos/houston/pull-requests/449/overview?commentId=263593)
+- [boolean expression formatting](https://gitit.post.ch/projects/ISA/repos/houston/pull-requests/461/overview?commentId=284022)
 - [Linter produces crap](https://gitit.post.ch/projects/ISA/repos/preflux/pull-requests/567/overview?commentId=237627)
 - [Linter produces crap js if](https://gitit.post.ch/projects/ISA/repos/preflux/pull-requests/598/overview?commentId=252867)
 - [Suddenly NEW formatting rules in PaISA since 2021](https://gitit.post.ch/projects/ISA/repos/watson/pull-requests/1/overview?commentId=234597)
@@ -244,8 +245,9 @@ Links (Aka argument amplifiers)
 - [Houston OOM 2023-01-20](https://wikit.post.ch/x/iRepPQ)
 - [Houston OOM Killed](https://jira.post.ch/browse/SDCISA-10871)
 
-## Performance clang micro benchmarking
-- "https://m.youtube.com/watch?v=nXaxk27zwlk"
+## Common Performance
+- [Optimize code by doing less](https://m.youtube.com/watch?v=5rb0vvJ7NCY)
+- [CppCon Tuning Benchmarks clang CPUs Compilers" ](https://m.youtube.com/watch?v=nXaxk27zwlk)
 
 ## POSIX shell language syntax
 - "https://pubs.opengroup.org/onlinepubs/009695399/utilities/xcu_chap02.html"
@@ -300,10 +302,12 @@ Links (Aka argument amplifiers)
 - "https://gitit.post.ch/projects/ISA/repos/customer-api/pull-requests/8/overview?commentId=88741"
 
 ## Documentation Noise/Clutter Comments, APIs (no response was specified)
-- Explanation "https://gitit.post.ch/projects/ISA/repos/deployment-masterdata-api/pull-requests/12/overview?commentId=187097"
-- Bad: "https://gitit.post.ch/projects/ISA/repos/vending-twint-api/pull-requests/1/overview?commentId=87895"
-- Good: "https://gitit.post.ch/projects/ISA/repos/vending-transaction-api/browse/src/rest/openapi/api.yaml?at=refs%2Ftags%2Fvending-transaction-api-01.00.00.00#79-80,96-98,112-113,130-131,162-164,197-199,230-232,250-252,270-272,287-288"
-- Damn It! write descriptions, stupid! "https://gitit.post.ch/projects/ISA/repos/vending-payment-api/pull-requests/5/overview?commentId=106020"
+- [How to document http status codes meaningfully](https://gitit.post.ch/projects/ISA/repos/deployment-masterdata-api/pull-requests/12/overview?commentId=187097)
+- [Where's the benefit?](https://gitit.post.ch/projects/ISA/repos/vending-twint-api/pull-requests/1/overview?commentId=87895)
+- [Some good examples](https://gitit.post.ch/projects/ISA/repos/vending-transaction-api/browse/src/rest/openapi/api.yaml?at=refs%2Ftags%2Fvending-transaction-api-01.00.00.00#79-80,96-98,112-113,130-131,162-164,197-199,230-232,250-252,270-272,287-288)
+- [Why is it so hard to write useful descriptions](https://gitit.post.ch/projects/ISA/repos/vending-payment-api/pull-requests/5/overview?commentId=106020)
+- [Why all that clutter?](https://gitit.post.ch/projects/ISA/repos/deployment-pipeline-api/pull-requests/22/overview?commentId=278860)
+- [The Golden Rules of Code Documentation](https://blog.jooq.org/the-golden-rules-of-code-documentation/)
 
 ## JenkinsfileRelease Api pipeline broken latest version
 - "https://jira.post.ch/browse/SDCISA-3378"
