@@ -69,4 +69,9 @@ Working example from web (but not optimized):
   ffmpeg -ss 0 -t 2.5 -i INPUT.mp4 -filter_complex "[0:v] fps=12,scale=-1:600,split [a][b];[a] palettegen=stats_mode=diff [p];[b][p] paletteuse=new=1" OUTPUT.gif
 
 
+## Pictures to Video (eg Timelapse)
+
+  -start_number 5619 -framerate 24 -i "input/IMG_%d.JPG" \
+    -vf "scale=4096:-1,crop=4096:2160:0:0" \
+    out.mkv
 
