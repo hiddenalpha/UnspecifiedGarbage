@@ -12,6 +12,13 @@ Firefox
 For refresh, there is a button on the same page to reload the plugin.
 
 
+## Create an XPI file (eg for distribution)
+
+"manifest.json" MUST be in top level dir inside ZIP.
+
+  zip my.xpi manifest.json main.js
+
+
 ## Distribute via self-hosting
 
 Package MUST be signed by "addons.mozilla.org" (Except for ESR or dev
