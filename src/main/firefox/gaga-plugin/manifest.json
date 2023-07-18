@@ -5,13 +5,13 @@
   "description": "Just a nonsense plugin to test out how stuff works.",
   "browser_specific_settings": {
     "gecko": {
-      "id": "971fdae1231e770c1f2e46f9339babf1839afac7d0571620c0cc530e4497137773fd810"
+      "id": "971fdae123170c1f2e46f933a2z4hgiuhrlc7d0571620c0cc530e4497137773fd810@example.com"
     }
   },
   "content_scripts": [
     {
-      "matches": [ "*://pi-one.local/*" ],
-      "run_at": "document_idle",
+      "matches": [ "https://jira.post.ch/*" ],
+      "run_at": "document_start",
       "js": [ "main.js" ]
     }
   ]
