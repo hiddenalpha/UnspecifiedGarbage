@@ -1,0 +1,23 @@
+
+Qemu
+================
+
+Created: 2023-07-19
+By: fankhauseand
+
+
+Nothing useful here yet. Just collecting notes in hope to end up with something
+useful in the end.
+
+
+TODO insert command to create qcow2 images.
+
+
+  CDROMFILE="path/to/cd.iso"
+  HDAIMG="path/to/maindisk.qcow2"
+  BIOSDIR="path/to/Bios"
+  BIOSFILE="path/to/bios-256k.bin"
+
+  qemu-system-x86_64 -L "${BIOSDIR:?}" -m size=2G -bios "${BIOSFILE:?}" -boot order=dc,menu=on -cdrom "${CDROMFILE:?}" -hda "${HDAIMG:?}" -net none -k de-ch
+
+
