@@ -2,12 +2,29 @@
 Qemu
 ================
 
-  apt install qemu-system-aarch42 qemu-efi-aarch64
+## Qemu Setup
+
+  apt install qemu-system-aarch64 qemu-efi-aarch64
+
+
+## Create Image
 
   qemu-img create -f qcow2 my_disk.qcow2 16G
 
 
-## WIP
+## amd64
+
+  CDROMFILE="path/to/cd.iso"
+  HDAIMG="path/to/maindisk.qcow2"
+  BIOSDIR="path/to/Bios"
+  BIOSFILE="path/to/bios-256k.bin"
+  qemu-system-x86_64 -L "${BIOSDIR:?}" -m size=2G -bios "${BIOSFILE:?}" -boot order=dc,menu=on \
+    -cdrom "${CDROMFILE:?}" \
+    -hda "${HDAIMG:?}" \
+    -net nic -net user \
+
+
+## aarch64 (not working yet)
 
   MAC='00:de:ad:de:ad:00'
   DISK=my_disk.qcow2
@@ -22,6 +39,7 @@ Qemu
   qemu-system-aarch64 -M virt -hda my_disk.qcow2 -cdrom debian.iso -boot c -m 1G
 
   qemu-system-aarch64 -M virt -cpu cortex-a57 -m 1G -bios /usr/share/qemu-efi-aarch64/QEMU_EFI.fd -hda my_disk.qcow2 -cdrom ~/images/debian-12.0.0-arm64-DVD/debian-12.0.0-arm64-DVD-1.iso
+
 
 TODO verify article:
 "https://kbeckmann.github.io/2017/05/26/QEMU-instead-of-cross-compiling/"

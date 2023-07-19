@@ -514,3 +514,6 @@ Links (Aka argument amplifiers)
 [What is reactor pattern](https://stackoverflow.com/q/5566653/4415884)
 [Original doc (but complicated)](http://www.dre.vanderbilt.edu/~schmidt/PDF/reactor-siemens.pdf)
 
+## Naming is hard
+- [Naming is hard. SBB](https://gitit.post.ch/projects/ISA/repos/timetable-reservation-api/pull-requests/4/overview?commentId=284225)
+
