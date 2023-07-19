@@ -18,6 +18,9 @@ TODO insert command to create qcow2 images.
   BIOSDIR="path/to/Bios"
   BIOSFILE="path/to/bios-256k.bin"
 
-  qemu-system-x86_64 -L "${BIOSDIR:?}" -m size=2G -bios "${BIOSFILE:?}" -boot order=dc,menu=on -cdrom "${CDROMFILE:?}" -hda "${HDAIMG:?}" -net none -k de-ch
+  qemu-system-x86_64 -L "${BIOSDIR:?}" -m size=2G -bios "${BIOSFILE:?}" -boot order=dc,menu=on \
+    -cdrom "${CDROMFILE:?}" \
+    -hda "${HDAIMG:?}" \
+    -net nic -net user \
 
 
