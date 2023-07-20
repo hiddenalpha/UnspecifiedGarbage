@@ -1,22 +1,19 @@
 package ch.hiddenalpha.unspecifiedgarbage.octetstream;
 
-import java.io.IOException;
-import java.io.InputStream;
-
 
 /**
- * {@link InputStream} decorator to count bytes flowed through the stream.
+ * {@link java.io.InputStream} decorator to count bytes flowed through the stream.
  *
  */
-public class ByteCountInputStream extends InputStream {
+public class ByteCountInputStream extends java.io.InputStream {
 
     // TODO: mark/reset should be simple to implement.
 
 
-    private final InputStream origin;
+    private final java.io.InputStream origin;
     private long numBytes = 0;
 
-    public ByteCountInputStream( InputStream origin ){
+    public ByteCountInputStream( java.io.InputStream origin ){
         this.origin = origin;
     }
 
@@ -26,7 +23,7 @@ public class ByteCountInputStream extends InputStream {
     }
 
     @Override
-    public int read() throws IOException {
+    public int read() throws java.io.IOException {
         int b = origin.read();
         if( b >= 0 ){
             numBytes += 1; }
@@ -34,7 +31,7 @@ public class ByteCountInputStream extends InputStream {
     }
 
     @Override
-    public int read( byte[] b, int off, int len ) throws IOException {
+    public int read( byte[] b, int off, int len ) throws java.io.IOException {
         int readLen = origin.read(b, off, len);
         if( readLen > 0 ){
             numBytes += readLen;
@@ -43,12 +40,12 @@ public class ByteCountInputStream extends InputStream {
     }
 
     @Override
-    public int available() throws IOException {
+    public int available() throws java.io.IOException {
         return origin.available();
     }
 
     @Override
-    public void close() throws IOException {
+    public void close() throws java.io.IOException {
         origin.close();
     }
 
@@ -58,7 +55,7 @@ public class ByteCountInputStream extends InputStream {
     //}
 
     //@Override
-    //public synchronized void reset() throws IOException {
+    //public synchronized void reset() throws java.io.IOException {
     //    origin.reset();
     //}
 

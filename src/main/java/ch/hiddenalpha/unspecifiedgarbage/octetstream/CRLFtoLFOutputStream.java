@@ -1,25 +1,18 @@
 package ch.hiddenalpha.unspecifiedgarbage.octetstream;
 
-import java.io.FilterOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-
-import org.slf4j.ILoggerFactory;
-import org.slf4j.Logger;
-
 
 /** Filters away broken newlines. */
-public class CRLFtoLFOutputStream extends FilterOutputStream {
+public class CRLFtoLFOutputStream extends java.io.FilterOutputStream {
 
     private static final int EMPTY = -42;
-    private final Logger log;
+    private final org.slf4j.Logger log;
     private int previous = EMPTY;
 
     /**
      * @param dst
      *      Destination where the result will be written to.
      */
-    public CRLFtoLFOutputStream( OutputStream dst ) {
+    public CRLFtoLFOutputStream( java.io.OutputStream dst ) {
         this(dst, null);
     }
 
@@ -27,13 +20,13 @@ public class CRLFtoLFOutputStream extends FilterOutputStream {
      * @param dst
      *      Destination where the result will be written to.
      */
-    public CRLFtoLFOutputStream( OutputStream dst, ILoggerFactory lf ) {
+    public CRLFtoLFOutputStream( java.io.OutputStream dst, org.slf4j.ILoggerFactory lf ) {
         super(dst);
         this.log = (lf == null) ? null : lf.getLogger(CRLFtoLFOutputStream.class.getName());
     }
 
     @Override
-    public void write( int current ) throws IOException {
+    public void write( int current ) throws java.io.IOException {
         // We're allowed to ignore the three high octets (See doc of "OutputStream#write").
         // This allows us to assign special meanings to those values internally (eg our
         // 'EMPTY' value). For this to work, we clear the high bits to not get confused
@@ -56,14 +49,14 @@ public class CRLFtoLFOutputStream extends FilterOutputStream {
 
     // TODO we should override this.
     //@Override
-    //public void write( byte[] buf, int off, int len ) throws IOException {
+    //public void write( byte[] buf, int off, int len ) throws java.io.IOException {
     //    throw new UnsupportedOperationException("TODO impl");/*TODO*/
     //}
 
     @Override
-    public void flush() throws IOException {
-        if( previous == '\r' ){
-            log.debug("Have to flush a CR byte without knowing if the next byte might be a LF");
+    public void flush() throws java.io.IOException {
+        if( previous == '\r' && log != null ){
+            log.debug("Have to flush a 0x13 byte (CR) without knowing if the next byte might be a 0x10 (LF)");
         }
         if( previous != EMPTY ){
             int tmp = previous;

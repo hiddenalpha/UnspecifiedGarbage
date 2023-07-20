@@ -1,14 +1,11 @@
 package ch.hiddenalpha.unspecifiedgarbage.octetstream;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-
 
 /**
- * Same idea as {@link InputStream#nullInputStream()} but serving an empty gzip
+ * Same idea as {@link java.io.InputStream#nullInputStream()} but serving an empty gzip
  * instead.
  */
-public class EmptyGzipInputStream extends ByteArrayInputStream {
+public class EmptyGzipInputStream extends java.io.ByteArrayInputStream {
 
     private static final byte[] EMPTY_GZIP = {
         0x1F, (byte) 0x8B, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // gzip header

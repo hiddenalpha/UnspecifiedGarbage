@@ -1,30 +1,26 @@
 package ch.hiddenalpha.unspecifiedgarbage.octetstream;
 
-import java.io.FilterOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import static java.util.Objects.requireNonNull;
 
 
 /**
  * Gives the chance to place a hook to get notified as soon the stream gets
  * closed.
  */
-public class CloseNotifyOutputStream extends FilterOutputStream {
+public class CloseNotifyOutputStream extends java.io.FilterOutputStream {
 
     private final Runnable onClose;
     private final AtomicBoolean isFired = new AtomicBoolean(false);
 
-    public CloseNotifyOutputStream( OutputStream out, Runnable onClose ){
+    public CloseNotifyOutputStream( java.io.OutputStream out, Runnable onClose ){
         super(out);
         if( true ) throw new UnsupportedOperationException("TODO need to delegate close call");/*TODO*/
-        this.onClose = requireNonNull(onClose);
+        assert onClose != null : "Expected arg 'onClose' to exist";
+        this.onClose = onClose;
     }
 
     @Override
-    public void close() throws IOException {
+    public void close() throws java.io.IOException {
         if (!isFired.getAndSet(true)) {
             onClose.run();
         }

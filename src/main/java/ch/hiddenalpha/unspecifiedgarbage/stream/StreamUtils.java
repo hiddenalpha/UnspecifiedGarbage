@@ -1,14 +1,5 @@
 package ch.hiddenalpha.unspecifiedgarbage.stream;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Iterator;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
-import java.util.function.Predicate;
-
 
 public class StreamUtils {
 
@@ -23,10 +14,11 @@ public class StreamUtils {
      *      Count of copied bytes.
      */
     public static long copy( java.io.InputStream is, java.io.OutputStream os ) throws java.io.IOException {
-        byte[] buffer = new byte[8192];
+        byte[] buffer = new byte[1<<14];
         long totalBytes = 0;
-        int readLen;
-        while( -1 != (readLen=is.read(buffer,0,buffer.length)) ){
+        while( true ){
+            int readLen = is.read(buffer, 0, buffer.length);
+            if( readLen == -1 ) break; /* EOF */
             totalBytes += readLen;
             os.write(buffer, 0, readLen);
         }
@@ -34,18 +26,18 @@ public class StreamUtils {
     }
 
     public static <SRC,DST> java.util.Iterator<DST> map( java.util.Iterator<SRC> src , java.util.function.Function<SRC,DST> mapper ) {
-        return new Iterator<DST>() {
+        return new java.util.Iterator<DST>() {
             @Override public boolean hasNext() { return src.hasNext(); }
             @Override public DST next() { return mapper.apply(src.next()); }
         };
     }
 
-    public static <T> Predicate<T> distinctBy(Function<? super T, ?> keyExtractor) {
-        Set<Object> seen = ConcurrentHashMap.newKeySet();
+    public static <T> java.util.function.Predicate<T> distinctBy( java.util.function.Function<? super T, ?> keyExtractor ) {
+        java.util.Set<Object> seen = java.util.concurrent.ConcurrentHashMap.newKeySet();
         return t -> seen.add(keyExtractor.apply(t));
     }
 
-    public static <T> Predicate<T> not( Predicate<T> p ){
+    public static <T> java.util.function.Predicate<T> not( java.util.function.Predicate<T> p ){
         return e -> !p.test(e);
     }
 

@@ -1,7 +1,5 @@
 package ch.hiddenalpha.unspecifiedgarbage.json;
 
-import java.io.IOException;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 
@@ -24,10 +22,10 @@ public class JsonUtils {
      */
     public static
     <TreeToValueFunc extends ObjectCodecIface<JsonNode, Map>, JsonNode, K, V>
-    Map<K, V> decodeMap( TreeToValueFunc treeToValueFunc, JsonNode mapNode, Class<K> keyType, Class<V> valueType ) throws IOException {
+    Map<K, V> decodeMap( TreeToValueFunc treeToValueFunc, JsonNode mapNode, Class<K> keyType, Class<V> valueType ) throws java.io.IOException {
         final Map<K, V> envVars;
         if( mapNode == null ){
-            envVars = new LinkedHashMap<>();
+            envVars = new java.util.LinkedHashMap<>();
         }else{
             envVars = treeToValueFunc.treeToValue(mapNode, Map.class);
         }
@@ -35,7 +33,7 @@ public class JsonUtils {
     }
 
     public static interface ObjectCodecIface<TreeNode, Value> {
-        Value treeToValue( TreeNode input, Class<Map> returnType ) throws IOException;
+        Value treeToValue( TreeNode input, Class<Map> returnType ) throws java.io.IOException;
     }
 
 

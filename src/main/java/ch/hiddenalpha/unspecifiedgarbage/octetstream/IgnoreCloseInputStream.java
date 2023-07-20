@@ -1,21 +1,15 @@
 package ch.hiddenalpha.unspecifiedgarbage.octetstream;
 
-import java.io.FilterInputStream;
-import java.io.InputStream;
-
 
 /**
- * Suppresses to close the underlying stream when close gets called.
+ * <p>Suppresses to close the underlying stream when close gets called.</p>
  */
-public class IgnoreCloseInputStream extends FilterInputStream {
+public class IgnoreCloseInputStream extends java.io.FilterInputStream {
 
-    public IgnoreCloseInputStream( InputStream in ) {
+    public IgnoreCloseInputStream( java.io.InputStream in ) {
         super(in);
     }
 
-    @Override
-    public void close() {
-        // NOOP. Do NOT close the stream.
-    }
+    @Override public void close() {/*no-op*/}
 
 }

@@ -30,16 +30,11 @@ public class ShellUtils {
      *   String path = "pâth \\with ${MustNotResolveThisVar} and a|so €vil chars like spaces, p|pes or * asterisk";<br/>
      *   cmd = "ls '"+ escapeForSnglQuotEverything(path) +"'";<br/>
      * </code>
+     * <p>For a more detailed explanation see <a
+     * href="https://hiddenalpha.ch/slnk/id/1-ea62ea0b8635c39#f4a94246c53735a69">How
+     * to escape shell commands</a>.</p>
      */
     public static String escapeForSingleQuotEverything( String s ){
-        // Cited from "Single-Quotes" in "https://pubs.opengroup.org/onlinepubs/009695399/utilities/xcu_chap02.html":
-        //   Enclosing characters in single-quotes shall preserve the literal
-        //   value of each character within the single-quotes. A single-quote
-        //   cannot occur within single-quotes.
-        // Cited from "Double-Quotes" in "https://pubs.opengroup.org/onlinepubs/009695399/utilities/xcu_chap02.html":
-        //   Enclosing characters in double-quotes ( "" ) shall preserve the
-        //   literal value of all characters within the double-quotes, with the
-        //   exception of the characters dollar sign, backquote, and backslash
         return s.replace("'", "'\"'\"'");
     }
 

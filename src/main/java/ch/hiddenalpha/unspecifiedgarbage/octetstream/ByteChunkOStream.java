@@ -1,14 +1,10 @@
 package ch.hiddenalpha.unspecifiedgarbage.octetstream;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.Arrays;
-
 
 /**
  * Converts an octet-stream to a push-source of byte-arrays.
  */
-public class ByteChunkOStream extends OutputStream {
+public class ByteChunkOStream extends java.io.OutputStream {
 
     private final int chunkSize; // Hint of how large our produced chunks should be.
     private byte[] buf;
@@ -26,14 +22,14 @@ public class ByteChunkOStream extends OutputStream {
     }
 
     @Override
-    public void write( byte[] b, int off, int len ) throws IOException {
+    public void write( byte[] b, int off, int len ) throws java.io.IOException {
         int remainingBytes = len;
         while( true ){
             int appendedBytes = appendToBuffer(b, off, len);
             remainingBytes -= appendedBytes;
             if( remainingBytes > 0 ){
                 publishBuffer();
-                // Adjust pointers then loop and continue write remainder.
+                // Adjust cursors then loop and continue write remainder.
                 off += appendedBytes;
                 len -= appendedBytes;
             }else if( remainingBytes == 0 ){
@@ -45,7 +41,7 @@ public class ByteChunkOStream extends OutputStream {
     }
 
     @Override
-    public void write( int b ) throws IOException {
+    public void write( int b ) throws java.io.IOException {
         while( true ){
             if( appendToBuffer(b) == 0 ){
                 publishBuffer();
@@ -57,12 +53,12 @@ public class ByteChunkOStream extends OutputStream {
     }
 
     @Override
-    public void flush() throws IOException {
+    public void flush() throws java.io.IOException {
         publishBuffer();
     }
 
     @Override
-    public void close() throws IOException {
+    public void close() throws java.io.IOException {
         flush();
         buf = null; // Think for GC
         EndHandler tmp = onEnd;
@@ -95,7 +91,7 @@ public class ByteChunkOStream extends OutputStream {
         }
     }
 
-    private void publishBuffer() throws IOException {
+    private void publishBuffer() throws java.io.IOException {
         if( bufUsedBytes == 0 ){
             return; // Nothing to do.
         }
@@ -108,7 +104,7 @@ public class ByteChunkOStream extends OutputStream {
             // Buffer is not completely full. So we have to make a copy so
             // buf.length does report the correct value to callee. That implies
             // that we can continue using our existing buffer for ourself.
-            bufToPublish = Arrays.copyOfRange(this.buf, 0, bufUsedBytes);
+            bufToPublish = java.util.Arrays.copyOfRange(this.buf, 0, bufUsedBytes);
         }
         bufUsedBytes = 0; // Our internal buffer is now empty.
         onChunk.accept(bufToPublish);
@@ -117,13 +113,13 @@ public class ByteChunkOStream extends OutputStream {
 
     /** Inspired by {@link java.util.function.Consumer} */
     public static interface ChunkHandler {
-        void accept( byte[] bytes ) throws IOException;
+        void accept( byte[] bytes ) throws java.io.IOException;
     }
 
 
     /** Inspired by {@link java.util.function.Runnable#run()} */
     public static interface EndHandler {
-        void run() throws IOException;
+        void run() throws java.io.IOException;
     }
 
 }

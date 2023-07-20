@@ -5,8 +5,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static java.util.Objects.requireNonNull;
-
 
 /** Allows to get notified when stream gets closed. */
 public class CloseNotifyInputStream extends FilterInputStream {
@@ -16,7 +14,8 @@ public class CloseNotifyInputStream extends FilterInputStream {
 
     public CloseNotifyInputStream( InputStream src, Runnable onClose ){
         super(src);
-        this.onClose = requireNonNull(onClose);
+        assert onClose != null : "onClose expected to exist";
+        this.onClose = onClose;
     }
 
     @Override

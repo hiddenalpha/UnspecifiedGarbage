@@ -13,6 +13,9 @@ public class ConcatInputStream extends InputStream {
     private int iSrc;
 
     public ConcatInputStream( InputStream... sources ){
+        for( InputStream src : sources ){
+            assert src != null : "Why do you pass a 'null' source here?";
+        }
         this.sources = sources;
         this.iSrc = 0;
     }
@@ -30,7 +33,7 @@ public class ConcatInputStream extends InputStream {
             InputStream src = sources[iSrc];
             int readLen = src.read(b, off + copied, len - copied);
             if( readLen < 0 ){
-                assert readLen == -1;
+                assert readLen == -1 : "InputStream.read() MUST NOT return "+ readLen +". RTFM!";
                 // Source drained. Continue read with next source.
                 shiftToNextSource();
                 continue;
@@ -50,7 +53,7 @@ public class ConcatInputStream extends InputStream {
             }
             return read;
         }
-        return -1;
+        return -1; /* EOF */
     }
 
     @Override
@@ -60,10 +63,11 @@ public class ConcatInputStream extends InputStream {
         for( int i = iSrc ; i < sources.length ; ++i ){
             try{
                 sources[i].close();
+                sources[i] = null; /* allow GC */
             }catch( IOException|RuntimeException ex ){
                 if( firstException == null ){
-                    // Track the exception. But we have to close the
-                    // remaining streams regardless of early exceptions.
+                    // Track exception. But we have to close the remaining
+                    // streams regardless of early exceptions.
                     firstException = ex;
                 }else if( firstException != ex ){
                     firstException.addSuppressed(ex);
