@@ -52,6 +52,18 @@ Regular boot
   qemu-system-aarch64 -M virt -cpu cortex-a57 -m 1G -bios /usr/share/qemu-efi-aarch64/QEMU_EFI.fd -hda my_disk.qcow2 -cdrom ~/images/debian-12.0.0-arm64-DVD/debian-12.0.0-arm64-DVD-1.iso
 
 
+## Shared host directory
+
+For windoof install WinNFSd (see source links).
+
+Run NFS server on windoof host:
+  WinNFSd.exe -addr 127.0.0.1 C:\hostDir /shareName
+
+Mount in guest:
+  apt install -y --no-install-recommends nfs-common
+  mount -t nfs -o vers=3 10.0.2.2:/shareName /mnt/host
+
+
 ## Debian PostInstall
 
 TODO: move this to a better place. Eg: debian/setup.txt or whatever.
@@ -65,10 +77,10 @@ TODO: move this to a better place. Eg: debian/setup.txt or whatever.
   && if [ -n "$http_proxy" ]; then true \
     && (echo "Acquire::http::proxy \"${http_proxy}\";"
         echo "Acquire::https::proxy \"${https_proxy}\";"
-       ) > /etc/apt/apt.conf.d/80proxy \
+       ) | $SUDO tee /etc/apt/apt.conf.d/80proxy >/dev/null \
       fi \
   && $SUDO apt update \
-  && $SUDO apt install -y --no-install-recommends vim openssh-server net-tools \
+  && $SUDO apt install -y --no-install-recommends vim openssh-server net-tools curl \
   && $SUDO sed -i -E 's;^GRUB_TIMEOUT=5$;GRUB_TIMEOUT=1;' /etc/default/grub \
   && $SUDO update-grub \
   && true
@@ -82,4 +94,6 @@ TODO verify article:
 
 - [apt via proxy](https://computingforgeeks.com/how-to-set-system-proxy-on-debian-linux/?expand_article=1)
 - [Qemu ssh from host](https://wiki.qemu.org/Documentation/Networking)
+- [shared host dir](https://superuser.com/a/628381/1123359)
+- [NFS server for windoof](https://github.com/winnfsd/winnfsd)
 
