@@ -14,17 +14,25 @@ Qemu
 
 ## amd64
 
-  CDROMFILE="path/to/installer/cd.iso"
-  HDAIMG="path/to/maindisk.qcow2"
-  BIOSDIR="path/to/Bios"
-  BIOSFILE="path/to/bios-256k.bin"
-  HOSTSPECIFICOPTS="--enable-kvm"
-  HOSTSPECIFICOPTS="-L \"${BIOSDIR:?}\" -bios \"${BIOSFILE:?}\""
-  qemu-system-x86_64 ${HOSTSPECIFICOPTS:?} \
-    -m size=4G -boot order=dc \
-    -cdrom "${CDROMFILE:?}" \
-    -hda "${HDAIMG:?}" \
-    -net nic -net user \
+  # Choose whichever fits the need
+  && MACHINE="-m size=4G" \
+  && HDAIMG="-hda path/to/maindisk.qcow2" \
+  && BIOSDIR="path/to/Bios"
+  && BIOSFILE="path/to/bios-256k.bin" \
+  && OPTIONROMFILE="path/to/kvmvapic.bin" \
+  && NETWORK="-net nic -net user" \
+  && NETWORK="-device e1000,netdev=net0 -netdev user,id=net0,hostfwd=tcp:127.0.0.1:10022-:22" \
+  && HOSTSPECIFICOPTS="--enable-kvm" \
+  && HOSTSPECIFICOPTS="-L ${BIOSDIR:?} -bios ${BIOSFILE:?} -option-rom ${OPTIONROMFILE:?}" \
+
+Start with installation disk
+
+  && CDROM="-cdrom path/to/installer.iso" \
+  && qemu-system-x86_64 ${HOSTSPECIFICOPTS:?} ${MACHINE:?} -boot order=dc ${CDROM} ${HDAIMG:?} ${NETWORK:?} \
+
+Regular boot
+
+  && qemu-system-x86_64 ${HOSTSPECIFICOPTS:?} ${MACHINE:?} -boot order=c ${HDAIMG:?} ${NETWORK:?} \
 
 
 ## aarch64 (not working yet)
@@ -44,6 +52,34 @@ Qemu
   qemu-system-aarch64 -M virt -cpu cortex-a57 -m 1G -bios /usr/share/qemu-efi-aarch64/QEMU_EFI.fd -hda my_disk.qcow2 -cdrom ~/images/debian-12.0.0-arm64-DVD/debian-12.0.0-arm64-DVD-1.iso
 
 
+## Debian PostInstall
+
+TODO: move this to a better place. Eg: debian/setup.txt or whatever.
+
+  true \
+  && http_proxy= \
+  && https_proxy= \
+  && no_proxy=127.0.0.1,10.0.2.* \
+  && SUDO= \
+  && true \
+  && if [ -n "$http_proxy" ]; then true \
+    && (echo "Acquire::http::proxy \"${http_proxy}\";"
+        echo "Acquire::https::proxy \"${https_proxy}\";"
+       ) > /etc/apt/apt.conf.d/80proxy \
+      fi \
+  && $SUDO apt update \
+  && $SUDO apt install -y --no-install-recommends vim openssh-server net-tools \
+  && $SUDO sed -i -E 's;^GRUB_TIMEOUT=5$;GRUB_TIMEOUT=1;' /etc/default/grub \
+  && $SUDO update-grub \
+  && true
+
+
 TODO verify article:
 "https://kbeckmann.github.io/2017/05/26/QEMU-instead-of-cross-compiling/"
+
+
+## Sources
+
+- [apt via proxy](https://computingforgeeks.com/how-to-set-system-proxy-on-debian-linux/?expand_article=1)
+- [Qemu ssh from host](https://wiki.qemu.org/Documentation/Networking)
 
