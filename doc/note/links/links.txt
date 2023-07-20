@@ -409,6 +409,7 @@ Links (Aka argument amplifiers)
 ## Bugs, Frameworks, Dependencies include them all
 - "https://medium.com/dinahmoe/escape-dependency-hell-b289de537403"
 - "https://gitit.post.ch/projects/ISA/repos/preflux/pull-requests/119/overview?commentId=46245"
+- [Stop Ductaping crap together](https://devrant.com/rants/5107044)
 
 ## Input validation
 - [WontDo](https://gitit.post.ch/projects/ISA/repos/preflux/pull-requests/512/overview?commentId=222672)
