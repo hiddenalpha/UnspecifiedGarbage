@@ -14,11 +14,14 @@ Qemu
 
 ## amd64
 
-  CDROMFILE="path/to/cd.iso"
+  CDROMFILE="path/to/installer/cd.iso"
   HDAIMG="path/to/maindisk.qcow2"
   BIOSDIR="path/to/Bios"
   BIOSFILE="path/to/bios-256k.bin"
-  qemu-system-x86_64 -L "${BIOSDIR:?}" -m size=2G -bios "${BIOSFILE:?}" -boot order=dc,menu=on \
+  HOSTSPECIFICOPTS="--enable-kvm"
+  HOSTSPECIFICOPTS="-L \"${BIOSDIR:?}\" -bios \"${BIOSFILE:?}\""
+  qemu-system-x86_64 ${HOSTSPECIFICOPTS:?} \
+    -m size=4G -boot order=dc \
     -cdrom "${CDROMFILE:?}" \
     -hda "${HDAIMG:?}" \
     -net nic -net user \
