@@ -19,11 +19,10 @@ Qemu
   && HDAIMG="-hda path/to/maindisk.qcow2" \
   && BIOSDIR="path/to/Bios"
   && BIOSFILE="path/to/bios-256k.bin" \
-  && OPTIONROMFILE="path/to/kvmvapic.bin" \
   && NETWORK="-net nic -net user" \
   && NETWORK="-device e1000,netdev=net0 -netdev user,id=net0,hostfwd=tcp:127.0.0.1:10022-:22" \
   && HOSTSPECIFICOPTS="--enable-kvm" \
-  && HOSTSPECIFICOPTS="-L ${BIOSDIR:?} -bios ${BIOSFILE:?} -option-rom ${OPTIONROMFILE:?}" \
+  && HOSTSPECIFICOPTS="-L ${BIOSDIR:?} -bios ${BIOSFILE:?}" \
 
 Start with installation disk
 
