@@ -63,6 +63,15 @@ Mount in guest:
   apt install -y --no-install-recommends nfs-common
   mount -t nfs -o vers=3 10.0.2.2:/shareName /mnt/host
 
+  mount -t nfs -o vers=3,tcp 10.0.2.2:/shareName /mnt/host
+
+
+## Alpine PostInstall
+
+  true \
+  && apk add bash curl openssh-server vim gcc make musl-dev \
+  && true
+
 
 ## Debian PostInstall
 
