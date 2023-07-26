@@ -42,6 +42,9 @@ ssh-keygen -E md5 -l -f path/to/key.pub
 ssh-keygen -y -f path/to/key > path/to/key.pub
 ```
 
+Print detailed DER file content:
+  openssl x509 -in dumpcertfile -inform DER -text
+
 
 ## Export pub key in misc formats
 
