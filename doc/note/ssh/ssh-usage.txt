@@ -25,6 +25,11 @@ request to "localhost:7080" on HOST.
   ssh -L 127.0.0.1:1234:localhost:7080 HOST
 
 
+## Use explicit client port
+
+ssh -o 'ProxyCommand ncat -p12345 %h %p' MY_SERVER
+
+
 ## Run Cmd via jumphost
 
 Source: "https://www.cyberciti.biz/faq/linux-unix-ssh-proxycommand-passing-through-one-host-gateway-server/"

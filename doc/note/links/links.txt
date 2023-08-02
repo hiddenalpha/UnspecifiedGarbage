@@ -125,7 +125,6 @@ Links (Aka argument amplifiers)
 - "http://www.richardrodger.com/2012/11/03/why-i-have-given-up-on-coding-standards/"
 
 ## slf4j logger dos and donts
-- [Parameterized logging with exceptions](https://www.slf4j.org/faq.html#paramException)
 - [case SO](https://stackoverflow.com/questions/1417190/should-a-static-final-logger-be-declared-in-upper-case)
 - [case java-styleguide](https://web.archive.org/web/20120911192801if_/http://developers.sun.com/sunstudio/products/archive/whitepapers/java-style.pdf#G3.5426)
 - [case slf4j](http://www.slf4j.org/api/org/slf4j/Logger.html)
@@ -368,9 +367,10 @@ Links (Aka argument amplifiers)
 - "https://m.youtube.com/watch?v=3fh9qm-ljA8"
 
 ## java slf4j parameterized logging log4shell
-- [slf4j parameterized logging](https://www.tutorialspoint.com/slf4j/slf4j_parameterized_logging.htm)
+- [SLF4J parameterized logging](https://www.tutorialspoint.com/slf4j/slf4j_parameterized_logging.htm)
 - [Format string vulnerability](https://beaglesecurity.com/blog/vulnerability/format-string-vulnerability.html)
 - [slf4shell](https://nvd.nist.gov/vuln/detail/CVE-2021-44228)
+- [Parameterized logging with exceptions](https://www.slf4j.org/faq.html#paramException)
 
 ## slf4j logger logging paisa platform alice
 - logger fail "https://jira.post.ch/browse/SDCISA-9903"
