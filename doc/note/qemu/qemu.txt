@@ -15,7 +15,7 @@ Qemu
 ## amd64
 
   # Choose whichever fits the need
-  && MACHINE="-m size=4G" \
+  && MACHINE="-m size=4G -smp cores=2" \
   && HDAIMG="-hda path/to/maindisk.qcow2" \
   && BIOSDIR="path/to/Bios"
   && BIOSFILE="path/to/bios-256k.bin" \
@@ -65,6 +65,10 @@ In GUEST to access it do:
   apt install -y --no-install-recommends nfs-common
   mkdir /mnt/host
   mount -t nfs -o vers=3 10.0.2.2:/path/to/share /mnt/host
+
+Keep build result inside vm:
+  mkdir /tmp/build /mnt/host/build
+  mount --bind /tmp/build /mnt/host/build
 
 
 ## Alpine PostInstall
