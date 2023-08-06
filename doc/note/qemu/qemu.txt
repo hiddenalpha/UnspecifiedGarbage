@@ -15,8 +15,8 @@ Qemu
 ## amd64
 
   # Choose whichever fits the need
-  && MACHINE="-m size=4G -smp cores=2" \
   && HDAIMG="-hda path/to/maindisk.qcow2" \
+  && MACHINE="-m size=4G -smp cores=2" \
   && BIOSDIR="path/to/Bios"
   && BIOSFILE="path/to/bios-256k.bin" \
   && NETWORK="-net nic -net user" \
@@ -63,6 +63,7 @@ For windoof HOST install WinNFSd, then:
 
 In GUEST to access it do:
   apt install -y --no-install-recommends nfs-common
+  apk add rpcbind && /etc/init.d/rpcbind start
   mkdir /mnt/host
   mount -t nfs -o vers=3 10.0.2.2:/path/to/share /mnt/host
 
@@ -74,7 +75,7 @@ Keep build result inside vm:
 ## Alpine PostInstall
 
   true \
-  && apk add bash curl openssh-server vim gcc make musl-dev \
+  && apk add bash openssh-server curl vim \
   && true
 
 
