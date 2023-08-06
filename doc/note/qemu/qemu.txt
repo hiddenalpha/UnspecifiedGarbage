@@ -53,16 +53,18 @@ Regular boot
 
 ## Shared host directory
 
-For windoof install WinNFSd (see source links).
+For debian HOST install 'nfs-kernel-system', then:
+  vim /etc/exports
+  Example: "/path/to/share 127.0.0.1(rw,no_subtree_check,insecure)"
+  exportfs -a && /etc/init.d/nfs-kernel-server restart
 
-Run NFS server on windoof host:
-  WinNFSd.exe -addr 127.0.0.1 C:\hostDir /shareName
+For windoof HOST install WinNFSd, then:
+  WinNFSd.exe -addr 127.0.0.1 C:\path\to\share /path/to/share
 
-Mount in guest:
+In GUEST to access it do:
   apt install -y --no-install-recommends nfs-common
-  mount -t nfs -o vers=3 10.0.2.2:/shareName /mnt/host
-
-  mount -t nfs -o vers=3,tcp,port=2049 10.0.2.2:/shareName /mnt/host
+  mkdir /mnt/host
+  mount -t nfs -o vers=3 10.0.2.2:/path/to/share /mnt/host
 
 
 ## Alpine PostInstall
@@ -94,14 +96,11 @@ TODO: move this to a better place. Eg: debian/setup.txt or whatever.
   && true
 
 
-TODO verify article:
-"https://kbeckmann.github.io/2017/05/26/QEMU-instead-of-cross-compiling/"
-
-
 ## Sources
 
 - [apt via proxy](https://computingforgeeks.com/how-to-set-system-proxy-on-debian-linux/?expand_article=1)
 - [Qemu ssh from host](https://wiki.qemu.org/Documentation/Networking)
 - [shared host dir](https://superuser.com/a/628381/1123359)
 - [NFS server for windoof](https://github.com/winnfsd/winnfsd)
+- [NFS server for debian](https://vitux.com/debian_nfs_server/)
 
