@@ -19,6 +19,7 @@ Qemu
   && MACHINE="-m size=4G -smp cores=2" \
   && BIOSDIR="path/to/Bios"
   && BIOSFILE="path/to/bios-256k.bin" \
+  && FIXMOUSEALIGN="-device usb-ehci,id=usb,bus=pci.0,addr=0x4 -device usb-tablet" \
   && NETWORK="-net nic -net user" \
   && NETWORK="-device e1000,netdev=net0 -netdev user,id=net0,hostfwd=tcp:127.0.0.1:10022-:22" \
   && HOSTSPECIFICOPTS="--enable-kvm" \
@@ -27,11 +28,11 @@ Qemu
 Start with installation disk
 
   && CDROM="-cdrom path/to/installer.iso" \
-  && qemu-system-x86_64 ${HOSTSPECIFICOPTS:?} ${MACHINE:?} -boot order=dc ${CDROM} ${HDAIMG:?} ${NETWORK:?} \
+  && qemu-system-x86_64 ${HOSTSPECIFICOPTS:?} ${MACHINE:?} -boot order=dc ${CDROM} ${HDAIMG:?} ${NETWORK:?} ${FIXMOUSEALIGN:?} \
 
 Regular boot
 
-  && qemu-system-x86_64 ${HOSTSPECIFICOPTS:?} ${MACHINE:?} -boot order=c ${HDAIMG:?} ${NETWORK:?} \
+  && qemu-system-x86_64 ${HOSTSPECIFICOPTS:?} ${MACHINE:?} -boot order=c ${HDAIMG:?} ${NETWORK:?} ${FIXMOUSEALIGN:?} \
 
 
 ## aarch64 (not working yet)
