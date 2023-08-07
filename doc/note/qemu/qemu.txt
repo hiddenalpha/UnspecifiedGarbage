@@ -12,6 +12,12 @@ Qemu
   qemu-img create -f qcow2 my_disk.qcow2 16G
 
 
+## Shrink img
+
+  sdelete -z C:
+  qemu-img convert -O qcow2 input.qcow output.qcow2
+
+
 ## amd64
 
   # Choose whichever fits the need
