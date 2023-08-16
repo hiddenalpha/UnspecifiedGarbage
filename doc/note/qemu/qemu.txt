@@ -79,6 +79,20 @@ Keep build result inside vm:
   mount --bind /tmp/build /mnt/host/build
 
 
+## USB pass-through
+
+NOTE: Couldn't yet test any of those commands.
+
+### By physical port
+  -usb -device usb-host,hostbus=1,hostport=2
+
+### By physical port via hub
+  -usb -device usb-host,hostbus=1,hostport=2.3
+
+### By device
+  -usb -device usb-host,vendorid=123,productid=456
+
+
 ## Alpine PostInstall
 
   true \
@@ -115,4 +129,5 @@ TODO: move this to a better place. Eg: debian/setup.txt or whatever.
 - [shared host dir](https://superuser.com/a/628381/1123359)
 - [NFS server for windoof](https://github.com/winnfsd/winnfsd)
 - [NFS server for debian](https://vitux.com/debian_nfs_server/)
+- [USB pass-through](https://unix.stackexchange.com/a/452946/292722)
 

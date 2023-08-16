@@ -518,3 +518,6 @@ Links (Aka argument amplifiers)
 ## Naming is hard
 - [Naming is hard. SBB](https://gitit.post.ch/projects/ISA/repos/timetable-reservation-api/pull-requests/4/overview?commentId=284225)
 
+## About True Security
+- [Tips, Tools and How-tos for Safer Online Communications](https://ssd.eff.org/)
+
