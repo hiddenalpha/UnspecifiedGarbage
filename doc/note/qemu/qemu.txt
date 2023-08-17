@@ -63,7 +63,7 @@ Regular boot
 For debian HOST install 'nfs-kernel-system', then:
   vim /etc/exports
   Example: "/path/to/share 127.0.0.1(rw,no_subtree_check,insecure)"
-  exportfs -a && /etc/init.d/nfs-kernel-server restart
+  exportfs -a; /etc/init.d/nfs-kernel-server restart
 
 For windoof HOST install WinNFSd, then:
   WinNFSd.exe -addr 127.0.0.1 C:\path\to\share /path/to/share
@@ -96,7 +96,10 @@ NOTE: Couldn't yet test any of those commands.
 ## Alpine PostInstall
 
   true \
-  && apk add bash openssh-server curl vim \
+  && apk add openssh-server \
+  && rc-update add sshd \
+  && sed -i -E 's;^# *(PermitRootLogin).+$;\1 yes;' /etc/ssh/sshd_config \
+  && sed -i -E 's;^# *(http://dl-cdn.alpinelinux.org/alpine/v[^/]+/community)$;\1;' /etc/apk/repositories \
   && true
 
 
