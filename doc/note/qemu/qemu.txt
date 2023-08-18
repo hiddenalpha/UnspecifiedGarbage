@@ -14,6 +14,10 @@ Qemu
 
 ## Shrink img
 
+Normal systems:
+  qemu-img convert -O qcow2 input.qcow2 output.qcow2
+
+Windoof:
   sdelete -z C:
   qemu-img convert -O qcow2 input.qcow output.qcow2
 
@@ -58,7 +62,34 @@ Regular boot
   qemu-system-aarch64 -M virt -cpu cortex-a57 -m 1G -bios /usr/share/qemu-efi-aarch64/QEMU_EFI.fd -hda my_disk.qcow2 -cdrom ~/images/debian-12.0.0-arm64-DVD/debian-12.0.0-arm64-DVD-1.iso
 
 
-## Shared host directory
+## Shared host directory via CIFS/SMB
+
+  true `# SMB server debian` \
+  && hostpath=/path/to/host/dir \
+  && sharename=work \
+  && apt install --no-install-recommends -y samba
+  && printf '[%s]\npath = %s\npublic = no\nwriteable = yes\nguest ok = yes\nforce user = andreas\n' "${sharename:?}" "${hostpath:?}" | $SUDO tee -a /etc/samba/smb.conf >/dev/null \
+  && $SUDO /etc/init.d/smbd restart \
+  && true
+
+TODO: SMB server windoof
+
+  true `# SMB client debian` \
+  && smbServer=10.0.2.2 \
+  && sharename=work \
+  && mountpoint=/mnt/work \
+  && hostUsername=yourHostUser \
+  && guestUid=$(id -u) \
+  && guestGid=$(id -g) \
+  && $SUDO apt install --no-install-recommends -y cifs-utils psmisc \
+  && $SUDO mount -t cifs -o username=${hostUsername:?},uid=${guestUid:?},gid=${guestGid:?} "//${smbServer:?}/${sharename:?}" "${mountpoint:?}" \
+  && true
+
+List smb shares (eg debugging)
+  smbclient -NL //10.0.2.2
+
+
+## Shared host directory via NFS
 
 For debian HOST install 'nfs-kernel-system', then:
   vim /etc/exports
@@ -125,6 +156,12 @@ TODO: move this to a better place. Eg: debian/setup.txt or whatever.
   && true
 
 
+## Qemu-Monitor in combo with VNC
+
+  --monitor stdio
+  --monitor telnet:127.0.0.1:55555,server,nowait
+
+
 ## Sources
 
 - [apt via proxy](https://computingforgeeks.com/how-to-set-system-proxy-on-debian-linux/?expand_article=1)
@@ -133,4 +170,6 @@ TODO: move this to a better place. Eg: debian/setup.txt or whatever.
 - [NFS server for windoof](https://github.com/winnfsd/winnfsd)
 - [NFS server for debian](https://vitux.com/debian_nfs_server/)
 - [USB pass-through](https://unix.stackexchange.com/a/452946/292722)
+- [qemu monitor via telnet](https://unix.stackexchange.com/a/426951/292722)
+- [qemu monitor via stdio](https://unix.stackexchange.com/a/57835/292722)
 
