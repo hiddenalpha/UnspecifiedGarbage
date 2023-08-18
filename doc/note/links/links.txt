@@ -248,6 +248,9 @@ Links (Aka argument amplifiers)
 - [Optimize code by doing less](https://m.youtube.com/watch?v=5rb0vvJ7NCY)
 - [CppCon Tuning Benchmarks clang CPUs Compilers" ](https://m.youtube.com/watch?v=nXaxk27zwlk)
 
+## Bugs are not an issue
+- [Bistr gateleen Forwarder exception](https://jira.post.ch/browse/SDCISA-11147)
+
 ## POSIX shell language syntax
 - "https://pubs.opengroup.org/onlinepubs/009695399/utilities/xcu_chap02.html"
 
@@ -520,4 +523,7 @@ Links (Aka argument amplifiers)
 
 ## About True Security
 - [Tips, Tools and How-tos for Safer Online Communications](https://ssd.eff.org/)
+
+## Qemu is Crap
+- [Qemu for Windows Host Quirks](https://wonghoi.humgar.com/blog/2021/05/03/qemu-for-windows-host-quirks/)
 

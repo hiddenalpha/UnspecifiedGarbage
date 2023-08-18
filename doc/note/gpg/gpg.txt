@@ -67,6 +67,12 @@ you're doing! If you don't, you MUST NOT use those instructions!
   gpgwin --sign-key foreignUser@example.com
 
 
+## Use keys with throw-away keyring
+
+  GNUPGHOME="/tmp/foo/"
+  gpg ...
+
+
 ## Some other helpful places
 
 - "https://insight.o-o.studio/article/setting-up-gpg.html#encryption-key"

@@ -73,6 +73,7 @@ Regular boot
   && true
 
 TODO: SMB server windoof
+DoesNotWork: "https://serverfault.com/questions/442664/virtualization-linux-kvm-qemu-host-windows-vm-guest-how-to-access-data-drive#comment479177_442678"
 
   true `# SMB client debian` \
   && smbServer=10.0.2.2 \
@@ -103,7 +104,7 @@ In GUEST to access it do:
   apt install -y --no-install-recommends nfs-common
   apk add rpcbind && /etc/init.d/rpcbind start
   mkdir /mnt/host
-  mount -t nfs -o vers=3 10.0.2.2:/path/to/share /mnt/host
+  $SUDO mount -t nfs -o vers=3 10.0.2.2:/path/to/share /mnt/host
 
 Keep build result inside vm:
   mkdir /tmp/build /mnt/host/build
