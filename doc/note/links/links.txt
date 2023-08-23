@@ -243,6 +243,7 @@ Links (Aka argument amplifiers)
 - [Houston OOM 2023-06-27](https://wikit.post.ch/x/_Bv6Rw)
 - [Houston OOM 2023-01-20](https://wikit.post.ch/x/iRepPQ)
 - [Houston OOM Killed](https://jira.post.ch/browse/SDCISA-10871)
+- [http cache disable](https://gitit.post.ch/projects/ISA/repos/bangbang/pull-requests/1/overview?commentId=287832)
 
 ## Common Performance
 - [Optimize code by doing less](https://m.youtube.com/watch?v=5rb0vvJ7NCY)

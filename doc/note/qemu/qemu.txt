@@ -101,7 +101,7 @@ For windoof HOST install WinNFSd, then:
   WinNFSd.exe -addr 127.0.0.1 C:\path\to\share /path/to/share
 
 In GUEST to access it do:
-  apt install -y --no-install-recommends nfs-common
+  $SUDO apt install -y --no-install-recommends nfs-common
   apk add rpcbind && /etc/init.d/rpcbind start
   mkdir /mnt/host
   $SUDO mount -t nfs -o vers=3 10.0.2.2:/path/to/share /mnt/host
