@@ -66,6 +66,7 @@ run () {
         --exclude=".git/refs/remotes" \
         --exclude=".git/refs/tags" \
         --exclude=".idea" \
+        --exclude="/.git-credentials" \
         --exclude="/.NERDTreeBookmarks" \
         --exclude="/.Xauthority" \
         --exclude="/.bash_history" \
@@ -102,6 +103,7 @@ run () {
         --exclude="/tmp" \
         --exclude="/virtualbox-*" \
         --exclude="/vmshare" \
+        --exclude="/vm-qemu" \
         "${DIR_FROM:?}" \
         "${BACKUP_PATH:?}/${DST_PREFIX}" \
         ;
