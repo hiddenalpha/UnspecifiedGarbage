@@ -28,7 +28,7 @@ Windoof:
   && HDAIMG="-hda path/to/maindisk.qcow2" \
   && MACHINE="-m size=4G -smp cores=2" \
   && BIOSDIR="path/to/Bios"
-  && BIOSFILE="path/to/bios-256k.bin" \
+  && BIOSFILE="${BIOSDIR:?}/bios-256k.bin" \
   && FIXMOUSEALIGN="-device usb-ehci,id=usb,bus=pci.0,addr=0x4 -device usb-tablet" \
   && NETWORK="-net nic -net user" \
   && NETWORK="-device e1000,netdev=net0 -netdev user,id=net0,hostfwd=tcp:127.0.0.1:10022-:22" \
@@ -132,6 +132,10 @@ NOTE: Couldn't yet test any of those commands.
   && rc-update add sshd \
   && sed -i -E 's;^# *(PermitRootLogin).+$;\1 yes;' /etc/ssh/sshd_config \
   && sed -i -E 's;^# *(http://dl-cdn.alpinelinux.org/alpine/v[^/]+/community)$;\1;' /etc/apk/repositories \
+  && mkdir /home/user && chown 1000:1000 /home/user && chmod 755 /home/user \
+  && printf 'user:x:1000:1000:user:/home/user:/bin/ash\n' >> /etc/passwd \
+  && printf 'user:x:1000:user\n' >> /etc/group \
+  && printf 'user:12345\n' | chpasswd \
   && true
 
 
