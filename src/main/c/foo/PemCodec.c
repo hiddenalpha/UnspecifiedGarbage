@@ -1,18 +1,13 @@
 
+#include "commonKludge.h"
+
 /* System */
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-
-#define STRQUOT_ASDFASDF(s) #s
-#define STRQUOT(s) STRQUOT_ASDFASDF(s)
-#ifndef PROJECT_VERSION
-#   define PROJECT_VERSION 0.0.0-SNAPSHOT
-#endif
 #define BUF_CAP (1<<15)
-
 
 typedef  struct PemCodec  PemCodec;
 
