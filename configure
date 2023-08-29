@@ -1,0 +1,57 @@
+
+set -o errexit
+
+MF="$(dirname "$0")/Makefile"
+
+
+printMakefileHdr () {
+    if [ -n "$WINDOOF" -a "$WINDOOF" != "0" ]; then
+        printf 'CC=x86_64-w64-mingw32-gcc\n'
+        printf 'BINEXT=.exe\n'
+    else
+        printf 'CC=gcc\n'
+        printf 'BINEXT=\n'
+    fi
+    if [ -n "$NDEBUG" -a "$NDEBUG" != "0" ]; then
+        printf 'CFLAGS=-Wall -std=c99 -Werror -fmax-errors=3 -Os -DNDEBUG=1\n'
+    else
+        printf 'CFLAGS=-Wall -std=c99 -Werror -fmax-errors=3 -O0 -ggdb -g3\n'
+    fi
+    printf 'RIMRAF=rm -rf\n'
+    printf 'MKDIR_P=mkdir -p\n'
+    printf '\n'
+    if [ -z "$VERBOSE" -o "$VERBOSE" == "0" ]; then printf '.SILENT:\n'; fi
+    printf '\n'
+}
+
+
+printTarget_clean () {
+    printf '\n'
+    printf '.PHONY: clean\n'
+    printf 'clean:\n'
+    printf '	$(RIMRAF) build\n'
+    printf '\n'
+}
+
+
+printTarget_PemCodec () {
+    printf '\n'
+    printf 'build/bin/pem-codec$(BINEXT):\n'
+    printf 'build/bin/pem-codec$(BINEXT): src/main/c/foo/PemCodec.c\n'
+    printf '	@echo " LN   build/bin/pem-codec$(BINEXT)"\n'
+    printf '	$(MKDIR_P) build/bin\n'
+    printf '	$(CC) -o build/bin/pem-codec$(BINEXT) $(CFLAGS) $^\n'
+    printf '\n'
+}
+
+
+main () {
+    printf '\n' > "${MF:?}"
+    printMakefileHdr >> "${MF:?}"
+    printTarget_clean >> "${MF:?}"
+    printTarget_PemCodec >> "${MF:?}"
+    printf '\n' >> "${MF:?}"
+}
+
+
+main "$@"
