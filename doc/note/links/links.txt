@@ -305,8 +305,8 @@ Links (Aka argument amplifiers)
 - "https://gitit.post.ch/projects/ISA/repos/customer-api/pull-requests/8/overview?commentId=88741"
 
 ## Documentation Noise/Clutter Comments, APIs (no response was specified)
-- [How to document http status codes meaningfully](https://gitit.post.ch/projects/ISA/repos/deployment-masterdata-api/pull-requests/12/overview?commentId=187097)
 - [Where's the benefit?](https://gitit.post.ch/projects/ISA/repos/vending-twint-api/pull-requests/1/overview?commentId=87895)
+- [How to document http status codes meaningfully](https://gitit.post.ch/projects/ISA/repos/deployment-masterdata-api/pull-requests/12/overview?commentId=187097)
 - [Some good examples](https://gitit.post.ch/projects/ISA/repos/vending-transaction-api/browse/src/rest/openapi/api.yaml?at=refs%2Ftags%2Fvending-transaction-api-01.00.00.00#79-80,96-98,112-113,130-131,162-164,197-199,230-232,250-252,270-272,287-288)
 - [Why is it so hard to write useful descriptions](https://gitit.post.ch/projects/ISA/repos/vending-payment-api/pull-requests/5/overview?commentId=106020)
 - [Why all that clutter?](https://gitit.post.ch/projects/ISA/repos/deployment-pipeline-api/pull-requests/22/overview?commentId=278860)
