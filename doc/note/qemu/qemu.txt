@@ -76,12 +76,14 @@ TODO: SMB server windoof
 DoesNotWork: "https://serverfault.com/questions/442664/virtualization-linux-kvm-qemu-host-windows-vm-guest-how-to-access-data-drive#comment479177_442678"
 
   true `# SMB client debian` \
+  && hostUsername=yourHostUser \
   && smbServer=10.0.2.2 \
   && sharename=work \
-  && mountpoint=/mnt/work \
-  && hostUsername=yourHostUser \
+  && mountpoint=/mnt/${sharename:?} \
   && guestUid=$(id -u) \
   && guestGid=$(id -g) \
+  && true \
+  && $SUDO mkdir -p "${mountpoint:?}" \
   && $SUDO apt install --no-install-recommends -y cifs-utils psmisc \
   && $SUDO mount -t cifs -o username=${hostUsername:?},uid=${guestUid:?},gid=${guestGid:?} "//${smbServer:?}/${sharename:?}" "${mountpoint:?}" \
   && true
