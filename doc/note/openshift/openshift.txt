@@ -1,0 +1,77 @@
+
+OpenShift
+=========
+
+- "https://wikit.post.ch/x/rJJ9G"
+  - Doc in confluence.
+- "https://artifactory.tools.pnet.ch/artifactory/ext-binaries-local/redhat/openshift/clients/"
+  - OC Clients Binary.
+
+
+## Config
+
++------------------------------------------------------------------------------
+| OC_EDITOR=vim
++------------------------------------------------------------------------------
+
+
+## Download Logs
+
+Houston logs sind NICHT im storage-manager. Musst direkt im houston pod
+schauen.
+
+Log paths:
+- Storage Mgr -> "/data/logs/SVC_NAME"
+- Service pod -> "/usr/local/jetty/logs".
+- Houston pod -> "/usr/local/vertx/logs".
+
+When tar fails all the time, try:  --ignore-failed-read
+
+Templates:
++------------------------------------------------------------------------------
+| oc -n NAMESPACE exec pod_name -- sh -c "echo 'gugus'"
+| 
+| # dload service logs via storage-manager
+| oc -n NAMESPACE exec storage-manager-XXX -- sh -c "cd /data/logs/SVC_NAME && tar --ignore-failed-read -cz *.log*" > `date +SVC_NAME-STAGE-logs-%Y%m%d-%H%M%S.tgz`
+| 
+| # DLoad logs directly from a service pod
+| oc -n NAMESPACE exec SVC_POD -- sh -c "cd /usr/local/jetty/logs && tar --ignore-failed-read --xform \"s:^:SVC_NAME-STAGE-logs-YYYYmmdd-HHMMSS/:\" -cz *.log*" > SAME_NAME_AS_BEFORE.tgz
+| 
+| # Download logs from HOUSTON:
+| oc -n NAMESPACE exec houston-XXX -- sh -c "cd /usr/local/vertx/logs && tar -cz *" > `date -uIs +"houston-STAGE-logs-%Y%m%d-%H%M%SZ.tgz"`
+| 
+| # Download logs from EAGLE:
+| oc -n NAMESPACE exec houston-XXX -- sh -c "cd /usr/local/vertx/logs && tar --xform \"s:^:houston-STAGE-logs-YYYYmmdd-HHMMSS-POD/:\" -cz *" > SAME_NAME_AS_BEFORE.tgz
++------------------------------------------------------------------------------
+
+
+## Edit config maps
+
+Configmaps for persistent changes are on
+"https://gitit.post.ch/projects/SECINF/repos/openshift-isa"
+
+To do direct manipulations:
++------------------------------------------------------------------------------
+| oc get configmap
+| oc edit configmap SVC_NAME-config
+| oc describe configmaps SVC-config > SVC-config
++------------------------------------------------------------------------------
+
+
+## Copy file to pod
+
+(TODO: not tested yet)
+tar -cz foo bar | oc -n NAMESPACE exec -i POD_NAME -- bash -c 'tar -C logs -zx'
+
+HINT: ALL files from Current dir (.) will get uploaded (when global rsync not available).
++------------------------------------------------------------------------------
+| oc -n NAMESPACE rsync . POD_NAME:/dst/dir --no-perms --exclude=* --include=MY_FILE.txt
++------------------------------------------------------------------------------
+
+
+## Expose port
++------------------------------------------------------------------------------
+| oc -n NAMESPACE expose service SVC_NAME --hostname=isa-SVC_NAME-STAGE.ospa.pnet.ch --port=1234 --name=isa-SVC_NAME-STAGE
++------------------------------------------------------------------------------
+
+
