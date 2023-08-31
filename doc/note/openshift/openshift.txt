@@ -75,3 +75,12 @@ HINT: ALL files from Current dir (.) will get uploaded (when global rsync not av
 +------------------------------------------------------------------------------
 
 
+## up/down scale from cli. input von thom (20230815)
+
+  oc scale dc/preflux --replicas=1
+
+## TODO what was this for?
+
+  oc get pvc
+
+
