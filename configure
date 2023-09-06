@@ -22,7 +22,7 @@ printMakefileHdr () {
     printf 'MKDIR_P=mkdir -p\n'
     printf 'PROJECT_VERSION=$(git describe --tags|sed '\''s,^v,,'\'')\n'
     printf '\n'
-    if [ -z "$VERBOSE" -o "$VERBOSE" == "0" ]; then printf '.SILENT:\n'; fi
+    if test -z "$VERBOSE" -o "$VERBOSE" = "0"; then printf '.SILENT:\n'; fi
     printf '\n'
     printf 'INCDIRS=-Isrc/main/c/common\n'
     printf '\n'
