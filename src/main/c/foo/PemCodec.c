@@ -3,6 +3,8 @@
 
 /* System */
 #include <assert.h>
+#include <errno.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,6 +12,7 @@
 #define BUF_CAP (1<<15)
 
 typedef  struct PemCodec  PemCodec;
+typedef  unsigned long long  ulong;
 
 
 enum Mode {
@@ -167,7 +170,7 @@ static int decodePem( PemCodec*app ){
     /* readEndOfPemLine. 1st dash got already consumed in func above */
     sz = fread(app->buf, 8, 1, stdin);
     if( sz != 1 || memcmp(app->buf, "----END ", 8)){
-        assert(fprintf(stderr, "sz=%llu\n", sz));
+        assert(fprintf(stderr, "sz=%llu\n", (ulong)sz));
         goto warnAndDrain;
     }
     /* assume rest of trailer is ok */

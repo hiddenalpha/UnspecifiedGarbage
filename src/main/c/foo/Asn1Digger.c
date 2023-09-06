@@ -6,6 +6,7 @@
 
 /* System */
 #include <assert.h>
+#include <errno.h>
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -54,6 +55,8 @@ struct AsnDigger {
     char typeNameBuf[sizeof"subType 0xFF, ObjectIdentifier, constructed"];
     int asciBuf_cap, asciBuf_len;
     char asciBuf[48+1];
+    int opStack_cap, opStack_len;
+    uchar opStack[1<<8]; /* operation stack, holding recursion information (eg nesting of sequences) */
     int innBuf_cap, innBuf_len;
     uchar innBuf[1<<15];
 };
@@ -121,6 +124,25 @@ static int parseArgs( int argc, char**argv, AsnDigger*app ){
 //static char* charPtrOfucharPtr( unsigned char*c ){ return (void*)c; }
 
 
+static void opStackPush( AsnDigger*app, uchar*buf, int len ){
+    if( app->opStack_len + len >= app->opStack_cap ){
+        fprintf(stderr, "%s: Internal operation stack overflow\n", strrchr(__FILE__,'/')+1);
+        abort();
+    }
+    memcpy(buf, app->opStack + app->opStack_len, len);
+    app->opStack_len += len;
+}
+
+
+static void opStackPop( AsnDigger*app, uchar*retval, int len ){
+    assert(app->opStack_len >= len);
+    app->opStack_len -= len;
+    if( retval != NULL ){
+        memcpy(retval, app->opStack + app->opStack_len, len);
+    }
+}
+
+
 static int asnType( AsnDigger*app ){
     size_t sz;
     int err;
@@ -174,8 +196,8 @@ readNextByte:
         }
         if( isLongType ){
             if( numBytesRead > sizeof(app->len)*8/7 ){
-                fprintf(stderr, "%s ENOTSUP: Cannot handle tag length encoded in more than %d bytes\n",
-                    strrchr(__FILE__,'/')+1, numBytesRead-1);
+                fprintf(stderr, "%s ENOTSUP: Cannot handle tag length encoded in more than %ld bytes\n",
+                    strrchr(__FILE__,'/')+1, (long)numBytesRead-1);
                 return -ENOTSUP;
             }else{
                 app->len = (app->len << numBytesRead*7) | (len[0] & 0x7F);
@@ -205,7 +227,8 @@ static int asnValue( AsnDigger*app ){
     printf("ASN.1 type 0x%02X, typeFlgs 0x%02X, len %d, lenFlgs 0x%02X (%s)%s",
         app->type, app->typeFlg, app->len, app->lenFlg, app->typeNameBuf, app->len?", value:":"");
 
-    if( app->len == 0 ){
+    const int isSequence = (app->type == 0x10);
+    if( app->len == 0 || isSequence ){
         /* no payload. Ready to go to next tag. */
         printf("\n");
         app->funcToCall = FUNC_asnType;
@@ -319,7 +342,7 @@ static void constructPrintableTypename( AsnDigger*app ){
         case 0x1C: memcpy(app->typeNameBuf, "UniversalString", 16); break;
         case 0x1D: memcpy(app->typeNameBuf, "CharacterString", 16); break;
         case 0x23: memcpy(app->typeNameBuf, "OID-IRI", 8); break;
-        default:
+        default:;
             /* construct some generified name with help of passed buffer */
             const char *tagClass;
             if(      (app->typeFlg & 0xC0) == 0 ){ tagClass = "Universal"; }
@@ -341,11 +364,14 @@ static void constructPrintableTypename( AsnDigger*app ){
 }
 
 
+static inline int breakBeforeDispatch( int i ){ return i; }
+
+
 static int run( AsnDigger*app ){
     int err;
     app->funcToCall = FUNC_asnType;
     while( (app->flg & FLG_innIsEof) == 0 ){
-        switch( app->funcToCall ){
+        switch( breakBeforeDispatch(app->funcToCall) ){
             case FUNC_asnType: err = asnType(app); break;
             case FUNC_asnLength: err = asnLength(app); break;
             case FUNC_asnValue: err = asnValue(app); break;
@@ -368,6 +394,8 @@ int main( int argc, char**argv ){
     app->typeNameBuf_cap = sizeof app->typeNameBuf;
     app->asciBuf_cap = sizeof app->asciBuf;
     app->asciBuf_len = 0;
+    app->opStack_cap = sizeof app->opStack;
+    app->opStack_len = 0;
     app->innBuf_cap = sizeof app->innBuf;
     app->innBuf_len = 0;
 
