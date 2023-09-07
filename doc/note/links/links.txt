@@ -226,12 +226,14 @@ Links (Aka argument amplifiers)
 - [new mandatory fields](https://gitit.post.ch/projects/ISA/repos/vehicleoperation-recording-api/pull-requests/36/overview?commentId=272214)
 - [thor-DasUnheilNaht](https://gitit.post.ch/projects/ISA/repos/fis-masterdata-api/pull-requests/17/overview?commentId=227703)
 - [thor-DerBlizHatEingeschlagen](https://gitit.post.ch/projects/ISA/repos/fis-masterdata-api/pull-requests/18/overview)
+- [PaISA api new enum values](https://gitit.post.ch/projects/ISA/repos/fis-control-api/pull-requests/14/overview?commentId=296012)
 
 ## Performance DOES matter
 - "https://github.com/swisspush/gateleen/pull/456#discussion_r844865066"
-- [Is writing performant code too expensive?](https://m.youtube.com/watch?v=EpYr3T5VP6w)
 - [Performance Excuses Debunked](https://m.youtube.com/watch?v=x2EOOJg8FkA)
+- [Is writing performant code too expensive?](https://m.youtube.com/watch?v=EpYr3T5VP6w)
 - [Simple Code, High Performance](https://m.youtube.com/watch?v=Ge3aKEmZcqY)
+- [Houston Last führt zu Neustart](https://wikit.post.ch/x/HDV8T)
 - [Houston storage request timed out large json](https://jira.post.ch/browse/SDCISA-11294)
 - [Preflux Garbage Collection issues](https://jira.post.ch/browse/SDCISA-4714)
 - [Preflux Gatherfacts läuft in Timeout](https://jira.post.ch/browse/SDCISA-8136)
@@ -261,6 +263,9 @@ Links (Aka argument amplifiers)
 
 ## Posix c API design
 - "https://lucumr.pocoo.org/2013/8/18/beautiful-native-libraries/"
+- [applications are required to avoid symbols ending in "_t"](https://pubs.opengroup.org/onlinepubs/9699919799/xrat/V4_xsh_chap02.html#tag_22_02_12)
+- [Names that end with ‘_t’ are reserved by POSIX](https://www.gnu.org/software/libc/manual/html_node/Reserved-Names.html)
+- [What does a type followed by _t represent?](https://stackoverflow.com/a/12727104/4415884)
 
 ## API paisa-api 01.03.00.01 Breaking change ISAGD-6566
 - "https://gitit.post.ch/projects/ISA/repos/fis-api/pull-requests/9/overview?commentId=129349"

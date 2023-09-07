@@ -7,6 +7,9 @@ Tcpdump
 
   scriptlee -W OcChunkDownload.lua -n OC_PROJ --scan-delay 10 --workdir ../../../../../tmp --pod-pattern 'houston.%d' --file-pattern 'houston.STAGE.tcp.*gz' --skip 1
 
+  RNG="{001,002,003}"; TS="20230907-100235"; ocprod exec -i "$(ocprod get pods|grep houston-[1-9]|cut -f1 -d' ')" -- sh -c 'true && cd /tmp && tar c houston-prod-tcp-'"${TS:?}"'.pcap'"${RNG:?}"'.gz && rm houston-prod-tcp-'"${TS:?}
+"'.pcap'"${RNG:?}"'.gz' | tar x
+
 
 
 ## Base (inclusive blacklist brox, fluentd, ...):
