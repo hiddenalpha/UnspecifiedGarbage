@@ -22,6 +22,7 @@ static char const*const DEV_STDIN = "/dev/stdin";
 #define FLG_isTcpFin (1<<6)
 #define FLG_isHttpReq (1<<7)
 #define FLG_isLlLinux (1<<12)
+#define FLG_isHdrPrinted (1<<13)
 #define FLG_INIT (0)
 
 typedef  struct PcapOne  PcapOne;
@@ -29,16 +30,16 @@ typedef  struct PcapOne  PcapOne;
 
 struct PcapOne {
     uint_least16_t flg;
-    char *dumpFilePath;
+    const char *dumpFilePath;
     char *pcapErrbuf;
     pcap_t *pcap;
     unsigned long frameNr;
     struct/*most recent frame*/{
-        int_fast32_t llProto;
+        int llProto;
         int llHdrEnd;
     };
     struct/*most recent packet*/{
-        int_fast16_t netProto;
+        int netProto;
         int netBodyLen;
         int netHdrEnd;
         int_fast32_t netTotLen;
@@ -46,11 +47,11 @@ struct PcapOne {
     };
     struct/*most recent segment*/{
         int trspBodyLen;
-        int_fast32_t trspSrcPort, trspDstPort;
+        int trspSrcPort, trspDstPort;
         int trspHdrEnd;
     };
     struct/*most recent http requst*/{
-        const char *httpReqHeadline;
+        const uint8_t *httpReqHeadline;
         int httpReqHeadline_len;
         int httpReq_off; /* pkg offset from begin of most recent request */
     };
@@ -62,7 +63,7 @@ static void parse_ll_LINUX_SLL( PcapOne*, const struct pcap_pkthdr*, const u_cha
 static void parse_net_IPv4( PcapOne*, const struct pcap_pkthdr*, const u_char* );
 static void parse_trsp_TCP( PcapOne*, const struct pcap_pkthdr*, const u_char* );
 static void parse_appl_HTTP_req( PcapOne*, const struct pcap_pkthdr*, const u_char* );
-static void printParsingResults( PcapOne* );
+static void printParsingResults( PcapOne*, const struct pcap_pkthdr* );
 /*END func fwd decl*/
 
 static void printHelp(){
@@ -111,7 +112,6 @@ static int parseArgs( PcapOne*app, int argc, char**argv ){
 
 
 static void onPcapPkg( u_char*user, const struct pcap_pkthdr*hdr, const u_char*buf ){
-    int err;
     PcapOne *const app = (void*)user;
 
     /* prepare for this new packet */
@@ -145,7 +145,7 @@ static void onPcapPkg( u_char*user, const struct pcap_pkthdr*hdr, const u_char*b
     case  8080: parse_appl_HTTP_req(app, hdr, buf); break;
     }
 
-    printParsingResults(app);
+    printParsingResults(app, hdr);
 }
 
 
@@ -210,29 +210,38 @@ static void parse_appl_HTTP_req( PcapOne*app, const struct pcap_pkthdr*hdr, cons
 }
 
 
-static void printParsingResults( PcapOne*app ){
-    int err;
+static void printParsingResults( PcapOne*app, const struct pcap_pkthdr*hdr ){
 
     int isHttpRequest = (app->flg & FLG_isHttpReq);
     int isHttpReqBegin = isHttpRequest && app->httpReq_off == 0;
 
     if( isHttpRequest && isHttpReqBegin ){
         /* find http method */
-        const char *method = app->httpReqHeadline;
+        const uint8_t *method = app->httpReqHeadline;
         int method_len = 0;
         for(;; ++method_len ){
             if( method_len > app->httpReqHeadline_len ) break;
             if( method[method_len] == ' ' ) break;
         }
         /* find http uri */
-        const char *uri = method + method_len + 1;
+        const uint8_t *uri = method + method_len + 1;
         int uri_len = 0;
         for(;; ++uri_len ){
             if( method_len + uri_len > app->httpReqHeadline_len ) break;
             if( uri[uri_len] == ' ' ) break;
         }
+        if( !(app->flg & FLG_isHdrPrinted) ){
+            app->flg |= FLG_isHdrPrinted;
+            printf("h;Title;HTTP requests\n");
+            printf("c;epochSec;srcIp;dstIp;srcPort;dstPort;http_method;http_uri\n");
+        }
         /* print it as a quick-n-dirty CSV record */
-        printf("r;HTTP req;%.*s;%.*s\n", method_len, method, uri_len, uri);
+        printf("r;%ld.%06ld;%d.%d.%d.%d;%d.%d.%d.%d;%d;%d;%.*s;%.*s\n",
+            hdr->ts.tv_sec, hdr->ts.tv_usec,
+            app->ipSrcAddr >> 24, app->ipSrcAddr >> 16 & 0xFF, app->ipSrcAddr >> 8 & 0xFF, app->ipSrcAddr & 0xFF,
+            app->ipDstAddr >> 24, app->ipDstAddr >> 16 & 0xFF, app->ipDstAddr >> 8 & 0xFF, app->ipDstAddr & 0xFF,
+            app->trspSrcPort, app->trspDstPort,
+            method_len, method, uri_len, uri);
     }
 }
 

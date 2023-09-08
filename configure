@@ -72,7 +72,7 @@ printTarget_PcapOne () {
     printf 'build/bin/pcap-one$(BINEXT): src/main/c/PcapOne/PcapOne.c\n'
     printf '	@echo " LN   $@"\n'
     printf '	@$(MKDIR_P) build/bin\n'
-    printf '	@$(CC) -o $@ $(CFLAGS) $^ $(INCDIRS)\n'
+    printf '	@$(CC) -o $@ $(CFLAGS) $^ $(INCDIRS) -Wl,-Bstatic -lpcap -Wl,-Bdynamic\n'
 }
 
 
