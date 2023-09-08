@@ -19,8 +19,10 @@
     function main(){
         var app = Object.seal({
             ui: {},
-            bloatyChecklistDone: STATUS_INIT,
-            bloatyDevelopmentDone: STATUS_INIT,
+            status: Object.seal({
+                checklistBtn: STATUS_INIT,
+                developmentBtn: STATUS_INIT,
+            }),
             lastClickEpochMs: 0,
         });
         if( NDEBUG ){
@@ -43,12 +45,12 @@
 
 
     function attachDomObserver( app ){
-        new MutationObserver(onDomhasChangedSomehow.bind(N, app))
+        new MutationObserver(onDomHasChangedSomehow.bind(N, app))
             .observe(document, { subtree:true, childList:true, attributes:true });
     }
 
 
-    function onDomhasChangedSomehow( app, changes, mutationObserver ){
+    function onDomHasChangedSomehow( app, changes, mutationObserver ){
         var nowEpochMs = Date.now();
         if( (app.lastClickEpochMs + 2000) > nowEpochMs ){
             LOGDBG("ignore, likely triggered by user.");
@@ -89,85 +91,67 @@
     function cleanupClutter( app ){
         if( app.bloatyChecklistDone != STATUS_RUNNING ){
             app.bloatyChecklistDone = STATUS_OBSOLETE
-            setTimeout(hideBloatyChecklist, 0, app);
+            setTimeout(hideBloatyButton, 0, app, "checklistBtn");
         }
         if( app.bloatyDevelopmentDone != STATUS_RUNNING ){
             app.bloatyDevelopmentDone = STATUS_OBSOLETE;
-            setTimeout(hideBloatyDevelopment, 0, app);
+            setTimeout(hideBloatyButton, 0, app, "developmentBtn");
         }
-    }
-
-
-    function getBloatyChecklistBtn( app ){
-        if( !app.ui.bloatyChecklistBtn ){
-            var btn = fetchUiRefOrNull(app, document, 'button[aria-label="Checklists"]');
-            if( btn ){
-                btn.addEventListener("mousedown", logErrors.bind(N, setLastClickTimeToNow, app));
-                app.ui.bloatyChecklistBtn = btn;
-            }
+        if( app.bloatyDevelopmentDone != STATUS_RUNNING ){
+            app.bloatyDevelopmentDone = STATUS_OBSOLETE;
+            setTimeout(hideBloatyButton, 0, app, "bigTemplateBtn");
         }
-        return app.ui.bloatyChecklistBtn;
-    }
-
-
-    function getBloatyDevelopmentBtn( app ){
-        if( !app.ui.bloatyDevelopmentBtn ){
-            var btn = fetchUiRefOrNull(app, document, 'button[aria-label="Development"]');
-            if( btn ){
-                btn.addEventListener("mousedown", logErrors.bind(N, setLastClickTimeToNow, app));
-                app.ui.bloatyDevelopmentBtn = btn;
-            }
-        }
-        return app.ui.bloatyDevelopmentBtn;
     }
 
 
     function setLastClickTimeToNow( app ){ app.lastClickEpochMs = Date.now(); }
 
 
-    function hideBloatyChecklist( app ){
-        if( app.bloatyChecklistDone == STATUS_DONE ){
-            LOGDBG("bloatyChecklistBtn now hidden", app.ui.bloatyChecklistBtn);
+    function hideBloatyButton( app, btnKey ){
+        if( app.status[btnKey] == STATUS_DONE ){
+            LOGDBG(btnKey +" now hidden");
             return; }
-        app.bloatyChecklistDone = STATUS_RUNNING;
-        var btn = getBloatyChecklistBtn(app);
+        app.status[btnKey] == STATUS_RUNNING;
+        var btn = getBloatyButton(app, btnKey);
         do{
-            if( ! btn ){ LOGDBG("Button not found. DOM maybe not yet ready?"); break; }
+            if( !btn ){ LOGDBG(btnKey +" not found. DOM maybe not yet ready?"); break; }
             var isExpanded = isAriaBtnExpanded(app, btn);
             if( isExpanded === true ){
-                LOGDBG("bloatyChecklistBtn.click()");
+                LOGDBG(btnKey +".click()");
                 btn.click();
             }else if( isExpanded === false ){
-                app.bloatyChecklistDone = STATUS_DONE;
+                app.status[btnKey] = STATUS_DONE;
             }else{
-                throw Error("Neither true nor false: "+ typeof(isExpanded) +" "+ isExpanded);
+                throw Error("Neither true nor false "+ typeof(isExpanded) +" "+ isExpanded);
             }
         }while(0);
-        /*try later*/
-        setTimeout(hideBloatyChecklist, 16, app);
+        /* try later */
+        setTimeout(hideBloatyButton, 16, app, btnKey);
     }
 
 
-    function hideBloatyDevelopment( app ){
-        if( app.bloatyDevelopmentDone == STATUS_DONE ){
-            LOGDBG("bloatyDevelopmentBtn now hidden");
-            return; }
-        app.bloatyDevelopmentDone = STATUS_RUNNING;
-        var btn = getBloatyDevelopmentBtn(app);
-        do{
-            if( !btn ){ LOGDBG("Button not found. DOM maybe not yet ready?"); break; }
-            var isExpanded = isAriaBtnExpanded(app, btn);
-            if( isExpanded === true ){
-                LOGDBG("bloatyDevelopmentBtn.click()");
-                btn.click();
-            }else if( isExpanded === false ){
-                app.bloatyDevelopmentDone = STATUS_DONE;
-            }else{
-                throw Error("Neither true nor false: "+ typeof(isExpanded) +" "+ isExpanded);
+    function getBloatyButton( app, btnKey ){
+        if(0){
+        }else if( btnKey == "checklistBtn" ){
+            var selector = "button[aria-label=Checklists]";
+            var uiKey = "bloatyChecklistBtn";
+        }else if( btnKey == "developmentBtn" ){
+            var selector = "button[aria-label=Development]";
+            var uiKey = "bloatyDevelopmentBtn";
+        }else if(  btnKey == "bigTemplateBtn" ){
+            var selector = "button[aria-label=BigTemplate]";
+            var uiKey = "bloatyBigTemplateBtn";
+        }else{
+            throw Error(btnKey);
+        }
+        if( !app.ui[uiKey] ){
+            var btn = fetchUiRefOrNull(app, document, selector);
+            if( btn ){
+                btn.addEventListener("mousedown", logErrors.bind(N, setLastClickTimeToNow, app));
+                app.ui[uiKey] = btn;
             }
-        }while(0);
-        /*try later*/
-        setTimeout(hideBloatyDevelopment, 16, app);
+        }
+        return app.ui[uiKey];
     }
 
 
