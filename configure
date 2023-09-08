@@ -66,6 +66,16 @@ printTarget_Asn1Digger () {
 }
 
 
+printTarget_PcapOne () {
+    printf '\n'
+    printf 'build/bin/pcap-one$(BINEXT):\n'
+    printf 'build/bin/pcap-one$(BINEXT): src/main/c/PcapOne/PcapOne.c\n'
+    printf '	@echo " LN   $@"\n'
+    printf '	@$(MKDIR_P) build/bin\n'
+    printf '	@$(CC) -o $@ $(CFLAGS) $^ $(INCDIRS)\n'
+}
+
+
 main () {
     (
         printMakefileHdr
@@ -73,6 +83,7 @@ main () {
         printTarget_link
         printTarget_PemCodec
         printTarget_Asn1Digger
+        printTarget_PcapOne
     ) > "${MF:?}"
 }
 
