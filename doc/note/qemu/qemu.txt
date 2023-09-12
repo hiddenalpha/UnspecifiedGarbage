@@ -7,9 +7,16 @@ Qemu
   apt install qemu-system-aarch64 qemu-efi-aarch64
 
 
-## Create Image
+## Manage Images
 
+### Create new image
   qemu-img create -f qcow2 my_disk.qcow2 16G
+
+### Convert qcow2 to raw
+  qemu-img convert -f qcow2 -O raw foo.qcow2 foo.img
+
+### Convert raw to qcow2
+  qemu-img convert -f raw -O qcow2 foo.img foo.qcow2
 
 
 ## Shrink img
@@ -47,19 +54,26 @@ Regular boot
 
 ## aarch64 (not working yet)
 
-  MAC='00:de:ad:de:ad:00'
-  DISK=my_disk.qcow2
-  cp /usr/share/AAVMF/AAVMF_CODE.fd ./flash1.img
-  qemu-system-aarch64 -m 1G -cpu cortex-a57 -M virt \
-    -pflash /usr/share/AAVMF/AAVMF_CODE.fd \
-    -pflash flash1.img \
-    -drive if=none,file=${DISK:?},id=hd0 \
-    -device virtio-blk-device,drive=hd0 \
-    -device virtio-net-device,netdev=net0,mac=${MAC:?}
+  apt install -y --no-install-recommends qemu-uefi-aarch64
+  curl -sSLO https://github.com/dhruvvyas90/qemu-rpi-kernel/raw/master/kernel-qemu-4.4.34-jessie
+  curl -sSLO https://downloads.raspberrypi.org/raspios_lite_arm64/images/raspios_lite_arm64-2023-05-03/2023-05-03-raspios-bullseye-arm64-lite.img.xz
+  xz -d 2023-05-03-raspios-bullseye-arm64-lite.img.xz
+  qemu-img convert -f raw -O qcow2 2023-05-03-raspios-bullseye-arm64-lite.img raspbian-bullseye-lite.qcow2
+  qemu-img resize raspbian-bullseye-lite.qcow2 16G
+  mv raspbian-bullseye-lite.qcow2 hda.qcow2
 
-  qemu-system-aarch64 -M virt -hda my_disk.qcow2 -cdrom debian.iso -boot c -m 1G
+  qemu-system-aarch64 \
+    -bios /usr/share/qemu-efi-aarch64/QEMU_EFI.fd \
+    -hda hda.qcow2 \
+    -cpu cortex-a72 -m 256 \
+    -M versatilepb \
+    -no-reboot \
+    -serial stdio \
+    -net nic -net user \
 
-  qemu-system-aarch64 -M virt -cpu cortex-a57 -m 1G -bios /usr/share/qemu-efi-aarch64/QEMU_EFI.fd -hda my_disk.qcow2 -cdrom ~/images/debian-12.0.0-arm64-DVD/debian-12.0.0-arm64-DVD-1.iso
+    -cpu arm1176 -m 256 \
+    -net tap,ifname=vnet0,script=no,downscript=no \
+    -bios /usr/share/ovmf/OVMF.fd \
 
 
 ## Shared host directory via CIFS/SMB
@@ -179,4 +193,5 @@ TODO: move this to a better place. Eg: debian/setup.txt or whatever.
 - [USB pass-through](https://unix.stackexchange.com/a/452946/292722)
 - [qemu monitor via telnet](https://unix.stackexchange.com/a/426951/292722)
 - [qemu monitor via stdio](https://unix.stackexchange.com/a/57835/292722)
+- [qemu raspberry pi TODO](https://blog.agchapman.com/using-qemu-to-emulate-a-raspberry-pi/)
 

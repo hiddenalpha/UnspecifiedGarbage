@@ -33,10 +33,16 @@ true `# Setup mounts & persistence (host)` \
   && true
 
 true `# Run dev server (guest)` \
+  && cd "${GUESTWD:?}" \
   && DEBUG=1 php -dassert.bail=1 -dzend.assertions=1 -dassert.exception=1 -S 0.0.0.0:8080 src/index.php \
   && true
 
 true `# Copy persistence from vm back to host (host)` \
   && $SSH -- sh -c "true && cd \"${GUESTWD:?}\" && tar c \"${CPY_OUT:?}\"" | tar x \
   && true
+
+
+## Links
+
+- [Install old php](https://tecadmin.net/how-to-install-php-on-debian-12/)
 
