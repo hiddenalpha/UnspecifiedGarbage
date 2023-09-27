@@ -25,6 +25,21 @@ public class StreamUtils {
         return totalBytes;
     }
 
+    public static Runnable newCopyTask(java.io.InputStream src, java.io.OutputStream dst, boolean doCloseDst){
+        return ()->{
+            try{
+                for( byte[] buf = new byte[8291] ;; ){
+                    int readLen = src.read(buf, 0, buf.length);
+                    if( readLen == -1 ) break;
+                    dst.write(buf, 0, readLen);
+                }
+                if( doCloseDst ) dst.close();
+            }catch( java.io.IOException ex ){
+                throw new RuntimeException(ex);
+            }
+        };
+    }
+
     public static <SRC,DST> java.util.Iterator<DST> map( java.util.Iterator<SRC> src , java.util.function.Function<SRC,DST> mapper ) {
         return new java.util.Iterator<DST>() {
             @Override public boolean hasNext() { return src.hasNext(); }

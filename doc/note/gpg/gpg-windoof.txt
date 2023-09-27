@@ -1,0 +1,5 @@
+
+
+[Why does git complain that no GPG agent is running?](https://superuser.com/a/1663941/1123359)
+
+

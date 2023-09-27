@@ -1,0 +1,6 @@
+
+
+## Stop silly path replacements
+
+  MSYS_NO_PATHCONV=1 ssh foo -- ls /var/lib
+
