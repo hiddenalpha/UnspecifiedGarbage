@@ -1,7 +1,8 @@
 
 ### Debian native
+### TODO: test this
 true \
-  && PKGS_TO_ADD="make gcc curl ca-certificates libc6-dev cmake" \
+  && PKGS_TO_ADD="make gcc curl ca-certificates libc6-dev" \
   && SUDO=sudo \
   && PKGINIT="$SUDO apt update" \
   && PKGADD="$SUDO apt install -y --no-install-recommends" \
@@ -11,13 +12,12 @@ true \
 
 
 ### Alpine mingw cross
-### TODO: test this
 true \
-  && PKGS_TO_ADD="make mingw-w64-gcc curl tar cmake" \
+  && PKGS_TO_ADD="make mingw-w64-gcc curl tar" \
   && SUDO="/home/$USER/.local/bin/sudo" \
   && PKGINIT=true \
   && PKGADD="$SUDO apk add" \
-  && PKGCLEAN="$SUDO apk clean" \
+  && PKGCLEAN="$SUDO apk cache clean 2>&1| grep -v 'ERROR: Package cache is not enabled'" \
   && HOST=x86_64-w64-mingw32 \
   && true
 
@@ -35,7 +35,7 @@ true \
      && printf '\n  It is recommended to run this script in an empty dir.\n\n' \
      && false \
      ;fi \
-  && LIBARCHIVE_URL="https://github.com/libarchive/libarchive/archive/refs/tags/v${LIBARCHIVE_VERSION:?}.tar.gz" \
+  && LIBARCHIVE_URL="https://github.com/libarchive/libarchive/releases/download/v${LIBARCHIVE_VERSION:?}/libarchive-${LIBARCHIVE_VERSION:?}.tar.gz" \
   && LIBARCHIVE_SRCTGZ="${CACHE_DIR:?}/libarchive-${LIBARCHIVE_VERSION:?}.tgz" \
   && LIBARCHIVE_BINTGZ="${LIBARCHIVE_SRCTGZ%.*}-bin.tgz" \
   && if test -n "$HOST"; then HOST_="${HOST:?}-" ;fi \
@@ -48,14 +48,14 @@ true \
      && printf '\n  Build libarchive\n\n' \
      && tar xf "${LIBARCHIVE_SRCTGZ:?}" \
      && cd "libarchive-${LIBARCHIVE_VERSION:?}" \
-     && if test -n "$HOST"; then true \
-        && CC="${HOST_:?}cc" cmake -D CMAKE_INSTALL_PREFIX="${PWD:?}/build/usr_local" . \
-        ;else true \
-        && cmake -D CMAKE_INSTALL_PREFIX="${PWD:?}/build/usr_local" . \
-        ;fi \
-     && make -j$(nproc) && make install \
-     && rm -rf build/usr_local/lib/pkgconfig \
+     && ./configure --prefix="${PWD:?}/build/usr_local" --host=${HOST} \
+            --enable-bsdtar=static --enable-bsdcat=static --enable-bsdcpio=static \
+            --disable-rpath --enable-posix-regex-lib \
+            --with-libiconv-prefix="${PWD%/*}/libiconv-1.16-mingw64" \
+            CC=${HOST_}gcc CPP=${HOST_}cpp \
+     && make clean && make -j$(nproc) && make install \
      && (cd build/usr_local \
+        && rm -rf lib/pkgconfig lib/libarchive.la \
         && find -type f -not -wholename MD5SUM -exec md5sum {} + > MD5SUM \
         && tar --owner=0 --group=0 -czf "${LIBARCHIVE_BINTGZ:?}" * \
         && md5sum -b "${LIBARCHIVE_BINTGZ:?}" > "${LIBARCHIVE_BINTGZ:?}.md5"  \
