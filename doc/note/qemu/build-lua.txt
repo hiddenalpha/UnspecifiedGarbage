@@ -1,0 +1,86 @@
+
+### Debian native
+true \
+  && PKGS_TO_ADD="ca-certificates gcc make libc6-dev" \
+  && SUDO=sudo \
+  && PKGINIT="$SUDO apt update" \
+  && PKGADD="$SUDO apt install -y --no-install-recommends" \
+  && PKGCLEAN="$SUDO apt clean" \
+  && HOST= \
+  && true
+
+
+### Alpine mingw cross
+true \
+  && PKGS_TO_ADD="binutils curl mingw-w64-gcc make tar" \
+  && SUDO="/home/$USER/.local/bin/sudo" \
+  && PKGINIT=true \
+  && PKGADD="$SUDO apk add" \
+  && PKGCLEAN="$SUDO apk clean" \
+  && HOST=x86_64-w64-mingw32 \
+  && true
+
+
+## Generic
+true \
+  && LUA_VERSION="5.4.3" \
+  && CACHE_DIR="/var/tmp" \
+  && true
+
+
+## Make
+true \
+  && if test -n "$(ls -A)"; then true \
+     && printf '\n  It is recommended to run this script in an empty dir.\n\n' \
+     && false \
+     ;fi \
+  && if test -n "$HOST"; then HOST_="${HOST:?}-" ;fi \
+  && ${PKGINIT:?} && ${PKGADD:?} $PKGS_TO_ADD \
+  && LUA_URL="https://www.lua.org/ftp/lua-${LUA_VERSION:?}.tar.gz" \
+  && LUA_SRCTGZ="${CACHE_DIR:?}/lua-${LUA_VERSION:?}.tgz" \
+  && LUA_BINTGZ="${LUA_SRCTGZ%.*}-bin.tgz" \
+  && printf '\n  Download Dependency Sources\n\n' \
+  && if test ! -e "${LUA_SRCTGZ:?}"; then true \
+     && echo "Download ${LUA_URL:?}" \
+     && curl -sSLo "${LUA_SRCTGZ:?}" "${LUA_URL:?}" \
+     ;fi \
+  && if test ! -e "${LUA_BINTGZ:?}"; then (true \
+     && printf '\n  Build lua\n\n' \
+     && tar xf "${LUA_SRCTGZ:?}" \
+     && cd "lua-${LUA_VERSION:?}" \
+     && mkdir -p build/bin build/include build/lib build/man/man1 \
+     && export CFLAGS="-ggdb -Wall -Wextra" \
+     && `# Uncomment this line for debugging` \
+     && export CFLAGS="$CFLAGS -DLUAI_ASSERT -DLUA_USE_APICHECK" \
+     && `# endOf Uncomment` \
+     && make clean \
+     && if echo "$HOST"|grep -q '\-mingw'; then true \
+        && make -j$(nproc) PLAT=mingw \
+             CC="${HOST_}gcc -std=gnu99" AR="${HOST_}ar rcu" RANLIB="${HOST_}ranlib" \
+        && cp -t build/. README \
+        && cp -t build/bin/. src/lua.exe src/luac.exe \
+        ;else true \
+        && export CFLAGS="$CFLAGS -DLUA_USE_POSIX" \
+        && make -j$(nproc) \
+        && cp -t build/. README \
+        && cp -t build/bin/. src/lua src/luac \
+        ;fi \
+     && cp -t build/include/. src/lua.h src/luaconf.h src/lualib.h src/lauxlib.h src/lua.hpp \
+     && cp -t build/lib/. src/liblua.a \
+     && cp -t build/man/man1/. doc/lua.1 doc/luac.1 \
+     && (cd build \
+        && rm -rf include/lua.hpp \
+        && tar --owner=0 --group=0 -czf "${LUA_BINTGZ:?}" * \
+        && md5sum -b "${LUA_BINTGZ:?}" > "${LUA_BINTGZ:?}.md5" \
+        ) \
+     && cd .. && rm -rf "lua-${LUA_VERSION:?}" \
+     );fi \
+  && printf '\n  DONE\n\n'
+
+
+## Install
+true \
+  && $SUDO tar -C "${INSTALL_ROOT:?}" -xzf "${LUA_BINTGZ:?}" \
+  && true
+
+

@@ -1,0 +1,76 @@
+
+### Debian native
+true \
+  && PKGS_TO_ADD="ca-certificates gcc libc6-dev" \
+  && SUDO=sudo \
+  && PKGINIT="$SUDO apt update" \
+  && PKGADD="$SUDO apt install -y --no-install-recommends" \
+  && PKGCLEAN="$SUDO apt clean" \
+  && HOST= \
+  && true
+
+
+### Alpine mingw cross
+true \
+  && PKGS_TO_ADD="curl mingw-w64-gcc tar" \
+  && SUDO="/home/$USER/.local/bin/sudo" \
+  && PKGINIT=true \
+  && PKGADD="$SUDO apk add" \
+  && PKGCLEAN="$SUDO apk clean" \
+  && HOST=x86_64-w64-mingw32 \
+  && true
+
+
+# Generic
+true \
+  && CJSON_VERSION="1.7.15" \
+  && CACHE_DIR="/var/tmp" \
+  && true
+
+
+## Make
+true \
+  && CJSON_URL="https://github.com/DaveGamble/cJSON/archive/refs/tags/v${CJSON_VERSION:?}.tar.gz" \
+  && CJSON_SRCTGZ="${CACHE_DIR:?}/cJSON-${CJSON_VERSION:?}.tgz" \
+  && CJSON_BINTGZ="${CJSON_SRCTGZ%.*}-bin.tgz" \
+  && ${PKGINIT:?} && ${PKGADD:?} ${PKGS_TO_ADD} \
+  && if test -n "$HOST"; then HOST_="${HOST:?}-" ;fi \
+  && if test ! -e "${CJSON_SRCTGZ:?}"; then (true \
+     && echo "Download \"${CJSON_URL:?}\"" \
+     && curl -sSLo "${CJSON_SRCTGZ:?}" "${CJSON_URL:?}" \
+     );fi \
+  && if test ! -e "${CJSON_BINTGZ:?}"; then (true \
+     && printf '\n  Build cJSON\n\n' \
+     && tar xzf "${CJSON_SRCTGZ:?}" \
+     && cd "cJSON-${CJSON_VERSION:?}" \
+     && mkdir build build/obj build/lib build/include \
+     && CFLAGS="-Wall -pedantic -fPIC" \
+     && ${HOST_}cc $CFLAGS -c -o build/obj/cJSON.o cJSON.c \
+     && ${HOST_}cc $CFLAGS -shared -o build/lib/libcJSON.so.${CJSON_VERSION:?} build/obj/cJSON.o \
+     && unset CFLAGS \
+     && (cd build/lib \
+        && MIN=${CJSON_VERSION%.*} && MAJ=${MIN%.*} \
+        && ln -s libcJSON.so.${CJSON_VERSION:?} libcJSON.so.${MIN:?} \
+        && ln -s libcJSON.so.${MIN:?} libcJSON.so.${MAJ} \
+        ) \
+     && ${HOST_}ar rcs build/lib/libcJSON.a build/obj/cJSON.o \
+     && cp -t build/. LICENSE README.md \
+     && cp -t build/include/. cJSON.h \
+     && rm build/obj -rf \
+     && (cd build \
+        && find -type f -not -name MD5SUM -exec md5sum -b {} + > MD5SUM \
+        && tar --owner=0 --group=0 -czf "${CJSON_BINTGZ:?}" * \
+        && md5sum -b "${CJSON_BINTGZ:?}" > "${CJSON_BINTGZ:?}.md5" \
+        ) \
+     && cd .. && rm -rf "cJSON-${CJSON_VERSION:?}" \
+     );fi \
+  && printf '\n  DONE\n\n'
+
+
+## Install
+true \
+  && $SUDO tar -C "${INSTALL_ROOT:?}" -xzf "${CJSON_BINTGZ:?}" \
+  && true
+
+
+

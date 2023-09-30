@@ -1,0 +1,73 @@
+
+### Debian native
+true \
+  && PKGS_TO_ADD="ca-certificates gcc libc6-dev make" \
+  && SUDO=sudo \
+  && PKGINIT="$SUDO apt update" \
+  && PKGADD="$SUDO apt install -y --no-install-recommends" \
+  && PKGCLEAN="$SUDO apt clean" \
+  && HOST= \
+  && true
+
+
+### Alpine mingw cross
+true \
+  && PKGS_TO_ADD="curl make mingw-w64-gcc tar" \
+  && SUDO="/home/$USER/.local/bin/sudo" \
+  && PKGINIT=true \
+  && PKGADD="$SUDO apk add" \
+  && PKGCLEAN="$SUDO apk clean" \
+  && HOST=x86_64-w64-mingw32 \
+  && true
+
+
+## Generic
+true \
+  && ZLIB_VERSION="1.2.11" \
+  && CACHE_DIR="/var/tmp" \
+  && true
+
+
+## Make
+true \
+  && ZLIB_URL="https://downloads.sourceforge.net/project/libpng/zlib/${ZLIB_VERSION:?}/zlib-${ZLIB_VERSION:?}.tar.gz" \
+  && ZLIB_SRCTGZ="${CACHE_DIR:?}/zlib-${ZLIB_VERSION:?}.tgz" \
+  && ZLIB_BINTGZ="${ZLIB_SRCTGZ%.*}-bin.tgz" \
+  && if test -n "$HOST"; then HOST_="${HOST:?}-" ;fi \
+  && if test ! -e "${ZLIB_SRCTGZ:?}"; then (true \
+     && echo "Download \"${ZLIB_URL:?}\"" \
+     && curl -sSLo "${ZLIB_SRCTGZ:?}" "${ZLIB_URL:?}" \
+     );fi \
+  && if test ! -e "${ZLIB_BINTGZ:?}"; then (true \
+     && printf '\n  Build zlib\n\n' \
+     && tar xzf "${ZLIB_SRCTGZ:?}" \
+     && cd "zlib-${ZLIB_VERSION:?}" \
+     && mkdir build \
+     && if echo $HOST|grep -q '\-mingw'; then true \
+        && export DESTDIR=./build BINARY_PATH=/bin INCLUDE_PATH=/include LIBRARY_PATH=/lib \
+        && sed -i "s;^PREFIX =.\*\$;;" win32/Makefile.gcc \
+        && make -j$(nproc) -fwin32/Makefile.gcc PREFIX=${HOST_:?} \
+        && make -fwin32/Makefile.gcc install PREFIX=${HOST_:?} \
+        && unset DESTDIR BINARY_PATH INCLUDE_PATH LIBRARY_PATH \
+        ;else true \
+        && ./configure --prefix=$PWD/build \
+        && make -j$(nproc) && make install \
+        ;fi \
+     && cp README build/. \
+     && (cd build \
+        && rm -rf lib/pkgconfig \
+        && tar --owner=0 --group=0 -czf "${ZLIB_BINTGZ:?}" * \
+        && md5sum -b "${ZLIB_BINTGZ:?}" > "${ZLIB_BINTGZ:?}.md5" \
+        ) \
+     && cd .. && rm -rf "zlib-${ZLIB_VERSION:?}" \
+     );fi \
+  && printf '\n  DONE\n\n'
+
+
+## Install
+true \
+  && $SUDO tar -C "${INSTALL_ROOT:?}" -xzf "${ZLIB_BINTGZ:?}" \
+  && true
+
+
+

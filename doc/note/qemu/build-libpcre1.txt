@@ -1,0 +1,70 @@
+
+
+### Debian native
+true \
+  && PKGS_TO_ADD="git make gcc ca-certificates libc6-dev cmake autoconf automake libtool m4" \
+  && SUDO=sudo \
+  && PKGINIT="$SUDO apt update" \
+  && PKGADD="$SUDO apt install -y --no-install-recommends" \
+  && PKGCLEAN="$SUDO apt clean" \
+  && HOST= \
+  && true
+
+
+### Alpine mingw cross
+true \
+  && PKGS_TO_ADD="git make mingw-w64-gcc curl tar cmake autoconf automake libtool m4" \
+  && SUDO="/home/$USER/.local/bin/sudo" \
+  && PKGINIT=true \
+  && PKGADD="$SUDO apk add" \
+  && PKGCLEAN="$SUDO apk clean" \
+  && HOST=x86_64-w64-mingw32 \
+  && true
+
+
+## Generic
+true \
+  && PCRE_VERSION="8.45" \
+  && CACHE_DIR="/var/tmp" \
+  && true
+
+
+## Make
+true \
+  && if test -n "$(ls -A)"; then true \
+     && printf '\n  It is recommended to run this script in an empty dir.\n\n' \
+     && false \
+     ;fi \
+  && PCRE_URL="https://sourceforge.net/projects/pcre/files/pcre/${PCRE_VERSION:?}/pcre-${PCRE_VERSION:?}.tar.gz/download" \
+  && PCRE_SRCTGZ="${CACHE_DIR:?}/pcre-${PCRE_VERSION:?}.tgz" \
+  && PCRE_BINTGZ="${PCRE_SRCTGZ%.*}-bin.tgz" \
+  && if test -n "$HOST"; then HOST_="${HOST:?}-" ;fi \
+  && ${PKGINIT:?} && ${PKGADD:?} $PKGS_TO_ADD \
+  && printf '\n  Download Dependency Sources\n\n' \
+  && if test ! -e "${PCRE_SRCTGZ:?}"; then true \
+     && echo "Download ${PCRE_URL:?}" \
+     && curl -sSLo "${PCRE_SRCTGZ:?}" "${PCRE_URL:?}" \
+     ;fi \
+  && if test ! -e "${PCRE_BINTGZ:?}"; then (true \
+     && printf '\n  Build curl\n\n' \
+     && tar xf "${PCRE_SRCTGZ:?}" \
+     && cd "pcre-${PCRE_VERSION:?}" \
+     && ./configure --prefix="$PWD/build/usr_local" --host=$HOST --disable-cpp --enable-utf \
+     && make clean && make -j$(nproc) && make install \
+     && (cd build/usr_local \
+        && rm -rf lib/libpcre.la lib/pkgconfig lib/libpcreposix.la bin/pcre-config \
+        && tar --owner=0 --group=0 -czf "${PCRE_BINTGZ:?}" * \
+        && md5sum -b "${PCRE_BINTGZ:?}" > "${PCRE_BINTGZ:?}.md5" \
+        ) \
+     && cd .. && rm -rf "pcre-${PCRE_VERSION:?}" \
+     );fi \
+  && printf '\n  DONE\n\n'
+
+
+## Install
+true \
+  && $SUDO tar -C "${INSTALL_ROOT:?}" -xzf "${PCRE_BINTGZ:?}" \
+  && true
+
+
+
