@@ -2,6 +2,7 @@
 Firefox
 ================
 
+
 ## Install plugin quickNdirty until restart
 
 - Visit "about:debugging"
@@ -12,11 +13,13 @@ Firefox
 For refresh, there is a button on the same page to reload the plugin.
 
 
+
 ## Create an XPI file (eg for distribution)
 
 "manifest.json" MUST be in top level dir inside ZIP.
 
   zip my.xpi manifest.json main.js
+
 
 
 ## Distribute via self-hosting
@@ -26,4 +29,10 @@ firefox builds)
 
 XPI file can be drag-n-drop to FF to trigger install dialog. Or via gear
 icon "install from file".
+
+
+
+## Install native manifest (linux)
+
+"~/.mozilla/native-messaging-hosts/<name>.json"
 
