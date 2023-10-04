@@ -38,7 +38,7 @@ Windoof:
   && BIOSFILE="${BIOSDIR:?}/bios-256k.bin" \
   && FIXMOUSEALIGN="-device usb-ehci,id=usb,bus=pci.0,addr=0x4 -device usb-tablet" \
   && NETWORK="-net nic -net user" \
-  && NETWORK="-device e1000,netdev=net0 -netdev user,id=net0,hostfwd=tcp:127.0.0.1:10022-:22" \
+  && NETWORK="-device e1000,netdev=n0 -netdev user,id=n0,hostfwd=tcp:127.0.0.1:2222-:22" \
   && HOSTSPECIFICOPTS="--enable-kvm" \
   && HOSTSPECIFICOPTS="-L ${BIOSDIR:?} -bios ${BIOSFILE:?}" \
 
@@ -169,7 +169,7 @@ TODO: move this to a better place. Eg: debian/setup.txt or whatever.
     && (echo "Acquire::http::proxy \"${http_proxy}\";"
         echo "Acquire::https::proxy \"${https_proxy}\";"
        ) | $SUDO tee /etc/apt/apt.conf.d/80proxy >/dev/null \
-      fi \
+      ;fi \
   && $SUDO apt update \
   && $SUDO apt install -y --no-install-recommends vim openssh-server net-tools curl \
   && $SUDO sed -i -E 's;^GRUB_TIMEOUT=5$;GRUB_TIMEOUT=1;' /etc/default/grub \

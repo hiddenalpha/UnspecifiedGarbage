@@ -85,4 +85,7 @@ you're doing! If you don't, you MUST NOT use those instructions!
   gpgconf --kill gpg-agent
   gpgconf --launch gpg-agent
 
+[windoof: Why does git complain that no GPG agent is running?](https://superuser.com/a/1663941/1123359) says:
+  gpg-connect-agent reloadagent /bye
+
 
