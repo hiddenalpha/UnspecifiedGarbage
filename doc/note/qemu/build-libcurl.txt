@@ -2,7 +2,7 @@
 
 ### Debian native
 true \
-  && PKGS_TO_ADD="autoconf automake ca-certificates make" \
+  && PKGS_TO_ADD="autoconf automake ca-certificates curl make" \
   && SUDO=sudo \
   && PKGINIT="$SUDO apt update" \
   && PKGADD="$SUDO apt install -y --no-install-recommends" \

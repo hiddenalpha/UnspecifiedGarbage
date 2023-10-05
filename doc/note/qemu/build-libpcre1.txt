@@ -2,7 +2,7 @@
 
 ### Debian native
 true \
-  && PKGS_TO_ADD="git make gcc ca-certificates libc6-dev cmake autoconf automake libtool m4" \
+  && PKGS_TO_ADD="curl git make gcc ca-certificates libc6-dev cmake autoconf automake libtool m4" \
   && SUDO=sudo \
   && PKGINIT="$SUDO apt update" \
   && PKGADD="$SUDO apt install -y --no-install-recommends" \

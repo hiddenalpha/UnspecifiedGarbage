@@ -10,7 +10,10 @@ Qemu
 ## Manage Images
 
 ### Create new image
-  qemu-img create -f qcow2 my_disk.qcow2 16G
+  qemu-img create -f qcow2 disk.qcow2 16G
+
+### Create new overlay image
+  qemu-img create -o backing_file=base.qcow2,backing_fmt=qcow2 -f qcow2 disk.cow
 
 ### Convert qcow2 to raw
   qemu-img convert -f qcow2 -O raw foo.qcow2 foo.img

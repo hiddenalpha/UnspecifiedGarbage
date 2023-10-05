@@ -1,7 +1,7 @@
 
 ### Debian native
 true \
-  && PKGS_TO_ADD="ca-certificates gcc libc6-dev make" \
+  && PKGS_TO_ADD="curl ca-certificates gcc libc6-dev make" \
   && SUDO=sudo \
   && PKGINIT="$SUDO apt update" \
   && PKGADD="$SUDO apt install -y --no-install-recommends" \
