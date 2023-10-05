@@ -2,7 +2,9 @@
 DumpBin For Windoof
 ===================
 
-Analyze PE32 / PE32+ files.
+## Analyze PE32 / PE32+ files.
+
+TODO: This is unusable, because this only works with lots of bloat installed.
 
 Location: "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\dumpbin.exe"
 
