@@ -13,7 +13,7 @@ Qemu
   qemu-img create -f qcow2 disk.qcow2 16G
 
 ### Create new overlay image
-  qemu-img create -o backing_file=base.qcow2,backing_fmt=qcow2 -f qcow2 disk.cow
+  qemu-img create -o backing_file=base.qcow2,backing_fmt=qcow2 -f qcow2 disk.qcow2
 
 ### Convert qcow2 to raw
   qemu-img convert -f qcow2 -O raw foo.qcow2 foo.img
@@ -112,7 +112,7 @@ Regular boot
 TODO: SMB server windoof
 DoesNotWork: "https://serverfault.com/questions/442664/virtualization-linux-kvm-qemu-host-windows-vm-guest-how-to-access-data-drive#comment479177_442678"
 
-  true `# SMB client debian` \
+true `# SMB client debian` \
   && hostUsername=yourHostUser \
   && smbServer=10.0.2.2 \
   && sharename=work \
