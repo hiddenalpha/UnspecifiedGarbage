@@ -61,6 +61,7 @@ true \
   && $PKGDEL $PKGS_TO_DEL \
   && $PKGCLEAN \
   && sleep 3 \
+  && (cd "${WORKDIR:?}/gateleen" && mvn clean) \
   && printf '\n  DONE\n\n' \
   && true
 
