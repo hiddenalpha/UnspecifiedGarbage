@@ -21,6 +21,8 @@ Qemu
 ### Convert raw to qcow2
   qemu-img convert -f raw -O qcow2 foo.img foo.qcow2
 
+### Create Standalone image based on snapshot image
+  qemu-img convert -O qcow2 derived.qcow2 standalone.qcow2
 
 ## Shrink img
 
