@@ -7,6 +7,9 @@ true \
   && PKGINIT=true \
   && PKGADD="$SUDO apk add" \
   && PKGCLEAN=true \
+  && mkdir -p "${HOME:?}/.local/bin" \
+  && printf '%s\n' '#!/bin/sh' 'printf "Sudo "' 'su root -c "$(echo "$@")"' > "${HOME:?}/.local/bin/mysudo" \
+  && chmod u+x "${HOME:?}/.local/bin/mysudo" \
   && true
 
 
@@ -53,9 +56,11 @@ true \
       & sleep 3 \
      ) \
   && (cd "${WORKDIR:?}/gateleen" && mvn deploy -PuploadStaticFiles) \
-  && pkill -TERM java && pkill -INT redis-server \
+  && (pkill -INT java || sleep 3 && pkill -TERM java || sleep 3 && pkill -9 java) \
+  && pkill -INT redis-server \
   && $PKGDEL $PKGS_TO_DEL \
   && $PKGCLEAN \
+  && sleep 3 \
   && printf '\n  DONE\n\n' \
   && true
 
@@ -63,7 +68,11 @@ true \
 ### Run
 true \
   && ip a | grep inet \
-  && (cd "${WORKDIR:?}/redis-state" && redis-server "${WORKDIR:?}/etc/redis.conf") \
-     & java -cp "${WORKDIR:?}/classpath/"'*' org.swisspush.gateleen.playground.Server \
+  && (true \
+     && (cd "${WORKDIR:?}/redis-state" && redis-server "${WORKDIR:?}/etc/redis.conf") \
+        & true \
+     && cd ~ \
+     && java -cp "${WORKDIR:?}/classpath/"'*' org.swisspush.gateleen.playground.Server \
+     ) \
   && true
 
