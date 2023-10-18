@@ -95,6 +95,9 @@ Links (Aka argument amplifiers)
 - "https://jira.post.ch/browse/SDCISA-5624"
 - "https://gitit.post.ch/projects/ISA/repos/halfrunt/pull-requests/27/overview?commentId=105541"
 
+## Java dropping exception stack traces is a "feature"
+- [](https://stackoverflow.com/a/3010106/4415884)
+
 ## Please don't never not avoid nevative (un)logic
 - "https://schneide.blog/tag/boolean-statements/"
 
@@ -444,6 +447,7 @@ Links (Aka argument amplifiers)
 
 ## FileLogging is a MUST have (kibana is bullsh**)
 - [example](https://jira.post.ch/browse/SDCISA-8382?focusedCommentId=1554435&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-1554435)
+- [example](https://jira.post.ch/browse/SDCISA-13655)
 - [warning](https://jira.post.ch/browse/SDCISA-7230?focusedCommentId=1550476&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-1550476)
 
 ## Automatic variable dynamic version are evil
