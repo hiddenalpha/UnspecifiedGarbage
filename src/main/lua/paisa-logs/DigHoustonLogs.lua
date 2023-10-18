@@ -1,8 +1,8 @@
 --[====================================================================[
 
-  projDir="C:\path\to\proj\root"
-  export LUA_PATH="${projDir:?}/lib/?.lua"
-  lua -W "${projDir:?}/bin/DigHoustonLogs.lua"
+  projDir='C:\path\to\proj\root'
+  export LUA_PATH="${projDir:?}/src/main/lua/paisa-logs/?.lua"
+  lua -W "${projDir:?}/src/main/lua/paisa-logs/DigHoustonLogs.lua"
 
   ]====================================================================]
 
@@ -25,27 +25,28 @@ end
 
 function mod.onLogEntry( log, that )
     if not mod.isTimeRangeOk(that,log) then return end
-    if not mod.isLevelOk(that,log) then return end
-    if not mod.acceptedByMisc(that,log) then return end
-    if     mod.isUselessNoise(that,log) then return end
+    --if not mod.isLevelOk(that,log) then return end
+    --if not mod.acceptedByMisc(that,log) then return end
+    --if     mod.isUselessNoise(that,log) then return end
     --if not mod.isNotYetReported(that,log) then return end
     mod.debugPrintLogEntry( that, log )
 end
 
 
 function mod.isTimeRangeOk( that, log )
+    -- At 2023-10-18 I observed that houston logs now seem to use a "T" in the datetime.
     local pass, drop = true, false
-    --if log.date < "2022-06-20 08:00:00,000" then return drop end
-    --if log.date > "2022-06-20 08:30:00,000" then return drop end
+    if log.date <= "2023-10-18T03:00:00,000" then return drop end
+    if log.date >  "2023-10-18T15:00:00,000" then return drop end
     return pass
 end
 
 
 function mod.isLevelOk( that, log )
     local pass, drop = true, false
-    --if log.level=="TRACE" then return drop end
-    --if log.level=="DEBUG" then return drop end
-    --if log.level=="INFO" then return drop end
+    if log.level=="TRACE" then return drop end
+    if log.level=="DEBUG" then return drop end
+    if log.level=="INFO" then return drop end
     return pass
 end
 
@@ -204,6 +205,26 @@ function mod.acceptedByMisc( that, log )
     -- Seen  2022-08-30 prod, 2022-06-20,  2021-09-17
     if log.file=="RedisQues" and log.level=="WARN"
         and log.msg:find("Registration for queue .+ has changed to null")
+        then return drop end
+
+    -- Reported: SDCISA-10973
+    -- Seen:  2023-10-18 prod.
+    if log.file=="HttpClientRequestImpl" and log.level=="ERROR"
+        and log.msg:find("The timeout period of 30000ms has been exceeded while executing PUT /houston/vehicles/[0-9]+/vehicle/backup/v1/executions/[0-9]+/backup.zip for server localhost:9089")
+        then return drop end
+
+    -- Reported:  TODO
+    -- Seen:  2023-10-18 prod.
+    if log.file=="Utils" and log.level=="ERROR"
+        and log.msg:find("Exception occurred\nio.vertx.core.eventbus.ReplyException: Timed out after waiting 30000%(ms%) for a reply. address: __vertx.reply.[0-9]+, repliedAddress: nsync%-re")
+        then return drop end
+
+    if log.file=="HttpHeaderUtil" and log.level=="ERROR"
+        and log.msg:find("Keep%-Alive%} values do not match timeout=42 != timeout=120 for request /googleplex/internal/security/login_state")
+        then return drop end
+
+    if log.file=="Forwarder" and log.level=="ERROR"
+        and log.msg:find("[%a-z0-9]+ [a-z0-9]+ http://eddie.....:7012/from%-houston/[^/]+/eagle/nsync/v1/push/trillian%-phonebooks%-affiliated%-planning%-area%-[^-]+%-vehicles The timeout period of 30000ms has been exceeded while executing POST /from%-houston/[0-9]+/eagle/nsync/v1/push/trillian%-phonebooks%-affiliated%-planning%-area%-[^%-]+-vehicles for server eddie.....:7012")
         then return drop end
 
     -- TODO Why do we have DNS problems within backend itself?
