@@ -386,6 +386,13 @@ function LogParse:getOrNewLogEntry()
 end
 
 
+function exports.normalizeIsoDateTime( str )
+    if str:find("%d%d%d%d%-%d%d%-%d%dT%d%d:%d%d:%d%d%.%d%d%d") then return str end
+    local y, mo, d, h, mi, s, ms = str:match("(%d%d%d)-(%d%d)-(%d%d)[ T_-](%d%d):(%d%d):(%d%d)[,.](%d%d%d)")
+    return y .."-".. mo .."-".. d .."T".. h ..":".. mi ..":".. s ..".".. ms
+end
+
+
 LogEntry = {
     raw,
     date,
