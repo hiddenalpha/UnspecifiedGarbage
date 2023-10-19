@@ -160,6 +160,11 @@ true `# SMB client debian` \
   && $SUDO mount -t cifs -o username=${hostUsername:?},uid=${guestUid:?},gid=${guestGid:?} "//${smbServer:?}/${sharename:?}" "${mountpoint:?}" \
   && true
 
+### Add those in "/etc/fstab" to setup mount automatically at boot:
+### HINT:  mkdir /home/user/build
+  //10.0.2.2/sharename  /mnt/sharename  cifs  password=,uid=1000,gid=1000,user  0  0
+  /home/user/build  /mnt/sharename/build  none  bind  0  0
+
 List smb shares (eg debugging)
   smbclient -NL //10.0.2.2
 
