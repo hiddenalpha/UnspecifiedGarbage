@@ -357,8 +357,11 @@ end
 
 function LogParse:appendStacktraceLine()
     local log = self:getOrNewLogEntry()
-    log.stack = log.stack or "";
-    log.stack = log.stack .."\n".. self.line;
+    if not log.stack then
+        log.stack = self.line
+    else
+        log.stack = log.stack .."\n".. self.line
+    end
     -- Also append to raw to have the complete entry there.
     log.raw = log.raw .."\n".. self.line;
 end
@@ -376,7 +379,10 @@ function LogParse:publishLogEntry()
         error(msg); return
     end
     self.log = nil; -- Mark as consumed
-    self.cb_onLogEntry( log, self.cb_cls )
+    -- Make sure log lines do NOT end in 0x0D
+    local msg = log.msg
+    if msg:byte(msg:len()) == 0x0D then log.msg = msg:sub(1, -2) end
+    self.cb_onLogEntry(log, self.cb_cls)
 end
 
 
@@ -388,7 +394,7 @@ end
 
 function exports.normalizeIsoDateTime( str )
     if str:find("%d%d%d%d%-%d%d%-%d%dT%d%d:%d%d:%d%d%.%d%d%d") then return str end
-    local y, mo, d, h, mi, s, ms = str:match("(%d%d%d)-(%d%d)-(%d%d)[ T_-](%d%d):(%d%d):(%d%d)[,.](%d%d%d)")
+    local y, mo, d, h, mi, s, ms = str:match("^(%d%d%d%d)-(%d%d)-(%d%d)[ T_-](%d%d):(%d%d):(%d%d)[,.](%d%d%d)$")
     return y .."-".. mo .."-".. d .."T".. h ..":".. mi ..":".. s ..".".. ms
 end
 
