@@ -1,0 +1,102 @@
+
+  General patch to fix crappy desing.
+
+  Contains:
+  - Logging override to get back control over logging.
+  - Listen on localhost only (DISABLED for zarniwoop)
+  - Disable NSync. To suppress that useless noise.
+
+
+diff --git a/eagle-process/pom.xml b/eagle-process/pom.xml
+index 5b226670..45acc276 100644
+--- a/eagle-process/pom.xml
++++ b/eagle-process/pom.xml
+@@ -21,6 +21,28 @@
+         <skip.node.install>true</skip.node.install>
+ 	</properties>
+ 	<dependencies>
++        <!-- ******************************************* TODO: Remove -->
++        <dependency>                                <!-- TODO: Remove -->
++            <groupId>org.slf4j</groupId>            <!-- TODO: Remove -->
++            <artifactId>slf4j-api</artifactId>      <!-- TODO: Remove -->
++            <version>1.7.25</version>               <!-- TODO: Remove -->
++        </dependency>                               <!-- TODO: Remove -->
++        <dependency>                                <!-- TODO: Remove -->
++            <groupId>org.slf4j</groupId>            <!-- TODO: Remove -->
++            <artifactId>slf4j-simple</artifactId>   <!-- TODO: Remove -->
++            <version>1.7.25</version>               <!-- TODO: Remove -->
++        </dependency>                               <!-- TODO: Remove -->
++        <dependency>                                <!-- TODO: Remove -->
++            <groupId>org.slf4j</groupId>            <!-- TODO: Remove -->
++            <artifactId>jcl-over-slf4j</artifactId> <!-- TODO: Remove -->
++            <version>1.7.25</version>               <!-- TODO: Remove -->
++        </dependency>                               <!-- TODO: Remove -->
++        <dependency>                                <!-- TODO: Remove -->
++            <groupId>org.slf4j</groupId>            <!-- TODO: Remove -->
++            <artifactId>jul-to-slf4j</artifactId>   <!-- TODO: Remove -->
++            <version>1.7.25</version>               <!-- TODO: Remove -->
++        </dependency>                               <!-- TODO: Remove -->
++        <!-- ******************************************* TODO: Remove -->
+ 		<!-- project -->
+ 		<dependency>
+ 			<groupId>ch.post.it.paisa.eagle</groupId>
+diff --git a/eagle-process/src/main/java/ch/post/it/paisa/eagle/process/main/MainVerticle.java b/eagle-process/src/main/java/ch/post/it/paisa/eagle/process/main/MainVerticle.java
+index 13ebdc51..9e947a2d 100644
+--- a/eagle-process/src/main/java/ch/post/it/paisa/eagle/process/main/MainVerticle.java
++++ b/eagle-process/src/main/java/ch/post/it/paisa/eagle/process/main/MainVerticle.java
+@@ -268,7 +268,7 @@ public class MainVerticle extends AbstractVerticle {
+         doubleSlashCheckHandler = new DoubleSlashCheckHandler(doubleSlashCheckerMode);
+         ClasspathResourceHandler classpathResourceHandler = new ClasspathResourceHandler("static-web-apps/", SERVER_ROOT + "/apps/");
+ 
+-        NSyncHandler nSyncHandler = new NSyncHandler(vertx, EAGLE_NSYNC_PATH, mainPort);
++        //NSyncHandler nSyncHandler = new NSyncHandler(vertx, EAGLE_NSYNC_PATH, mainPort);
+ 
+         ReturnHttpErrorHandler returnHttpErrorHandler = new ReturnHttpErrorHandler(RETURN_HTTP_ERROR_ROOT);
+ 
+@@ -325,7 +325,7 @@ public class MainVerticle extends AbstractVerticle {
+                     .withLoggingResourceManager(loggingResourceManager)
+                     .withMonitoringHandler(monitoringHandler)
+                     .withHttpClientFactory(this::createHttpClientForRouter)
+-                    .addDoneHandler(aVoid -> this.onRouterReady(selfClient, classpathResourceHandler, returnHttpErrorHandler, nSyncHandler))
++                    .addDoneHandler(aVoid -> this.onRouterReady(selfClient, classpathResourceHandler, returnHttpErrorHandler, null))
+                     .build();
+             });
+         });
+@@ -412,9 +412,9 @@ public class MainVerticle extends AbstractVerticle {
+                             if (hookHandler.handle(request)) {
+                                 return;
+                             }
+-                            if (nSyncHandler.handle(request)) {
+-                                return;
+-                            }
++                            //if (nSyncHandler.handle(request)) {
++                            //    return;
++                            //}
+                             if (eventBusHandler.handle(request)) {
+                                 return;
+                             }
+@@ -559,7 +559,7 @@ public class MainVerticle extends AbstractVerticle {
+         final Future<String> storageDataFuture      = newLoggingFuture.apply("storage-data"     );
+         final Future<String> mirrorModFuture        = newLoggingFuture.apply("MirrorMod"        );
+         final Future<String> metricsModuleFuture    = newLoggingFuture.apply("MetricsModule"    );
+-        final Future<String> nsyncFuture            = newLoggingFuture.apply("NSync"            );
++        //final Future<String> nsyncFuture            = newLoggingFuture.apply("NSync"            );
+         CompositeFuture.all(futuresToWaitFor).setHandler(handler);
+ 
+ 
+@@ -721,10 +721,10 @@ public class MainVerticle extends AbstractVerticle {
+         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+         {
+-            NSyncVerticleConfig nSyncVerticleConfig = new NSyncVerticleConfig()
+-                .withBasePath(EAGLE_NSYNC_PATH)
+-                .withMainPort(mainPort);
+-            DeploymentOptions deplOpt = new DeploymentOptions().setConfig(JsonObject.mapFrom(nSyncVerticleConfig));
+-            vertx.deployVerticle(new NSyncVerticle(), deplOpt, nsyncFuture.completer());
++            //NSyncVerticleConfig nSyncVerticleConfig = new NSyncVerticleConfig()
++            //    .withBasePath(EAGLE_NSYNC_PATH)
++            //    .withMainPort(mainPort);
++            //DeploymentOptions deplOpt = new DeploymentOptions().setConfig(JsonObject.mapFrom(nSyncVerticleConfig));
++            //vertx.deployVerticle(new NSyncVerticle(), deplOpt, nsyncFuture.completer());
+         }
+ 
+         vertx.deployVerticle(new DirectMemoryUsageLogger(), new DeploymentOptions().setConfig(new JsonObject(props)));
