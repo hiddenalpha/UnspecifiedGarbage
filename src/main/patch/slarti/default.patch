@@ -1,0 +1,31 @@
+diff --git a/slarti-web/pom.xml b/slarti-web/pom.xml
+index 7933bdf86..3a1730377 100644
+--- a/slarti-web/pom.xml
++++ b/slarti-web/pom.xml
+@@ -17,6 +17,26 @@
+ 	<packaging>war</packaging>
+ 
+ 	<dependencies>
++		<dependency>                                <!-- TODO: Remove -->
++			<groupId>org.slf4j</groupId>            <!-- TODO: Remove -->
++			<artifactId>slf4j-api</artifactId>      <!-- TODO: Remove -->
++			<version>2.0.1</version>                <!-- TODO: Remove -->
++		</dependency>                               <!-- TODO: Remove -->
++		<dependency>                                <!-- TODO: Remove -->
++			<groupId>org.slf4j</groupId>            <!-- TODO: Remove -->
++			<artifactId>slf4j-simple</artifactId>   <!-- TODO: Remove -->
++			<version>2.0.1</version>                <!-- TODO: Remove -->
++		</dependency>                               <!-- TODO: Remove -->
++		<dependency>                                <!-- TODO: Remove -->
++			<groupId>org.slf4j</groupId>            <!-- TODO: Remove -->
++			<artifactId>jcl-over-slf4j</artifactId> <!-- TODO: Remove -->
++			<version>2.0.1</version>                <!-- TODO: Remove -->
++		</dependency>                               <!-- TODO: Remove -->
++		<dependency>                                <!-- TODO: Remove -->
++			<groupId>org.slf4j</groupId>            <!-- TODO: Remove -->
++			<artifactId>jul-to-slf4j</artifactId>   <!-- TODO: Remove -->
++			<version>2.0.1</version>                <!-- TODO: Remove -->
++		</dependency>                               <!-- TODO: Remove -->
+ 		<dependency>
+ 			<groupId>ch.post.it.webjars</groupId>
+ 			<artifactId>linti</artifactId>
