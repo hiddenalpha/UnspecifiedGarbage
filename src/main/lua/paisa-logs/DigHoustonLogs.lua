@@ -1,7 +1,7 @@
 #!/usr/bin/env lua
 --[====================================================================[
 
-  projDir='C:\path\to\proj\root'
+  projDir='/c/path/to/proj/root'
   export LUA_PATH="${projDir:?}/src/main/lua/paisa-logs/?.lua"
   lua -W "${projDir:?}/src/main/lua/paisa-logs/DigHoustonLogs.lua"
 

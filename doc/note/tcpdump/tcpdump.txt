@@ -31,6 +31,11 @@ Tips: "https://chrissanders.org/2018/06/large-captures4-filter-whittling/"
 
 
 
+## Local dumps isa-only filter
+
+  "portrange 6000-9999 and not port 7778"
+
+
 ## Accept HTTP POST requests:
 
   "tcp[((tcp[12:1] & 0xf0) >> 2):4] = 0x504F5354"
