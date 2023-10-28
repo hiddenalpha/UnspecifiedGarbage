@@ -1,0 +1,64 @@
+
+### Debian native
+true \
+  && PKGS_TO_ADD="curl ca-certificates gcc make libc6-dev flex bison" \
+  && SUDO=sudo \
+  && PKGINIT="$SUDO apt update" \
+  && PKGADD="$SUDO apt install -y --no-install-recommends" \
+  && HOST= \
+  && true
+
+
+### Alpine mingw cross
+true \
+  && PKGS_TO_ADD="binutils curl mingw-w64-gcc make tar flex bison" \
+  && SUDO="/home/$USER/.local/bin/mysudo" \
+  && PKGINIT=true \
+  && PKGADD="$SUDO apk add" \
+  && HOST=x86_64-w64-mingw32 \
+  && true
+
+
+## Generic
+true \
+  && PCAP_VERSION="1.10.4" \
+  && CACHE_DIR="/var/tmp" \
+  && WORKDIR="/tmp" \
+  && INSTALL_ROOT="/usr/local" \
+  && MAKE_JOBS=$(nproc) \
+  && true
+
+
+## Make
+true \
+  && PCAP_URL="https://github.com/the-tcpdump-group/libpcap/archive/refs/tags/libpcap-${PCAP_VERSION:?}.tar.gz" \
+  && PCAP_SRCTGZ="${CACHE_DIR:?}/pcap-${PCAP_VERSION:?}.tgz" \
+  && PCAP_BINTGZ="${PCAP_SRCTGZ%.*}-bin.tgz" \
+  && if test -f "${PCAP_SRCTGZ:?}" ]; then true \
+     && echo "[DEBUG] Already have \"${PCAP_SRCTGZ:?}\"" \
+     ;else true \
+     && echo curl -sSL "${PCAP_URL:?}" -o "${PCAP_SRCTGZ:?}" \
+     && curl -sSL "${PCAP_URL:?}" -o "${PCAP_SRCTGZ:?}" \
+     ;fi \
+  && ( mkdir "${WORKDIR:?}/pcap-${PCAP_VERSION}" \
+     &&   cd "${WORKDIR:?}/pcap-${PCAP_VERSION}" \
+     && tar xf "${PCAP_SRCTGZ:?}" \
+     && cd * \
+     && ./configure --prefix=${WORKDIR:?}/pcap-"${PCAP_VERSION:?}"/out \
+     && make clean \
+     && make -j$(nproc) \
+     && make install \
+     && cd ../out \
+     && rm bin/pcap-config lib/pkgconfig -rf \
+     && tar cf "${PCAP_BINTGZ:?}" * \
+     && printf '\n  Build pcap  Done\n\n' \
+     ) \
+     && true
+
+
+### Install
+true \
+  && $SUDO mkdir -p "${INSTALL_ROOT:?}" \
+  && $SUDO tar -C "${INSTALL_ROOT:?}" -xf "${PCAP_BINTGZ:?}" \
+  && true
+

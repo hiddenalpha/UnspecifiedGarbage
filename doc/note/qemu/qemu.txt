@@ -42,6 +42,9 @@ qemu-system-x86_64 \
     -boot order=dc \
     -cdrom "path/to/cd.iso" \
     -hda "$(dirname "$(realpath "$0")")/hda.qcow2" \
+    `# Host-Only Network` \
+    -netdev user,id=n1,restrict=y \
+    -device e1000,netdev=n1 \
     `# 10.0.2.x network with host redirect` \
     -netdev user,id=n0,hostfwd=tcp:127.0.0.1:${SSH_PORT:-2222}-:22 \
     -device e1000,netdev=n0 \
@@ -53,8 +56,9 @@ qemu-system-x86_64 \
     -device usb-ehci,id=usb,bus=pci.0,addr=0x4 -device usb-tablet \
     `# Choose ONE of those for graphic output` \
     -nographic \
-    -display gtk \
-    -display sdl \
+    -display sdl,grab-mod=rctrl \
+    -display gtk,show-menubar=on \
+    -display vnc=127.0.0.1:0 `#HINT: 0 is port 5900` \
     ;
 
 ### Example manual adapter setup (inside VM) for socket mcast network:

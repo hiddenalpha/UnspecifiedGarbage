@@ -1,0 +1,10 @@
+
+## Print next few ASM instructions
+
+  x/3i $pc
+
+
+## Sources
+
+- [Print asm instructions](https://stackoverflow.com/a/59331366/4415884)
+
