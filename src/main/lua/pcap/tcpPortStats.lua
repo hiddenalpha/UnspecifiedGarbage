@@ -1,21 +1,17 @@
 
 local newPcapParser = assert(require("pcapit").newPcapParser)
-local newPcapDumper = assert(require("pcapit").newPcapDumper)
 
+local out, log = io.stdout, io.stderr
 local main, onPcapFrame, printStats
 
 
 function main()
     local app = {
-        dumpr = false,
         parser = false,
-        foundPortNumbers = {},
         youngestEpochSec = -math.huge,
         oldestEpochSec = math.huge,
+        foundPortNumbers = {},
     }
-    --app.dumpr = newPcapDumper{
-    --    dumpFilePath = "/tmp/meins/my.out.pcap",
-    --}
     app.parser = newPcapParser{
         dumpFilePath = "-",
         onFrame = function(f)onPcapFrame(app, f)end,
@@ -26,7 +22,6 @@ end
 
 
 function onPcapFrame( app, it )
-    local out = io.stdout
     local sec, usec = it:frameArrivalTime()
     local srcPort, dstPort = it:trspSrcPort(), it:trspDstPort()
     --local srcIp, dstIp = it:netSrcIpStr(), it:netDstIpStr()
@@ -39,48 +34,31 @@ function onPcapFrame( app, it )
     else app.foundPortNumbers[srcPort] = app.foundPortNumbers[srcPort] + 1 end
     if not app.foundPortNumbers[dstPort+100000] then app.foundPortNumbers[dstPort+100000] = 1
     else app.foundPortNumbers[dstPort+100000] = app.foundPortNumbers[dstPort+100000] + 1 end
-    --
-    local portOfInterest = 7012
-    if dstPort == portOfInterest then
-        local httpMethod, httpUri =
-            it:trspPayload():match("^([A-Z]+) ([^ ]+) [^ \r\n]+\r?\n")
-        if httpMethod then
-            out:write(string.format("%5d->%5d %s %s\n", srcPort, dstPort, httpMethod, httpUri))
-        end
-    elseif srcPort == portOfInterest then
-        local httpStatus, httpPhrase =
-            it:trspPayload():match("^HTTP/%d.%d (%d%d%d) ([^\r\n]*)\r?\n")
-        if httpStatus then
-            out:write(string.format("%5d<-%5d %s %s\n", srcPort, dstPort, httpStatus, httpPhrase))
-        end
-    end
-    --if srcPort ~= 53 and dstPort ~= 53 then return end
-    if app.dumpr then it:dumpTo(app.dumpr) end
 end
 
 
 function printStats( app )
-    local out = io.stdout
     local sorted = {}
-    local maxOccurValue = 0
+    local totalPackets, maxOccurValue = 0, 0
     for port, pkgcnt in pairs(app.foundPortNumbers) do
         if pkgcnt > maxOccurValue then maxOccurValue = pkgcnt end
         table.insert(sorted, { port=port, pkgcnt=pkgcnt })
+        totalPackets = totalPackets + pkgcnt
     end
     table.sort(sorted, function(a, b)return a.pkgcnt > b.pkgcnt end)
     local dumpDurationSec = app.youngestEpochSec - app.oldestEpochSec
     local timeFmt = "!%Y-%m-%d_%H:%M:%SZ"
     out:write("\n")
-    out:write("Statistics\n")
-    out:write("From: ")out:write(os.date(timeFmt,app.oldestEpochSec))out:write("\n")
-    out:write("To:   ")out:write(os.date(timeFmt,app.youngestEpochSec))out:write("\n")
+    out:write(string.format("   Subject  TCP/UDP stats\n"))
+    out:write(string.format("     Begin  %s\n", os.date(timeFmt,app.oldestEpochSec)))
+    out:write(string.format("  Duration  %d seconds\n", dumpDurationSec))
+    out:write(string.format("Throughput  %.1f packets per second\n", totalPackets / dumpDurationSec))
     out:write("\n")
-    out:write("  .- Port (TCP/UDP)\n")
+    out:write("  .- TCP/UDP Port\n")
     out:write("  |   .-Direction (Send, Receive)\n")
-    out:write("  |   |     .- Frames per second\n")
-    out:write(".-+-. | .---+-.   Amount of frames compared:\n")
+    out:write("  |   |     .- Packets per second\n")
+    out:write(".-+-. | .---+-.\n")
     local chartWidth = 60
-    local cntPrinted = 0
     for i, elem in ipairs(sorted) do
         local port, pkgcnt = elem.port, elem.pkgcnt
         local dir = (port > 100000)and("R")or("S")
@@ -94,8 +72,6 @@ function printStats( app )
             out:write((i < (barLen*chartWidth))and("=")or(" "))
         end
         out:write("|\n")
-        cntPrinted = cntPrinted + 1
-        if cntPrinted >= 20 then break end
         ::nextPort::
     end
     out:write("\n")
