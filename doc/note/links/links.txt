@@ -243,6 +243,7 @@ Links (Aka argument amplifiers)
 - [Houston Optimize EnqueuePatrol](https://jira.post.ch/browse/SDCISA-2876)
 - [Update beim Fahrzeughersteller dauert zu lange](https://jira.post.ch/browse/SDCISA-9059)
 - [vortex too slow](https://jira.post.ch/browse/SDCISA-9990)
+- [2023-10-27 OOM nun auch auf Eagle](https://wikit.post.ch/x/c2U1Tw)
 
 ## Performance is not an issue ...
 - [Houston OOM 2023-06-27](https://wikit.post.ch/x/_Bv6Rw)
@@ -536,4 +537,7 @@ Links (Aka argument amplifiers)
 
 ## Qemu is Crap
 - [Qemu for Windows Host Quirks](https://wonghoi.humgar.com/blog/2021/05/03/qemu-for-windows-host-quirks/)
+
+## Git paisa complain about rebase stuff
+- [Complain about force-pushes](https://gitit.post.ch/projects/ISA/repos/lazlar/pull-requests/3/overview?commentId=311142)
 
