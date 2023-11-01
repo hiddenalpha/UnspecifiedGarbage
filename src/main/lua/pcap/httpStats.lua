@@ -1,15 +1,16 @@
 
 local newPcapParser = assert(require("pcapit").newPcapParser)
 
+local out, log = io.stdout, io.stderr
 local main, onPcapFrame, vapourizeUrlVariables, printHttpRequestStats
 
 
 function main()
     local app = {
         parser = false,
-        foundHttpRequests = {},
         youngestEpochSec = -math.huge,
         oldestEpochSec = math.huge,
+        foundHttpRequests = {},
     }
     app.parser = newPcapParser{
         dumpFilePath = "-",
@@ -21,7 +22,6 @@ end
 
 
 function onPcapFrame( app, it )
-    local out = io.stdout
     local sec, usec = it:frameArrivalTime()
     local srcPort, dstPort = it:trspSrcPort(), it:trspDstPort()
     --
@@ -80,7 +80,6 @@ end
 
 
 function printHttpRequestStats( app )
-    local out = io.stdout
     local sorted = {}
     local maxOccurValue = 0
     local overallCount = 0
