@@ -1,0 +1,32 @@
+
+How to hunt memory issues in production
+=======================================
+
+SVCNAME=foo-prod
+PID=42
+OC="oc -n whatever"
+
+
+${OC:?} exec -ti "$(${OC:?} get pods|egrep ston-1|cut -f1 -d' ')" -- pmap 9 > "${SVCNAME:?}"-pmap-$(date -u +%Y%m%d-%H%M%S).txt
+
+
+${OC:?} exec -ti "$(${OC:?} get pods|egrep ston-1|cut -f1 -d' ')" -- sh -c 'true \
+  && printf '\''%s\n'\'' "$(sed '\''s;^(.*)$;FOO;'\'' /proc/'${PID:?}'/smaps)" \
+  '
+
+
+true \
+  && ${OC:?} exec -ti "$(${OC:?} get pods|grep ston-[1-9]|cut -f1 -d' ')" -- sh -c 'true \
+    && printf '\''h;PageSize;%s\n'\'' $(getconf PAGESIZE) \
+    && printf '\''c;%-24s;%8s;%8s;%8s;%5s;%4s;%3s;%8s;%3s;%7s\n'\'' When nThrds size RSS SHR text lib data dt nFds \
+    && while true; do true \
+      && printf '\''r;%s;%8s;%8d;%8d;%5d;%4d;%3d;%8d;%3d;%7d\n'\'' \
+           "$(date -Is)" \
+           $(cat /proc/'${PID:?}'/stat|cut -d" " -f20) \
+           $(cat /proc/'${PID:?}'/statm) \
+           $(ls -1 /proc/9/fd | wc -l) \
+      && sleep $(expr 60 - \( $(date +%s) % 60 \)) || break; done' \
+    | tee "${SVCNAME:?}"-mem-$(date +%Y%m%d-%H%M%S%z).csv
+
+
+
