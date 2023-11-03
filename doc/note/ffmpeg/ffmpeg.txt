@@ -45,6 +45,13 @@ Use  -codec:v copy  to keep video, or -codec:v no  for audio-only.
   -i INFILE -ss <pos> -to <pos> OUTFILE
 
 
+## Concatenate
+
+  && ffmpeg -i one.mkv -i two.mkv \
+       -filter_complex '[0:v] [0:a] [1:v] [1:a] concat=n=2:v=1:a=1 [v] [a]' \
+       -map "[v]" -map "[a]" out.mkv \
+
+
 ## Rotate Portrait
 
   -i INFILE -vf "transpose=2" OUTFILE
