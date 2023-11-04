@@ -1,0 +1,38 @@
+#
+# Tools for Android development.
+#
+# HINT: Migration to qemu not yet tested.
+#
+set -e
+
+### Made for debian 10 (alias buster)
+true \
+  && PKGS_TO_ADD="curl unzip openjdk-11-jdk-headless aapt apksigner zipalign" \
+  && PKGS_TO_DEL="curl unzip" \
+  && PKGINIT="apt-get update" \
+  && PKGADD="apt-get install -y --no-install-recommends" \
+  && PKGDEL="apt-get purge -y" \
+  && PKGCLEAN="apt-get clean" \
+  && PLATFORM_VERSION="22" \
+  && BUILD_TOOLS_VERSION="22.0.1" \
+  && CMDLINETOOLS_URL="https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip" \
+  \
+  && export ANDROID_HOME="/usr/lib/android-sdk" \
+  && export PATH="$PATH:/usr/lib/android-sdk/build-tools/debian:/usr/lib/android-sdk/cmdline-tools/latest/bin:/usr/lib/android-sdk/build-tools/$BUILD_TOOLS_VERSION" \
+  \
+  && $PKGINIT \
+  && $PKGADD $PKGS_TO_ADD \
+  && (cd /var/tmp && curl -sSLO "${CMDLINETOOLS_URL:?}") \
+  && if test -x /tmp/cmdline-tools; then echo >&2 "[ERROR] /tmp/cmdline-tools already exists"; false; fi \
+  && (cd /tmp && unzip /var/tmp/$(basename "$CMDLINETOOLS_URL") >/dev/null) \
+  && mkdir /usr/lib/android-sdk/cmdline-tools \
+  && mkdir /usr/lib/android-sdk/cmdline-tools/latest \
+  && mv /tmp/cmdline-tools/* /usr/lib/android-sdk/cmdline-tools/latest/. \
+  && yes | sdkmanager --install "platforms;android-${PLATFORM_VERSION:?}" "build-tools;${BUILD_TOOLS_VERSION:?}" \
+  && `# Those for some reason are broken (wrong linker) so use the debian variant.` \
+  && (cd "/usr/lib/android-sdk/build-tools/${BUILD_TOOLS_VERSION:?}" && rm aapt zipalign) \
+  && $PKGDEL $PKGS_TO_DEL \
+  && $PKGCLEAN \
+  && rm -rf /tmp/* \
+  && true
+

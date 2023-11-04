@@ -1,0 +1,18 @@
+
+#
+# openjdk java 1.8 runtime environment.
+#
+
+### For alpine 3.16.0
+true \
+  && apk add openjdk8-jre \
+  && true
+
+### For debian 9
+true \
+  && SUDO= \
+  && $SUDO apt update \
+  && `# Use one of openjdk-8-jre-headless or openjdk-8-jre` \
+  && $SUDO apt install -y --no-install-recommends openjdk-8-jre \
+  && true
+

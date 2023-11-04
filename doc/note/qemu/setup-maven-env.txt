@@ -1,0 +1,16 @@
+#
+# Maven build env.
+#
+# Use this to share your hosts repository with the container:
+#
+#   mount -t cifs //10.0.2.2/path/to/.m2/repository /var/tmp/.m2/repository
+#
+set -e
+
+
+### Made for alpine 3.16.0
+true \
+  && apk add maven \
+  && sed -i "s,</settings>,  <localRepository>/var/tmp/.m2/repository</localRepository>\n</settings>,g" /usr/share/java/maven-3/conf/settings.xml \
+  && true
+

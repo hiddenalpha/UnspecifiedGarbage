@@ -1,0 +1,48 @@
+#
+# Bare nginx server serving HTTP/80 and HTTPS/443.
+#
+set -e
+
+
+### Made for alpine 3.16.0
+true \
+  && CN="example.com" \
+  \
+  && apk add nginx openssl \
+  && mkdir /etc/ssl/private \
+  && openssl genrsa -out /etc/ssl/private/nginx.key 2048 \
+  && openssl req -new -key /etc/ssl/private/nginx.key \
+       -out /etc/ssl/private/nginx.csr \
+       -subj "/C=/ST=/L=/O=/OU=/CN=${CN:?}" \
+  && openssl x509 -req -days 365 -in /etc/ssl/private/nginx.csr \
+       -signkey /etc/ssl/private/nginx.key -out /etc/ssl/certs/nginx.crt \
+  && chgrp nginx /etc/ssl/private/nginx.key \
+  && chmod 0640 /etc/ssl/private/nginx.key \
+  && printf '%s\n' \
+       'server {' \
+       '  listen 80 default_server;' \
+       '  listen [::]:80 default_server;' \
+       '  listen 443 ssl default_server;' \
+       '  listen [::]:443 default_server;' \
+       '  ssl_certificate /etc/ssl/certs/nginx.crt;' \
+       '  ssl_certificate_key /etc/ssl/private/nginx.key;' \
+       '  location / {' \
+       '    root  /srv/www;' \
+       '    index index.html index.htm;' \
+       '  }' \
+       '}' \
+       > /etc/nginx/http.d/default.conf \
+  && mkdir /srv/www \
+  && printf '<h1>Nginx says hi</h1>\n' > /srv/www/index.html \
+  && chown nginx:nginx /srv/www \
+  && chown nginx:nginx /srv/www/index.html \
+  && apk del openssl \
+  && `# Configure nginx as a service` \
+  && rc-update add nginx \
+  && /etc/init.d/nginx start \
+  && sleep 1 \
+  && echo \
+  && printf 'GET /index.html HTTP/1.0\r\n\r\n'|nc localhost 80 \
+  && echo \
+  && true
+

@@ -1,0 +1,22 @@
+
+#
+# Debian with tools for java-native-interface development.
+#
+# HINT: Since migration from docker, I switched it to jdk-17 (because 11
+# seems no longer available). This change is not yet tested.
+#
+set -e
+
+
+### For debian 12
+true \
+  && SUDO= \
+  && export JAVA_HOME="/usr/lib/jvm/java-17-openjdk-amd64" \
+  && $SUDO apt update \
+  && $SUDO apt install -y --no-install-recommends \
+       g++ make openjdk-17-jdk-headless \
+  && (printf '%s\n' "JAVA_HOME=${JAVA_HOME:?}" \
+     ) | $SUDO tee "/etc/environment" >/dev/null \
+  && $SUDO apt clean \
+  && true
+
