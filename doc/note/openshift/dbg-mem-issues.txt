@@ -17,6 +17,8 @@ ${OC:?} exec -ti "$(${OC:?} get pods|egrep ston-1|cut -f1 -d' ')" -- sh -c 'true
   && printf '\''%s\n'\'' "$(sed '\''s;^(.*)$;FOO;'\'' /proc/'${PID:?}'/smaps)" \
   '
 
+dropPadding () { sed -E 's_ *; *_;_g'; }
+
 true `# Track pod memory` \
   && ${OC:?} exec -ti "$(${OC:?} get pods|grep ston-[1-9]|cut -f1 -d' ')" -- sh -c 'true \
     && printf '\''h;PageSize;%s\n'\'' $(getconf PAGESIZE) \
@@ -43,24 +45,21 @@ true \
     && <"$F" ${MemLeakTry1:?} --date "${DATE:?}" > "${F%.*}.csv" \
     ;done)
 
-true \
-  && cat houston-prod-pmap-*.csv > houston-prod-pmapAll.csv \
-  && true
-
-
 true `# log JMX stuff` \
   && grepUsed () { egrep 'used : ' | sed -r 's_^[^0-9]+ ([0-9]+) [^0-9]+$_\1_'; } \
   && grepPureNumberLine () { egrep $(printf '^[0-9]+\r?$') | sed -r 's_^(.*)\r$_\1_'; } \
   && (true \
-    && printf 'c; When                    ; JvmMetaspace; jvmNonHeap; JvmClassCnt;  JvmHeap\n' \
+    && printf 'c; When                    ; JvmMetaspace; jvmNonHeap; JvmClassCnt;    JvmHeap\n' \
     && while true; do true \
       && metaSpcByts="$(curl -sS "${JMX:?}"'/servers/0/domains/java.lang/mbeans/name=Metaspace,type=MemoryPool/attributes/Usage/' | grepUsed)" \
       && jvmNonHeap="$(curl -sS "${JMX:?}"'/servers/0/domains/java.lang/mbeans/type=Memory/attributes/NonHeapMemoryUsage/' | grepUsed)" \
       && ldClassCnt="$(curl -sS "${JMX:?}"'/servers/0/domains/java.lang/mbeans/type=ClassLoading/attributes/LoadedClassCount/' | grepPureNumberLine)" \
       && jvmHeap="$(curl -sS "${JMX:?}"'/servers/0/domains/java.lang/mbeans/type=Memory/attributes/HeapMemoryUsage/' | grepUsed)" \
-      && printf 'r;%s;%13d;%11d;%12d;%9d\n'  "$(date -Is)"  "${metaSpcByts:?}"  "${jvmNonHeap:?}"  "${ldClassCnt:?}"  "${jvmHeap:?}" \
+      && printf 'r;%s;%13d;%11d;%12d;%11d\n'  "$(date -Is)"  "${metaSpcByts:?}"  "${jvmNonHeap:?}"  "${ldClassCnt:?}"  "${jvmHeap:?}" \
       && sleep $(expr 60 - \( $(date +%s) % 60 \)) || break \
       ; done) \
     | tee "houston-prod-jmx-Metaspace-used-$(date +%Y%m%d-%H%M%S).log" \
   && true
+
+
 
