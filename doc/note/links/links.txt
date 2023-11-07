@@ -83,6 +83,7 @@ Links (Aka argument amplifiers)
 - SRP "https://blog.ndepend.com/solid-design-the-single-responsibility-principle-srp/"
 - OCP "https://blog.ndepend.com/solid-design-the-open-close-principle-ocp/"
 - LSP "https://blog.ndepend.com/solid-design-the-liskov-substitution-principle/"
+- ISP "https://blog.ndepend.com/solid-design-the-interface-segregation-principle-isp/"
 - DIP "https://stackify.com/dependency-inversion-principle/#post-18184-_nuqaxpnmvpn7"
 
 ## Java how to handle InterruptedException:
