@@ -352,7 +352,7 @@ Links (Aka argument amplifiers)
 - "https://pubs.opengroup.org/onlinepubs/009695399/utilities/xcu_chap02.html"
 
 ## YAGNI (but also KISS and DRY)
-- "https://medium.com/swlh/yagni-and-dry-the-kiss-of-death-for-your-software-project-cfd44b0654b6#fc82"
+- [YAGNI, KISS and DRY](https://medium.com/swlh/yagni-and-dry-the-kiss-of-death-for-your-software-project-cfd44b0654b6#fc82)
 - [eagle queue json only](https://gitit.post.ch/projects/ISA/repos/eagle/pull-requests/331/overview?commentId=236944)
 - [Uncle Bob - Why Are Programmers slow](https://youtu.be/G6HyEeEcB-w)
 

@@ -8,16 +8,12 @@ true \
   && OC= \
   && JMX= \
   && MemLeakTry1="lua -W MemLeakTry1.lua" \
+  && dropPadding () { sed -E 's_ *; *_;_g'; } \
+  && getPodName () { ${OC:?} get pods | egrep ston-[0-9] | cut -d' ' -f1; } \
   && true
 
 
-${OC:?} exec -ti "$(${OC:?} get pods|egrep ston-1|cut -f1 -d' ')" -- pmap 9 > "${SVCNAME:?}"-pmap-$(date -u +%Y%m%d-%H%M%S).txt
-
-${OC:?} exec -ti "$(${OC:?} get pods|egrep ston-1|cut -f1 -d' ')" -- sh -c 'true \
-  && printf '\''%s\n'\'' "$(sed '\''s;^(.*)$;FOO;'\'' /proc/'${PID:?}'/smaps)" \
-  '
-
-dropPadding () { sed -E 's_ *; *_;_g'; }
+${OC:?} exec -ti "$(${OC:?} get pods|egrep ston-1|cut -f1 -d' ')" -- pmap 9 > "pmap/${SVCNAME:?}"-pmap-$(date -u +%Y%m%d-%H%M%S).txt
 
 true `# Track pod memory` \
   && ${OC:?} exec -ti "$(${OC:?} get pods|grep ston-[1-9]|cut -f1 -d' ')" -- sh -c 'true \
@@ -30,20 +26,7 @@ true `# Track pod memory` \
            $(cat /proc/'${PID:?}'/statm) \
            $(ls -1 /proc/9/fd | wc -l) \
       && sleep $(expr 60 - \( $(date +%s) % 60 \)) || break; done' \
-    | tee "${SVCNAME:?}"-mem-$(date +%Y%m%d-%H%M%S%z).csv
-
-true \
-  && ONE="houston-prod-pmap-20231102-163425.txt" \
-  && TWO="houston-prod-pmap-20231103-074301.txt" \
-  && diff -U0 "${ONE:?}" "${TWO:?}" | egrep '^\+' | sed -r 's_\+([^ ]+) .*$_\1_'|sort|uniq \
-  && true
-
-(true \
-  && for F in $(ls *pmap*.txt); do true \
-    && printf "$F\n" \
-    && DATE="$(date +%s -d "$(echo $F|sed -r 's_.*([0-9]{4})([0-9]{2})([0-9]{2})-([0-9]{2})([0-9]{2})([0-9]{2}).*_\1-\2-\3T\4:\5:\6Z_')")" \
-    && <"$F" ${MemLeakTry1:?} --date "${DATE:?}" > "${F%.*}.csv" \
-    ;done)
+    | tee "mem/${SVCNAME:?}"-mem-$(date +%Y%m%d-%H%M%S%z).csv
 
 true `# log JMX stuff` \
   && grepUsed () { egrep 'used : ' | sed -r 's_^[^0-9]+ ([0-9]+) [^0-9]+$_\1_'; } \
@@ -58,8 +41,27 @@ true `# log JMX stuff` \
       && printf 'r;%s;%13d;%11d;%12d;%11d\n'  "$(date -Is)"  "${metaSpcByts:?}"  "${jvmNonHeap:?}"  "${ldClassCnt:?}"  "${jvmHeap:?}" \
       && sleep $(expr 60 - \( $(date +%s) % 60 \)) || break \
       ; done) \
-    | tee "houston-prod-jmx-Metaspace-used-$(date +%Y%m%d-%H%M%S).log" \
+    | tee "jmx/houston-prod-jmx-Metaspace-used-$(date +%Y%m%d-%H%M%S).log" \
   && true
 
+(true `# Fetch logs` \
+  && while true; do true \
+    && printf '%s - Fetch logs\n' "$(date -Is)" \
+    && ${OC:?} exec -i "$(getPodName)" -- sh -c 'cd /usr/local/vertx/logs && (tar -cz houston* || test $? -eq 1)' \
+      > "logs/${SVCNAME:?}-log-$(date -u +%Y%m%d-%H%M%SZ).tgz" \
+    && sleep $(expr 14400 - \( $(date +%s) % 14400 \)) || break; done \
+  && true)
 
+true \
+  && ONE="houston-prod-pmap-20231102-163425.txt" \
+  && TWO="houston-prod-pmap-20231103-074301.txt" \
+  && diff -U0 "${ONE:?}" "${TWO:?}" | egrep '^\+' | sed -r 's_\+([^ ]+) .*$_\1_'|sort|uniq \
+  && true
+
+(true \
+  && for F in $(ls *pmap*.txt); do true \
+    && printf "$F\n" \
+    && DATE="$(date +%s -d "$(echo $F|sed -r 's_.*([0-9]{4})([0-9]{2})([0-9]{2})-([0-9]{2})([0-9]{2})([0-9]{2}).*_\1-\2-\3T\4:\5:\6Z_')")" \
+    && <"$F" ${MemLeakTry1:?} --date "${DATE:?}" > "${F%.*}.csv" \
+    ;done)
 
