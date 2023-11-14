@@ -24,7 +24,7 @@ true `# Track pod memory` \
            "$(date -Is)" \
            $(cat /proc/'${PID:?}'/stat|cut -d" " -f20) \
            $(cat /proc/'${PID:?}'/statm) \
-           $(ls -1 /proc/9/fd | wc -l) \
+           $(ls -1 /proc/'${PID:?}'/fd | wc -l) \
       && sleep $(expr 60 - \( $(date +%s) % 60 \)) || break; done' \
     | tee "mem/${SVCNAME:?}"-mem-$(date +%Y%m%d-%H%M%S%z).csv
 
