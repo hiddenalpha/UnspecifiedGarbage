@@ -218,7 +218,7 @@ Links (Aka argument amplifiers)
 - "https://stackoverflow.com/a/20177092/4415884"
 - "https://github.com/swisspush/gateleen/pull/426#discussion_r813752075"
 - "https://github.com/swisspush/gateleen/blob/v1.1.61/gateleen-kafka/src/main/java/org/swisspush/gateleen/kafka/KafkaMessageSender.java#L21"
-- performance long "https://m.youtube.com/watch?v=x5akmCWgGY0"
+- [How to use java fancy streams](https://m.youtube.com/watch?v=x5akmCWgGY0)
 - think please ... "https://m.youtube.com/watch?v=hSfylUXhpkA"
 
 ## The Only way to Format Dates ISO 8601
@@ -235,8 +235,8 @@ Links (Aka argument amplifiers)
 ## Performance DOES matter
 - "https://github.com/swisspush/gateleen/pull/456#discussion_r844865066"
 - [Performance Excuses Debunked](https://m.youtube.com/watch?v=x2EOOJg8FkA)
-- [Is writing performant code too expensive?](https://m.youtube.com/watch?v=EpYr3T5VP6w)
-- [Simple Code, High Performance](https://m.youtube.com/watch?v=Ge3aKEmZcqY)
+- [Frameworks & clusters do not solve it](https://www.youtube.com/watch?v=EpYr3T5VP6w&t=1109)
+- [Simple Code, High Performance](https://m.youtube.com/watch?v=Ge3aKEmZcqY&t=78)
 - [Houston Last führt zu Neustart](https://wikit.post.ch/x/HDV8T)
 - [Houston storage request timed out large json](https://jira.post.ch/browse/SDCISA-11294)
 - [Preflux Garbage Collection issues](https://jira.post.ch/browse/SDCISA-4714)

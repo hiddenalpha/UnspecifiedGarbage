@@ -16,8 +16,13 @@ Tcpdump
 
 redis=6379, brox=7022, fluentd=7099
 
-  cd /tmp && timeout --foreground -s INT 180 tcpdump -ni any -C 50M -W 999 -w houston-STAGE-tcp-`date -u +%Y%m%d-%H%M%S`.pcap "not port 443 and not port 6379 and not port 7022 and not port 7099" -z gzip
+  cd /usr/local/vertx/houston-storage-file && timeout --foreground -s INT 180 tcpdump -ni any -C 50M -W 999 -w houston-STAGE-tcp-`date -u +%Y%m%d-%H%M%S`.pcap "not port 443 and not port 6379 and not port 7022 and not port 7099" -z gzip
 
+  cd /tmp && timeout --foreground -s INT 180 tcpdump -ni any -C 50M -W 999 -w houston-prod-tcp-`date -u +%Y%m%d-%H%M%S`.pcap "not port 443 and not port 6379 and not port 7022 and not port 7099" -z gzip
+
+  ocprod exec -i "$(ocprod get pods|egrep ston-[1-9]|cut -f1 -d' ')" -- sh -c 'cd /tmp && tar c "houston-prod-tcp-20231114-165243.pcap*.gz"' > houston-prod-tcp-20231114-165243.pcap.gz.tar
+
+  ocprod exec -ti "$(ocprod get pods|egrep ston-[1-9]|cut -f1 -d' ')" -- sh -c 'cd /tmp && watch ls -Ahl'
 
 
 ## pcap cli PreProcessing
