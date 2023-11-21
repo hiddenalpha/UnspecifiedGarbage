@@ -547,3 +547,6 @@ Links (Aka argument amplifiers)
 ## Git paisa complain about rebase stuff
 - [Complain about force-pushes](https://gitit.post.ch/projects/ISA/repos/lazlar/pull-requests/3/overview?commentId=311142)
 
+## Angular is terrible
+- [Why angular sucks](https://medium.com/dirtyjs/why-angular-2-4-5-6-sucks-afb36567ad68)
+

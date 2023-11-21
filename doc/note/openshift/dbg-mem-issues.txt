@@ -52,6 +52,21 @@ true `# log JMX stuff` \
     && sleep $(expr 14400 - \( $(date +%s) % 14400 \)) || break; done \
   && true)
 
+
+`# Create heap dump`
+com.sun.management.dumpHeap("/usr/local/vertx/houston-storage-file/houston-___-heap-2023____-____Z.hprof", true)
+
+`# Inspect`
+ocprod exec -i "$(ocprod get pods|egrep ston-[1-9]|cut -f1 -d' ')" -- sh -c 'cd /usr/local/vertx/houston-storage-file && ls -Ahl'
+
+true `# Get made heap dump` \
+  && echo create checksum. \
+  && ocprod exec -i "$(ocprod get pods|egrep ston-[1-9]|cut -f1 -d' ')" -- sh -c 'cd /usr/local/vertx/houston-storage-file && md5sum -b houston-*.hprof >> MD5SUM-$(date -u +%Y%m%d-%H%M%SZ)' \
+  && echo checksum done. Begin dload. \
+  && ocprod exec -i "$(ocprod get pods|egrep ston-[1-9]|cut -f1 -d' ')" -- sh -c 'cd /usr/local/vertx/houston-storage-file && tar c houston-*.hprof MD5SUM*' | (cd heapDump && tar x) \
+  && echo dload done \
+  && true
+
 true \
   && ONE="houston-prod-pmap-20231102-163425.txt" \
   && TWO="houston-prod-pmap-20231103-074301.txt" \
