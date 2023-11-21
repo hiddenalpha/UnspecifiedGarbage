@@ -52,6 +52,50 @@ true `# log JMX stuff` \
     && sleep $(expr 14400 - \( $(date +%s) % 14400 \)) || break; done \
   && true)
 
+true `# Merge logs` \
+  && PREFX="houston-prod-log-" \
+  && SUFFX=".tgz" \
+  && for SRCTGZ in \
+       ${PREFX:?}20231110-160510Z${SUFFX:?} \
+       ${PREFX:?}20231110-181226Z${SUFFX:?} \
+       ${PREFX:?}20231114-093133Z${SUFFX:?} \
+       ${PREFX:?}20231114-120002Z${SUFFX:?} \
+       ${PREFX:?}20231114-123040Z${SUFFX:?} \
+       ${PREFX:?}20231114-160001Z${SUFFX:?} \
+       ${PREFX:?}20231116-082933Z${SUFFX:?} \
+       ${PREFX:?}20231116-120002Z${SUFFX:?} \
+       ${PREFX:?}20231116-160002Z${SUFFX:?} \
+       ${PREFX:?}20231117-081112Z${SUFFX:?} \
+       ${PREFX:?}20231117-120001Z${SUFFX:?} \
+       ${PREFX:?}20231117-164612Z${SUFFX:?} \
+     ; do true \
+       && echo "[INFO ] Create ${SRCTGZ%.*}.log" \
+       && tar xf ../logs/${SRCTGZ:?} \
+       && unzip houston.log.1.zip \
+       && cat houston.log.1 houston.log > "${SRCTGZ%.*}.log" \
+       && rm houston.log.1.zip houston.log.1 houston.log \
+     ;done && true \
+  && printf '%s' '
+       local newLogFileMerger = require("AndisLogUtils").newLogFileMerger
+       local merger = newLogFileMerger{
+         sources = {
+             io.open("houston-prod-log-20231110-160510Z.log", "r"),
+             io.open("houston-prod-log-20231110-181226Z.log", "r"),
+             io.open("houston-prod-log-20231114-093133Z.log", "r"),
+             io.open("houston-prod-log-20231114-120002Z.log", "r"),
+             io.open("houston-prod-log-20231114-123040Z.log", "r"),
+             io.open("houston-prod-log-20231114-160001Z.log", "r"),
+             io.open("houston-prod-log-20231116-082933Z.log", "r"),
+             io.open("houston-prod-log-20231116-120002Z.log", "r"),
+             io.open("houston-prod-log-20231116-160002Z.log", "r"),
+             io.open("houston-prod-log-20231117-081112Z.log", "r"),
+             io.open("houston-prod-log-20231117-120001Z.log", "r"),
+             io.open("houston-prod-log-20231117-164612Z.log", "r"),
+         },
+         snk = { write = function( t, buf, b, c ) io.stdout:write(buf) io.stdout:write("\n") end, },
+       }' | lua -W - | gzip -n > houston-log-merged-$(date -u +%Y%m%d-%H%M%S)Z.log.gz \
+  && true
+
 
 `# Create heap dump`
 com.sun.management.dumpHeap("/usr/local/vertx/houston-storage-file/houston-___-heap-2023____-____Z.hprof", true)
