@@ -1,20 +1,22 @@
 --
 -- Sources:
 -- - [Authorize](https://learn.microsoft.com/en-us/graph/auth-v2-user?tabs=http)
+-- - [Auth witout app register](https://techcommunity.microsoft.com/t5/teams-developer/authenticate-microsoft-graph-api-with-username-and-password/m-p/3940540)
 --
 -- TODO: scriptlee  0.0.5-83-gdffa272 seems to SEGFAULT constantly here. No
 --       matter if we use socket or newHttpClient.
 --
 
 local SL = require("scriptlee")
-local AF_INET = SL.posix.AF_INET
-local getaddrinfo = SL.posix.getaddrinfo
-local INADDR_ANY = SL.posix.INADDR_ANY
-local inaddrOfHostname = SL.posix.inaddrOfHostname
-local IPPROTO_TCP = SL.posix.IPPROTO_TCP
+local newHttpClient = SL.newHttpClient
+--local AF_INET = SL.posix.AF_INET
+--local getaddrinfo = SL.posix.getaddrinfo
+--local INADDR_ANY = SL.posix.INADDR_ANY
+--local inaddrOfHostname = SL.posix.inaddrOfHostname
+--local IPPROTO_TCP = SL.posix.IPPROTO_TCP
 local objectSeal = SL.objectSeal
-local SOCK_STREAM = SL.posix.SOCK_STREAM
-local socket = SL.posix.socket
+--local SOCK_STREAM = SL.posix.SOCK_STREAM
+--local socket = SL.posix.socket
 local startOrExecute = SL.reactor.startOrExecute
 --for k,v in pairs(SL)do print("SL",k,v)end os.exit(1)
 SL = nil
@@ -26,9 +28,8 @@ local inn, out, log = io.stdin, io.stdout, io.stderr
 
 function printHelp()
     out:write("  \n"
-        .."  Options:\n"
-        .."  \n"
-        .."\n\n")
+        .."  TODO write help page\n"
+        .."  \n")
 end
 
 
@@ -42,51 +43,138 @@ function parseArgs( app )
             break
         elseif arg == "--help" then
             app.isHelp = true; return 0
+        elseif arg == "--user" then
+            iA = iA + 1; arg = _ENV.arg[iA]
+            if not arg then log:write("EINVAL: --user needs value\n")return-1 end
+            app.msUser = arg
+        elseif arg == "--pass" then
+            iA = iA + 1; arg = _ENV.arg[iA]
+            if not arg then log:write("EINVAL: --pass needs value\n")return-1 end
+            app.msPass = arg
         elseif arg == "--yolo" then
             isYolo = true
         else
             log:write("EINVAL: ".. arg .."\n") return-1
         end
     end
-    if not isYolo then log:write("EINVAL\n")return-1 end
+    if not isYolo then log:write("EINVAL: This app is only for insiders\n")return-1 end
+    if not app.msUser then log:write("EINVAL: --user missing\n") return-1 end
+    if not app.msPass then log:write("EINVAL: --pass missing\n") return-1 end
     return 0
 end
 
 
 function getMyProfileForDebugging( app )
-    local sck = app.sck
+    local http = app.http
     local authKey, authVal = getAuthHdr(app)
     local req = objectSeal{
         base = false,
+        method = "GET",
+        uri = "/v1.0/me",
+        rspCode = false,
+        rspBody = {},
     }
-    sck:write("GET /v1.0/me HTTP/1.1\r\n"
-        .."".. authKey ..": ".. authVal .."\r\n"
-        .."\r\n")
-    sck:flush()
-    local buf = sck:read()
-    log:write("buf is '"..tostring(buf).."'\n")
+    req.base = http:request{
+        cls = req,
+        host = app.msGraphHost,
+        port = app.msGraphPort,
+        connectTimeoutMs = 3000,
+        method = req.method,
+        url = req.uri,
+        hdrs = {
+            { authKey, authVal },
+        },
+        --useHostHdr = ,
+        --useTLS = true,
+        onRspHdr = function( rsp, cls )
+            cls.rspCode = rsp.status
+            if rsp.status ~= 200 then
+                log:write("> ".. req.method .." ".. req.uri .."\n> \n")
+                log:write("< ".. rsp.proto .." ".. rsp.status .." ".. rsp.phrase .."\n")
+                for _,h in ipairs(rsp.headers)do log:write("< "..h[1]..": "..h[2].."\n")end
+                log:write("\n")
+            end
+        end,
+        onRspChunk = function(buf, cls)
+            if cls.rspCode ~= 200 then
+                log:write("< ")
+                log:write((buf:gsub("\n", "\n< ")))
+                log:write("\n")
+            else
+                assert(type(buf) == "string")
+                table.insert(cls.rspBody, buf)
+            end
+        end,
+        onRspEnd = function(cls)
+            if cls.rspCode ~= 200 then error("Request failed.") end
+            cls.rspBody = table.concat(cls.rspBody)
+            log:write("Response was:\n\n")
+            log:write(cls.rspBody)
+            log:write("\n\n")
+        end,
+    }
+    req.base:closeSnk()
 end
 
 
 function authorizeToMsGraphApi( app )
-    -- See "https://learn.microsoft.com/en-us/graph/auth-v2-user?tabs=http"
-    local redirUri = "https%3A%2F%2Flogin.microsoftonline.com%2Fcommon%2Foauth2%2Fnativeclient"
-    local scope = "offline_access%20user.read%20mail.read"
-    local stateDict = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
-    local state = {}
-    for i=1, 16 do
-        local rnd = math.random(1, #stateDict)
-        state[i] = chars:sub(rnd, rnd)
-    end
-    state = table.concat(state)
-    local method = "GET"
-    local url = "https://login.microsoftonline.com/".. app.msTenant .."/oauth2/v2.0/authorize"
-        .."?client_id=".. app.msAppId
-        .."&response_type=code"
-        .."&redirect_uri=".. redirUri
-        .."&response_mode=query"
-        .."&scope=".. httpUrlEncode(app.msPerms)
-        .."&state=".. state
+    local http = app.http
+    local req = objectSeal{
+        base = false,
+        method = "GET",
+        uri = "https://login.microsoftonline.com/".. app.msTenant .."/oauth2/v2.0/token",
+        hdrs = {
+            { "Content-Type", "application/x-www-form-urlencoded" },
+        },
+        reqBody = ""
+            .. "grant_type=password"
+            .."&resource=https://graph.microsoft.com"
+            .."&username=".. httpUrlEncode(app, app.msUser) ..""
+            .."&password=".. httpUrlEncode(app, app.msPass) .."",
+        rspProto = false, rspCode = false, rspPhrase = false,
+        rspHdrs = false,
+        rspBody = {},
+    }
+    req.base = http:request{
+        cls = req,
+        connectTimeoutMs = app.connectTimeoutMs,
+        host = app.msGraphHost,
+        port = app.msGraphPort,
+        method = req.method,
+        url = req.uri,
+        hdrs = req.hdrs,
+        onRspHdr = function( rsp, cls )
+            cls.rspProto = rsp.proto
+            cls.rspCode = rsp.status
+            cls.rspPhrase = rsp.phrase
+            cls.rspHdrs = rsp.headers
+        end,
+        onRspChunk = function( buf, cls ) table.insert(cls.rspBody, buf) end,
+        onRspEnd = function( cls )
+            local rspBody = table.concat(cls.rspBody) cls.rspBody = false
+            if cls.rspCode ~= 200 then
+                log:write("[ERROR] Request failed\n")
+                log:write("> ".. cls.method .." ".. cls.uri .."\n")
+                for _, h in ipairs(req.hdrs) do log:write("> ".. h[1] ..": ".. h[2] .."\n") end
+                log:write("> \n")
+                log:write("> ".. cls.reqBody:gsub("\r?\n", "\n> ") .."\n")
+                log:write("< ".. cls.rspProto .." ".. cls.rspCode .." ".. cls.rspPhrase .."\n")
+                for _, h in ipairs(cls.rspHdrs) do log:write("< ".. h[1] ..": ".. h[2] .."\n")end
+                log:write("< \n")
+                log:write("< ".. rspBody:gsub("\r?\n", "\n< ") .."\n")
+                error("TODO_10aa11de804e733337e7c244298791c6")
+            end
+            log:write("< ".. cls.rspProto .." ".. cls.rspCode .." ".. cls.rspPhrase .."\n")
+            for _, h in ipairs(cls.rspHdrs) do log:write("< ".. h[1] ..": ".. h[2] .."\n")end
+            log:write("< \n")
+            log:write("< ".. rspBody:gsub("\r?\n", "\n< ") .."\n")
+            -- How to continue:
+            --local token = rsp.bodyJson.access_token
+            --local authHdr = { "Authorization", "Bearer ".. token, }
+        end,
+    }
+    --req.base:write(req.reqBody)
+    req.base:closeSnk()
 end
 
 
@@ -97,6 +185,7 @@ function httpUrlEncode( app, str )
     local byt = str:byte(iRd)
     if not byt then
     elseif byt == 0x2D -- dash
+        or byt == 0x2E -- dot
         or byt >= 0x30 and byt <= 0x39 -- 0-9
         or byt >= 0x40 and byt <= 0x5A -- A-Z
         or byt >= 0x60 and byt <= 0x7A -- a-z
@@ -134,34 +223,35 @@ end
 -- @return 1 - HTTP header key
 -- @return 2 - HTTP header value
 function getAuthHdr( app )
-    return "Authorization", ("Bearer ".. app.msBearerToken)
-end
-
-
-function initHttpClient( app )
-    local sck = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)
-    sck:connect(app.msGraphHost, app.msGraphPort, app.connectTimeoutMs)
-    app.sck = sck
+    assert(app.msToken)
+    return "Authorization", ("Bearer ".. app.msToken)
 end
 
 
 function run( app )
-    initHttpClient(app)
-    getMyProfileForDebugging(app)
+    app.http = newHttpClient{}
+    authorizeToMsGraphApi(app)
+    --getMyProfileForDebugging(app)
 end
 
 
 function main()
     local app = objectSeal{
         isHelp = false,
-        msGraphHost = "127.0.0.1",
-        msGraphPort = 8080,
-        msTenant = "TODO_1700563786",
-        msAppId = "TODO_1700563821",
+        msGraphHost = "graph.microsoft.com", msGraphPort = 443,
+        --msGraphHost = "127.0.0.1", msGraphPort = 80,
+        -- TODO take this from a failed api call, which has this in the rsp headers.
+        msAuthUri = "https://login.microsoftonline.com/common/oauth2/authorize",
+        msTenant = "common", -- TODO configurable
+        -- TODO take this from a failed api call, which has this in the rsp headers.
+        msAppId = "00000003-0000-0000-c000-000000000000",
         msPerms = "offline_access user.read mail.read",
-        msBearerToken = "TODO_1700575589",
+        msToken = false,
+        msUser = false,
+        msPass = false,
+        http = false,
         connectTimeoutMs = 3000,
-        sck = false,
+        --sck = false,
     }
     if parseArgs(app) ~= 0 then os.exit(1) end
     if app.isHelp then printHelp() return end
