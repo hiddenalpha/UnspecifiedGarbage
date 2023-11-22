@@ -5,7 +5,9 @@
 --
 -- TODO: scriptlee  0.0.5-83-gdffa272 seems to SEGFAULT constantly here. No
 --       matter if we use socket or newHttpClient.
---
+-- TODO: scriptlee  0.0.5-87-g946ebdc  crashes through assertion:
+--       Assertion failed: cls->msg.connect.sck->vt->unwrap != NULL, file src/windoof/c/io/AsyncIO.c, line 421
+-- 
 
 local SL = require("scriptlee")
 local newHttpClient = SL.newHttpClient
