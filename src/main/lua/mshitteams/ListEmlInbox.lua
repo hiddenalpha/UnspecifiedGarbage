@@ -124,7 +124,9 @@ function authorizeToMsGraphApi( app )
     local req = objectSeal{
         base = false,
         method = "GET",
-        uri = "https://login.microsoftonline.com/".. app.msTenant .."/oauth2/v2.0/token",
+        host = (app.proxyHost or app.msLoginHost),
+        port = (app.proxyPort or app.msLoginPort),
+        uri = false,
         hdrs = {
             { "Content-Type", "application/x-www-form-urlencoded" },
         },
@@ -137,44 +139,62 @@ function authorizeToMsGraphApi( app )
         rspHdrs = false,
         rspBody = {},
     }
-    req.base = http:request{
-        cls = req,
-        connectTimeoutMs = app.connectTimeoutMs,
-        host = app.msGraphHost,
-        port = app.msGraphPort,
-        method = req.method,
-        url = req.uri,
-        hdrs = req.hdrs,
-        onRspHdr = function( rsp, cls )
-            cls.rspProto = rsp.proto
-            cls.rspCode = rsp.status
-            cls.rspPhrase = rsp.phrase
-            cls.rspHdrs = rsp.headers
-        end,
-        onRspChunk = function( buf, cls ) table.insert(cls.rspBody, buf) end,
-        onRspEnd = function( cls )
-            local rspBody = table.concat(cls.rspBody) cls.rspBody = false
-            if cls.rspCode ~= 200 then
-                log:write("[ERROR] Request failed\n")
-                log:write("> ".. cls.method .." ".. cls.uri .."\n")
-                for _, h in ipairs(req.hdrs) do log:write("> ".. h[1] ..": ".. h[2] .."\n") end
-                log:write("> \n")
-                log:write("> ".. cls.reqBody:gsub("\r?\n", "\n> ") .."\n")
-                log:write("< ".. cls.rspProto .." ".. cls.rspCode .." ".. cls.rspPhrase .."\n")
-                for _, h in ipairs(cls.rspHdrs) do log:write("< ".. h[1] ..": ".. h[2] .."\n")end
+    if app.proxyHost then
+        req.uri = "https://".. app.msLoginHost ..":".. app.msLoginPort
+            .."/".. app.msTenant .."/oauth2/v2.0/token"
+    else
+        req.uri = "/".. app.msTenant .."/oauth2/v2.0/token"
+    end
+    local ok, ex = xpcall(function()
+        req.base = http:request{
+            cls = req,
+            connectTimeoutMs = app.connectTimeoutMs,
+            host = req.host,
+            port = req.port,
+            method = req.method,
+            url = req.uri,
+            hdrs = req.hdrs,
+            onRspHdr = function( rsp, req )
+                req.rspProto = rsp.proto
+                req.rspCode = rsp.status
+                req.rspPhrase = rsp.phrase
+                req.rspHdrs = rsp.headers
+            end,
+            onRspChunk = function( buf, req ) table.insert(req.rspBody, buf) end,
+            onRspEnd = function( req )
+                local rspBody = table.concat(req.rspBody) req.rspBody = false
+                if req.rspCode ~= 200 then
+                    log:write("[ERROR] Request failed\n")
+                    log:write("peer  ".. req.host ..":".. req.port .."\n")
+                    log:write("> ".. req.method .." ".. req.uri .."\n")
+                    for _, h in ipairs(req.hdrs) do log:write("> ".. h[1] ..": ".. h[2] .."\n") end
+                    log:write("> \n")
+                    log:write("> ".. req.reqBody:gsub("\r?\n", "\n> ") .."\n")
+                    log:write("< ".. req.rspProto .." ".. req.rspCode .." ".. req.rspPhrase .."\n")
+                    for _, h in ipairs(req.rspHdrs) do log:write("< ".. h[1] ..": ".. h[2] .."\n")end
+                    log:write("< \n")
+                    log:write("< ".. rspBody:gsub("\r?\n", "\n< ") .."\n")
+                    error("TODO_10aa11de804e733337e7c244298791c6")
+                end
+                log:write("< ".. req.rspProto .." ".. req.rspCode .." ".. req.rspPhrase .."\n")
+                for _, h in ipairs(req.rspHdrs) do log:write("< ".. h[1] ..": ".. h[2] .."\n")end
                 log:write("< \n")
                 log:write("< ".. rspBody:gsub("\r?\n", "\n< ") .."\n")
-                error("TODO_10aa11de804e733337e7c244298791c6")
-            end
-            log:write("< ".. cls.rspProto .." ".. cls.rspCode .." ".. cls.rspPhrase .."\n")
-            for _, h in ipairs(cls.rspHdrs) do log:write("< ".. h[1] ..": ".. h[2] .."\n")end
-            log:write("< \n")
-            log:write("< ".. rspBody:gsub("\r?\n", "\n< ") .."\n")
-            -- How to continue:
-            --local token = rsp.bodyJson.access_token
-            --local authHdr = { "Authorization", "Bearer ".. token, }
-        end,
-    }
+                -- How to continue:
+                --local token = rsp.bodyJson.access_token
+                --local authHdr = { "Authorization", "Bearer ".. token, }
+            end,
+        }
+    end, debug.traceback)
+    if not ok then
+        log:write("[ERROR] Request failed 2\n")
+        log:write("peer  ".. req.host ..":".. req.port .."\n")
+        log:write("> ".. req.method .." ".. req.uri .."\n")
+        for _, h in ipairs(req.hdrs) do log:write("> ".. h[1] ..": ".. h[2] .."\n") end
+        log:write("> \n")
+        log:write("> ".. req.reqBody:gsub("\r?\n", "\n> ") .."\n")
+        error(ex)
+    end
     --req.base:write(req.reqBody)
     req.base:closeSnk()
 end
@@ -238,12 +258,31 @@ end
 
 
 function main()
+    local loginHost, loginPort, graphHost, graphPort, proxyHost, proxyPort
+    local choice = 3
+    if choice == 1 then
+        loginHost = "login.microsoftonline.com"; loginPort = 443
+        graphHost = "graph.microsoft.com"; graphPort = 443
+        proxyHost = "127.0.0.1"; proxyPort = 3128
+    elseif choice == 2 then
+        loginHost = "127.0.0.1"; loginPort = 8081
+        graphHost = "127.0.0.1"; graphPort = 8081
+        proxyHost = false; proxyPort = false
+    elseif choice == 3 then
+        loginHost = "login.microsoftonline.com"; loginPort = 443
+        graphHost = "127.0.0.1"; graphPort = 8081
+        proxyHost = "127.0.0.1"; proxyPort = 3128
+    elseif choice == 4 then
+        loginHost = "login.microsoftonline.com"; loginPort = 443
+        graphHost = "graph.microsoft.com"; graphPort = 443
+        proxyHost = false; proxyPort = false
+    else error("TODO_1700683244") end
     local app = objectSeal{
         isHelp = false,
-        msGraphHost = "graph.microsoft.com", msGraphPort = 443,
-        --msGraphHost = "127.0.0.1", msGraphPort = 80,
+        msLoginHost = loginHost, msLoginPort = loginPort,
+        msGraphHost = graphHost, msGraphPort = graphPort,
+        proxyHost = proxyHost, proxyPort = proxyPort,
         -- TODO take this from a failed api call, which has this in the rsp headers.
-        msAuthUri = "https://login.microsoftonline.com/common/oauth2/authorize",
         msTenant = "common", -- TODO configurable
         -- TODO take this from a failed api call, which has this in the rsp headers.
         msAppId = "00000003-0000-0000-c000-000000000000",
