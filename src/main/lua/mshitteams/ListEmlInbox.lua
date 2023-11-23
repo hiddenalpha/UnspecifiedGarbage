@@ -30,7 +30,20 @@ local inn, out, log = io.stdin, io.stdout, io.stderr
 
 function printHelp()
     out:write("  \n"
-        .."  TODO write help page\n"
+        .."  Experiments for M$ graph API.\n"
+        .."  \n"
+        .."  WARN: This tool is experimental! Do NOT use it!\n"
+        .."  \n"
+        .."  Options:\n"
+        .."  \n"
+        .."      --user <str>\n"
+        .."          M$ user.\n"
+        .."  \n"
+        .."      --pass <str>\n"
+        .."          M$ password. TODO get rid of this insecure idea.\n"
+        .."  \n"
+        .."      --appId <str>\n"
+        .."          AppId (aka client_id). See M$ doc about it.\n"
         .."  \n")
 end
 
@@ -38,7 +51,7 @@ end
 function parseArgs( app )
     if #_ENV.arg == 0 then log:write("EINVAL: Args missing\n")return-1 end
     local iA = 0
-    local isYolo = false
+    --local isYolo = false
     while true do iA = iA + 1
         local arg = _ENV.arg[iA]
         if not arg then
@@ -53,15 +66,20 @@ function parseArgs( app )
             iA = iA + 1; arg = _ENV.arg[iA]
             if not arg then log:write("EINVAL: --pass needs value\n")return-1 end
             app.msPass = arg
-        elseif arg == "--yolo" then
-            isYolo = true
+        elseif arg == "--appId" then
+            iA = iA + 1; arg = _ENV.arg[iA]
+            if not arg then log:write("EINVAL: --appId needs value\n")return-1 end
+            app.msAppId = arg
+        --elseif arg == "--yolo" then
+        --    isYolo = true
         else
             log:write("EINVAL: ".. arg .."\n") return-1
         end
     end
-    if not isYolo then log:write("EINVAL: This app is only for insiders\n")return-1 end
     if not app.msUser then log:write("EINVAL: --user missing\n") return-1 end
     if not app.msPass then log:write("EINVAL: --pass missing\n") return-1 end
+    if not app.msAppId then log:write("EINVAL: --appId missing\n")return-1 end
+    --if not isYolo then log:write("EINVAL: --yolo missing\n")return-1 end
     return 0
 end
 
@@ -234,7 +252,7 @@ function getAccessToken( app )
         { "Content-Type", "application/x-www-form-urlencoded" },
     }
     local body = ""
-        .."client_id=".. app.msAppId
+        .."client_id=".. assert(app.appId)
         .."&scope=".. scope
         .."&code=".. code
         .."&redirect_uri=".. redirUri
@@ -285,7 +303,7 @@ function main()
         -- TODO take this from a failed api call, which has this in the rsp headers.
         msTenant = "common", -- TODO configurable
         -- TODO take this from a failed api call, which has this in the rsp headers.
-        msAppId = "00000003-0000-0000-c000-000000000000",
+        msAppId = false,
         msPerms = "offline_access user.read mail.read",
         msToken = false,
         msUser = false,
