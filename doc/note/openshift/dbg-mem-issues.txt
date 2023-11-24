@@ -111,6 +111,18 @@ true `# Get made heap dump` \
   && echo dload done \
   && true
 
+true `# Probe` \
+  && logFile="readyness-probe.log" \
+  && printf 'c; when                   ;rspCode; connectSec; trsfSec; totlSec; curlExit\n' | tee -a "${logFile:?}" \
+  && while true; do true \
+     && printf 'r;%s;%7d;%11.3f;%8.3f;%8.3f;%9d\n' \
+           $(date +%Y-%m-%dT%H:%M:%S%z) \
+           $(curl -sSw "%{http_code} %{time_connect} %{time_starttransfer} %{time_total}" "${houstonServerInfoUrl:?}" -o /dev/null || ex=$? && echo " $ex") \
+           | tee -a "${logFile:?}" \
+     && sleep $(expr 60 - $(date +%s) % 60) || break \
+     ;done \
+  && true
+
 true \
   && ONE="houston-prod-pmap-20231102-163425.txt" \
   && TWO="houston-prod-pmap-20231103-074301.txt" \
