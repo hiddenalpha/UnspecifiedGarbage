@@ -1,0 +1,14 @@
+
+How to export email as EML file in stupid systems
+=================================================
+
+- "https://outlook.office.com"
+- Compose a new eMail.
+- DragNDrop the email from the inbox to the draft (add attachment).
+- Now "Download" that attachment.
+
+
+## Source
+
+- [How to save mail as eml](https://superuser.com/a/1474143/1123359)
+
