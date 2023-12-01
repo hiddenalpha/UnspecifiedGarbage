@@ -7,6 +7,7 @@ SSH Setup & Key Management
 - [Insane answer about key formats](https://stackoverflow.com/a/29707204/4415884)
 
 
+
 ## Create New Ssh Key
 
 Create "path/to/key" and "path/to/key.pub" as a 2048 bit RSA with
@@ -16,6 +17,13 @@ Create "path/to/key" and "path/to/key.pub" as a 2048 bit RSA with
 ssh-keygen -t rsa -b 2048 -f path/to/key -C "your comment"
 ```
 
+Create "path/to/key" and "path/to/key.pub" as an elliptic curve.
+
+```sh
+ssh-keygen -t ed25519 -f path/to/key -C "your comment"
+```
+
+
 
 ## Change Passphrase
 
@@ -24,6 +32,7 @@ ssh-keygen -p -f path/to/key
 ```
 
 NOTE: Just hitting enter when asked for the new one will remove the passphrase.
+
 
 
 ## Inspect keys
@@ -46,6 +55,7 @@ Print detailed DER file content:
   openssl x509 -in dumpcertfile -inform DER -text
 
 
+
 ## Export pub key in misc formats
 
   ssh-keygen -e -f path/to/ssh2pub-or-privKey -m PKCS8
@@ -62,9 +72,11 @@ TODO to PKCS8:
   ssh-keygen -i -f path/to/key.pub -e -m PKCS8 > path/to/pub.pem
 
 
+
 ## Remove obsolete entry from known_hosts
 
   ssh-keygen -f path/to/known_hosts -R "example.com"
+
 
 
 ## TODO
