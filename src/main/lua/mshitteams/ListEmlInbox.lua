@@ -130,20 +130,45 @@ function authorizeToMsGraphApi( app )
         hdrs = {
             { "Content-Type", "application/x-www-form-urlencoded" },
         },
-        reqBody = ""
-            .. "grant_type=password"
-            .."&resource=https://graph.microsoft.com"
-            .."&username=".. httpUrlEncode(app, app.msUser) ..""
-            .."&password=".. httpUrlEncode(app, app.msPass) .."",
+
+https://login.microsoftonline.com/common/oauth2/authorize?client_id=00000002-0000-0ff1-ce00-000000000000
+    &redirect_uri=https%3a%2f%2foutlook.office.com%2fowa%2f
+    &resource=00000002-0000-0ff1-ce00-000000000000
+    &response_mode=form_post
+    &response_type=code+id_token
+    &scope=openid
+    &msafed=1
+    &msaredir=1
+    &client-request-id=f0e17000-6e10-7300-ff1c-66476b9b0128
+    &protectedtoken=true
+    &claims=%7b%22id_token%22%3a%7b%22xms_cc%22%3a%7b%22values%22%3a%5b%22CP1%22%5d%7d%7d%7d
+    &nonce=638362912925695104.0fb89afe-011d-41a1-93f4-e15a7cfa342d
+    &state=Dcs5FoAgDABR0OdxItlYcpwoprX0-lL86SanlPZlWzKupN5kSGMjNq7NKqGeGNcwjweQaIKSE5iEwkPV-x0uyjOv9yjv5-UH
+
         rspProto = false, rspCode = false, rspPhrase = false,
         rspHdrs = false,
         rspBody = {},
     }
-    if app.proxyHost then
-        req.uri = "https://".. app.msLoginHost ..":".. app.msLoginPort
-            .."/".. app.msTenant .."/oauth2/v2.0/token"
-    else
-        req.uri = "/".. app.msTenant .."/oauth2/v2.0/token"
+    req.uri = ((app.proxyHost)and("https://".. app.msLoginHost ..":".. app.msLoginPort)or"")
+        .."/".. app.msTenant .."/oauth2/v2.0/token"
+        .."?grant_type=password"
+        .."&resource=".. httpUrlEncode(app, "https://graph.microsoft.com")
+        .."&username=".. httpUrlEncode(app, app.msUser)
+        .."&password=".. httpUrlEncode(app, app.msPass),
+
+    local printRequest = function()
+        log:write("  Peer  ".. req.host .."  ".. req.port .."\n")
+        log:write("> ".. req.method .." ".. req.uri .." HTTP/1.1\n")
+        for _, h in ipairs(req.hdrs) do log:write("> ".. h[1] ..": ".. h[2] .."\n") end
+        log:write("> \n")
+        log:write("> ".. req.reqBody:gsub("\r?\n", "\n> ") .."\n")
+    end
+    local printResponse = function()
+        log:write("  Peer  ".. req.host .."  ".. req.port .."\n")
+        log:write("< ".. req.rspProto .." ".. req.rspCode .." ".. req.rspPhrase .."\n")
+        for _, h in ipairs(req.rspHdrs) do log:write("< ".. h[1] ..": ".. h[2] .."\n")end
+        log:write("< \n")
+        log:write("< ".. rspBody:gsub("\r?\n", "\n< ") .."\n")
     end
     local ok, ex = xpcall(function()
         req.base = http:request{
@@ -165,15 +190,8 @@ function authorizeToMsGraphApi( app )
                 local rspBody = table.concat(req.rspBody) req.rspBody = false
                 if req.rspCode ~= 200 then
                     log:write("[ERROR] Request failed\n")
-                    log:write("peer  ".. req.host ..":".. req.port .."\n")
-                    log:write("> ".. req.method .." ".. req.uri .."\n")
-                    for _, h in ipairs(req.hdrs) do log:write("> ".. h[1] ..": ".. h[2] .."\n") end
-                    log:write("> \n")
-                    log:write("> ".. req.reqBody:gsub("\r?\n", "\n> ") .."\n")
-                    log:write("< ".. req.rspProto .." ".. req.rspCode .." ".. req.rspPhrase .."\n")
-                    for _, h in ipairs(req.rspHdrs) do log:write("< ".. h[1] ..": ".. h[2] .."\n")end
-                    log:write("< \n")
-                    log:write("< ".. rspBody:gsub("\r?\n", "\n< ") .."\n")
+                    printRequest()
+                    printResponse()
                     error("TODO_10aa11de804e733337e7c244298791c6")
                 end
                 log:write("< ".. req.rspProto .." ".. req.rspCode .." ".. req.rspPhrase .."\n")
@@ -187,15 +205,10 @@ function authorizeToMsGraphApi( app )
         }
     end, debug.traceback)
     if not ok then
-        log:write("[ERROR] Request failed 2\n")
-        log:write("peer  ".. req.host ..":".. req.port .."\n")
-        log:write("> ".. req.method .." ".. req.uri .."\n")
-        for _, h in ipairs(req.hdrs) do log:write("> ".. h[1] ..": ".. h[2] .."\n") end
-        log:write("> \n")
-        log:write("> ".. req.reqBody:gsub("\r?\n", "\n> ") .."\n")
+        log:write("[ERROR] Problem with ".. req.host ..":".. req.port .."\n")
+        printRequest()
         error(ex)
     end
-    --req.base:write(req.reqBody)
     req.base:closeSnk()
 end
 
@@ -259,7 +272,7 @@ end
 
 function main()
     local loginHost, loginPort, graphHost, graphPort, proxyHost, proxyPort
-    local choice = 3
+    local choice = 4
     if choice == 1 then
         loginHost = "login.microsoftonline.com"; loginPort = 443
         graphHost = "graph.microsoft.com"; graphPort = 443
