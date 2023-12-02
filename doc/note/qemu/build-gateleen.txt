@@ -39,8 +39,8 @@ true \
   && printf "require('/usr/lib/node_modules/npm/lib/cli.js')\n" | tee gateleen-hook-js/node/node_modules/npm/bin/npm-cli.js >/dev/null \
   && mvn install -PpublicRepos -DskipTests -Dskip.installnodenpm -pl gateleen-hook-js \
   && mvn install -PpublicRepos -DfailIfNoTests=false \
-      -pl !gateleen-test,!gateleen-hook-js \
-      -Dtest=!ReleaseLockLuaScriptTests,!RedisCacheStorageTest,!DeltaHandlerTest,!QueueCircuitBreakerCloseCircuitLuaScriptTests,!QueueCircuitBreakerGetAllCircuitsLuaScriptTests,!QueueCircuitBreakerHalfOpenCircuitsLuaScriptTests,!QueueCircuitBreakerReOpenCircuitLuaScriptTests,!QueueCircuitBreakerUpdateStatsLuaScriptTests,!RemoveExpiredQueuesLuaScriptTests,!StartQueueTimerLuaScriptTests \
+      -pl '!gateleen-test,!gateleen-hook-js' \
+      '-Dtest=!ReleaseLockLuaScriptTests,!RedisCacheStorageTest,!DeltaHandlerTest,!QueueCircuitBreakerCloseCircuitLuaScriptTests,!QueueCircuitBreakerGetAllCircuitsLuaScriptTests,!QueueCircuitBreakerHalfOpenCircuitsLuaScriptTests,!QueueCircuitBreakerReOpenCircuitLuaScriptTests,!QueueCircuitBreakerUpdateStatsLuaScriptTests,!RemoveExpiredQueuesLuaScriptTests,!StartQueueTimerLuaScriptTests' \
   && mkdir "${WORKDIR:?}/classpath" \
   && (cd gateleen-playground && mvn dependency:copy-dependencies \
       -DexcludeScope=provided -DoutputDirectory="${WORKDIR:?}/classpath/.") \

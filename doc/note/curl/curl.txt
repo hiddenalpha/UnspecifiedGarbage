@@ -1,0 +1,13 @@
+
+
+## Timing
+
+  curl example.com -w "\n\nconnect=%{time_connect}s, trsf=%{time_starttransfer}s, totl=%{time_total}s"
+
+
+
+
+## Sources
+
+- [time trace](https://stackoverflow.com/a/18215566/4415884)
+

@@ -2,6 +2,34 @@
   TODO describe (like in houston)
 
 
+diff --git a/pom.xml b/pom.xml
+--- a/pom.xml
++++ b/pom.xml
+@@ -57,6 +57,24 @@
+ 
+     <!-- atlas -->
+     <atlas.version>00.01.00.00</atlas.version>
++    <skip.angular.build>true</skip.angular.build>
++    <skip.frontend.sourceformat.check>true</skip.frontend.sourceformat.check>
++    <skip.grunt.build>true</skip.grunt.build>
++    <skip.install.nodeAndNpm>false</skip.install.nodeAndNpm>
++    <skip.integration.tests>true</skip.integration.tests>
++    <skip.jacoco>true</skip.jacoco>
++    <skip.jacoco.regularbuild>true</skip.jacoco.regularbuild>
++    <skip.junit.tests>false</skip.junit.tests>
++    <skip.karma.tests>true</skip.karma.tests>
++    <skip.npm.install>true</skip.npm.install>
++    <skip.remote.tests>true</skip.remote.tests>
++    <skip.selenium.tests>true</skip.selenium.tests>
++    <skip.spotless>true</skip.spotless>
++    <skip.test.install.nodeAndNpm>true</skip.test.install.nodeAndNpm>
++    <skip.test.npm.install>true</skip.test.npm.install>
++    <skip.unpack.dependencies>true</skip.unpack.dependencies>
++    <skip.web.install.nodeAndNpm>true</skip.web.install.nodeAndNpm>
++    <skip.web.npm.install>true</skip.web.npm.install>
+   </properties>
+ 
+   <modules>
 diff --git a/preflux-web/pom.xml b/preflux-web/pom.xml
 index 752be702..8f91c053 100644
 --- a/preflux-web/pom.xml
