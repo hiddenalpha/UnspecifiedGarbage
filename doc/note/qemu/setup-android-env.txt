@@ -26,6 +26,7 @@ true \
   && BUILD_TOOLS_URL="https://dl.google.com/android/repository/build-tools_r25-linux.zip" \
   && PLATFORM_URL="https://dl.google.com/android/repository/platform-${PLATFORM_VERSION:?}_r02.zip" \
   && BUILD_TOOLS_ZIP="$(basename "${BUILD_TOOLS_URL:?}")" \
+  && PLATFORM_ZIP="$(basename "${PLATFORM_URL:?}")" \
   \
   && $PKGINIT \
   && $PKGADD $PKGS_TO_ADD \
@@ -44,27 +45,29 @@ true \
         | (cd /usr/lib/android-sdk/build-tools && $SUDO tar x) \
   && $SUDO find /usr/lib/android-sdk/build-tools -type d -exec chmod 755 {} + \
   && `# Those for some reason are broken (wrong linker) so use the debian variant.` \
-  && (cd "/usr/lib/android-sdk/build-tools/android*" && $SUDO rm aapt zipalign) \
+  && (cd /usr/lib/android-sdk/build-tools/android* && $SUDO rm aapt zipalign) \
   && `# Platform` \
-  && (cd /var/tmp && curl -sSLO "${PLATFORM_URL:?}") \
+  && (cd /var/tmp && curl -sSL "${PLATFORM_URL:?}" -o "${PLATFORM_ZIP:?}") \
   && if test -x /tmp/android*; then echo >&2 '[ERROR] /tmp/android* already exists'; false; fi \
-  && (cd /tmp && unzip /var/tmp/$(basename "${PLATFORM_URL:?}") >/dev/null) \
+  && (cd /tmp && unzip "/var/tmp/${PLATFORM_ZIP:?}" >/dev/null) \
   && $SUDO mkdir /usr/lib/android-sdk/platforms \
-  && (cd /tmp && tar --owner=0 --group=0 -c android-*) | (cd /usr/lib/android-sdk/platforms && $SUDO tar x) \
+  && (cd /tmp && mv android-* "android-${PLATFORM_VERSION:?}") \
+  && (cd /tmp && tar --owner=0 --group=0 -c "android-${PLATFORM_VERSION:?}") \
+        | (cd /usr/lib/android-sdk/platforms && $SUDO tar x) \
   && $SUDO find /usr/lib/android-sdk/platforms/android-* -type d -exec chmod o+rx {} + \
   && $SUDO find /usr/lib/android-sdk/platforms/android-* -type f -exec chmod o+r {} + \
   && `# Environ` \
   && printf >>~/.profile '%s\n' \
         "PATH=/usr/lib/android-sdk/build-tools/debian:\$PATH" \
-        "PATH=\"$(ls -d /usr/lib/android-sdk/build-tools/android*):\$PATH\"" \
-        "CLASSPATH=/usr/lib/android-sdk/build-tools/android-7.1.1/lib/dx.jar" \
-        "LD_LIBRARY_PATH=/usr/lib/android-sdk/build-tools/android-7.1.1/lib64:\$LD_LIBRARY_PATH" \
+        "PATH=\"$(ls -d /usr/lib/android-sdk/build-tools/android-*):\$PATH\"" \
+        "CLASSPATH=$(ls -d /usr/lib/android-sdk/build-tools/android-*/lib/dx.jar)" \
+        "LD_LIBRARY_PATH=$(ls -d /usr/lib/android-sdk/build-tools/android-*/lib64):\$LD_LIBRARY_PATH" \
         "export PATH" \
         "export CLASSPATH" \
         "export LD_LIBRARY_PATH" \
   && `# Cleanup` \
   && $PKGCLEAN \
-  && rm -rf /tmp/* \
-  && printf '\n  Done :)\n\n' \
+  && rm -rf /tmp/* 2>/dev/null || true \
+  && printf '\n  Done :)\n\n  Logout and login to get your new environ from ~/.profile\n\n' \
   && true
 
