@@ -15,7 +15,7 @@ set -e
 
 ### Made for debian 10 (alias buster)
 true \
-  && PKGS_TO_ADD="curl unzip openjdk-17-jdk-headless aapt apksigner zipalign" \
+  && PKGS_TO_ADD="curl unzip openjdk-17-jdk-headless aapt apksigner zipalign adb android-sdk-platform-tools-common" \
   && SUDO=sudo \
   && PKGINIT="$SUDO apt update" \
   && PKGADD="$SUDO apt install -y --no-install-recommends" \
@@ -60,6 +60,7 @@ true \
   && printf >>~/.profile '%s\n' \
         "PATH=/usr/lib/android-sdk/build-tools/debian:\$PATH" \
         "PATH=\"$(ls -d /usr/lib/android-sdk/build-tools/android-*):\$PATH\"" \
+        "PATH=\"/usr/lib/android-sdk/platform-tools:$PATH\"" \
         "CLASSPATH=$(ls -d /usr/lib/android-sdk/build-tools/android-*/lib/dx.jar)" \
         "LD_LIBRARY_PATH=$(ls -d /usr/lib/android-sdk/build-tools/android-*/lib64):\$LD_LIBRARY_PATH" \
         "export PATH" \

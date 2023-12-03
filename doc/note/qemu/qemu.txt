@@ -51,6 +51,8 @@ qemu-system-x86_64 \
     `# socket mcast shared network adapter` \
     -netdev socket,id=n1,ipv6=off,mcast=230.0.0.1:1234 \
     -device e1000,netdev=n1 \
+    `# USB pass-through (WARN: untested!)` \
+    -usb -device usb-host,id=myUsbQemuId,vendorid=0xFFFF,productid=0xFFFF \
     `# Fix broken host systems` \
     -L "${QEMU_HOME:?}/Bios" -bios "${QEMU_HOME:?}/Bios/bios-256k.bin" \
     `# Fix broken guest systems` \
