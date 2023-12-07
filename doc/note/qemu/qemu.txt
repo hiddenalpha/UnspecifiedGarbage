@@ -36,7 +36,7 @@ Windoof:
 
 ## Example Params (Usage: CopyPaste, then delege what is not needed)
 qemu-system-x86_64 \
-    -accel kvm:whpx:hax:tcg -m size=4G -smp cores=$(nproc) \
+    -accel kvm:whpx:hax:tcg -m size=2G -smp cores=$(nproc) \
     -monitor stdio \
     `# Drives & Boot.` \
     -boot order=dc \
@@ -51,8 +51,8 @@ qemu-system-x86_64 \
     `# socket mcast shared network adapter` \
     -netdev socket,id=n1,ipv6=off,mcast=230.0.0.1:1234 \
     -device e1000,netdev=n1 \
-    `# Fix broken guest systems` \
-    -device usb-ehci,id=usb,bus=pci.0,addr=0x4 -device usb-tablet \
+    `# USB pass-through` \
+    -usb -device usb-host,id=myUsbQemuId,vendorid=0xFFFF,productid=0xFFFF \
     `# Choose ONE of those for graphic output` \
     -nographic \
     -display sdl,grab-mod=rctrl \
@@ -60,33 +60,13 @@ qemu-system-x86_64 \
     -display vnc=127.0.0.1:0,to=99 `#HINT: 0 is port 5900` \
     ;
 
-## Example Params for BROKEN host systems
-qemu-system-x86_64 \
-    -machine pc,accel=tcg -m size=2G -smp cores=$(nproc) \
-    -monitor stdio \
-    `# Drives & Boot.` \
-    -boot order=dc \
-    -cdrom "path/to/cd.iso" \
-    -hda "$(dirname "$(realpath "$0")")/hda.qcow2" \
-    `# Isolated Network plus host port/cmd reachable from guest` \
-    -netdev 'user,id=n1,ipv6=off,restrict=y,guestfwd=guestfwd=tcp:10.0.2.9:80-cmd:ncat 127.0.0.1 80' \
-    -device e1000,netdev=n1 \
-    `# 10.0.2.x network with host redirect` \
-    -netdev user,id=n0,ipv6=off,hostfwd=tcp:127.0.0.1:${SSH_PORT:-2222}-:22 \
-    -device e1000,netdev=n0 \
-    `# socket mcast shared network adapter` \
-    -netdev socket,id=n1,ipv6=off,mcast=230.0.0.1:1234 \
-    -device e1000,netdev=n1 \
-    `# Fix broken host systems` \
+## Broken systems likely need some of those too
+    `# Fix broken hosts` \
+    -machine pc,accel=tcg \
     -L "${QEMU_HOME:?}/Bios" -bios "${QEMU_HOME:?}/Bios/bios-256k.bin" \
-    `# Fix broken guest systems` \
+    `# Fix broken guests` \
     -device usb-ehci,id=usb,bus=pci.0,addr=0x4 -device usb-tablet \
-    `# Choose ONE of those for graphic output` \
-    -nographic \
-    -display sdl,grab-mod=rctrl \
-    -display gtk,show-menubar=on \
-    -display vnc=127.0.0.1:0,to=99 `#HINT: 0 is port 5900` \
-    ;
+
 
 ### Example manual adapter setup (inside VM) for socket mcast network:
 true \
