@@ -426,6 +426,10 @@ Links (Aka argument amplifiers)
 - [Thought DB streams](https://wikit.post.ch/pages/viewpage.action?pageId=993270063&focusedCommentId=993272727#comment-993272727)
 - [How To Prevent Data Loss On A Non-Reliable Transport Channel](https://wikit.post.ch/x/4y_nQg)
 
+## Resilience reliable end-to-end transport
+- [How To Prevent Data Loss On A Non-Reliable Transport Channel](https://wikit.post.ch/x/4y_nQg)
+- [Houston losing hook messages](https://jira.post.ch/browse/SDCISA-13346)
+
 ## Bugs, Frameworks, Dependencies include them all
 - "https://medium.com/dinahmoe/escape-dependency-hell-b289de537403"
 - "https://gitit.post.ch/projects/ISA/repos/preflux/pull-requests/119/overview?commentId=46245"
