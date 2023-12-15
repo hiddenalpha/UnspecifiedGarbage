@@ -248,6 +248,8 @@ Links (Aka argument amplifiers)
 - [Update beim Fahrzeughersteller dauert zu lange](https://jira.post.ch/browse/SDCISA-9059)
 - [vortex too slow](https://jira.post.ch/browse/SDCISA-9990)
 - [2023-10-27 OOM nun auch auf Eagle](https://wikit.post.ch/x/c2U1Tw)
+- [Fahrplanimports slow](https://jira.post.ch/browse/SDCISA-11528)
+- [Jenkinsbuild too slow](https://jira.post.ch/browse/SDCISA-14313?focusedId=1914236&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-1914236)
 
 ## Performance is not an issue ...
 - [Houston OOM 2023-06-27](https://wikit.post.ch/x/_Bv6Rw)
@@ -424,11 +426,12 @@ Links (Aka argument amplifiers)
 ## Resilience limit upper bound
 - [Thought OOM](https://jira.post.ch/browse/SDCISA-10021)
 - [Thought DB streams](https://wikit.post.ch/pages/viewpage.action?pageId=993270063&focusedCommentId=993272727#comment-993272727)
-- [How To Prevent Data Loss On A Non-Reliable Transport Channel](https://wikit.post.ch/x/4y_nQg)
+- [in-memory buffer OOM](https://gitit.post.ch/projects/ISA/repos/nsync/pull-requests/55/overview?commentId=324715)
 
 ## Resilience reliable end-to-end transport
 - [How To Prevent Data Loss On A Non-Reliable Transport Channel](https://wikit.post.ch/x/4y_nQg)
 - [Houston losing hook messages](https://jira.post.ch/browse/SDCISA-13346)
+- [Not interested in the fix](https://jira.post.ch/browse/SDCISA-11619?focusedId=1913186&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-1913186)
 
 ## Bugs, Frameworks, Dependencies include them all
 - "https://medium.com/dinahmoe/escape-dependency-hell-b289de537403"
