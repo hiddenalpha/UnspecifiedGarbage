@@ -60,8 +60,8 @@ true \
   && printf >>~/.profile '%s\n' \
         "PATH=/usr/lib/android-sdk/build-tools/debian:\$PATH" \
         "PATH=\"$(ls -d /usr/lib/android-sdk/build-tools/android-*):\$PATH\"" \
-        "PATH=\"/usr/lib/android-sdk/platform-tools:$PATH\"" \
-        "PATH=\"$(ls -d /usr/lib/android-sdk/build-tools/android-*):$PATH\"" \
+        "PATH=\"/usr/lib/android-sdk/platform-tools:\$PATH\"" \
+        "PATH=\"$(ls -d /usr/lib/android-sdk/build-tools/android-*):\$PATH\"" \
         "CLASSPATH=$(ls -d /usr/lib/android-sdk/build-tools/android-*/lib/dx.jar)" \
         "LD_LIBRARY_PATH=$(ls -d /usr/lib/android-sdk/build-tools/android-*/lib64):\$LD_LIBRARY_PATH" \
         "export PATH" \
