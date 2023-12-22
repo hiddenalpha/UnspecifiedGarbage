@@ -1,0 +1,18 @@
+
+Stop Automatic windoof updates
+==============================
+
+For example in Virtual machines running in isolated environments
+shouting auto updates are nothing than annoying. Further, they
+continuously bloat VM images for no reason and make snapshotting
+unneccesarily tedious.
+
+
+
+## Stop annoying updates
+
+Windows Registry Editor Version 5.00
+[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU]
+"NoAutoUpdate"=dword:00000001
+
+
