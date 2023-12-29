@@ -25,8 +25,10 @@ true \
   && CMDLINETOOLS_URL="https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip" \
   && BUILD_TOOLS_URL="https://dl.google.com/android/repository/build-tools_r25-linux.zip" \
   && PLATFORM_URL="https://dl.google.com/android/repository/platform-${PLATFORM_VERSION:?}_r02.zip" \
+  && NDK_URL="https://dl.google.com/android/repository/android-ndk-r26b-linux.zip" \
   && BUILD_TOOLS_ZIP="$(basename "${BUILD_TOOLS_URL:?}")" \
   && PLATFORM_ZIP="$(basename "${PLATFORM_URL:?}")" \
+  && NDK_ZIP="$(basename "${NDK_URL:?}")" \
   \
   && $PKGINIT \
   && $PKGADD $PKGS_TO_ADD \
@@ -67,6 +69,14 @@ true \
         "export PATH" \
         "export CLASSPATH" \
         "export LD_LIBRARY_PATH" \
+  && `# NDK` \
+  && (cd /var/tmp && curl -sSL "${NDK_URL:?}" -o "${NDK_ZIP:?}") \
+  && mkdir "/tmp/${NDK_ZIP%.*}" \
+  && (cd "/tmp/${NDK_ZIP%.*}" && unzip "/var/tmp/${NDK_ZIP:?}") \
+  && `# TODO may worth throw away some of that garbage before moving it into place` \
+  && (cd "/tmp/${NDK_ZIP%.*}" && tar --owner=0 --group=0 -c android-ndk-*) \
+        | (cd "/usr/lib" && $SUDO tar x) \
+  && $SUDO ln -s /usr/lib/android-ndk-* "/usr/lib/android-ndk" \
   && `# Cleanup` \
   && $PKGCLEAN \
   && rm -rf /tmp/* 2>/dev/null || true \
