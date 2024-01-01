@@ -1,0 +1,32 @@
+#!/bin/sh
+#
+# Once used to batch process some PDFs. This is NOT functional. It is only here
+# for reference purposes.
+#
+#  scan.pdf
+#  scan0001.pdf
+#  scan0002.pdf
+#  scan0003.pdf
+#  scan0004.pdf
+#  scan0005.pdf
+#
+
+true \
+  && mkdir scan scan0001 scan0002 scan0003 scan0004 scan0005 \
+  && pdfimages -all  scan.pdf     scan-tmp1/scan-img \
+  && pdfimages -all  scan0001.pdf scan0001-tmp1/scan0001-img \
+  && pdfimages -all  scan0002.pdf scan0002-tmp1/scan0002-img \
+  && pdfimages -all  scan0003.pdf scan0003-tmp1/scan0003-img \
+  && pdfimages -all  scan0004.pdf scan0004-tmp1/scan0004-img \
+  && pdfimages -all  scan0005.pdf scan0005-tmp1/scan0005-img \
+  && X=nVXBcpswEL3nK7acRDuywUkPnvTCNErijmtnHJK7ArKiFAS1ZDf9+wosRB08GTligF28b/X27Y6MCqY/AzoDs5CQckFLpgAVQun2W7OCsS7rccmEVGOVUTlpn2NRchxF0eil5oFfbHxC7MQn1mwfOwOfQOgY0IvdMeCHqZ57AnvjxBoHQN8aB0DfGgfAD9d44Qk8d8aJ4gyAvuIMgL7iXDjjRKoDoC/VAdCX6ldnDKmG4cFxAZH1q62+k9y5BufsfEP/0KeijxX5K+DYOpnUEE8bp7lRztZCMkD6WaiZ+rFVOrneZr+E5Fe0lPOqqsHAu0RrQN8aH0yWENAT40La+pBi+hN0NJHUz21gd8zZOlyc4YsyugG0FgXDLzXjuKhoDrFLYd/hG6Srbg/noqyNapQzzJnGNNNix3BB/7JNs8l/6DayQ+OC7Vih+my3s/t0ebNKfuLHZP5AXNOi0aR5TAGuk/k9Abg0xOptf2DHowgO1iVwWpb0MEMb5TKY5vUpDgnuS8kquWMbjYXM2SvLW7m+LxePZJXiq1l6S1Z4sVwQ9+0umZM0JfiGLMgqSQmcT+xu6eqBQBAcamiHBym9MY3GtK6ZzJ3wAW6YjGrJg1692kTqt4hA0Z1xoekh6AoCm7mHtd01mbCJZE1zTSFOc0ujG2WYmttex0TJmfn/ZG1Xu1/fmVr0pZ2/2HIJ3cS/g2m33W/5eyt044dn/wA4gyeC \
+  && echo $X|base64 -d|inflate| gimp -nidfsc -b - \
+  && mkdir scan-out scan0001-out scan0002-out scan0003-out scan0004-out scan0005-out \
+  && mv -t scan-out/. scan-tmp1/*-gimp.png \
+  && mv -t scan0001-out/. scan0001-tmp1/*-gimp.png \
+  && mv -t scan0002-out/. scan0002-tmp1/*-gimp.png \
+  && mv -t scan0003-out/. scan0003-tmp1/*-gimp.png \
+  && mv -t scan0004-out/. scan0004-tmp1/*-gimp.png \
+  && mv -t scan0005-out/. scan0005-tmp1/*-gimp.png \
+
+
