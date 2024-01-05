@@ -87,13 +87,16 @@ run () {
         --exclude="/.lesshst" \
         --exclude="/.local/share" \
         --exclude="/.m2/repository" \
+        --exclude="/mnt" \
         --exclude="/.mozilla/firefox" \
         --exclude="/.NERDTreeBookmarks" \
         --exclude="/.recently-used" \
+        --exclude="/.sh_history" \
         --exclude="/.sqlite_history" \
         --exclude="/.squirrel-sql" \
         --exclude="/.viking-maps" \
         --exclude="/.viminfo" \
+        --exclude="/.viminfo.tmp" \
         --exclude="/.Xauthority" \
         --exclude="/.xsession-errors" \
         --exclude="/.xsession-errors.old" \
