@@ -36,7 +36,7 @@ function loadFilters( that )
     that.filters = {
 
         { action = "drop", beforeDate = "2023-10-18 03:00:00.000", },
-        { action = "drop", afterDate  = "2023-10-18 15:00:00.000", },
+        { action = "drop", afterDate  = "2024-01-31 23:59:59.999", },
 
         { action = "drop", level = "TRACE" },
         { action = "drop", level = "DEBUG" },
@@ -68,7 +68,7 @@ function loadFilters( that )
         },
 
         -- Reported:  SDCISA-13717
-        -- Seen:  2023-10-18 prod
+        -- Seen:  2024-01-05 prod, 2023-10-18 prod
         { action = "drop", file = "LocalHttpServerResponse", level = "ERROR",
             msgPattern = "^non%-proper HttpServerResponse occured\r?\n"
                 .."java.lang.IllegalStateException:"
@@ -76,7 +76,7 @@ function loadFilters( that )
                 .." HTTP chunked encoding.", },
 
         -- Reported:  <none>
-        -- Seen:  2023-10-18 prod
+        -- Seen:  2024-01-05 prod, 2023-10-18 prod
         { action = "drop", file = "ContextImpl", level = "ERROR",
             msgPattern = "Unhandled exception\n"
                 .."java.lang.IllegalStateException: You must set the Content%-Length header to be the total size of the message body BEFORE sending"
@@ -163,7 +163,7 @@ function loadFilters( that )
                 .." __vertx.reply.[0-9]+, repliedAddress: nsync.reregister.sync/slarti.vehicle.setup.sync.[0-9]+",
         },
 
-        -- Seen:  2023-10-18 prod
+        -- Seen:  2024-01-05 prod, 2023-10-18 prod
         -- Reported:  <unknown>
         { action = "drop", file = "Utils", level = "ERROR", msgPattern = "^Exception occurred\n"
             .."io.vertx.core.eventbus.ReplyException: Timed out after waiting 30000.ms. for a reply. address: __vertx.reply.[0-9]+, repliedAddress: nsync.register.sync" },

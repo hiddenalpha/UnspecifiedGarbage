@@ -558,3 +558,6 @@ Links (Aka argument amplifiers)
 ## Angular is terrible
 - [Why angular sucks](https://medium.com/dirtyjs/why-angular-2-4-5-6-sucks-afb36567ad68)
 
+## java try-with-resources behavior
+[Exception Scenarios for Java's try-with-resources](https://dev.to/moaxcp/exception-scenarios-for-java-s-try-with-resources-63m)
+
