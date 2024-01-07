@@ -81,6 +81,7 @@ run () {
         --exclude="/.config/VirtualBox/vbox-ssl-cacertificate.crt" \
         --exclude="/.config/VirtualBox/VBoxSVC.log*" \
         --exclude="/.config/VirtualBox/xpti.dat" \
+        --exclude="/.eclipse" \
         --exclude="/.gdb_history" \
         --exclude="/.git-credentials" \
         --exclude="/.gmrun_history" \
@@ -91,6 +92,7 @@ run () {
         --exclude="/.mozilla/firefox" \
         --exclude="/.NERDTreeBookmarks" \
         --exclude="/.recently-used" \
+        --exclude="/.recoll" \
         --exclude="/.sh_history" \
         --exclude="/.sqlite_history" \
         --exclude="/.squirrel-sql" \
@@ -107,7 +109,9 @@ run () {
         --exclude="/projects/forks" \
         --exclude="/tmp" \
         --exclude="/virtualbox-*" \
+        --exclude="/VirtualBox VMs" \
         --exclude="/vm-qemu" \
+        --exclude="/vm-share" \
         --exclude="/vmshare" \
         --exclude="cee-misc-lib/external" \
         --exclude="cee-misc-lib/tmp" \
