@@ -233,6 +233,7 @@ Links (Aka argument amplifiers)
 - [thor-DasUnheilNaht](https://gitit.post.ch/projects/ISA/repos/fis-masterdata-api/pull-requests/17/overview?commentId=227703)
 - [thor-DerBlizHatEingeschlagen](https://gitit.post.ch/projects/ISA/repos/fis-masterdata-api/pull-requests/18/overview)
 - [PaISA api new enum values](https://gitit.post.ch/projects/ISA/repos/fis-control-api/pull-requests/14/overview?commentId=296012)
+- [Keep APIs scope narrow as possible](https://gitit.post.ch/projects/ISA/repos/timetable-reservation-api/pull-requests/12/overview?commentId=327819)
 
 ## Performance DOES matter
 - "https://github.com/swisspush/gateleen/pull/456#discussion_r844865066"
@@ -258,6 +259,9 @@ Links (Aka argument amplifiers)
 - [http cache disable](https://gitit.post.ch/projects/ISA/repos/bangbang/pull-requests/1/overview?commentId=287832)
 - [How to repair KISS for performance](https://gitit.post.ch/projects/ISA/repos/preflux/pull-requests/304/diff)
 - [Houston readyness fails often](https://jira.post.ch/browse/SDCISA-13746?focusedId=1899551&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-1899551)
+
+## Errorhandling is not needed ...
+- [OOM exit code 137 9 sigkill houston openshift pod](https://jira.post.ch/browse/SDCISA-13746?focusedId=1925526&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-1925526)
 
 ## Common Performance
 - [going fast is about doing less](https://m.youtube.com/watch?v=5rb0vvJ7NCY)
@@ -560,4 +564,6 @@ Links (Aka argument amplifiers)
 
 ## java try-with-resources behavior
 [Exception Scenarios for Java's try-with-resources](https://dev.to/moaxcp/exception-scenarios-for-java-s-try-with-resources-63m)
+
+[About TLS in isa](https://jira.post.ch/browse/SDCISA-14330?focusedId=1925001&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-1925001)
 
