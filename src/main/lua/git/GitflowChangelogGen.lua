@@ -28,11 +28,11 @@ function parseArgs( app )
             break
         elseif arg == "--since" then
             iA = iA + 1; arg = _ENV.arg[iA]
-            if not arg then log:write("EINVAL: --since needs value\n")end
+            if not arg then log:write("EINVAL: --since needs value\n")return end
             app.since = arg
         elseif arg == "--remote" then
             iA = iA + 1; arg = _ENV.arg[iA]
-            if not arg then log:write("EINVAL: --remote needs value\n")end
+            if not arg then log:write("EINVAL: --remote needs value\n")return end
             app.remoteName = arg
         elseif arg == "--help" then
             app.isHelp = true; return 0

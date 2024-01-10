@@ -221,7 +221,8 @@ Links (Aka argument amplifiers)
 - "https://github.com/swisspush/gateleen/pull/426#discussion_r813752075"
 - "https://github.com/swisspush/gateleen/blob/v1.1.61/gateleen-kafka/src/main/java/org/swisspush/gateleen/kafka/KafkaMessageSender.java#L21"
 - [How to use java fancy streams](https://m.youtube.com/watch?v=x5akmCWgGY0)
-- think please ... "https://m.youtube.com/watch?v=hSfylUXhpkA"
+- [think please ...](https://m.youtube.com/watch?v=hSfylUXhpkA)
+- [java streams are ugly](https://gitit.post.ch/projects/ISA/repos/nsync/pull-requests/55/overview?commentId=328210)
 
 ## The Only way to Format Dates ISO 8601
 - "https://xkcd.com/1179/"
