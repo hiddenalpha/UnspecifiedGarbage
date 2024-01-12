@@ -5,7 +5,7 @@ local main
 
 function printHelp()
     io.stdout:write("  \n"
-        .."  Helper to extract essential data from a gitflog log which potentially\n"
+        .."  Helper to extract essential data from a gitflow log which potentially\n"
         .."  is useful to write a CHANGELOG from.\n"
         .."  \n"
         .."  Options:\n"
@@ -36,6 +36,8 @@ function parseArgs( app )
             app.remoteName = arg
         elseif arg == "--help" then
             app.isHelp = true; return 0
+        else
+            log:write("EINVAL: ".. arg .."\n")return
         end
     end
     if not app.since then log:write("EINVAL: --since missing\n")return end

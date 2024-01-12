@@ -941,9 +941,6 @@ function mod.exportParentsLatest(app)
     local stmt = app.stmtCache[stmtStr]
     if not stmt then stmt = db:prepare(stmtStr) app.stmtCache[stmtStr] = stmt end
     local rs = stmt:execute()
-    out:write("h;Title;Parent relations (latest only)\n")
-    out:write("h;ExportedAt;".. os.date("!%Y-%m-%d_%H:%M:%SZ") .."\n")
-    out:write("c;GroupId;ArtifactId;Version;ParentGid;ParentAid;ParentVersion\n")
     -- Need to filter out the older artifacts.
     local all = {}
     while rs:next() do
@@ -954,18 +951,14 @@ function mod.exportParentsLatest(app)
         if diff > 0 then -- existing is newer. Keep it and ignore newer one.
             goto nextRecord
         else -- Either no entry yet or found a newer one.
-            local entry = { gid=false, aid=false, ver=false, pgid=false, paid=false, pver=false }
-            entry.gid = gid
-            entry.aid = aid
-            entry.ver = ver
-            entry.pgid = rs:value(4)
-            entry.paid = rs:value(5)
-            entry.pver = rs:value(6)
-            all[key] = entry
+            all[key] = { gid=gid, aid=aid, ver=ver, pgid=rs:value(4), paid=rs:value(5), pver=rs:value(6) }
         end
 ::nextRecord::
     end
     -- Print
+    out:write("h;Title;Parent relations (latest only)\n")
+    out:write("h;ExportedAt;".. os.date("!%Y-%m-%d_%H:%M:%SZ") .."\n")
+    out:write("c;GroupId;ArtifactId;Version;ParentGid;ParentAid;ParentVersion\n")
     for _, entry in pairs(all) do
         out:write("r;".. entry.gid ..";".. entry.aid ..";".. entry.ver
             ..";".. entry.pgid ..";".. entry.paid ..";".. entry.pver .."\n")
@@ -1031,9 +1024,6 @@ function mod.exportDepsLatest(app)
     local stmt = app.stmtCache[stmtStr]
     if not stmt then stmt = db:prepare(stmtStr) app.stmtCache[stmtStr] = stmt end
     local rs = stmt:execute()
-    out:write("h;Title;Dependencies (of latest only)\n")
-    out:write("h;ExportedAt;".. os.date("!%Y-%m-%d_%H:%M:%SZ") .."\n")
-    out:write("c;GroupId;ArtifactId;Version;Dependency GID;Dependency AID;Dependency Version\n")
     -- Need to filter out the older artifacts.
     local all = {}
     local entry, key, gid, aid, ver, diff
@@ -1046,18 +1036,14 @@ function mod.exportDepsLatest(app)
     if diff > 0 then -- existing is newer. Keep it and ignore newer one.
         goto nextRecord
     else -- Either no entry yet or found a newer one.
-        local entry = { gid=false, aid=false, ver=false, dgid=false, daid=false, dver=false }
-        entry.gid = gid
-        entry.aid = aid
-        entry.ver = ver
-        entry.dgid = rs:value(4)
-        entry.daid = rs:value(5)
-        entry.dver = rs:value(6)
-        all[key] = entry
+        all[key] = { gid=gid, aid=aid, ver=ver, dgid=rs:value(4), daid=rs:value(5), dver=rs:value(6) }
     end
     goto nextRecord
 ::endFiltering::
     -- Print
+    out:write("h;Title;Dependencies (of latest only)\n")
+    out:write("h;ExportedAt;".. os.date("!%Y-%m-%d_%H:%M:%SZ") .."\n")
+    out:write("c;GroupId;ArtifactId;Version;Dependency GID;Dependency AID;Dependency Version\n")
     for _, entry in pairs(all) do
         out:write("r;".. entry.gid ..";".. entry.aid ..";".. entry.ver
             ..";".. entry.dgid ..";".. entry.daid ..";".. entry.dver .."\n")
