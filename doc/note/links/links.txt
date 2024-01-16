@@ -278,6 +278,7 @@ Links (Aka argument amplifiers)
 ## How to API design
 - "https://m.youtube.com/watch?v=2xgplCQS1bY"
 - [How to migrate an API properly via migration path](https://wikit.post.ch/x/pK1WJQ)
+- [What "Software Architect" means](https://m.youtube.com/watch?v=rPJfadFSCyQ&t=900)
 
 ## Posix c API design
 - "https://lucumr.pocoo.org/2013/8/18/beautiful-native-libraries/"
@@ -443,6 +444,7 @@ Links (Aka argument amplifiers)
 - "https://medium.com/dinahmoe/escape-dependency-hell-b289de537403"
 - "https://gitit.post.ch/projects/ISA/repos/preflux/pull-requests/119/overview?commentId=46245"
 - [Stop Ductaping crap together](https://devrant.com/rants/5107044)
+- [JavaMelody OutOfMemory](https://wikit.post.ch/display/ISA/God+UI+ohne+Inhalt?focusedCommentId=1439580947#comment-1439580947)
 
 ## Input validation
 - [WontDo](https://gitit.post.ch/projects/ISA/repos/preflux/pull-requests/512/overview?commentId=222672)
