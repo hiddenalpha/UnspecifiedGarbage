@@ -2,22 +2,22 @@
   Custom houston patch to have a "usable" service at all.
 
   Patch based on "develop" aka
-  "3b1275e123c2b7aa2ffaa34270a5e1a373a65993" from "2023-04-27".
+  "125344e940ebc090183bad7fc096938289f15e3f" from "2024-01-16".
 
 
 diff --git a/pom.xml b/pom.xml
 index 0ed4f7f3..b44c5693 100644
 --- a/pom.xml
 +++ b/pom.xml
-@@ -72,8 +72,6 @@
-         <skip.wagon>false</skip.wagon>
+@@ -73,7 +73,7 @@
          <skip.copy-dependencies>false</skip.copy-dependencies>
  
--        <!-- spotless -->
+         <!-- spotless -->
 -        <source.format.apply.phase>compile</source.format.apply.phase>
-     </properties>
++        <source.format.apply.phase>none</source.format.apply.phase>
  
-     <scm>
+         <!-- JavaMelody -->
+         <jetty.version>9.4.43.v20210629</jetty.version>
 diff --git a/houston-process/pom.xml b/houston-process/pom.xml
 index 374dcb97..3c24937c 100644
 --- a/houston-process/pom.xml
@@ -69,9 +69,9 @@ index 432efb01..d1729fe9 100644
                  qc.add(
 -                    new QueueConfiguration().withPattern(".*").withRetryIntervals(standardDelays));
 +                    new QueueConfiguration().withPattern(".*").withRetryIntervals(5/*TODO revert*/));
- 
-                 RedisquesConfiguration redisquesConfig =
-                     RedisquesConfiguration.with()
+                 LOGGER.info(
+                     "Redisques redis-client will created with MaxPoolSize: {}, MaxPoolWaiting: {}, MaxWaitingHandlers: {}",
+                     Props.getMaxRedisConnectionPoolSize4RedisQues(),
 diff --git a/houston-process/src/main/java/org/apache/logging/slf4j/Log4jLogger.java b/houston-process/src/main/java/org/apache/logging/slf4j/Log4jLogger.java
 new file mode 100644
 index 00000000..aa3aa2e0
