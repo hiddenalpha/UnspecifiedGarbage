@@ -7,6 +7,7 @@
 
   ${CC:?} -o build/bin/mvn-launch.exe \
     -Wall -Werror -fmax-errors=3 -Wno-error=unused-function -Wno-error=unused-variable \
+    -DPROJECT_VERSION=0.0.0-$(date -u +%s) \
     src/main/c/postshit/launch/mvn/mvn-launch.c \
     -Isrc/main/c/postshit/launch/mvn \
 
@@ -18,6 +19,9 @@
 
 #define LOGERR(...) fprintf(stderr, __VA_ARGS__)
 #define LOGDBG(...) fprintf(stderr, __VA_ARGS__)
+
+#define STR_QUOT_3q9o58uhzjad(s) #s
+#define STR_QUOT(s) STR_QUOT_3q9o58uhzjad(s)
 
 
 static int appendRaw( char*dst, int*dst_len, int dst_cap, const char*src, int src_len ){
@@ -107,6 +111,18 @@ endFn:
 int main( int argc, char**argv ){
     register int err;
 
+    char tmp[2];
+    err = GetEnvironmentVariable("LAUNCHR_HELP", tmp, 1);
+    if( err == 0 ){
+        if( GetLastError() != ERROR_ENVVAR_NOT_FOUND ){
+            LOGERR("ERROR: GetEnvironmentVariable(LAUNCHR_HELP): %lu. %s:%d\n", GetLastError(), __FILE__, __LINE__);
+            err = -1; goto endFn; }
+        /*no such variable. interpret as no-help-wanted*/;
+    }else{
+        printf("\n  %s  " STR_QUOT(PROJECT_VERSION) "\n  \n  Delegates the call to maven without 'cmd' files.\n\n", strrchr(__FILE__,'/')+1);
+        err = -1; goto endFn;
+    }
+
     char username[16];
     const int username_cap = sizeof username;
     err = GetEnvironmentVariable("USERNAME", username, username_cap);
@@ -131,7 +147,7 @@ int main( int argc, char**argv ){
         || appendFromEnvironIfNotEmpty(cmdline, &cmdline_len, cmdline_cap, "MAVEN_OPTS") < 0
         || appendFromEnvironIfNotEmpty(cmdline, &cmdline_len, cmdline_cap, "MAVEN_DEBUG_OPTS") < 0
         || appendRaw(cmdline, &cmdline_len, cmdline_cap, " -classpath", 11) < 0
-        || appendRaw(cmdline, &cmdline_len, cmdline_cap, " C:/Users/", 9) < 0
+        || appendRaw(cmdline, &cmdline_len, cmdline_cap, " C:/Users/", 10) < 0
         || appendRaw(cmdline, &cmdline_len, cmdline_cap, username, username_len) < 0
         || appendRaw(cmdline, &cmdline_len, cmdline_cap, "/.opt/maven/boot/plexus-classworlds-2.5.2.jar", 45) < 0
         || appendRaw(cmdline, &cmdline_len, cmdline_cap, " -Dclassworlds.conf=C:/Users/", 29) < 0
@@ -143,21 +159,22 @@ int main( int argc, char**argv ){
         ;
     if( err ){ LOGDBG("[TRACE]   at %s:%d\n", __FILE__, __LINE__); goto endFn; }
 
-    char tmpBuf[0x7FFF];
-    const int tmpBuf_cap = sizeof tmpBuf;
-    err = GetCurrentDirectory(tmpBuf_cap, tmpBuf);
+    char workDir[0x7FFF];
+    const int workDir_cap = sizeof workDir;
+    err = GetCurrentDirectory(workDir_cap, workDir);
     if( err == 0 ){
         LOGERR("ERROR: GetCurrentDirectory() -> 0x%lX. %s:%d\n", GetLastError(), strrchr(__FILE__,'/')+1, __LINE__);
         err = -1; goto endFn; }
-    if( err >= tmpBuf_cap ){
+    if( err >= workDir_cap ){
         LOGERR("ENOBUFS: Working dir too long. %s:%d\n", strrchr(__FILE__,'/')+1, __LINE__);
         err = -ENOBUFS; goto endFn; }
     assert(err > 0);
-    const int tmpBuf_len = err;
+    const int workDir_len = err;
+    for( err = 0 ; err < workDir_len ; ++err ){ if( workDir[err] == '\\' ) workDir[err] = '/'; }
 
     err = 0
         || appendRaw(cmdline, &cmdline_len, cmdline_cap, " \"-Dmaven.multiModuleProjectDirectory=", 38) < 0
-        || appendQuotEscaped(cmdline, &cmdline_len, cmdline_cap, tmpBuf, tmpBuf_len) < 0
+        || appendQuotEscaped(cmdline, &cmdline_len, cmdline_cap, workDir, workDir_len) < 0
         || appendRaw(cmdline, &cmdline_len, cmdline_cap, "\"", 1) < 0
         || appendRaw(cmdline, &cmdline_len, cmdline_cap, " org.codehaus.plexus.classworlds.launcher.Launcher", 50) < 0
         ;
@@ -175,17 +192,24 @@ int main( int argc, char**argv ){
     PROCESS_INFORMATION proc;
     err = CreateProcessA(NULL, cmdline, NULL, NULL, !0, 0, NULL, NULL, &startInfo, &proc);
     if( err == 0 ){
-        LOGERR("[DEBUG] CMDLINE: %.*s\n", cmdline_len, cmdline);
         LOGERR("ERROR: CreateProcess(): 0x%0lX. %s:%d\n", GetLastError(), strrchr(__FILE__,'/')+1, __LINE__);
         err = -1; goto endFn;
     }
     err = WaitForSingleObject(proc.hProcess, INFINITE);
-    if( err != WAIT_OBJECT_0 ){ LOGERR("ERROR: WaitForSingleObject() -> %d. %s:%d\n", err, strrchr(__FILE__,'/')+1, __LINE__);
+    if( err != WAIT_OBJECT_0 ){ LOGERR("ERROR: WaitForSingleObject() -> %lu. %s:%d\n", GetLastError(), strrchr(__FILE__,'/')+1, __LINE__);
         err = -1; goto endFn; }
-    err = 0;
+    long unsigned exitCode;
+    err = GetExitCodeProcess(proc.hProcess, &exitCode);
+    if( err == 0 ){ LOGERR("ERROR: GetExitCodeProcess(): %lu. %s:%d\n", GetLastError(), strrchr(__FILE__,'/')+1, __LINE__);
+        err = -1; goto endFn; }
+    if( (exitCode & 0x7FFFFFFF) != exitCode ){
+        LOGERR("EDOM: Exit code %lu out of bounds. %s:%d\n", exitCode, strrchr(__FILE__,'/')+1, __LINE__);
+        err = -1; goto endFn;
+    }
+    err = exitCode;
 endFn:
+    if( err != 0 && cmdline_len > 0 ){ LOGDBG("[DEBUG] %.*s\n", cmdline_len, cmdline); }
     if( err < 0 ) err = -err;
-    if( err > 0x7F ) err = 1;
     return err;
 }
 
