@@ -35,8 +35,8 @@ function loadFilters( that )
     assert(not that.filters)
     that.filters = {
 
-        { action = "drop", beforeDate = "2023-10-18 03:00:00.000", },
-        { action = "drop", afterDate  = "2024-01-31 23:59:59.999", },
+--        { action = "drop", beforeDate = "2023-10-18 03:00:00.000", },
+--        { action = "drop", afterDate  = "2024-01-31 23:59:59.999", },
 
         { action = "drop", level = "TRACE" },
         { action = "drop", level = "DEBUG" },

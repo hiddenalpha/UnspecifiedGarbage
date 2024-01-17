@@ -261,6 +261,7 @@ Links (Aka argument amplifiers)
 - [How to repair KISS for performance](https://gitit.post.ch/projects/ISA/repos/preflux/pull-requests/304/diff)
 - [Houston readyness fails often](https://jira.post.ch/browse/SDCISA-13746?focusedId=1899551&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-1899551)
 - [Just one message per minute](https://gitit.post.ch/projects/ISA/repos/eagle/pull-requests/375/overview?commentId=330543)
+- [Houston down readyness probe timeout](https://wikit.post.ch/x/koO0Vg)
 
 ## Errorhandling is not needed ...
 - [OOM exit code 137 9 sigkill houston openshift pod](https://jira.post.ch/browse/SDCISA-13746?focusedId=1925526&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-1925526)
