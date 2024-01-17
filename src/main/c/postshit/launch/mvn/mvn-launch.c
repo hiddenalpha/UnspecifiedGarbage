@@ -9,7 +9,6 @@
     -Wall -Werror -fmax-errors=3 -Wno-error=unused-function -Wno-error=unused-variable \
     -DPROJECT_VERSION=0.0.0-$(date -u +%s) \
     src/main/c/postshit/launch/mvn/mvn-launch.c \
-    -Isrc/main/c/postshit/launch/mvn \
 
 */
 
@@ -178,7 +177,7 @@ int main( int argc, char**argv ){
         || appendRaw(cmdline, &cmdline_len, cmdline_cap, "\"", 1) < 0
         || appendRaw(cmdline, &cmdline_len, cmdline_cap, " org.codehaus.plexus.classworlds.launcher.Launcher", 50) < 0
         ;
-    if( err ){ LOGDBG("[TRACE] %s:%d", __FILE__, __LINE__); err = -1; goto endFn; }
+    if( err ){ LOGDBG("[TRACE]   at %s:%d", __FILE__, __LINE__); err = -1; goto endFn; }
 
     /*append all other args*/
     for( int iA=1 ; iA < argc ; ++iA ){
