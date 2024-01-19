@@ -12,6 +12,8 @@ mvn versions:update-parent -DparentVersion=
 
 mvn versions:set-property -Dproperty=foo.bar -DnewVersion=gugus
 
+export MAVEN_OPTS="..."
+
 
 ## Deploy paisa snapshot
 mvn deploy -DaltDeploymentRepository=artifactory-snapshots::default::https://artifactory.tools.pnet.ch/artifactory/libs-snapshot-local
