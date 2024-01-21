@@ -1,0 +1,8 @@
+
+## tmpfs / ramfs
+
+TODO: it seems as 'size' has no effect, and system may run OOM instead.
+
+  mount -t ramfs -o size=1G ramfs /mnt/ramfs
+  chown -R $(whoami):$(whoami) /mnt/ramfs
+

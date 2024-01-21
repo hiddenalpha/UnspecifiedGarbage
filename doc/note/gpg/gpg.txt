@@ -67,6 +67,24 @@ you're doing! If you don't, you MUST NOT use those instructions!
   gpgwin --sign-key foreignUser@example.com
 
 
+## Expand detached subkey expiry
+
+  cd "${WORKDIR:?}"
+  mkdir master
+  (cd "${OFFHOME:?}/.gnupg" && tar c *) | (cd master && tar x)
+  export GNUPGHOME="${WORKDIR:?}/master"
+  gpg --list-secret-keys --with-keygrip --keyid-format=long --with-fingerprint --with-subkey-fingerprint --list-options show-unusable-subkeys
+  gpg --edit-key SSB_KEY
+    key 1
+    key 2
+    expire
+    save
+  gpg --export-secret-subkeys F00! BA5! > subkey-$(date -u +%Y%m%d).sec.gpg
+  gpg --export F00! BA5! > subkey-$(date -u +%Y%m%d).pub.gpg
+  tar --owner=0 --group=0 -c subkey-$(date -u +%Y%m%d).*.gpg | (cd "${OFFHOME:?}" && sudo tar x)
+  md5sum -b subkey-$(date -u +%Y%m%d).*.gpg | sudo tee -a "${OFFHOME:?}/MD5SUM"
+
+
 ## Use keys with throw-away keyring
 
   GNUPGHOME="/tmp/foo/"
