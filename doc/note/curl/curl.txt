@@ -2,9 +2,7 @@
 
 ## Timing
 
-  curl example.com -w "\n\nconnect=%{time_connect}s, trsf=%{time_starttransfer}s, totl=%{time_total}s"
-
-
+  curl example.com -w "\n\nconnect=%{time_connect}s, trsf=%{time_starttransfer}s, totl=%{time_total}s\n"
 
 
 ## Sources

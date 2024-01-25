@@ -239,7 +239,7 @@ Links (Aka argument amplifiers)
 ## Performance DOES matter
 - "https://github.com/swisspush/gateleen/pull/456#discussion_r844865066"
 - [Performance Excuses Debunked](https://m.youtube.com/watch?v=x2EOOJg8FkA)
-- [Frameworks & clusters do not solve it](https://www.youtube.com/watch?v=EpYr3T5VP6w&t=1109)
+- [Is writing performant code too expensive?](https://www.youtube.com/watch?v=EpYr3T5VP6w&t=1109)
 - [Simple Code, High Performance](https://m.youtube.com/watch?v=Ge3aKEmZcqY&t=78)
 - [Houston Last führt zu Neustart](https://wikit.post.ch/x/HDV8T)
 - [Houston storage request timed out large json](https://jira.post.ch/browse/SDCISA-11294)
@@ -252,6 +252,7 @@ Links (Aka argument amplifiers)
 - [2023-10-27 OOM nun auch auf Eagle](https://wikit.post.ch/x/c2U1Tw)
 - [Fahrplanimports slow](https://jira.post.ch/browse/SDCISA-11528)
 - [Jenkinsbuild too slow](https://jira.post.ch/browse/SDCISA-14313?focusedId=1914236&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-1914236)
+- [Houston check too slow](https://jira.post.ch/browse/SDCISA-13746?focusedId=1937167&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-1937167)
 
 ## Performance is not an issue ...
 - [Houston OOM 2023-06-27](https://wikit.post.ch/x/_Bv6Rw)
