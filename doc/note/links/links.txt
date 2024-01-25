@@ -573,3 +573,6 @@ Links (Aka argument amplifiers)
 
 [About TLS in isa](https://jira.post.ch/browse/SDCISA-14330?focusedId=1925001&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-1925001)
 
+## Tools like tcpdump are incredibly important
+- [tcpdump discovers the truth once more](https://jira.post.ch/browse/SDCISA-13746?focusedId=1939377&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-1939377)
+

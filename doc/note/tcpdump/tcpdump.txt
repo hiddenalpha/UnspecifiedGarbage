@@ -69,7 +69,7 @@ Tips: "https://chrissanders.org/2018/06/large-captures4-filter-whittling/"
 
 ## Try dump kube-probes fully
 
-  tcpdump -nni any -w /tmp/houston-${PAISA_ENV:?}-tcp-$(date -u +%Y%m%d-%H%M%SZ)-%s.pcap -C 8M -W 99 -G 600 "host 10.127.77.1 and port 7012"
+  timeout --foreground 900 tcpdump -nni any -w /tmp/houston-${PAISA_ENV:?}-tcp-$(date -u +%Y%m%d-%H%M%SZ)-%s.pcap -C 42M -W 42 -G 600 "host 10.127.73.1 and port 7012"
 
 
 ## Extract hosts file from DNS traffic
