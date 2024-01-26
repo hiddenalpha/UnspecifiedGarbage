@@ -62,6 +62,15 @@ Tips: "https://chrissanders.org/2018/06/large-captures4-filter-whittling/"
   "net 172.18.0.0/16"
 
 
+## Filter kube-probes "GET /houston/server/info" or '{"name":"houston",'
+
+  tcpdump -nni any -w /tmp/houston-${PAISA_ENV:?}-tcp-$(date -u +%Y%m%d-%H%M%SZ)-%s.pcap -C 8M -W 99 -G 600 "(tcp[((tcp[12:1]&0xf0)>>2)+0:4] = 0x47455420 && tcp[((tcp[12:1]&0xf0)>>2)+4:4] = 0x2F686F75 && tcp[((tcp[12:1]&0xf0)>>2)+8:4] = 0x73746F6E && tcp[((tcp[12:1]&0xf0)>>2)+12:4] = 0x2F736572 && tcp[((tcp[12:1]&0xf0)>>2)+16:4] = 0x7665722F && tcp[((tcp[12:1]&0xf0)>>2)+20:4] = 0x696E666F && tcp[((tcp[12:1]&0xf0)>>2)+24:1] = 0x20) or (tcp[((tcp[12:1]&0xf0)>>2)+115:4] = 0x7B226E61 && tcp[((tcp[12:1]&0xf0)>>2)+119:4] = 0x6D65223A && tcp[((tcp[12:1]&0xf0)>>2)+123:4] = 0x22686F75 && tcp[((tcp[12:1]&0xf0)>>2)+127:4] = 0x73746F6E && tcp[((tcp[12:1]&0xf0)>>2)+131:2] = 0x222C)"
+
+
+## Try dump kube-probes fully
+
+  timeout --foreground 900 tcpdump -nni any -w /tmp/houston-${PAISA_ENV:?}-tcp-$(date -u +%Y%m%d-%H%M%SZ)-%s.pcap -C 42M -W 42 -G 600 "host 10.127.73.1 and port 7012"
+
 
 ## Extract hosts file from DNS traffic
 
@@ -70,4 +79,9 @@ Not perfect because needs manual fine-tuning. But can be helpful anyway.
   -Y 'dns.a and dns.resp.name' -Tfields -edns.a -edns.resp.name
 
 Vielleicht auch mal option "-zhosts" ausprobieren. Sollte auch sowas tun.
+
+
+[man tcpdump](https://www.tcpdump.org/manpages/tcpdump.1.html)
+[no name port numbers rhel patch](https://superuser.com/a/587304/1123359)
+[complex filter by byte contents](https://security.stackexchange.com/a/121013/179017)
 

@@ -10,7 +10,7 @@ local mod = {}
 
 function mod.init()
     local that = mod.seal{
-        proto = Proto("__", "Additional Metadata"),
+        proto = Proto("AdditMeta", "Additional Metadata"),
         f_andy_httpTime = ProtoField.float("_.httpTime", "HttpTime"),
         f_andy_synSeen = ProtoField.bool("_.synSeen", "SynSeen"),
         f_andy_uri = ProtoField.string("_.uri", "Request URI"),

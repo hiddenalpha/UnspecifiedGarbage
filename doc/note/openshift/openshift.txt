@@ -79,8 +79,16 @@ HINT: ALL files from Current dir (.) will get uploaded (when global rsync not av
 
   oc scale dc/preflux --replicas=1
 
-## TODO what was this for?
 
-  oc get pvc
+
+## Kube Probe
+
+  echo && ocprod exec -ti "$(ocprod get pods|egrep ston-[0-9]|cut -f1 -d' ')" -- sh -c 'true \
+    && printf "c; When                    ; rsp_code; time_connect; time_redirect; time_starttransfer; time_total\n" \
+    && while true; do true \
+       && now=$(date -uIs) \
+       && curl -sS -o/dev/null -w "r; $(date -uIs);      %{response_code};       %{time_connect}s;        %{time_redirect}s;             %{time_starttransfer}s;     %{time_total}s\n" 127.0.0.1:7012/houston/server/info \
+       && sleep 5 || break \
+    ;done' | tee -a C:/work/tmp/houston-prod-inPod-probe.log
 
 
