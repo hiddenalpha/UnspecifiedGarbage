@@ -24,7 +24,7 @@ Qemu
 ### Create Standalone image based on snapshot image
   qemu-img convert -O qcow2 derived.qcow2 standalone.qcow2
 
-## Shrink img
+## Shrink/compact img
 
 Normal systems:
   qemu-img convert -O qcow2 input.qcow2 output.qcow2
