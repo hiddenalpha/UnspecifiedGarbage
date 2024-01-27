@@ -43,7 +43,7 @@ qemu-system-x86_64 \
     -cdrom "path/to/cd.iso" \
     -hda "$(dirname "$(realpath "$0")")/hda.qcow2" \
     `# Isolated Network plus host port/cmd reachable from guest` \
-    -netdev 'user,id=n1,ipv6=off,restrict=y,guestfwd=guestfwd=tcp:10.0.2.9:80-cmd:ncat 127.0.0.1 80' \
+    -netdev 'user,id=n1,ipv6=off,restrict=y,guestfwd=tcp:10.0.2.9:80-cmd:ncat 127.0.0.1 80' \
     -device e1000,netdev=n1 \
     `# 10.0.2.x network with host redirect` \
     -netdev user,id=n0,ipv6=off,hostfwd=tcp:127.0.0.1:${SSH_PORT:-2222}-:22 \

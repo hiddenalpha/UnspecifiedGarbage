@@ -23,6 +23,7 @@ http {
   sendfile        on;
   keepalive_timeout  65;
   server {
+      # For public access use "8080" and "[::]:8080"
       listen       127.0.0.1:8080;
       server_name  localhost;
       location / {
