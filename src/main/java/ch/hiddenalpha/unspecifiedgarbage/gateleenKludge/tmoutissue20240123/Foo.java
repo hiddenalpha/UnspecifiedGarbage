@@ -5,6 +5,8 @@ import io.vertx.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static java.lang.System.currentTimeMillis;
+
 
 public class Foo {
 
@@ -36,7 +38,7 @@ public class Foo {
     public static void onBeforeMainVerticleRouteGeneric(HttpServerRequest req) {
         if( !isServerInfoRequst(req) ) return;
         log.trace("onBeforeMainVerticleRouteGeneric()");
-        onBeginRouteEpochMs = System.currentTimeMillis();
+        onBeginRouteEpochMs = currentTimeMillis();
         assert !assertRequestEquality || serverInfoRequest == req;
     }
 
@@ -121,8 +123,8 @@ public class Foo {
     }
 
     public static void onEndCompleted(long responseBegEpochMs){
-        long durationMs = System.currentTimeMillis() - responseBegEpochMs;
-        log.debug("Request took {}ms", durationMs);
+        long nowEpochMs = currentTimeMillis();
+        log.debug("Request took {}ms and {}ms", nowEpochMs - onBeginRouteEpochMs, nowEpochMs - responseBegEpochMs);
     }
 
 }
