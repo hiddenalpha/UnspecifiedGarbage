@@ -1,0 +1,37 @@
+
+Setup Windoof in a experiment VM
+================================
+
+Install system STRICTLY WITHOUT internet connection.
+
+Stop annoying windoof auto updates. Make sure to use windoof newlines (CRLF) in
+the reg file:
+
+
+Windows Registry Editor Version 5.00
+[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU]
+"NoAutoUpdate"=dword:00000001
+
+curl -sSD- http://10.0.2.9:80/stop-annoying-updates.reg -O
+
+After running "reg" file, we can reboot windoof with internet connection.
+
+Download/Install:
+- "https://learn.microsoft.com/en-us/sysinternals/downloads/sdelete"
+- "https://notepad-plus-plus.org/"
+
+Install needed software (Maybe: firefox, MsOffice, MsTeams, ..?).
+
+Manually trigger updates, reboot, updates, reboot, (likely some more turns ...)
+
+Make sure no more updates are running. Then, I guess best is to reboot without
+internet access once more to cleanup the disk:
+
+  SDelete.exe -nobanner -z C:
+
+Shutdown guest, then compact disc.
+
+  qemu-img convert -O qcow2 input.qcow output.qcow2
+
+Image is ready.
+
