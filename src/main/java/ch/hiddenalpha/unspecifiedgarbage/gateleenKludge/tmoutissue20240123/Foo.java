@@ -11,7 +11,7 @@ import static java.lang.System.currentTimeMillis;
 public class Foo {
 
     private static final Logger log = Foo.getLogger(Foo.class);
-    private static final boolean assertRequestEquality = true;
+    private static final boolean assertRequestEquality = false;
     private static HttpServerRequest serverInfoRequest;
     private static io.vertx.core.http.impl.HttpServerRequestInternal restStorageEvBusAdaptMappdHttpServReq;
     private static long onBeginRouteEpochMs;
