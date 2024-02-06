@@ -24,8 +24,11 @@ Install needed software (Maybe: firefox, MsOffice, MsTeams, ..?).
 
 Manually trigger updates, reboot, updates, reboot, (likely some more turns ...)
 
+Configure Performance options. Disable all but screen fonts.
+
 Make sure no more updates are running. Then, I guess best is to reboot without
-internet access once more to cleanup the disk:
+internet access once more to cleanup the disk. Delete unused files like
+trashcan or downloaded installers:
 
   SDelete.exe -nobanner -z C:
 
