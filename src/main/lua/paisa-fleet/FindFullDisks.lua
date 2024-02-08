@@ -118,8 +118,7 @@ end
 
 function doWhateverWithDevices( app )
     for k, dev in pairs(app.devices) do
-        log:write("\n")
-        log:write("[INFO ] About to inspect '".. dev.hostname .."' (@ ".. dev.eddieName ..")\n")
+        log:write("[INFO ] Inspecting '".. dev.hostname .."' (@ ".. dev.eddieName ..") ...\n")
         local fookCmd = "true"
             .." && HOSTNAME=$(hostname|sed 's_.isa.localdomain__')"
             .." && STAGE=$PAISA_ENV"
@@ -153,27 +152,25 @@ function doWhateverWithDevices( app )
         -- EndOf kludge
         local cmd = objectSeal{
             base = false,
-            stdoutBuf = false,
-            stderrBuf = false,
+            stdoutBuf = {},
+            stderrBuf = {},
         }
         cmd.base = newShellcmd{
             cls = cmd,
             cmdLine = "sh \"".. tmpPath .."\"",
-            onStdout = function( buf, cmd )
-                if buf then cmd.stdoutBuf = cmd.stdoutBuf and cmd.stdoutBuf .. buf or buf end
-            end,
-            onStderr = function( buf, cmd )
-                if buf then cmd.stderrBuf = cmd.stderrBuf and cmd.stderrBuf .. buf or buf end
-            end,
+            onStdout = function( buf, cmd ) table.insert(cmd.stdoutBuf, buf or"") end,
+            onStderr = function( buf, cmd ) table.insert(cmd.stderrBuf, buf or"") end,
         }
         cmd.base:start()
         cmd.base:closeSnk()
         local exit, signal = cmd.base:join(17)
+        cmd.stderrBuf = table.concat(cmd.stderrBuf)
+        cmd.stdoutBuf = table.concat(cmd.stdoutBuf)
         if exit == 255 and signal ==  nil then
-            log:write("[DEBUG] fd2: ".. cmd.stderrBuf:gsub("\n", "\n[DEBUG] fd2: "):gsub("\n[DEBUG] fd2: $", "") .."\n")
+            log:write("[DEBUG] fd2: ".. cmd.stderrBuf:gsub("\n", "\n[DEBUG] fd2: "):gsub("\n%[DEBUG%] fd2: $", "") .."\n")
             goto nextDevice
         end
-        log:write("[DEBUG] fd1: ".. cmd.stdoutBuf:gsub("\n", "\n[DEBUG] fd1: "):gsub("\n[DEBUG] fd1: $", "") .."\n")
+        log:write("[DEBUG] fd1: ".. cmd.stdoutBuf:gsub("\n", "\n[DEBUG] fd1: "):gsub("\n%[DEBUG%] fd1: $", "") .."\n")
         storeDiskFullResult(app, dev.hostname, dev.eddieName, cmd.stderrBuf, cmd.stdoutBuf)
         if exit ~= 0 or signal ~= nil then
             error("exit=".. tostring(exit)..", signal="..tostring(signal))
