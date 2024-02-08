@@ -65,6 +65,8 @@ function parseArgs( app )
         app.statePath = arg
     elseif arg == "--exportLatestStatus" then
         app.exportLatestStatus = true
+    else
+        log:write("EINVAL: ".. arg .."\n")return
     end
     goto nextArg
     ::verifyResult::
