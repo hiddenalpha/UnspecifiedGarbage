@@ -1,15 +1,10 @@
 /*
- * For how to install see:
- *
- * "https://git.hiddenalpha.ch/UnspecifiedGarbage.git/tree/doc/note/firefox/firefox.txt"
+ * [How to install](UnspecifiedGarbage/doc/note/firefox/firefox.txt)
  */
 ;(function(){ try{
 
     var NDEBUG = false;
     var STATUS_INIT = 1;
-    var STATUS_RUNNING = 2;
-    var STATUS_DONE = 3;
-    var STATUS_OBSOLETE = 4;
     var NOOP = function(){};
     var LOGERR = console.error.bind(console);
     var N = null;
@@ -19,11 +14,10 @@
     function main(){
         var app = Object.seal({
             ui: {},
-            status: Object.seal({
-                checklistBtn: STATUS_INIT,
-                developmentBtn: STATUS_INIT,
-            }),
             lastClickEpochMs: 0,
+            wantChecklistExpanded: false,
+            wantDevelopmentExpanaded: false,
+            wantBigTemplateExpanded: false,
         });
         if( NDEBUG ){
             setTimeout = window.setTimeout;
@@ -32,14 +26,16 @@
         }else{ /* fix broken tooling */
             setTimeout = setTimeoutWithCatch.bind(0, app);
             logErrors = logErrorsImpl.bind(N, app);
-            LOGDBG = console.debug.bind(console);
+            LOGDBG = console.debug.bind(console, "[gaga-plugin]");
         }
         document.addEventListener("DOMContentLoaded", logErrors.bind(N, onDOMContentLoaded, app));
+        scheduleNextStateCheck(app);
+        LOGDBG("gaga-plugin initialized");
     }
 
 
     function onDOMContentLoaded( app ){
-        cleanupClutter(app);
+        LOGDBG("onDOMContentLoaded()");
         attachDomObserver(app);
     }
 
@@ -50,83 +46,58 @@
     }
 
 
+    function scheduleNextStateCheck( app ){
+        //LOGDBG("scheduleNextStateCheck()");
+        if( app.stateCheckTimer ){
+            LOGDBG("Why is stateCheckTimer not zero?", app.stateCheckTimer);
+        }
+        app.stateCheckTimer = setTimeout(function(){
+            app.stateCheckTimer = null;
+            scheduleNextStateCheck(app);
+            performStateCheck(app);
+        }, 42);
+    }
+
+
+    function performStateCheck( app ){
+        var buttons = [ "checklistBtn", "developmentBtn", "bigTemplateBtn" ];
+        var wantKey = [ "wantChecklistExpanded", "wantDevelopmentExpanaded", "wantBigTemplateExpanded" ];
+        for( var i = 0 ; i < buttons.length ; ++i ){
+            var btnKey = buttons[i];
+            var btnElem = getBloatyButton(app, btnKey);
+            if( !btnElem ) continue;
+            var isExpanded = isAriaBtnExpanded(app, btnElem)
+            var wantExpanded = app[wantKey[i]];
+            //LOGDBG(btnKey +" expanded is", isExpanded);
+            if( isExpanded && !wantExpanded ){
+                collapseAriaBtn(app, btnElem);
+            }
+        }
+    }
+
+
     function onDomHasChangedSomehow( app, changes, mutationObserver ){
         var nowEpochMs = Date.now();
-        if( (app.lastClickEpochMs + 2000) > nowEpochMs ){
-            LOGDBG("ignore, likely triggered by user.");
-            return; }
-        var needsReEval = false;
-        for( var change of changes ){
-            if( change.target.nodeName != "BUTTON" ) continue;
-            var isAriaExpanded = (change.attributeName == "aria-expanded");
-            var isChildAdded = (change.addedNodes.length > 0);
-            var isChildRemoved = (change.removedNodes.length > 0);
-            var isChildAddedOrRemoved = isChildAdded || isChildRemoved;
-            if( !isAriaExpanded && !isChildAddedOrRemoved ) continue;
-            if( isAriaExpanded ){
-                LOGDBG("Suspicious, isExpanded: ", change.target);
-                needsReEval = true; break;
-            }
-            if( !isChildAddedOrRemoved ) continue;
-            var isBloatyChecklistBtnStillThere = document.body.contains(getBloatyChecklistBtn(app));
-            if( !isBloatyChecklistBtnStillThere ){
-                LOGDBG("Suspicious, btn lost");
-                needsReEval = true; break;
-            }
-            var isBloatyDevelopmentBtnStillThere = document.body.contains(getBloatyDevelopmentBtn(app));
-            if( !isBloatyDevelopmentBtnStillThere ){
-                LOGDBG("Suspicious, btn lost");
-                needsReEval = true; break;
-            }
-        }
-        if( needsReEval ){
-            LOGDBG("Change detected! Eval again");
-            app.ui.bloatyChecklistBtn = null;
-            app.ui.bloatyDevelopmentBtn = null;
-            setTimeout(cleanupClutter, 42, app);
-        }
+        LOGDBG("DOM Change detected!");
+        /*refresh dom refs so check will work on correct elems*/
+        Object.keys(app.ui).forEach(function( key ){
+            app.ui[key] = null;
+        });
     }
 
 
-    function cleanupClutter( app ){
-        if( app.bloatyChecklistDone != STATUS_RUNNING ){
-            app.bloatyChecklistDone = STATUS_OBSOLETE
-            setTimeout(hideBloatyButton, 0, app, "checklistBtn");
-        }
-        if( app.bloatyDevelopmentDone != STATUS_RUNNING ){
-            app.bloatyDevelopmentDone = STATUS_OBSOLETE;
-            setTimeout(hideBloatyButton, 0, app, "developmentBtn");
-        }
-        if( app.bloatyDevelopmentDone != STATUS_RUNNING ){
-            app.bloatyDevelopmentDone = STATUS_OBSOLETE;
-            setTimeout(hideBloatyButton, 0, app, "bigTemplateBtn");
-        }
+    function onBloatyChecklistBtnMousedown( app ){
+        app.wantChecklistExpanded = !app.wantChecklistExpanded;
     }
 
 
-    function setLastClickTimeToNow( app ){ app.lastClickEpochMs = Date.now(); }
+    function onBloatyDevelopmentBtnMousedown( app ){
+        app.wantDevelopmentExpanaded = !app.wantDevelopmentExpanaded;
+    }
 
 
-    function hideBloatyButton( app, btnKey ){
-        if( app.status[btnKey] == STATUS_DONE ){
-            LOGDBG(btnKey +" now hidden");
-            return; }
-        app.status[btnKey] == STATUS_RUNNING;
-        var btn = getBloatyButton(app, btnKey);
-        do{
-            if( !btn ){ LOGDBG(btnKey +" not found. DOM maybe not yet ready?"); break; }
-            var isExpanded = isAriaBtnExpanded(app, btn);
-            if( isExpanded === true ){
-                LOGDBG(btnKey +".click()");
-                btn.click();
-            }else if( isExpanded === false ){
-                app.status[btnKey] = STATUS_DONE;
-            }else{
-                throw Error("Neither true nor false "+ typeof(isExpanded) +" "+ isExpanded);
-            }
-        }while(0);
-        /* try later */
-        setTimeout(hideBloatyButton, 16, app, btnKey);
+    function onBloatyBigTemplateBtnMousedown( app ){
+        app.wantBigTemplateExpanded = !app.wantBigTemplateExpanded;
     }
 
 
@@ -135,23 +106,41 @@
         }else if( btnKey == "checklistBtn" ){
             var selector = "button[aria-label=Checklists]";
             var uiKey = "bloatyChecklistBtn";
+            var onMousedown = onBloatyChecklistBtnMousedown;
         }else if( btnKey == "developmentBtn" ){
             var selector = "button[aria-label=Development]";
             var uiKey = "bloatyDevelopmentBtn";
+            var onMousedown = onBloatyDevelopmentBtnMousedown;
         }else if(  btnKey == "bigTemplateBtn" ){
             var selector = "button[aria-label=BigTemplate]";
             var uiKey = "bloatyBigTemplateBtn";
+            var onMousedown = onBloatyBigTemplateBtnMousedown;
         }else{
             throw Error(btnKey);
         }
         if( !app.ui[uiKey] ){
             var btn = fetchUiRefOrNull(app, document, selector);
             if( btn ){
-                btn.addEventListener("mousedown", logErrors.bind(N, setLastClickTimeToNow, app));
+                btn.addEventListener("mousedown", logErrors.bind(N, onMousedown, app));
                 app.ui[uiKey] = btn;
             }
         }
         return app.ui[uiKey];
+    }
+
+
+    function collapseAriaBtn( app, btnElem ){
+        do{
+            var isExpanded = isAriaBtnExpanded(app, btnElem);
+            if( isExpanded === true ){
+                LOGDBG("click()");
+                btnElem.click();
+            }else if( isExpanded === false ){
+                break;
+            }else{
+                throw Error("Neither true nor false "+ typeof(isExpanded) +" "+ isExpanded);
+            }
+        }while(0);
     }
 
 
