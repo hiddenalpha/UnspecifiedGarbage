@@ -23,6 +23,13 @@ mvn deploy -DaltDeploymentRepository=artifactory-snapshots::default::https://art
 mvn deploy -Dcmake.generate.skip=true -Dcmake.compile.skip=true -DaltDeploymentRepository=artifactory-releases::default::https://artifactory.tools.pnet.ch/artifactory/libs-release-local
 
 
+true `# Deploy custom build 20240206` \
+  && DEPLOPTS= \
+  && mvn clean install -pl '!gateleen-hook-js,!gateleen-playground' \
+  && mvn deploy -DskipTests -pl '!gateleen-hook-js,!gateleen-playground' $DEPLOPTS \
+  && true
+
+
 ## Run e2e locally
 mvn verify -U -DSelBaseUrl=http://localhost:7012/apigateway/services/foo/index.html -Dskip.tests=false -Dserver.host=localhost -Dserver.port=7012 -Ptestsuite
 

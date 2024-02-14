@@ -18,6 +18,32 @@ index 0ed4f7f3..b44c5693 100644
  
          <!-- JavaMelody -->
          <jetty.version>9.4.43.v20210629</jetty.version>
+@@ -301,4 +301,25 @@
+             </properties>
+         </profile>
+     </profiles>
++    <build>
++     <plugins>
++         <plugin>
++             <groupId>com.diffplug.spotless</groupId>
++             <artifactId>spotless-maven-plugin</artifactId>
++             <executions>
++                 <execution>
++                     <id>spotless-apply</id>
++                     <phase>none</phase>
++                 </execution>
++                 <execution>
++                     <id>spotless-check</id>
++                     <phase>none</phase>
++                 </execution>
++             </executions>
++             <configuration>
++                 <skip>true</skip>
++             </configuration>
++         </plugin>
++     </plugins>
++    </build>
+ </project>
 diff --git a/houston-process/pom.xml b/houston-process/pom.xml
 index 374dcb97..3c24937c 100644
 --- a/houston-process/pom.xml
