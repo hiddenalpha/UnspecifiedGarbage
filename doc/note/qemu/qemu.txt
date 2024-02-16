@@ -43,6 +43,7 @@ Windoof:
 
 
 ## Example Params (Usage: CopyPaste, then delege what is not needed)
+# TODO use '-nodefaults'.
 qemu-system-x86_64 \
     -accel kvm:whpx:hax:tcg -m size=2G -smp cores=$(nproc) \
     -monitor stdio \
