@@ -11,11 +11,10 @@ true \
   && CACHEDIR=/var/tmp \
   && WORKDIR=/home/$USER/work \
   && LINUX_TXZ=$(basename "${LINUX_URL:?}") \
-  && true \
-  && $SUDO apt install -y --no-install-recommends make gcc bc flex bison libc-dev libelf-dev libssl-dev \
-  && true \
+  && $SUDO apt install -y --no-install-recommends curl make gcc bc flex bison libc-dev libelf-dev libssl-dev \
   && cd "${CACHEDIR:?}" \
   && curl -L "${LINUX_URL:?}" -O \
+  && mkdir -p "${WORKDIR:?}" \
   && cd "${WORKDIR:?}" \
   && tar xf "${CACHEDIR:?}/${LINUX_TXZ:?}" \
   && cd linux* \
@@ -66,8 +65,22 @@ EOF
 true \
   && make olddefconfig \
   && make -j$(nproc) \
-  && echo "[WARN ] TODO steps from here on are UNTESTED" && sleep 3 \
-  && ls -Ahl arch/*/boot/bzImage \
+  && base64 -d <<EOF | gunzip > "${CACHEDIR:?}/gagainit.c" &&
+H4sIACTh02UAA41UTYvbMBC9+1cIlwY7JKtsYSlsNoVSAj1s0x62pzQsijxORCzJq4+wacl/35Ed
+u85HS3ywnp5n5j2NJNP+3Bq+SNbOlfaeUglmBUvNTHbDtaTLQq/oh+ELSD+Ughu9lcNM8w0YmvZp
+9E4oXvgMyAMYo/TN+lOHsi4T51QhlsecVwLpk7idpVJ75c5p69h/2IivmSF9rpV1JIOc+cI9g9oK
+o5UE5eYLMiF/IoJP/OPz09cJ9dbQQnNW0KVQ952pbectqKnqFWA8qArNfj4+DqL9OIq2WmSk8v3M
+18A3SfW9NlMbs9obDoMjzjFsuRucxeaiAFybA+l2JeZ4ZcVKQUYKrVa1TF6wle1mVg76GXMsSg/r
+tM547kjoEBEq1+gz0CInSeCSgzzphY8pmUzI8Jb0eqTa0TCdzr5PZ09NufCURqB2En8xwJxAM+/t
+L+wGqUul4zYwiMhNJkyrMvp4d5eSBzLq1qtqop42nZqYBdxpsyM5w05kcadueOBVuOS2Q+6j+h11
+LX4LbfqXxcpeCEiafWlsnva+020Sunu2hMZ+pXfB8ZHbfYQu0R+RTKgkAJTlg8O+I97OF03x7nGK
+lVaAi4hpaTQP4DCOEDZqlxMy2NLS2YAR1ui6LPniwVfTFl2XaNcyYCfL/Do1bHgYcbg+geaW8pXR
+vgxMi5rc+gaAW2vrFJOQxIe/GMZY8Rt0/pdJm3h4BV5gaLjpuIpKqoXVbb/0azk4bQ7CFIucnAMD
+zhtFbse4/W9r76rneAUAAA==
+EOF
+true \
+  && gcc -Wall -static -o "${CACHEDIR:?}/gagainit" "${CACHEDIR:?}/gagainit.c" \
+  && echo "[ERROR] TODO Need more steps here" && false \
   && true
 
 

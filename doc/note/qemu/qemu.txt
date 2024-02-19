@@ -43,8 +43,8 @@ Windoof:
 
 
 ## Example Params (Usage: CopyPaste, then delege what is not needed)
-# TODO use '-nodefaults'.
 qemu-system-x86_64 \
+    -nodefaults `# <- TODO Fix network when using this` \
     -accel kvm:whpx:hax:tcg -m size=2G -smp cores=$(nproc) \
     -monitor stdio \
     `# Drives & Boot.` \
@@ -64,6 +64,7 @@ qemu-system-x86_64 \
     -usb -device usb-host,id=myUsbQemuId,vendorid=0xFFFF,productid=0xFFFF \
     `# Choose ONE of those for graphic output` \
     -nographic \
+    -device VGA \
     -display sdl,grab-mod=rctrl \
     -display gtk,show-menubar=on \
     -display vnc=127.0.0.1:0,to=99 `#HINT: 0 is port 5900` \
