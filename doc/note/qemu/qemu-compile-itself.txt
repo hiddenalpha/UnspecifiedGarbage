@@ -1,0 +1,21 @@
+
+#
+# Compile qemu bullshit-free for windoof.
+#
+
+true \
+ && QEMU_URL="https://gitlab.com/qemu-project/qemu/-/archive/v8.2.1/qemu-v8.2.1.tar.gz" \
+ && WORKDIR=/home/${USER:?}/work \
+ && CACHEDIR=/var/tmp \
+ && QEMU_TGZ="${QEMU_URL_TODOCUTIT:?}" \
+ && apt install -y --no-install-recommends curl \
+ && curl -D- "${QEMU_URL:?}" -o "${CACHEDIR:?}/${QEMU_TGZ:?}" \
+ && cd "${WORKDIR:?}" \
+ && tar xf "${CACHEDIR:?}/${QEMU_TGZ:?}" \
+ && mkdir build \
+ && cd build \
+ && ../configure \
+ && make \
+ && true
+
+
