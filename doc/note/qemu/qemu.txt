@@ -34,7 +34,16 @@ Windoof:
   qemu-img convert -O qcow2 input.qcow output.qcow2
 
 
+## Shrink snapshot layer
+
+  qemu-img convert -O qcow2 snapLayer.qcow2 tmpFullClone.qcow2
+  qemu-img create -f qcow2 -b tmpFullClone.qcow2 diff.qcow2
+  qemu-img rebase -b base.qcow2 tmpDiff.qcow2
+  mv tmpDiff.qcow2 snapLayer.qcow2
+
+
 ## Example Params (Usage: CopyPaste, then delege what is not needed)
+# TODO use '-nodefaults'.
 qemu-system-x86_64 \
     -accel kvm:whpx:hax:tcg -m size=2G -smp cores=$(nproc) \
     -monitor stdio \

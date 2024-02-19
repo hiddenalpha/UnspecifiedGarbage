@@ -23,10 +23,15 @@ mvn deploy -DaltDeploymentRepository=artifactory-snapshots::default::https://art
 mvn deploy -Dcmake.generate.skip=true -Dcmake.compile.skip=true -DaltDeploymentRepository=artifactory-releases::default::https://artifactory.tools.pnet.ch/artifactory/libs-release-local
 
 
-true `# Deploy custom build 20240206` \
+true \
   && DEPLOPTS= \
+  && `# Deploy custom gateleen build 20240206` \
   && mvn clean install -pl '!gateleen-hook-js,!gateleen-playground' \
-  && mvn deploy -DskipTests -pl '!gateleen-hook-js,!gateleen-playground' $DEPLOPTS \
+  && mvn deploy -DskipTests -pl '!gateleen-hook-js,!gateleen-playground' ${DEPLOPTS:?} \
+  && `# Deploy custom houston build 20240216` \
+  && jenkinsbuild-by-upstream \
+  #&& mvn clean install \
+  #&& mvn deploy -DskipTests ${DEPLOPTS:?} \
   && true
 
 

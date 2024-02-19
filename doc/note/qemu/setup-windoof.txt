@@ -32,7 +32,7 @@ trashcan or downloaded installers:
 
   SDelete.exe -nobanner -z C:
 
-Shutdown guest, then compact disc.
+Shutdown win guest, then compact disc.
 
   qemu-img convert -O qcow2 input.qcow output.qcow2
 

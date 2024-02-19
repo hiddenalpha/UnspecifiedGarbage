@@ -264,12 +264,13 @@ Links (Aka argument amplifiers)
 - [Just one message per minute](https://gitit.post.ch/projects/ISA/repos/eagle/pull-requests/375/overview?commentId=330543)
 - [Houston down readyness probe timeout](https://wikit.post.ch/x/koO0Vg)
 
-## Errorhandling is not needed ...
-- [OOM exit code 137 9 sigkill houston openshift pod](https://jira.post.ch/browse/SDCISA-13746?focusedId=1925526&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-1925526)
-
 ## Common Performance
+- [Java Exceptions performance is bad](https://www.baeldung.com/java-exceptions-performance)
 - [going fast is about doing less](https://m.youtube.com/watch?v=5rb0vvJ7NCY)
 - [CppCon Tuning Benchmarks clang CPUs Compilers" ](https://m.youtube.com/watch?v=nXaxk27zwlk)
+
+## Errorhandling is not needed ...
+- [OOM exit code 137 9 sigkill houston openshift pod](https://jira.post.ch/browse/SDCISA-13746?focusedId=1925526&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-1925526)
 
 ## Bugs are not an issue
 - [Bistr gateleen Forwarder exception](https://jira.post.ch/browse/SDCISA-11147)
