@@ -73,11 +73,11 @@ qemu-system-x86_64 \
 ## Inspect qcow2 by host mounting it
 
   $SUDO modprobe nbd
-  $SUDO qemu-nbd -c /dev/nbd0 /path/to/my.qcow2
-  echo 'p' | $SUDO fdisk /dev/nbd0
-  $SUDO mount -o ro /dev/nbd0p2 /mnt/q
+  $SUDO qemu-nbd -c /dev/nbd__ /path/to/my.qcow2
+  echo 'p' | $SUDO fdisk /dev/nbd__
+  $SUDO mount -o ro /dev/nbd__p__ /mnt/q
   $SUDO umount /mnt/q  `# cleanup`
-  qemu-nbd -d /dev/nbd0  `# cleanup`
+  $SUDO qemu-nbd -d /dev/nbd__  `# cleanup`
   $SUDO rmmod nbd  `# cleanup`
 
 
