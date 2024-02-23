@@ -38,6 +38,7 @@ struct Device {
 
 static void Child_onStdout( const char*buf, int buf_len, void*cls ){
     //struct FindFullDisks*const app = cls;
+    //fprintf(stderr, "[TRACE] %s(buf, %d, cls)\n", __func__, buf_len);
     if( buf_len > 0 ){ /*another chunk*/
         fprintf(stdout, "%.*s", buf_len, buf);
     }else{ /*EOF*/
@@ -62,7 +63,7 @@ static void visitDevice( struct FindFullDisks*app, const Device*device ){
         " && HOSTNAME=$(hostname|sed 's_.pnet.ch__')"
         " && STAGE=$PAISA_ENV"
         " && printf \"remoteEddieName=$HOSTNAME, remoteStage=$STAGE\\n\""
-        " && if test \"${HOSTNAME}\" != \"%s\"; then true"
+        " && if test \"$(echo ${HOSTNAME}|sed -E 's_^vted_teddie_g')\" != \"%s\"; then true"
             " && echo wrong host. Want %s found $HOSTNAME && false"
         " ;fi"
         " && ssh -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null"
@@ -85,19 +86,25 @@ static void visitDevice( struct FindFullDisks*app, const Device*device ){
     char userAtEddie[64];
     err = snprintf(userAtEddie, sizeof userAtEddie, "%s@%s", app->sshUser, device->eddieName);
     assert(err < sizeof userAtEddie);
+    char *childArgv[] = { "ssh",
+        "-oRemoteCommand=none",
+        "-oStrictHostKeyChecking=no",
+        "-oUserKnownHostsFile=/dev/null",
+        "-oConnectTimeout=4",
+        "-p", sshPortStr,
+        userAtEddie,
+        "--", "sh", "-c", eddieCmd,
+        NULL
+    };
+    //fprintf(stderr, "CMDLINE:");
+    //for( int i = 0 ; childArgv[i] != NULL ; ++i ) fprintf(stderr, "  \"%s\"", childArgv[i]);
+    //fprintf(stderr, "\n\n");
     app->child = (*app->garb)->newProcess(app->garb, &(struct Garbage_Process_Mentor){
         .cls = app,
         .usePathSearch = !0,
-        .argv = (char*[]){ "ssh",
-            "-oRemoteCommand=none",
-            "-oStrictHostKeyChecking=no",
-            "-oUserKnownHostsFile=/dev/null",
-            "-p", sshPortStr,
-            userAtEddie,
-            "--", "sh", "-c", eddieCmd,
-            NULL,
-        },
+        .argv = childArgv,
         .onStdout = Child_onStdout,
+        //.onStderr = Child_onStderr,
         .onJoined = Child_onJoined,
     });
     assert(app->child != NULL);
@@ -114,22 +121,22 @@ static void startApp( void*cls ){
 
 
 static void setupExampleDevices( FindFullDisks*app ){
-    app->devices_len = 3;
+    app->devices_len = 1;
     app->devices = realloc(NULL, app->devices_len*sizeof*app->devices);
     assert(app->devices != NULL || !"ENOMEM");
     /**/
     strcpy(app->devices[0].hostname, "fook-12345");
-    strcpy(app->devices[0].eddieName, "eddie09845");
+    strcpy(app->devices[0].eddieName, "eddie09815");
     strcpy(app->devices[0].lastSeen, "2023-12-31T23:59:59");
     /**/
-    strcpy(app->devices[1].hostname, "fook-67890");
-    strcpy(app->devices[1].eddieName, "eddie12345");
-    strcpy(app->devices[1].lastSeen, "2023-12-31T23:42:42");
-    /**/
-    strcpy(app->devices[2].hostname, "lunkwill-12345");
-    strcpy(app->devices[2].eddieName, "eddie09845");
-    strcpy(app->devices[2].lastSeen, "2023-12-31T23:59:42");
-    /**/
+//    strcpy(app->devices[1].hostname, "fook-67890");
+//    strcpy(app->devices[1].eddieName, "eddie12345");
+//    strcpy(app->devices[1].lastSeen, "2023-12-31T23:42:42");
+//    /**/
+//    strcpy(app->devices[2].hostname, "lunkwill-12345");
+//    strcpy(app->devices[2].eddieName, "eddie09845");
+//    strcpy(app->devices[2].lastSeen, "2023-12-31T23:59:42");
+//    /**/
 }
 
 
@@ -140,6 +147,8 @@ int main( int argc, char**argv ){
         .sshPort = 22,
         .garb = NULL,
         .child = NULL,
+        .devices_len = 0,
+        .devices = NULL,
     };
     setupExampleDevices(&app);
     app.garb = GarbageEnv_ctor(&(struct GarbageEnv_Mentor){
