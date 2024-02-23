@@ -1,0 +1,24 @@
+
+(true \
+  && DIO_URL=https://wikit.post.ch/download/attachments/613505757/d-054897-060542.zip?api=v2 \
+  && SUDO=sudo \
+  && WORKDIR=/home/$USER/zarniwoop-workspace \
+  && CACHEDIR=/var/tmp \
+  && DIO_VERSION=$(echo $DIO_URL|sed -E 's_^.*/d-([0-9-]+).zip.*$_\1_') \
+  && $SUDO apt install -y --no-install-recommends openssh-server vim make curl git unzip \
+  && cd "${CACHEDIR:?}" \
+  && echo H4sIAAAAAAAAA1XLOw4CMQwA0Z5TUCMtsuNffBw7jiU6ak7PChqoZppX4NEUaLOw2Vfw6JRg8UXW6tdbHSA83c644by/Hs8Lp23PziU+AjcHdcKmjbjFJ8av0nPGRwGanmRkdSlsKTItcBQgjCL8U+b6VW9H4D67ogAAAA== | base64 -d | gunzip > MD5SUM \
+  && curl -LO 'https://wikit.post.ch/download/attachments/613505757/d-054897-060542.zip?api=v2' \
+  && grep "${DIO_VERSION:?}" MD5SUM | md5sum -c - \
+  && mkdir -p "${WORKDIR:?}" \
+  && cd "${WORKDIR:?}" \
+  && unzip "${CACHEDIR:?}/d-${DIO_VERSION:?}.zip" \
+  && mv DIO021E "d-${DIO_VERSION:?}" \
+  && cd "d-${DIO_VERSION:?}/devel" \
+  && rm -rf app \
+  && git clone https://gitit.post.ch/scm/isa/zarniwoop.git app \
+  && cd app \
+  && printf '\n  Zarniwoop setup complete (TODO install compiler etc)\n\n' \
+  && true)
+
+
