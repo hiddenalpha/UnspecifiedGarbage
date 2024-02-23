@@ -72,9 +72,6 @@ qemu-system-x86_64 \
 
 ## Broken systems likely need some of those too
     `# Fix broken hosts` \
-    `# TODO test accel=hax` \
-    `# TODO test accel=whpx` \
-    -machine pc,accel=hax \
     -L "${QEMU_HOME:?}/Bios" -bios "${QEMU_HOME:?}/Bios/bios-256k.bin" \
     `# Fix broken guests` \
     -device usb-ehci,id=usb,bus=pci.0,addr=0x4 -device usb-tablet \
