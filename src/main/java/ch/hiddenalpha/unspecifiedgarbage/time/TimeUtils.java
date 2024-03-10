@@ -25,9 +25,9 @@ public class TimeUtils {
      * Find smallest distance assuming integers overflow "like a circle".
      *
      * Computers cannot represent all existing integers. Due to how
-     * integers are represented in computers, they are not infinite but
-     * more like a circle.  Speak when we infinitely increment an
-     * integer, it overflows and (usually) continues to walk around this
+     * integers are represented in java, they are not infinite but
+     * more like a circle. Speak when we infinitely increment an integer,
+     * it overflows and (usually) continues to walk around this
      * (imaginary) circle.
      *
      * This function takes two of those numbers on this circle and
