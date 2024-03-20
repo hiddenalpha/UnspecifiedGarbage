@@ -136,3 +136,34 @@ true \
     && <"$F" ${MemLeakTry1:?} --date "${DATE:?}" > "${F%.*}.csv" \
     ;done)
 
+
+
+
+
+
+
+Zwischenfall auf INT 20231124
+
+
+
+`# Create heap dump`
+com.sun.management.dumpHeap("/usr/local/vertx/houston-storage-file/houston-___-heap-2023____-____Z.hprof", true)
+
+`# Inspect`
+${OC:?} exec -i "$(${OC:?} get pods|egrep ston-[1-9]|cut -f1 -d' ')" -- sh -c 'cd /usr/local/vertx/houston-storage-file && ls -Ahl'
+
+true `# Get made heap dump` \
+  && if test ! -d heapDump; then echo "Dir heapDump missing"; false ;fi \
+  && echo create checksum. \
+  && ${OC:?} exec -i "$(${OC:?} get pods|egrep ston-[1-9]|cut -f1 -d' ')" -- sh -c 'cd /usr/local/vertx/houston-storage-file && md5sum -b houston-*.hprof >> MD5SUM-$(date -u +%Y%m%d-%H%M%SZ)' \
+  && echo checksum done. Begin dload. \
+  && ${OC:?} exec -i "$(${OC:?} get pods|egrep ston-[1-9]|cut -f1 -d' ')" -- sh -c 'cd /usr/local/vertx/houston-storage-file && tar c houston-*.hprof MD5SUM*' | (cd heapDump && tar x) \
+  && echo dload done \
+  && true
+
+
+
+
+
+
+
