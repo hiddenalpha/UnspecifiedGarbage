@@ -1,0 +1,47 @@
+
+  Some patches that maybe will become relevant in future. For example bcause a
+  PR is no yet merged or similar.
+
+
+--- /dev/null
++++ b/houston-process/src/main/java/net/bull/javamelody/internal/common/Log4J2Logger.java
+@@ -22,1 +22,1 @@
+         if (!iLoaders.hasNext()) throw new IllegalStateException("Too few logger impls");
+         SLF4JServiceProvider loggerProvider = iLoaders.next();
+-        if (iLoaders.hasNext()) throw new IllegalStateException("Too many logger impls");
++        if (!(loggerProvider instanceof org.slf4j.simple.SimpleServiceProvider) && iLoaders.hasNext()) throw new IllegalStateException("Too many logger impls");
+         loggerProvider.initialize();
+         ILoggerFactory loggerFactory = loggerProvider.getLoggerFactory();
+
+
+--- /dev/null
++++ b/houston-process/src/main/java/ch/post/it/paisa/houston/process/main/BadLoggerImplKiller.java
+@@ -0,0 +1,26 @@
++package ch.post.it.paisa.houston.process.main;
++
++import org.slf4j.spi.SLF4JServiceProvider;
++
++import java.util.ServiceLoader;
++
++
++public class BadLoggerImplKiller {
++
++    public static void assertExactlyOneLoggerImplPresent(){
++        Class<?> log4jProviderClz, simpleProviderClz;
++        try {
++            log4jProviderClz = Class.forName("org.apache.logging.slf4j.SLF4JServiceProvider");
++            simpleProviderClz = Class.forName("org.slf4j.simple.SimpleServiceProvider");
++        }catch( ClassNotFoundException ex ){
++            throw new RuntimeException(ex);
++        }
++        for( SLF4JServiceProvider provider : ServiceLoader.load(SLF4JServiceProvider.class) ){
++            Class<?> providerClass = provider.getClass();
++            if( log4jProviderClz.isAssignableFrom(providerClass) ) continue;
++            if( simpleProviderClz.isAssignableFrom(providerClass) ) continue;
++            throw new IllegalStateException("Go away with this ugly logger: "+ providerClass.getName());
++        }
++    }
++
++}
+
+

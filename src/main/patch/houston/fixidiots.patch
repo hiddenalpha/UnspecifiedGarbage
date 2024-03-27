@@ -146,3 +146,220 @@
 +
 +}
 
+
+--- /dev/null
++++ b/houston-process/src/main/java/org/slf4j/reload4j/Reload4jServiceProvider.java
+@@ -0,0 +1,64 @@
++package org.slf4j.reload4j;
++
++import org.slf4j.ILoggerFactory;
++import org.slf4j.IMarkerFactory;
++import org.slf4j.Logger;
++import org.slf4j.Marker;
++import org.slf4j.spi.MDCAdapter;
++import org.slf4j.spi.SLF4JServiceProvider;
++
++import java.lang.reflect.InvocationTargetException;
++import java.lang.reflect.Method;
++import java.util.Deque;
++import java.util.Map;
++
++
++/** <p>How many of those fu**ing damn stupid idiots are still out there
++ * continuing to stubbornly include those stupid logger impls with their
++ * libraries?!?</p> */
++public class Reload4jServiceProvider implements SLF4JServiceProvider, ILoggerFactory, IMarkerFactory, MDCAdapter {
++
++    private final Object slf4jSimpleLoggerFactory;
++    private final Method getLoggerFn;
++
++    public Reload4jServiceProvider() {
++        try {
++            Class<?> logrFactClz = Class.forName("org.slf4j.simple.SimpleLoggerFactory");
++            slf4jSimpleLoggerFactory = logrFactClz.getConstructor().newInstance();
++            getLoggerFn = logrFactClz.getMethod("getLogger", String.class);
++        } catch (ClassNotFoundException | NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException ex) {
++            throw new UnsupportedOperationException(ex);
++        }
++    }
++
++    @Override public ILoggerFactory getLoggerFactory() { return this; }
++    @Override public IMarkerFactory getMarkerFactory() { return this; }
++    @Override public MDCAdapter getMDCAdapter() { return this; }
++    @Override public String getRequestedApiVersion() { return "2.0"; }
++    @Override public void initialize() {}
++
++    @Override
++    public Logger getLogger(String name) {
++        try {
++            return (Logger) getLoggerFn.invoke(slf4jSimpleLoggerFactory, name);
++        } catch (IllegalAccessException | InvocationTargetException ex) {
++            throw new RuntimeException(ex);
++        }
++    }
++
++    @Override public Marker getMarker(String s) { assert false : "TODO not impl yet"; return null; }
++    @Override public boolean exists(String s) { assert false : "TODO not impl yet"; return false; }
++    @Override public boolean detachMarker(String s) { assert false : "TODO not impl yet"; return false; }
++    @Override public Marker getDetachedMarker(String s) { assert false : "TODO not impl yet"; return null; }
++    @Override public void put(String s, String s1) { assert false : "TODO not impl yet"; }
++    @Override public String get(String s) { assert false : "TODO not impl yet"; return null; }
++    @Override public void remove(String s) { assert false : "TODO not impl yet"; }
++    @Override public void clear() { assert false : "TODO not impl yet"; }
++    @Override public Map<String, String> getCopyOfContextMap() { assert false : "TODO not impl yet"; return null; }
++    @Override public void setContextMap(Map<String, String> map) { assert false : "TODO not impl yet"; }
++    @Override public void pushByKey(String s, String s1) { assert false : "TODO not impl yet"; }
++    @Override public String popByKey(String s) { assert false : "TODO not impl yet"; return null; }
++    @Override public Deque<String> getCopyOfDequeByKey(String s) { assert false : "TODO not impl yet"; return null; }
++    @Override public void clearDequeByKey(String s) { assert false : "TODO not impl yet"; }
++
++}
+
+
+--- /dev/null
++++ b/houston-process/src/main/java/org/apache/logging/slf4j/SLF4JServiceProvider.java
+@@ -0,0 +1,62 @@
++package org.apache.logging.slf4j;
++
++import org.slf4j.ILoggerFactory;
++import org.slf4j.IMarkerFactory;
++import org.slf4j.Logger;
++import org.slf4j.Marker;
++import org.slf4j.spi.MDCAdapter;
++
++import java.lang.reflect.InvocationTargetException;
++import java.lang.reflect.Method;
++import java.util.Deque;
++import java.util.Map;
++
++
++/** <p>How many of those fu**ing damn stupid idiotic libs are still out there
++ * continuing to stubbornly include those stupid logger impls?!?</p> */
++public class SLF4JServiceProvider implements org.slf4j.spi.SLF4JServiceProvider, ILoggerFactory, IMarkerFactory, MDCAdapter {
++
++    private final Object slf4jSimpleLoggerFactory;
++    private final Method getLoggerFn;
++
++    public SLF4JServiceProvider() {
++        try {
++            Class<?> logrFactClz = Class.forName("org.slf4j.simple.SimpleLoggerFactory");
++            slf4jSimpleLoggerFactory = logrFactClz.getConstructor().newInstance();
++            getLoggerFn = logrFactClz.getMethod("getLogger", String.class);
++        } catch (ClassNotFoundException | NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException ex) {
++            throw new UnsupportedOperationException(ex);
++        }
++    }
++
++    @Override public ILoggerFactory getLoggerFactory() { return this; }
++    @Override public IMarkerFactory getMarkerFactory() { return this; }
++    @Override public MDCAdapter getMDCAdapter() { return this; }
++    @Override public String getRequestedApiVersion() { return "2.0"; }
++    @Override public void initialize() {}
++
++    @Override
++    public Logger getLogger(String name) {
++        try {
++            return (Logger) getLoggerFn.invoke(slf4jSimpleLoggerFactory, name);
++        } catch (IllegalAccessException | InvocationTargetException ex) {
++            throw new RuntimeException(ex);
++        }
++    }
++
++    @Override public Marker getMarker(String s) { assert false : "TODO not impl yet"; return null; }
++    @Override public boolean exists(String s) { assert false : "TODO not impl yet"; return false; }
++    @Override public boolean detachMarker(String s) { assert false : "TODO not impl yet"; return false; }
++    @Override public Marker getDetachedMarker(String s) { assert false : "TODO not impl yet"; return null; }
++    @Override public void put(String s, String s1) { assert false : "TODO not impl yet"; }
++    @Override public String get(String s) { assert false : "TODO not impl yet"; return null; }
++    @Override public void remove(String s) { assert false : "TODO not impl yet"; }
++    @Override public void clear() { assert false : "TODO not impl yet"; }
++    @Override public Map<String, String> getCopyOfContextMap() { assert false : "TODO not impl yet"; return null; }
++    @Override public void setContextMap(Map<String, String> map) { assert false : "TODO not impl yet"; }
++    @Override public void pushByKey(String s, String s1) { assert false : "TODO not impl yet"; }
++    @Override public String popByKey(String s) { assert false : "TODO not impl yet"; return null; }
++    @Override public Deque<String> getCopyOfDequeByKey(String s) { assert false : "TODO not impl yet"; return null; }
++    @Override public void clearDequeByKey(String s) { assert false : "TODO not impl yet"; }
++
++}
+
+
+--- /dev/null
++++ b/houston-process/src/main/java/net/bull/javamelody/internal/common/Log4J2Logger.java
+@@ -0,0 +1,38 @@
++package net.bull.javamelody.internal.common;
++
++import org.slf4j.Logger;
++
++import javax.servlet.http.HttpServletRequest;
++import java.lang.reflect.InvocationTargetException;
++import java.lang.reflect.Method;
++
++
++/** <p>How many of those fu**ing damn stupid idiot libs are still out there
++ * continuing to stubbornly include those stupid logger impls?!?</p> */
++public class Log4J2Logger implements net.bull.javamelody.JavaMelodyLogger {
++
++    private final org.slf4j.Logger log;
++
++    public Log4J2Logger(){
++        try {
++            Class<?> logrFactClz = Class.forName("org.slf4j.simple.SimpleLoggerFactory");
++            Object slf4jSimpleLoggerFactory = logrFactClz.getConstructor().newInstance();
++            Method getLoggerFn = logrFactClz.getMethod("getLogger", String.class);
++            this.log = (Logger) getLoggerFn.invoke(slf4jSimpleLoggerFactory, "net.bull.javamelody");
++        } catch (ClassNotFoundException | NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException ex) {
++            throw new UnsupportedOperationException(ex);
++        }
++    }
++
++    @Override public void debug(String s) { log.debug(s); }
++    @Override public void debug(String s, Throwable ex) { log.debug(s, ex); }
++    @Override public void info(String s) { log.info(s); }
++    @Override public void info(String s, Throwable ex) { log.info(s, ex);}
++    @Override public void warn(String s, Throwable ex) { log.warn(s, ex);}
++    @Override public void logHttpRequest(
++        HttpServletRequest httpRequest, String requestName, long duration, boolean systemError, int responseStatus, long responseSize, String loggerName
++    ){
++        if (log.isInfoEnabled()) log.info("{}", LOG.buildLogMessage(httpRequest, duration, systemError, responseStatus, responseSize));
++    }
++
++}
+
+
+--- /dev/null
++++ b/houston-process/src/main/java/org/eclipse/jetty/util/log/Slf4jLog.java
+@@ -0,0 +1,32 @@
++package org.eclipse.jetty.util.log;
++
++import org.slf4j.LoggerFactory;
++
++
++/** Yet another fu**ing bastard lib having its own shiny stupid loggers. */
++public class Slf4jLog {
++
++    private final org.slf4j.Logger log;
++
++    public Slf4jLog() {
++        this.log = LoggerFactory.getLogger("org.eclipse.jetty.util.log");
++    }
++
++    public Slf4jLog(String name) {
++        this.log = LoggerFactory.getLogger(name);
++    }
++
++    public String getName() { return log.getName(); }
++    public void warn(String msg, Object... args) { log.warn(msg, args); }
++    public void warn(Throwable thrown) { log.warn("", thrown); }
++    public void warn(String msg, Throwable thrown) { log.warn(msg, thrown); }
++    public void info(String msg, Object... args) { log.info(msg, args); }
++    public void info(Throwable thrown) { log.info("", thrown); }
++    public void info(String msg, Throwable thrown) { log.info(msg, thrown); }
++    public void debug(String msg, Object... args) { log.debug(msg, args); }
++    public void debug(String msg, long arg) { if (log.isDebugEnabled()) log.debug(msg, arg); }
++    public void debug(Throwable thrown) { this.debug("", thrown); }
++    public void debug(String msg, Throwable thrown) { log.debug(msg, thrown); }
++    public boolean isDebugEnabled() { return log.isDebugEnabled(); }
++    public void setDebugEnabled(boolean enabled) { log.warn("setDebugEnabled not implemented"); }
++
++}
+
