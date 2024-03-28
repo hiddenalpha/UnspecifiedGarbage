@@ -20,6 +20,7 @@ LRANGE key -1 -1  (get tail)
 
 ## List all keys  (WARN: do NOT in production!)
 
+SCAN 0 MATCH *part:of:key:* COUNT 42
 KEYS *:part:inside-the:key:*
 KEYS redisques:queues:vehicleoperation-events-for-vehicle-*
 
