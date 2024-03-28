@@ -1,0 +1,31 @@
+
+Redis
+================
+
+
+## Run redis commands from cli
+
+redis-cli -a ***** SCAN 0
+
+
+## Example commands
+
+SCAN 0 COUNT 42
+TYPE key
+GET redisques:queues:vehicleoperation-events-for-vehicle-9942
+LRANGE key start stop
+LRANGE key  1  1  (get head)
+LRANGE key -1 -1  (get tail)
+
+
+## List all keys  (WARN: do NOT in production!)
+
+KEYS *:part:inside-the:key:*
+KEYS redisques:queues:vehicleoperation-events-for-vehicle-*
+
+
+## Delete by pattern
+
+redis-cli --scan --pattern schedulers:* | xargs redis-cli del
+
+
