@@ -3,6 +3,7 @@
     const http = require("http");
     const log = process.stderr;
     const out = process.stdout;
+    const NOOP = function(){};
 
     setTimeout(main); return;
 
@@ -51,30 +52,65 @@
 
 
     function run( app ){
-        foo(app);
+        //placeHook(app);
+        putSomeNonsense(app);
     }
 
 
-    function foo( app ){
+    function placeHook( app ){
         const req = Object.seal({
             base: null,
+            app: app,
         });
         req.base = http.request({
             host: app.host, port: app.port,
-            method: "PUT", path: app.uri,
-            headers: {
-                "X-Queue": app.queueName,
-                "X-Queue-Expire-After": 9999999,
-            },
+            method: "PUT", path: app.uri +"/_hooks/listeners/http",
+            //headers: {
+            //    "X-Expire-After": "42",
+            //},
         });
-        req.base.on("response", onResponse.bind(0, app));
-        req.base.end("{\"guguseli\":42}\n");
+        req.base.on("response", onResponse.bind(0, req));
+        req.base.end(JSON.stringify({
+            destination: "http://127.0.0.1:7099/guguseli",
+            queueExpireAfter/*seconds*/: 42,
+        }));
+        function onResponse( req, rsp ){
+            var app = req.app;
+            log.write("[DEBUG] < HTTP/"+ rsp.httpVersion +" "+ rsp.statusCode +" "+ rsp.statusMessage +"\n");
+            for( var k of Object.keys(rsp.headers) ) log.write("[DEBUG] < "+ k +": "+ rsp.headers[k] +"\n");
+        }
     }
 
 
-    function onResponse( app, rsp ){
-        log.write("[DEBUG] < HTTP/"+ rsp.httpVersion +" "+ rsp.statusCode +" "+ rsp.statusMessage +"\n");
-        for( var k of Object.keys(rsp.headers) ) log.write("[DEBUG] < "+ k +": "+ rsp.headers[k] +"\n");
+    function putSomeNonsense( app ){
+        const nonsense = Object.seal({
+            app: app,
+            req: null,
+            i: 0,
+            limit: 42,
+        });
+        putNextRequest(nonsense);
+        function putNextRequest( nonsense ){
+            nonsense.req = http.request({
+                host: app.host, port: app.port,
+                method: "PUT", path: app.uri +"/foo/"+ nonsense.i,
+                headers: {
+                    "X-Queue": app.queueName +"-"+ nonsense.i,
+                    "X-Queue-Expire-After": 9999999,
+                },
+            });
+            nonsense.req.on("response", onResponse.bind(0, nonsense));
+            nonsense.req.end("{\"guguseli\":\""+ new Date().toISOString() +"\"}\n");
+        }
+        function onResponse( nonsense, rsp ){
+            var app = nonsense.app;
+            log.write("[DEBUG] < HTTP/"+ rsp.httpVersion +" "+ rsp.statusCode +" "+ rsp.statusMessage +"\n");
+            for( var k of Object.keys(rsp.headers) ) log.write("[DEBUG] < "+ k +": "+ rsp.headers[k] +"\n");
+            rsp.on("data", NOOP);
+            if( nonsense.i++ < nonsense.limit ){
+                putNextRequest(nonsense);
+            }
+        }
     }
 
 
