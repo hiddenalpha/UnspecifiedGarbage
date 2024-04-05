@@ -104,8 +104,10 @@
         }
         function onResponse( nonsense, rsp ){
             var app = nonsense.app;
-            log.write("[DEBUG] < HTTP/"+ rsp.httpVersion +" "+ rsp.statusCode +" "+ rsp.statusMessage +"\n");
-            for( var k of Object.keys(rsp.headers) ) log.write("[DEBUG] < "+ k +": "+ rsp.headers[k] +"\n");
+            if( rsp.statusCode != 200 ){
+                log.write("[DEBUG] < HTTP/"+ rsp.httpVersion +" "+ rsp.statusCode +" "+ rsp.statusMessage +"\n");
+                for( var k of Object.keys(rsp.headers) ) log.write("[DEBUG] < "+ k +": "+ rsp.headers[k] +"\n");
+            }
             rsp.on("data", NOOP);
             if( nonsense.i++ < nonsense.limit ){
                 putNextRequest(nonsense);

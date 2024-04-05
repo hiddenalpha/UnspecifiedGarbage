@@ -137,6 +137,7 @@ Links (Aka argument amplifiers)
 - [logging guards](https://stackoverflow.com/a/12953090/4415884)
 - [impl VS facade in lib](https://jira.post.ch/browse/SDCISA-15223)
 - [drop logger impl from lib](https://github.com/swisspost/vertx-redisques/pull/153)
+- [Should my library attempt to configure logging?](https://www.slf4j.org/faq.html#configure_logging)
 
 ## Misleading log msg messages
 - "https://gitit.post.ch/projects/ISA/repos/zarquon/pull-requests/2/overview?commentId=61283"
