@@ -135,6 +135,9 @@ Links (Aka argument amplifiers)
 - [case slf4j](http://www.slf4j.org/api/org/slf4j/Logger.html)
 - [General rules](https://gualtierotesta.github.io/java/tutorial-correct-slf4j-logging-usage-and-how-to-check-it/)
 - [logging guards](https://stackoverflow.com/a/12953090/4415884)
+- [impl VS facade in lib](https://jira.post.ch/browse/SDCISA-15223)
+- [drop logger impl from lib](https://github.com/swisspost/vertx-redisques/pull/153)
+- [Should my library attempt to configure logging?](https://www.slf4j.org/faq.html#configure_logging)
 
 ## Misleading log msg messages
 - "https://gitit.post.ch/projects/ISA/repos/zarquon/pull-requests/2/overview?commentId=61283"
@@ -370,7 +373,7 @@ Links (Aka argument amplifiers)
 - "https://pubs.opengroup.org/onlinepubs/009695399/utilities/xcu_chap02.html"
 
 ## YAGNI (but also KISS and DRY)
-- [YAGNI, KISS and DRY](https://medium.com/swlh/yagni-and-dry-the-kiss-of-death-for-your-software-project-cfd44b0654b6#fc82)
+- [YAGNI, KISS and DRY](https://medium.com/swlh/yagni-and-dry-the-kiss-of-death-for-your-software-project-cfd44b0654b6)
 - [eagle queue json only](https://gitit.post.ch/projects/ISA/repos/eagle/pull-requests/331/overview?commentId=236944)
 - [How to repair KISS](https://gitit.post.ch/projects/ISA/repos/preflux/pull-requests/304/diff)
 - [won't stream, bcause YAGNI](https://gitit.post.ch/projects/ISA/repos/bangbang/pull-requests/5/overview?commentId=316503)
@@ -577,4 +580,13 @@ Links (Aka argument amplifiers)
 
 ## Tools like tcpdump are incredibly important
 - [tcpdump discovers the truth once more](https://jira.post.ch/browse/SDCISA-13746?focusedId=1939377&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-1939377)
+
+## MUST have an issue
+- [no-issue PR gets sued](https://gitit.post.ch/projects/ISA/repos/preflux/pull-requests/721/overview?commentId=349529)
+
+## STOP using stupid local times use UTC
+- [3 simple rules](https://dev.to/corykeane/3-simple-rules-for-effectively-handling-dates-and-timezones-1pe0)
+
+## WARN clustering is NOT the solution
+- [trin kill performance with shared counter](https://gitit.post.ch/projects/ISA/repos/trin/pull-requests/155/overview?commentId=352721)
 
