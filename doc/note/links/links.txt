@@ -227,9 +227,6 @@ Links (Aka argument amplifiers)
 - [think please ...](https://m.youtube.com/watch?v=hSfylUXhpkA)
 - [java streams are ugly](https://gitit.post.ch/projects/ISA/repos/nsync/pull-requests/55/overview?commentId=328210)
 
-## The Only way to Format Dates ISO 8601
-- "https://xkcd.com/1179/"
-
 ## Backward compatibility, Breaking Changes
 - "https://www.redstar.be/backward-compatibility-in-software-development-what-and-why/"
 - [UserInformation SAP 2023](https://gitit.post.ch/projects/ISA/repos/user-information-api/pull-requests/20/overview?commentId=270157)
@@ -584,9 +581,7 @@ Links (Aka argument amplifiers)
 ## MUST have an issue
 - [no-issue PR gets sued](https://gitit.post.ch/projects/ISA/repos/preflux/pull-requests/721/overview?commentId=349529)
 
-## STOP using stupid local times use UTC
+## Format Date ISO 8601, UTC GMT localtime
+- [public service announcement](https://xkcd.com/1179/)
 - [3 simple rules](https://dev.to/corykeane/3-simple-rules-for-effectively-handling-dates-and-timezones-1pe0)
-
-## WARN clustering is NOT the solution
-- [trin kill performance with shared counter](https://gitit.post.ch/projects/ISA/repos/trin/pull-requests/155/overview?commentId=352721)
 
