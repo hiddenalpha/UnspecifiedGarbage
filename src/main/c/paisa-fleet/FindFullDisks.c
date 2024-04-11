@@ -1,11 +1,25 @@
-/* TODO move compile cmd somewhere better maybe?
+#if 0
 
-true \
-  && CFLAGS="-Wall -Werror -pedantic -ggdb -Os -fmax-errors=1 -Wno-error=unused-variable -Wno-error=unused-function" \
-  && ${CC:?} -o build/bin/findfulldisks $CFLAGS src/main/c/paisa-fleet/FindFullDisks.c -Isrc/main/c -Iimport/include -Limport/lib -lgarbage -lpthread \
+true `# configure FindFullDisks for NORMAL systems` \
+  && CC=gcc \
+  && MKDIR_P="mkdir -p" \
+  && CFLAGS="-Wall -Werror -pedantic -Os -fmax-errors=1 -Wno-error=unused-variable -Wno-error=unused-function -Isrc/main/c -Iimport/include" \
+  && LDFLAGS="-Wl,-dn,-lgarbage,-dy,-lpthread,-lws2_w32,-Limport/lib" \
   && true
 
-*/
+true `# configure FindFullDisks for BROKEN systems` \
+  && CC=x86_64-w64-mingw32-gcc \
+  && MKDIR_P="mkdir -p" \
+  && CFLAGS="-Wall -Werror -pedantic -Os -fmax-errors=1 -Wno-error=unused-variable -Wno-error=unused-function -Isrc/main/c -Iimport/include" \
+  && LDFLAGS="-Wl,-dn,-lgarbage,-dy,-lws2_32,-Limport/lib" \
+  && true
+
+true `# make FindFullDisks` \
+  && ${MKDIR_P:?} build/bin \
+  && ${CC:?} -o build/bin/findfulldisks $CFLAGS src/main/c/paisa-fleet/FindFullDisks.c $LDFLAGS \
+  && true
+
+#endif
 
 #include <assert.h>
 #include <stdio.h>
@@ -13,6 +27,15 @@ true \
 #include <string.h>
 
 #include "Garbage.h"
+
+#if !NDEBUG
+#   define REGISTER register
+#   define LOGDBG(...) fprintf(stderr, __VA_ARGS__)
+#else
+#   define REGISTER
+#   define LOGDBG(...)
+#endif
+#define LOGERR(...) fprintf(stderr, __VA_ARGS__)
 
 
 typedef  struct FindFullDisks  FindFullDisks;
@@ -22,10 +45,13 @@ typedef  struct Device  Device;
 struct FindFullDisks {
     char *sshUser;
     int sshPort;
-    struct GarbageEnv **garb;
+    int maxParallel, numInProgress;
+    struct GarbageEnv **env;
     struct Garbage_Process **child;
     int devices_len;
     Device *devices;
+    int iDevice; /* Next device to be triggered. */
+    int exitCode;
 };
 
 
@@ -36,11 +62,15 @@ struct Device {
 };
 
 
+/*BEG fwd decls*/
+static void beginNextDevice( void* );
+/*END fwd decls*/
+
+
 static void Child_onStdout( const char*buf, int buf_len, void*cls ){
-    //struct FindFullDisks*const app = cls;
-    //fprintf(stderr, "[TRACE] %s(buf, %d, cls)\n", __func__, buf_len);
+    //FindFullDisks*const app = cls;
     if( buf_len > 0 ){ /*another chunk*/
-        fprintf(stdout, "%.*s", buf_len, buf);
+        printf("%.*s", buf_len, buf);
     }else{ /*EOF*/
         assert(buf_len == 0);
     }
@@ -48,15 +78,19 @@ static void Child_onStdout( const char*buf, int buf_len, void*cls ){
 
 
 static void Child_onJoined( int retval, int exitCode, int sigNum, void*cls ){
-    //struct FindFullDisks*const app = cls;
-    fprintf(stderr, "[TRACE] %s(%d, %d, %d)\n", __func__, retval, exitCode, sigNum);
+    FindFullDisks*const app = cls;
+    LOGDBG("[TRACE] %s(%d, %d, %d)\n", __func__, retval, exitCode, sigNum);
+    assert(app->numInProgress > 0);
+    app->numInProgress -= 1;
+    //LOGDBG("[DEBUG] numInProgress decremented is now %d\n", app->numInProgress);
+    (*app->env)->enqueBlocking(app->env, beginNextDevice, app);
 }
 
 
-static void visitDevice( struct FindFullDisks*app, const Device*device ){
+static void visitDevice( FindFullDisks*app, const Device*device ){
     assert(device != NULL);
-    fprintf(stderr, "[TRACE] %s \"%s\" (behind \"%s\")\n", __func__,
-        device->hostname, device->eddieName);
+    assert(device < app->devices + app->devices_len);
+    LOGERR("\n[INFO ] %s \"%s\" (behind \"%s\")\n", __func__, device->hostname, device->eddieName);
     int err;
     char eddieCmd[2048];
     err = snprintf(eddieCmd, sizeof eddieCmd, "true"
@@ -96,10 +130,10 @@ static void visitDevice( struct FindFullDisks*app, const Device*device ){
         "--", "sh", "-c", eddieCmd,
         NULL
     };
-    //fprintf(stderr, "CMDLINE:");
-    //for( int i = 0 ; childArgv[i] != NULL ; ++i ) fprintf(stderr, "  \"%s\"", childArgv[i]);
-    //fprintf(stderr, "\n\n");
-    app->child = (*app->garb)->newProcess(app->garb, &(struct Garbage_Process_Mentor){
+    //LOGDBG("CMDLINE:");
+    //for( int i = 0 ; childArgv[i] != NULL ; ++i ) LOGDBG("  \"%s\"", childArgv[i]);
+    //LOGDBG("\n\n");
+    app->child = (*app->env)->newProcess(app->env, &(struct Garbage_Process_Mentor){
         .cls = app,
         .usePathSearch = !0,
         .argv = childArgv,
@@ -112,53 +146,75 @@ static void visitDevice( struct FindFullDisks*app, const Device*device ){
 }
 
 
-static void startApp( void*cls ){
-    struct FindFullDisks *app = cls;
-    for( int i = 0 ; i < app->devices_len ; ++i ){
-        visitDevice(app, app->devices + i);
+static void beginNextDevice( void*cls ){
+    FindFullDisks *app = cls;
+maybeBeginAnotherOne:
+    if( app->numInProgress >= app->maxParallel ){
+        LOGDBG("[DEBUG] Already %d/%d in progress. Do NOT trigger more for now.\n",
+            app->numInProgress, app->maxParallel);
+        goto endFn;
     }
+    if( app->iDevice >= app->devices_len ){
+        LOGDBG("[INFO ] All %d devices started\n", app->iDevice);
+        goto endFn;
+    }
+    assert(app->iDevice >= 0 && app->iDevice < INT_MAX);
+    app->iDevice += 1;
+    assert(app->numInProgress >= 0 && app->numInProgress < INT_MAX);
+    app->numInProgress += 1;
+    visitDevice(app, app->devices + app->iDevice - 1);
+    goto maybeBeginAnotherOne;
+endFn:;
 }
 
 
 static void setupExampleDevices( FindFullDisks*app ){
-    app->devices_len = 1;
-    app->devices = realloc(NULL, app->devices_len*sizeof*app->devices);
-    assert(app->devices != NULL || !"ENOMEM");
+    #define DEVICES_CAP 3
+    app->devices_len = 0;
+    app->devices = malloc(DEVICES_CAP*sizeof*app->devices);
+    assert(app->devices != NULL || !"malloc fail");
     /**/
-    strcpy(app->devices[0].hostname, "fook-12345");
-    strcpy(app->devices[0].eddieName, "eddie09815");
-    strcpy(app->devices[0].lastSeen, "2023-12-31T23:59:59");
+//    strcpy(app->devices[app->devices_len].eddieName, "eddie09815");
+//    strcpy(app->devices[app->devices_len].hostname, "fook-12345");
+//    strcpy(app->devices[app->devices_len].lastSeen, "2023-12-31T23:59:59");
+//    app->devices_len += 1; assert(app->devices_len < DEVICES_CAP);
+//    /**/
+//    strcpy(app->devices[app->devices_len].eddieName, "eddie12345");
+//    strcpy(app->devices[app->devices_len].hostname, "fook-67890");
+//    strcpy(app->devices[app->devices_len].lastSeen, "2023-12-31T23:42:42");
+//    app->devices_len += 1; assert(app->devices_len < DEVICES_CAP);
+//    /**/
+    strcpy(app->devices[app->devices_len].eddieName, "eddie09845");
+    strcpy(app->devices[app->devices_len].hostname, "lunkwill-0005b7ec98a9");
+    strcpy(app->devices[app->devices_len].lastSeen, "2023-12-31T23:59:42");
+    app->devices_len += 1; assert(app->devices_len < DEVICES_CAP);
     /**/
-//    strcpy(app->devices[1].hostname, "fook-67890");
-//    strcpy(app->devices[1].eddieName, "eddie12345");
-//    strcpy(app->devices[1].lastSeen, "2023-12-31T23:42:42");
-//    /**/
-//    strcpy(app->devices[2].hostname, "lunkwill-12345");
-//    strcpy(app->devices[2].eddieName, "eddie09845");
-//    strcpy(app->devices[2].lastSeen, "2023-12-31T23:59:42");
-//    /**/
+    strcpy(app->devices[app->devices_len].eddieName, "eddie00002");
+    strcpy(app->devices[app->devices_len].hostname, "lunkwill-FACEBOOKBABE");
+    strcpy(app->devices[app->devices_len].lastSeen, "2023-12-31T23:59:42");
+    app->devices_len += 1; assert(app->devices_len < DEVICES_CAP);
+    /**/
+    #undef DEVICES_CAP
 }
 
 
 int main( int argc, char**argv ){
     static union{ void*align; char space[SIZEOF_struct_GarbageEnv]; } garbMemory;
-    FindFullDisks app = {
-        .sshUser = "brünzli",
-        .sshPort = 22,
-        .garb = NULL,
-        .child = NULL,
-        .devices_len = 0,
-        .devices = NULL,
-    };
-    setupExampleDevices(&app);
-    app.garb = GarbageEnv_ctor(&(struct GarbageEnv_Mentor){
+    FindFullDisks app = {0}; assert((void*)0 == NULL);
+    #define app (&app)
+    app->sshUser = "isa"  ;//  "brünzli";
+    app->sshPort = 7022  ;//  22;
+    app->maxParallel = 1;
+    setupExampleDevices(app);
+    app->env = GarbageEnv_ctor(&(struct GarbageEnv_Mentor){
         .memBlockToUse = &garbMemory,
         .memBlockToUse_sz = sizeof garbMemory,
     });
-    assert(app.garb != NULL);
-    (*app.garb)->enqueBlocking(app.garb, startApp, &app);
-    (*app.garb)->runUntilDone(app.garb);
-    return 0;
+    assert(app->env != NULL);
+    (*app->env)->enqueBlocking(app->env, beginNextDevice, app);
+    (*app->env)->runUntilDone(app->env);
+    return !!app->exitCode;
+    #undef app
 }
 
 
