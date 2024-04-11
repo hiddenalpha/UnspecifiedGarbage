@@ -28,6 +28,8 @@ true `# make FindFullDisks` \
 
 #include "Garbage.h"
 
+#define FLG_isHelp (1<<0)
+
 #if !NDEBUG
 #   define REGISTER register
 #   define LOGDBG(...) fprintf(stderr, __VA_ARGS__)
@@ -43,7 +45,8 @@ typedef  struct Device  Device;
 
 
 struct FindFullDisks {
-    char *sshUser;
+    int flg;
+    const char *sshUser;
     int sshPort;
     int maxParallel, numInProgress;
     struct GarbageEnv **env;
@@ -65,6 +68,54 @@ struct Device {
 /*BEG fwd decls*/
 static void beginNextDevice( void* );
 /*END fwd decls*/
+
+
+static void printHelp( void ){
+    printf("%s%s%s", "  \n"
+        "  ", strrchr(__FILE__,'/')+1, "\n"
+        "  \n"
+        "  Expected format on stdin is:\n"
+        "  \n"
+        "    eddie00042 <TAB> lunkwill-ABBABEAFABBA <LF>\n"
+        "    ...\n"
+        "  \n"
+        "  Options:\n"
+        "  \n"
+        "      --sshUser <str>\n"
+        "  \n"
+        "      --sshPort <int>\n"
+        "  \n");
+}
+
+
+static int parseArgs( int argc, char**argv, FindFullDisks*app ){
+    int iA = 1;
+    app->sshUser = NULL;
+    app->sshPort = 22;
+    app->maxParallel = 1;
+nextArg:;
+    const char *arg = argv[iA++];
+    if( arg == NULL ) goto validateArgs;
+    if( !strcmp(arg, "--help")){
+        app->flg |= FLG_isHelp; return 0;
+    }else if( !strcmp(arg, "--sshUser")){
+        arg = argv[iA++];
+        if( arg == NULL ){ LOGERR("EINVAL: Arg --sshUser needs value\n"); return -1; }
+        app->sshUser = arg;
+    }else if( !strcmp(arg, "--sshPort")){
+        arg = argv[iA++];
+        if( arg == NULL ){ LOGERR("EINVAL: Arg --sshPort needs value\n"); return -1; }
+        errno = 0;
+        app->sshPort = strtol(arg, NULL, 0);
+        if( errno ){ LOGERR("EINVAL: --sshPort %s\n", arg); return -1; }
+    }else{
+        LOGERR("EINVAL: %s\n", arg);
+    }
+    goto nextArg;
+validateArgs:;
+    if( app->sshUser == NULL ){ LOGERR("EINVAL: Arg --sshUser missing\n"); return -1; }
+    return 0;
+}
 
 
 static void Child_onStdout( const char*buf, int buf_len, void*cls ){
@@ -169,7 +220,7 @@ endFn:;
 
 
 static void setupExampleDevices( FindFullDisks*app ){
-    #define DEVICES_CAP 3
+    #define DEVICES_CAP 42
     app->devices_len = 0;
     app->devices = malloc(DEVICES_CAP*sizeof*app->devices);
     assert(app->devices != NULL || !"malloc fail");
@@ -185,12 +236,22 @@ static void setupExampleDevices( FindFullDisks*app ){
 //    app->devices_len += 1; assert(app->devices_len < DEVICES_CAP);
 //    /**/
     strcpy(app->devices[app->devices_len].eddieName, "eddie09845");
+    strcpy(app->devices[app->devices_len].hostname, "fook");
+    strcpy(app->devices[app->devices_len].lastSeen, "2023-12-31T23:59:42");
+    app->devices_len += 1; assert(app->devices_len < DEVICES_CAP);
+    /**/
+    strcpy(app->devices[app->devices_len].eddieName, "eddie09845");
     strcpy(app->devices[app->devices_len].hostname, "lunkwill-0005b7ec98a9");
     strcpy(app->devices[app->devices_len].lastSeen, "2023-12-31T23:59:42");
     app->devices_len += 1; assert(app->devices_len < DEVICES_CAP);
     /**/
     strcpy(app->devices[app->devices_len].eddieName, "eddie00002");
     strcpy(app->devices[app->devices_len].hostname, "lunkwill-FACEBOOKBABE");
+    strcpy(app->devices[app->devices_len].lastSeen, "2023-12-31T23:59:42");
+    app->devices_len += 1; assert(app->devices_len < DEVICES_CAP);
+    /**/
+    strcpy(app->devices[app->devices_len].eddieName, "eddie00002");
+    strcpy(app->devices[app->devices_len].hostname, "fook");
     strcpy(app->devices[app->devices_len].lastSeen, "2023-12-31T23:59:42");
     app->devices_len += 1; assert(app->devices_len < DEVICES_CAP);
     /**/
@@ -202,10 +263,9 @@ int main( int argc, char**argv ){
     static union{ void*align; char space[SIZEOF_struct_GarbageEnv]; } garbMemory;
     FindFullDisks app = {0}; assert((void*)0 == NULL);
     #define app (&app)
-    app->sshUser = "isa"  ;//  "brünzli";
-    app->sshPort = 7022  ;//  22;
-    app->maxParallel = 1;
-    setupExampleDevices(app);
+    if( parseArgs(argc, argv, app) ){ app->exitCode = -1; goto endFn; }
+    if( app->flg & FLG_isHelp ){ printHelp(); goto endFn; }
+    //setupExampleDevices(app);
     app->env = GarbageEnv_ctor(&(struct GarbageEnv_Mentor){
         .memBlockToUse = &garbMemory,
         .memBlockToUse_sz = sizeof garbMemory,
@@ -213,6 +273,7 @@ int main( int argc, char**argv ){
     assert(app->env != NULL);
     (*app->env)->enqueBlocking(app->env, beginNextDevice, app);
     (*app->env)->runUntilDone(app->env);
+endFn:
     return !!app->exitCode;
     #undef app
 }
