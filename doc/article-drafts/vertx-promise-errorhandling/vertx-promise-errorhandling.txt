@@ -187,7 +187,7 @@ you straight to where the problem has to be fixed.
 For those who now start yelling around "urgh, this code is soo long". Here's your choise:
 
 - Write short code which does NOT TELL YOU WHAT IS HAPPENING and gives bugs
-  many places to play hide-and-seek. Aka happy maintenance nightmare.
+  many places to play hide-and-seek with you. Aka happy maintenance nightmare.
 - Write some more code which makes it hard for bugs to hide.
 
 

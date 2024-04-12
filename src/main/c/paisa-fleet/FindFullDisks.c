@@ -4,14 +4,14 @@ true `# configure FindFullDisks for NORMAL systems` \
   && CC=gcc \
   && MKDIR_P="mkdir -p" \
   && CFLAGS="-Wall -Werror -pedantic -Os -fmax-errors=1 -Wno-error=unused-variable -Wno-error=unused-function -Isrc/main/c -Iimport/include" \
-  && LDFLAGS="-Wl,-dn,-lgarbage,-dy,-lpthread,-lws2_w32,-Limport/lib" \
+  && LDFLAGS="-Wl,-dn,-lgarbage,-lcJSON,-lexpat,-lmbedtls,-lmbedx509,-lmbedcrypto,-dy,-lpthread,-lws2_w32,-Limport/lib" \
   && true
 
 true `# configure FindFullDisks for BROKEN systems` \
   && CC=x86_64-w64-mingw32-gcc \
   && MKDIR_P="mkdir -p" \
   && CFLAGS="-Wall -Werror -pedantic -Os -fmax-errors=1 -Wno-error=unused-variable -Wno-error=unused-function -Isrc/main/c -Iimport/include" \
-  && LDFLAGS="-Wl,-dn,-lgarbage,-dy,-lws2_32,-Limport/lib" \
+  && LDFLAGS="-Wl,-dn,-lgarbage,-lcJSON,-lexpat,-lmbedtls,-lmbedx509,-lmbedcrypto,-dy,-lws2_32,-Limport/lib" \
   && true
 
 true `# make FindFullDisks` \
@@ -50,9 +50,12 @@ struct FindFullDisks {
     int sshPort;
     int maxParallel, numInProgress;
     struct GarbageEnv **env;
+    struct Garbage_CsvIStream **csvSrc;
     struct Garbage_Process **child;
-    int devices_len;
+    char *inBuf;
+    int inBuf_cap, inBuf_len;
     Device *devices;
+    int devices_cap, devices_cnt;
     int iDevice; /* Next device to be triggered. */
     int exitCode;
 };
@@ -61,12 +64,12 @@ struct FindFullDisks {
 struct Device {
     char hostname[sizeof"lunkwill-0123456789AB"];
     char eddieName[sizeof"eddie12345"];
-    char lastSeen[sizeof"2023-12-31T23:59:59"];
 };
 
 
 /*BEG fwd decls*/
 static void beginNextDevice( void* );
+static void feedNextChunkFromStdinToCsvParser( void* );
 /*END fwd decls*/
 
 
@@ -118,6 +121,9 @@ validateArgs:;
 }
 
 
+static void no_op( void*_ ){}
+
+
 static void Child_onStdout( const char*buf, int buf_len, void*cls ){
     //FindFullDisks*const app = cls;
     if( buf_len > 0 ){ /*another chunk*/
@@ -140,7 +146,7 @@ static void Child_onJoined( int retval, int exitCode, int sigNum, void*cls ){
 
 static void visitDevice( FindFullDisks*app, const Device*device ){
     assert(device != NULL);
-    assert(device < app->devices + app->devices_len);
+    assert(device < app->devices + app->devices_cnt);
     LOGERR("\n[INFO ] %s \"%s\" (behind \"%s\")\n", __func__, device->hostname, device->eddieName);
     int err;
     char eddieCmd[2048];
@@ -205,8 +211,8 @@ maybeBeginAnotherOne:
             app->numInProgress, app->maxParallel);
         goto endFn;
     }
-    if( app->iDevice >= app->devices_len ){
-        LOGDBG("[INFO ] All %d devices started\n", app->iDevice);
+    if( app->iDevice >= app->devices_cnt ){
+        LOGDBG("[INFO ] Work on %d devices triggered. No more devices to trigger.\n", app->iDevice);
         goto endFn;
     }
     assert(app->iDevice >= 0 && app->iDevice < INT_MAX);
@@ -219,59 +225,95 @@ endFn:;
 }
 
 
-static void setupExampleDevices( FindFullDisks*app ){
-    #define DEVICES_CAP 42
-    app->devices_len = 0;
-    app->devices = malloc(DEVICES_CAP*sizeof*app->devices);
-    assert(app->devices != NULL || !"malloc fail");
-    /**/
-//    strcpy(app->devices[app->devices_len].eddieName, "eddie09815");
-//    strcpy(app->devices[app->devices_len].hostname, "fook-12345");
-//    strcpy(app->devices[app->devices_len].lastSeen, "2023-12-31T23:59:59");
-//    app->devices_len += 1; assert(app->devices_len < DEVICES_CAP);
-//    /**/
-//    strcpy(app->devices[app->devices_len].eddieName, "eddie12345");
-//    strcpy(app->devices[app->devices_len].hostname, "fook-67890");
-//    strcpy(app->devices[app->devices_len].lastSeen, "2023-12-31T23:42:42");
-//    app->devices_len += 1; assert(app->devices_len < DEVICES_CAP);
-//    /**/
-    strcpy(app->devices[app->devices_len].eddieName, "eddie09845");
-    strcpy(app->devices[app->devices_len].hostname, "fook");
-    strcpy(app->devices[app->devices_len].lastSeen, "2023-12-31T23:59:42");
-    app->devices_len += 1; assert(app->devices_len < DEVICES_CAP);
-    /**/
-    strcpy(app->devices[app->devices_len].eddieName, "eddie09845");
-    strcpy(app->devices[app->devices_len].hostname, "lunkwill-0005b7ec98a9");
-    strcpy(app->devices[app->devices_len].lastSeen, "2023-12-31T23:59:42");
-    app->devices_len += 1; assert(app->devices_len < DEVICES_CAP);
-    /**/
-    strcpy(app->devices[app->devices_len].eddieName, "eddie00002");
-    strcpy(app->devices[app->devices_len].hostname, "lunkwill-FACEBOOKBABE");
-    strcpy(app->devices[app->devices_len].lastSeen, "2023-12-31T23:59:42");
-    app->devices_len += 1; assert(app->devices_len < DEVICES_CAP);
-    /**/
-    strcpy(app->devices[app->devices_len].eddieName, "eddie00002");
-    strcpy(app->devices[app->devices_len].hostname, "fook");
-    strcpy(app->devices[app->devices_len].lastSeen, "2023-12-31T23:59:42");
-    app->devices_len += 1; assert(app->devices_len < DEVICES_CAP);
-    /**/
-    #undef DEVICES_CAP
+static void onCsvRow( struct Garbage_CsvIStream_BufWithLength*row, int numCols, void*cls ){
+    REGISTER int err;
+    FindFullDisks *app = cls;
+    if( app->exitCode ) return;
+    if( numCols != 2 ){
+        LOGERR("[ERROR] Expected 2 column in input CSV but found %d\n", numCols);
+        app->exitCode = -1; return;
+    }
+    if( app->devices_cap <= app->devices_cnt ){
+        app->devices_cap += 4096;
+        void *tmp = realloc(app->devices, app->devices_cap*sizeof*app->devices);
+        if( tmp == NULL ) assert(!"TODO_c04CAJtRAgDYWQIAm10CAOAeAgA0KgIA");
+        app->devices = tmp;
+    }
+    #define DEVICE (app->devices + app->devices_cnt)
+    if( row[0].len >= sizeof DEVICE->eddieName ){
+        LOGERR("[ERROR] eddieName too long: len=%d\n", row[0].len);
+        app->exitCode = -1; return;
+    }
+    if( row[1].len >= sizeof DEVICE->hostname ){
+        LOGERR("[ERROR] hostname too long: len=%d\n", row[1].len);
+        app->exitCode = -1; return;
+    }
+    memcpy(DEVICE->eddieName, row[0].buf, row[0].len);
+    DEVICE->eddieName[row[0].len] = '\0';
+    memcpy(DEVICE->hostname, row[1].buf, row[1].len);
+    DEVICE->hostname[row[1].len] = '\0';
+    #undef DEVICE
+    app->devices_cnt += 1;
+}
+
+
+static void onCsvParserCloseSnkDone( int retval, void*app_ ){
+    FindFullDisks *app = app_;
+    LOGDBG("[DEBUG] Found %d devices in input.\n", app->devices_cnt);
+    (*app->env)->enqueBlocking(app->env, beginNextDevice, app);
+}
+
+
+static void onCsvParserWriteDone( int retval, void*cls ){
+    FindFullDisks *app = cls;
+    if( retval <= 0 ) assert(!"TODO_bD0CAO1tAgDaNgIACzcCAIsOAgBkXgIA");
+    (*app->env)->enqueBlocking(app->env, feedNextChunkFromStdinToCsvParser, app);
+}
+
+
+static void feedNextChunkFromStdinToCsvParser( void*cls ){
+    REGISTER int err;
+    FindFullDisks *app = cls;
+    if( app->exitCode ) return;
+    #define SRC (stdin)
+    if( app->inBuf == NULL || app->inBuf_cap < 1024 ){
+        app->inBuf_cap = 1<<15;
+        void *tmp = realloc(app->inBuf, app->inBuf_cap*sizeof*app->inBuf);;
+        if( tmp == NULL ){ assert(!"TODO_TT8CAGQLAgCoawIA9jgCANA6AgBTaAIA"); }
+        app->inBuf = tmp;
+    }
+    err = fread(app->inBuf, 1, app->inBuf_cap, SRC);
+    if( err <= 0 ){
+        (*app->csvSrc)->closeSnk(app->csvSrc, onCsvParserCloseSnkDone, app);
+        return;
+    }
+    app->inBuf_len = err;
+    (*app->csvSrc)->write(app->inBuf, app->inBuf_len, app->csvSrc, onCsvParserWriteDone, app);
+    #undef SRC
+}
+
+
+static void initCsvParserForDeviceListOnStdin( void*cls ){
+    FindFullDisks *app = cls;
+    static struct Garbage_CsvIStream_Mentor csvMentor = {
+        .onCsvRow = onCsvRow,
+        .onCsvDocEnd = no_op,
+    };
+    static struct Garbage_CsvIStream_Opts csvOpts = { .delimCol = ';' };
+    app->csvSrc = (*app->env)->newCsvIStream(app->env, &csvOpts, &csvMentor, app);
+    feedNextChunkFromStdinToCsvParser(app);
 }
 
 
 int main( int argc, char**argv ){
-    static union{ void*align; char space[SIZEOF_struct_GarbageEnv]; } garbMemory;
+    void *envMemory[SIZEOF_struct_GarbageEnv/sizeof(void*)];
     FindFullDisks app = {0}; assert((void*)0 == NULL);
     #define app (&app)
     if( parseArgs(argc, argv, app) ){ app->exitCode = -1; goto endFn; }
     if( app->flg & FLG_isHelp ){ printHelp(); goto endFn; }
-    //setupExampleDevices(app);
-    app->env = GarbageEnv_ctor(&(struct GarbageEnv_Mentor){
-        .memBlockToUse = &garbMemory,
-        .memBlockToUse_sz = sizeof garbMemory,
-    });
+    app->env = GarbageEnv_ctor(envMemory, sizeof envMemory);
     assert(app->env != NULL);
-    (*app->env)->enqueBlocking(app->env, beginNextDevice, app);
+    (*app->env)->enqueBlocking(app->env, initCsvParserForDeviceListOnStdin, app);
     (*app->env)->runUntilDone(app->env);
 endFn:
     return !!app->exitCode;

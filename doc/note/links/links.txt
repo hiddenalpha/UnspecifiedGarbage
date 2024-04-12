@@ -585,3 +585,6 @@ Links (Aka argument amplifiers)
 - [public service announcement](https://xkcd.com/1179/)
 - [3 simple rules](https://dev.to/corykeane/3-simple-rules-for-effectively-handling-dates-and-timezones-1pe0)
 
+## (TODO put to a better place in here)
+- [how to handle vertx promise fail/errors properly](https://github.com/swisspost/vertx-redisques/pull/164#discussion_r1562105007)
+

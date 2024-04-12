@@ -112,7 +112,8 @@ true `# Get made heap dump` \
   && true
 
 true `# Probe` \
-  && logFile="readyness-probe.log" \
+  && stage=prod \
+  && logFile="readyness-houston-${stage:?}-$(date -u +%Y%m%d-%H%M%SZ).log" \
   && printf 'c; when                   ;rspCode; connectSec; trsfSec; totlSec; curlExit\n' | tee -a "${logFile:?}" \
   && while true; do true \
      && printf 'r;%s;%7d;%11.3f;%8.3f;%8.3f;%9d\n' \
