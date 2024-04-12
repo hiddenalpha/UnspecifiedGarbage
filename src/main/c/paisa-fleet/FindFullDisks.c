@@ -87,6 +87,10 @@ static void printHelp( void ){
         "      --sshUser <str>\n"
         "  \n"
         "      --sshPort <int>\n"
+        "      Default: 22\n"
+        "  \n"
+        "      --maxParallel <int>\n"
+        "      Default 1.\n"
         "  \n");
 }
 
@@ -111,6 +115,12 @@ nextArg:;
         errno = 0;
         app->sshPort = strtol(arg, NULL, 0);
         if( errno ){ LOGERR("EINVAL: --sshPort %s\n", arg); return -1; }
+    }else if( !strcmp(arg, "--maxParallel")){
+        arg = argv[iA++];
+        if( arg == NULL ){ LOGERR("EINVAL: Arg --maxParallel needs value\n"); return -1; }
+        errno = 0;
+        app->maxParallel = strtol(arg, NULL, 0);
+        if( errno ){ LOGERR("EINVAL: --maxParallel %s\n", arg); return -1; }
     }else{
         LOGERR("EINVAL: %s\n", arg);
     }
