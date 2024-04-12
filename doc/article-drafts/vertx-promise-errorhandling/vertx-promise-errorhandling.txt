@@ -1,0 +1,199 @@
+
+<hdr>How to do error handling with java vertx Proimises</hdr>
+
+Example library
+```java
+    public class ExampleLib {
+        public Promise<Person> fetchPerson();
+        public Promise<Phone> fetchPhone(String personId);
+    }
+```
+
+The way to go (HINT still suffers from callback-hell, use method refs):
+
+```java
+    exampleLib.fetchPerson().onComplete( personEv -> {
+        if( personEv.failed() ){
+            log.error("TODO error handling", new UnsupportedOperationException(personEv.cause()));
+            return;
+        }
+        Person person = personEv.result();
+        exampleLib.fetchPhone().onComplete( phoneEv -> {
+            if( phoneEv.failed() ){
+                log.error("TODO error handling", new UnsupportedOperationException(phoneEv.cause()));
+                return;
+            }
+            Phone phone = phoneEv.result();
+            // 'person' and 'phone' are now ready to use.
+            // ....
+        });
+    });
+```
+
+
+<hdr>Why not using onSuccess().onFailure() ?</hdr>
+
+What I've found often in PRODUCTION code is the following:
+
+```java
+    exampleLib.fetchPerson().onSuccess( person -> exampleLib.fetchPhone(person.id, phone -> {
+        log.info("yayy! :) we got {} and {}", person, phone);
+    })).onFailure( ex -> {
+        log.error("whops :(", ex);
+    });
+```
+
+Then I hear stuff like "Yeah is this cool. It is so short and concise. This
+framebloat is great". BUT HERE'S THE CATCH: This code has a major flaw. Do you
+spot it? It is a VERY simple example so we should spot such a major flaw
+immediately. Just imagine a somewhat more realistic example whith tons of more
+code around it and it will become even harder to ever spot what is wrong here.
+
+Couldn't find the flaw yet? To make it more obvious I'll rewrite the code to
+good old synchronous, blocking, stone-age code, removing all that fancy
+framework clutter. This will help us to SEE immediately what the problem is:
+
+```java
+    try{
+        Person person = exampleLib.fetchPerson();
+        try{
+            Phone phone = exampleLib.fetchPhone();
+        }catch( Throwable ex ){
+            return; // HINT: This line should be your eye-catcher.
+        }
+        log.info("yayy! :) we got {} and {}", person, phone);
+    }catch( Throwable ex ){
+        log.error("whops :(", ex);
+    }
+```
+
+Take a look at the inner catch block. Now every serious dev should see something
+terrifying. It is catching EVERY kind of Throwables and JUST COMPLETELY IGNORES
+THEM! This is exactly what the previous code does. The problem is, that even
+experienced developers have a hard time to spot this. I say this, because in
+nearly every pull-request I've to review, I spot this issue dozens of times
+every few lines of code. This is terrifying for hunting bugs later.
+
+
+<hdr>Why not just using global error handler?</hdr>
+
+Lazy devs may argue with DRY, that we should just register a global handler and
+then just ignore all error handling everywher else.
+
+I think it is a good idea to register the global error handler. BUT we have to
+consider the folowing:
+
+- If we're writing a library, we MUST NOT steal the error handler. This is the applications job.
+- We still MUST have error handlers for every individual case.
+
+Why not registering from a lib? Bcause that error handler is GLOBAL to our
+vertx context, and we will make it hard to use our library, because the
+application cannot rely on this feature anymore, as all those fancy
+dependencies are going to fight each other by overriding that handler with
+their own one. Which makes the catch-all error handler pretty useless for the
+application.
+
+So then why not rely on the application setting this handler? Good APIs are
+easy to use right and hard to use wrong. Silently putting this responsibility
+to the application as an option is an example of how to provocate wrong usage
+of the library. So if a library does this, it just degrades the quality of the
+libraries API. And usage of libraries with bad APIs should be if you would like
+to prevent your future yourself unneccessary headache during maintenance later.
+
+So then why we still need individual handlers everywhere, even with a global
+catch-all handler registered? The only thing such a global handler is good for,
+is to make visible that error handling is missing SOMEWHERE. And this is the
+problem. As the stack traces likely will NOT contain the location where you
+have to apply a fix. You still have to guess where it could be. Here an example
+code which needs to be fixed, but we do NOT yet know that it is the code,
+because we only see the exception in the log and do NOT know where it should be
+handled:
+
+```java
+    public Promise<Phone> getOrCreatePhone(Id personId, Phone addIfMissing){
+        var onDone = Promise.<Void>promise();
+        exampleLib.fetchPerson(personId).onSuccess( person -> exampleLib.fetchPhone(person.id).onSuccess( phone -> {
+            onDone.complete(phone);
+        })).onFailure(onDone::fail);
+        return onDone.future();
+    }
+```
+
+Whops this code accidentally misses that it should assign the new phone to the
+person if there is no phone assigned yet. Unluckily we do NOT know this yet, as
+this code is in production and we just found this error in our logs, maybe in
+combination with some complaining customers that they get HTTP response
+timeouts without any further details. With luck we somewhen randomly stumble
+over this error. Notihng indicates a HTTP 500 nor any timeout. Just looks
+unrelated to what we're searching. Exactly as all the other 100'000 usless
+error logs in there.
+
+```
+    foo.bar.HttpNotFoundException: 404
+        at HttpLib.doGet0()
+        at HttpLib.doGet()
+        at HttpLib.get()
+        at EventLoop.runTask()
+        at EventLoop.nextTask()
+        at Thread.run()
+```
+
+So now how would you like to find out where this stack is coming from? There is
+NOT EVEN ONE stacktrace line pointing to any of our application code at all. So
+the only option left is to GUESS where it could come from. And both of the
+message and the stacktrace are pretty useless.
+
+Thereofore: Just add this fu**ing error handling. It is not that hard:
+
+```java
+    public Promise<Phone> getOrCreatePhone(Id personId, Phone addIfMissing){
+        var onDone = Promise.<Void>promise();
+        exampleLib.fetchPerson(personId, personEv -> {
+            if( personEv.failed() ){
+                onDone.fail(new UnsupportedOperationException("TODO error handling", personEv.cause()));
+                return;
+            }
+            Person person = personEv.result();
+            exampleLib.fetchPhone(person.id, phoneEv -> {
+                if( phoneEv.failed() ){
+                    onDone.fail(new UnsupportedOperationException("TODO error handling", phoneEv.cause()));
+                    return;
+                }
+                onDone.complete(phone);
+            });
+        });
+        return onDone.future();
+    }
+```
+
+Now the stack will look somewhat like below, where the very first line points
+you straight to where the problem has to be fixed.
+
+```
+    UnsupportedOperationException: TODO error handling
+        at getOrCreatePhone$lambda$1() line 42
+        at EventLoop.runTask()
+        at EventLoop.nextTask()
+        at Thread.run()
+    Caused by: foo.bar.HttpNotFoundException: 404
+        at HttpLib.doGet0()
+        at HttpLib.doGet()
+        at HttpLib.get()
+        at EventLoop.runTask()
+        at EventLoop.nextTask()
+        at Thread.run()
+```
+
+For those who now start yelling around "urgh, this code is soo long". Here's your choise:
+
+- Write short code which does NOT TELL YOU WHAT IS HAPPENING and gives bugs
+  many places to play hide-and-seek. Aka happy maintenance nightmare.
+- Write some more code which makes it hard for bugs to hide.
+
+
+Initialized: 2024-04-12
+LastModified: 2024-04-12
+Published: <none>
+Author and Copyright: Andreas Fankhauser
+
+
