@@ -33,18 +33,23 @@ true `# make FindFullDisks` \
 #if !NDEBUG
 #   define REGISTER register
 #   define LOGDBG(...) fprintf(stderr, __VA_ARGS__)
+#   define IF_DBG(expr) expr
 #else
 #   define REGISTER
 #   define LOGDBG(...)
+#   define IF_DBG(expr)
 #endif
 #define LOGERR(...) fprintf(stderr, __VA_ARGS__)
+
 
 
 typedef  struct FindFullDisks  FindFullDisks;
 typedef  struct Device  Device;
 
 
+#define MAGIC_FindFullDisks 0xB5410200
 struct FindFullDisks {
+    IF_DBG(int mAGIC);
     int flg;
     const char *sshUser;
     int sshPort;
@@ -61,9 +66,14 @@ struct FindFullDisks {
 };
 
 
+#define MAGIC_Device 0xAB420200
 struct Device {
-    char hostname[sizeof"lunkwill-0123456789AB"];
-    char eddieName[sizeof"eddie12345"];
+    IF_DBG(int mAGIC);
+    struct FindFullDisks *app;
+    char hostname[sizeof"lunkwill-0123456789AB_____"];
+    char eddieName[sizeof"eddie12345_____"];
+    char stdoutBuf[8192];
+    int stdoutBuf_cap, stdoutBuf_len;
 };
 
 
@@ -77,9 +87,9 @@ static void printHelp( void ){
     printf("%s%s%s", "  \n"
         "  ", strrchr(__FILE__,'/')+1, "\n"
         "  \n"
-        "  Expected format on stdin is:\n"
+        "  Expected format on stdin is a CSV like:\n"
         "  \n"
-        "    eddie00042 <TAB> lunkwill-ABBABEAFABBA <LF>\n"
+        "    eddie00042 <SEMICOLON> lunkwill-ABBABEAFABBA <LF>\n"
         "    ...\n"
         "  \n"
         "  Options:\n"
@@ -134,10 +144,32 @@ validateArgs:;
 static void no_op( void*_ ){}
 
 
+static void examineDeviceResult( void*device_ ){
+    REGISTER int err;
+    Device*const device = device_; assert(device->mAGIC = MAGIC_Device);
+    //FindFullDisks*const app = device->app; assert(app->mAGIC == MAGIC_FindFullDisks);
+    FILE *outFd = NULL;
+    if( device->stdoutBuf_len <= 0 ){ /*nothing to do*/ goto endFn; }
+    char outName[sizeof"result/eddie12345-lunkwill-1234567890123456.log"];
+    err = snprintf(outName, sizeof outName, "result/%s-%s.log", device->eddieName, device->hostname);
+    assert(err < sizeof outName);
+    outFd = fopen(outName, "wb");
+    if( outFd == NULL ){ LOGDBG("assert(fopen(%s) != %d)  %s:%d\n", outName, errno, __FILE__, __LINE__); abort(); }
+    err = fwrite(device->stdoutBuf, 1, device->stdoutBuf_len, outFd);
+    assert(err == device->stdoutBuf_len);
+endFn:
+    if( outFd != NULL ) fclose(outFd);
+}
+
+
 static void Child_onStdout( const char*buf, int buf_len, void*cls ){
-    //FindFullDisks*const app = cls;
+    Device*const device = cls; assert(device->mAGIC = MAGIC_Device);
+    FindFullDisks*const app = device->app; assert(app->mAGIC == MAGIC_FindFullDisks);
     if( buf_len > 0 ){ /*another chunk*/
-        printf("%.*s", buf_len, buf);
+        if( device->stdoutBuf_len + buf_len >= device->stdoutBuf_cap ) assert(!"TODO_VD8CAIVAgBDwIA4mECAKVjAgB1XwIAfk");
+        memcpy(device->stdoutBuf + device->stdoutBuf_len, buf, buf_len);
+        device->stdoutBuf_len += buf_len;
+        //printf("%.*s", buf_len, buf);
     }else{ /*EOF*/
         assert(buf_len == 0);
     }
@@ -145,21 +177,34 @@ static void Child_onStdout( const char*buf, int buf_len, void*cls ){
 
 
 static void Child_onJoined( int retval, int exitCode, int sigNum, void*cls ){
-    FindFullDisks*const app = cls;
-    LOGDBG("[TRACE] %s(%d, %d, %d)\n", __func__, retval, exitCode, sigNum);
+    Device*const device = cls; assert(device->mAGIC == MAGIC_Device);
+    FindFullDisks*const app = device->app; assert(app->mAGIC == MAGIC_FindFullDisks);
+    if( retval != 0 || exitCode != 0 || sigNum != 0 ){
+        LOGDBG("[DEBUG] %s(%d, %d, %d)\n", __func__, retval, exitCode, sigNum);
+    }
     assert(app->numInProgress > 0);
     app->numInProgress -= 1;
-    //LOGDBG("[DEBUG] numInProgress decremented is now %d\n", app->numInProgress);
+    (*app->env)->enqueBlocking(app->env, examineDeviceResult, device);
     (*app->env)->enqueBlocking(app->env, beginNextDevice, app);
 }
 
 
-static void visitDevice( FindFullDisks*app, const Device*device ){
-    assert(device != NULL);
+static void visitDevice( FindFullDisks*app, Device*device ){
+    assert(device != NULL && device->mAGIC == MAGIC_Device);
     assert(device < app->devices + app->devices_cnt);
     LOGERR("\n[INFO ] %s \"%s\" (behind \"%s\")\n", __func__, device->hostname, device->eddieName);
     int err;
     char eddieCmd[2048];
+    //err = snprintf(eddieCmd, sizeof eddieCmd, "true"
+    //    " && HOSTNAME=$(hostname|sed 's_.pnet.ch__')"
+    //    " && STAGE=$PAISA_ENV"
+    //    " && printf \"remoteEddieName=$HOSTNAME, remoteStage=$STAGE\\n\""
+    //    " && if test \"$(echo ${HOSTNAME}|sed -E 's_^vted_teddie_g')\" != \"%s\"; then true"
+    //        " && echo wrong host. Want %s found $HOSTNAME && false"
+    //    " ;fi"
+    //    " && df",
+    //    device->eddieName, device->eddieName
+    //);
     err = snprintf(eddieCmd, sizeof eddieCmd, "true"
         " && HOSTNAME=$(hostname|sed 's_.pnet.ch__')"
         " && STAGE=$PAISA_ENV"
@@ -181,9 +226,10 @@ static void visitDevice( FindFullDisks*app, const Device*device ){
         strncmp("fook-",device->hostname,5) ? device->hostname : "fook"
     );
     assert(err < sizeof eddieCmd);
-    assert(app->sshPort > 0 && app->sshPort < 0xFFFF);
-    char sshPortStr[12];
-    sprintf(sshPortStr, "%d", app->sshPort);
+    assert(app->sshPort > 0 && app->sshPort <= 0xFFFF);
+    char sshPortStr[sizeof"65535"];
+    err = snprintf(sshPortStr, sizeof sshPortStr, "%d", app->sshPort);
+    assert(err < (int)sizeof sshPortStr);
     char userAtEddie[64];
     err = snprintf(userAtEddie, sizeof userAtEddie, "%s@%s", app->sshUser, device->eddieName);
     assert(err < sizeof userAtEddie);
@@ -201,11 +247,11 @@ static void visitDevice( FindFullDisks*app, const Device*device ){
     //for( int i = 0 ; childArgv[i] != NULL ; ++i ) LOGDBG("  \"%s\"", childArgv[i]);
     //LOGDBG("\n\n");
     app->child = (*app->env)->newProcess(app->env, &(struct Garbage_Process_Mentor){
-        .cls = app,
+        .cls = device,
         .usePathSearch = !0,
         .argv = childArgv,
         .onStdout = Child_onStdout,
-        //.onStderr = Child_onStderr,
+        //.onStderr = ,
         .onJoined = Child_onJoined,
     });
     assert(app->child != NULL);
@@ -214,15 +260,15 @@ static void visitDevice( FindFullDisks*app, const Device*device ){
 
 
 static void beginNextDevice( void*cls ){
-    FindFullDisks *app = cls;
+    FindFullDisks*const app = cls; assert(app->mAGIC == MAGIC_FindFullDisks);
 maybeBeginAnotherOne:
     if( app->numInProgress >= app->maxParallel ){
-        LOGDBG("[DEBUG] Already %d/%d in progress. Do NOT trigger more for now.\n",
-            app->numInProgress, app->maxParallel);
+        //LOGDBG("[DEBUG] Already %d/%d in progress. Do NOT trigger more for now.\n",
+        //    app->numInProgress, app->maxParallel);
         goto endFn;
     }
     if( app->iDevice >= app->devices_cnt ){
-        LOGDBG("[INFO ] Work on %d devices triggered. No more devices to trigger.\n", app->iDevice);
+        //LOGDBG("[INFO ] Work on %d devices triggered. No more devices to trigger.\n", app->iDevice);
         goto endFn;
     }
     assert(app->iDevice >= 0 && app->iDevice < INT_MAX);
@@ -237,7 +283,7 @@ endFn:;
 
 static void onCsvRow( struct Garbage_CsvIStream_BufWithLength*row, int numCols, void*cls ){
     REGISTER int err;
-    FindFullDisks *app = cls;
+    FindFullDisks*const app = cls; assert(app->mAGIC == MAGIC_FindFullDisks);
     if( app->exitCode ) return;
     if( numCols != 2 ){
         LOGERR("[ERROR] Expected 2 column in input CSV but found %d\n", numCols);
@@ -250,6 +296,9 @@ static void onCsvRow( struct Garbage_CsvIStream_BufWithLength*row, int numCols, 
         app->devices = tmp;
     }
     #define DEVICE (app->devices + app->devices_cnt)
+    IF_DBG(DEVICE->mAGIC = MAGIC_Device);
+    DEVICE->app = app;
+    DEVICE->stdoutBuf_cap = sizeof DEVICE->stdoutBuf / sizeof*DEVICE->stdoutBuf;
     if( row[0].len >= sizeof DEVICE->eddieName ){
         LOGERR("[ERROR] eddieName too long: len=%d\n", row[0].len);
         app->exitCode = -1; return;
@@ -268,29 +317,29 @@ static void onCsvRow( struct Garbage_CsvIStream_BufWithLength*row, int numCols, 
 
 
 static void onCsvParserCloseSnkDone( int retval, void*app_ ){
-    FindFullDisks *app = app_;
+    FindFullDisks*const app = app_; assert(app->mAGIC == MAGIC_FindFullDisks);
     LOGDBG("[DEBUG] Found %d devices in input.\n", app->devices_cnt);
     (*app->env)->enqueBlocking(app->env, beginNextDevice, app);
 }
 
 
 static void onCsvParserWriteDone( int retval, void*cls ){
-    FindFullDisks *app = cls;
-    if( retval <= 0 ) assert(!"TODO_bD0CAO1tAgDaNgIACzcCAIsOAgBkXgIA");
+    FindFullDisks*const app = cls; assert(app->mAGIC == MAGIC_FindFullDisks);
+    if( retval <= 0 ){ LOGDBG("assert(retval != %d)  %s:%d\n", retval, __FILE__, __LINE__); abort(); }
     (*app->env)->enqueBlocking(app->env, feedNextChunkFromStdinToCsvParser, app);
 }
 
 
 static void feedNextChunkFromStdinToCsvParser( void*cls ){
     REGISTER int err;
-    FindFullDisks *app = cls;
+    FindFullDisks*const app = cls; assert(app->mAGIC == MAGIC_FindFullDisks);
     if( app->exitCode ) return;
     #define SRC (stdin)
-    if( app->inBuf == NULL || app->inBuf_cap < 1024 ){
+    if( app->inBuf == NULL || app->inBuf_cap < 1<<15 ){
         app->inBuf_cap = 1<<15;
-        void *tmp = realloc(app->inBuf, app->inBuf_cap*sizeof*app->inBuf);;
-        if( tmp == NULL ){ assert(!"TODO_TT8CAGQLAgCoawIA9jgCANA6AgBTaAIA"); }
-        app->inBuf = tmp;
+        if( app->inBuf ) free(app->inBuf);
+        app->inBuf = malloc(app->inBuf_cap*sizeof*app->inBuf);;
+        if( app->inBuf == NULL ){ assert(!"TODO_TT8CAGQLAgCoawIA9jgCANA6AgBTaAIA"); }
     }
     err = fread(app->inBuf, 1, app->inBuf_cap, SRC);
     if( err <= 0 ){
@@ -304,12 +353,12 @@ static void feedNextChunkFromStdinToCsvParser( void*cls ){
 
 
 static void initCsvParserForDeviceListOnStdin( void*cls ){
-    FindFullDisks *app = cls;
+    FindFullDisks*const app = cls; assert(app->mAGIC == MAGIC_FindFullDisks);
     static struct Garbage_CsvIStream_Mentor csvMentor = {
         .onCsvRow = onCsvRow,
         .onCsvDocEnd = no_op,
     };
-    static struct Garbage_CsvIStream_Opts csvOpts = { .delimCol = ';' };
+    struct Garbage_CsvIStream_Opts csvOpts = { .delimCol = ';' };
     app->csvSrc = (*app->env)->newCsvIStream(app->env, &csvOpts, &csvMentor, app);
     feedNextChunkFromStdinToCsvParser(app);
 }
@@ -319,6 +368,7 @@ int main( int argc, char**argv ){
     void *envMemory[SIZEOF_struct_GarbageEnv/sizeof(void*)];
     FindFullDisks app = {0}; assert((void*)0 == NULL);
     #define app (&app)
+    IF_DBG(app->mAGIC = MAGIC_FindFullDisks);
     if( parseArgs(argc, argv, app) ){ app->exitCode = -1; goto endFn; }
     if( app->flg & FLG_isHelp ){ printHelp(); goto endFn; }
     app->env = GarbageEnv_ctor(envMemory, sizeof envMemory);
