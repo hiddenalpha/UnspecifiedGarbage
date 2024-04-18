@@ -73,6 +73,7 @@ qemu-system-x86_64 \
 ## Broken systems likely need some of those too
     `# Fix broken hosts` \
     -L "${QEMU_HOME:?}/Bios" -bios "${QEMU_HOME:?}/Bios/bios-256k.bin" \
+    -accel whpx,kernel-irqchip=off `# "https://github.com/Tech-FZ/EmuGUI/issues/72#issuecomment-1940933918"` \
     `# Fix broken guests` \
     -device usb-ehci,id=usb,bus=pci.0,addr=0x4 -device usb-tablet \
 
