@@ -63,7 +63,7 @@ qemu-system-x86_64 \
     `# USB pass-through` \
     -usb -device usb-host,id=myUsbQemuId,vendorid=0xFFFF,productid=0xFFFF \
     `# Choose ONE of those for graphic output` \
-    -nographic \
+    -nographic -serial stdio \
     -device VGA \
     -display sdl,grab-mod=rctrl \
     -display gtk,show-menubar=on \
