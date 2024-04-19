@@ -63,7 +63,7 @@ qemu-system-x86_64 \
     `# USB pass-through` \
     -usb -device usb-host,id=myUsbQemuId,vendorid=0xFFFF,productid=0xFFFF \
     `# Choose ONE of those for graphic output` \
-    -nographic \
+    -nographic -serial stdio \
     -device VGA \
     -display sdl,grab-mod=rctrl \
     -display gtk,show-menubar=on \
@@ -73,6 +73,7 @@ qemu-system-x86_64 \
 ## Broken systems likely need some of those too
     `# Fix broken hosts` \
     -L "${QEMU_HOME:?}/Bios" -bios "${QEMU_HOME:?}/Bios/bios-256k.bin" \
+    -accel whpx,kernel-irqchip=off `# "https://github.com/Tech-FZ/EmuGUI/issues/72#issuecomment-1940933918"` \
     `# Fix broken guests` \
     -device usb-ehci,id=usb,bus=pci.0,addr=0x4 -device usb-tablet \
 
@@ -238,6 +239,9 @@ NOTE: Couldn't yet test any of those commands.
 ## Alpine PostInstall
 
   true \
+  && `# HINT: environ setup does not work autmoatically during login. has to be sourced manually.` \
+  && P="http://10.0.2.2:3128/" \
+  && printf 'export no_proxy=127.0.0.1,10.0.2.*\nexport http_proxy=%s\nexport https_proxy=%s\n' "${P:?}" "${P:?}" >> '/etc/environment' \
   && apk add openssh-server \
   && rc-update add sshd \
   && sed -i -E 's;^# *(PermitRootLogin).+$;\1 yes;' /etc/ssh/sshd_config \
@@ -254,9 +258,9 @@ NOTE: Couldn't yet test any of those commands.
 TODO: move this to a better place. Eg: debian/setup.txt or whatever.
 
   true \
-  && http_proxy= \
-  && https_proxy= \
   && no_proxy=127.0.0.1,10.0.2.* \
+  && http_proxy=http://10.0.2.2:3128 \
+  && https_proxy=http://10.0.2.2:3128 \
   && SUDO= \
   && true \
   && if [ -n "$http_proxy" ]; then true \

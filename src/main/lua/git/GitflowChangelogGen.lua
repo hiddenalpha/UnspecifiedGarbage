@@ -16,6 +16,9 @@ function printHelp()
         .."    --remote <str>\n"
         .."      Name of the git remote to use. Defaults to 'upstream'.\n"
         .."  \n"
+        .."    --no-fetch\n"
+        .."      Do NOT update refs from remote. Just use what we have local.\n"
+        .."  \n"
         )
 end
 
@@ -34,6 +37,8 @@ function parseArgs( app )
             iA = iA + 1; arg = _ENV.arg[iA]
             if not arg then log:write("EINVAL: --remote needs value\n")return end
             app.remoteName = arg
+        elseif arg == "--no-fetch" then
+            app.isFetch = false
         elseif arg == "--help" then
             app.isHelp = true; return 0
         else
@@ -107,6 +112,17 @@ end
 
 function run( app )
     local snk = io.stdout
+    if app.isFetch then
+        -- Make sure refs are up-to-date
+        local gitFetch = "git fetch \"".. app.remoteName .."\""
+        log:write("[DEBUG] ".. gitFetch .."\n")
+        local gitFetch = io.popen(gitFetch)
+        while true do
+            local buf = gitFetch:read(1<<16)
+            if not buf then break end
+            log:write(buf)
+        end
+    end
     -- Collect input
     local git = "git log --date-order --first-parent --decorate --since \"".. app.since.."\""
         .." \"".. app.remoteName .."/master\""
@@ -163,6 +179,7 @@ function main()
     local app = {
         since = false,
         remoteName = false,
+        isFetch = true,
         fullHistory = {},
         fullHistoryRdBeg = 1,
         commits = {},
