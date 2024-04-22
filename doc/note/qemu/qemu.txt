@@ -46,7 +46,7 @@ Windoof:
 qemu-system-x86_64 \
     -nodefaults `# <- TODO Fix network when using this` \
     -accel kvm:whpx:hax:tcg -m size=2G -smp cores=$(nproc) \
-    -monitor stdio \
+    -monitor stdio -serial stdio `# coose ONE` \
     `# Drives & Boot.` \
     -boot order=dc \
     -cdrom "path/to/cd.iso" \
@@ -63,7 +63,7 @@ qemu-system-x86_64 \
     `# USB pass-through` \
     -usb -device usb-host,id=myUsbQemuId,vendorid=0xFFFF,productid=0xFFFF \
     `# Choose ONE of those for graphic output` \
-    -nographic -serial stdio \
+    -nographic \
     -device VGA \
     -display sdl,grab-mod=rctrl \
     -display gtk,show-menubar=on \
