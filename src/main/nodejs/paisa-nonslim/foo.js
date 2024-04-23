@@ -4,14 +4,54 @@
     const promisify = require("util").promisify;
     const zlib = require("zlib");
     const noop = function(){};
+    const logAsString = function( buf ){ log.write(buf.toString()); };
     const log = process.stderr;
 
     setImmediate(main);
 
 
+    function printHelp( argv, app ){
+        process.stdout.write("  \n"
+            +"  Autmoate some steps that are tedious manually.\n"
+            +"  \n"
+            +"  Options:\n"
+            +"  \n"
+            +"    --yolo\n"
+            +"      WARN: Use this only if you know what you're doing! It potentially\n"
+            +"      could damage stuff! Only use, if you understand what this script\n"
+            +"      is doing!\n"
+            +"  \n"
+        );
+    }
+
+
     function parseArgs( argv, app ){
-        log.write("[WARN ] TODO impl parseArgs()\n");
-        return 0;
+        const STEP_fetchArg = 1, STEP_parseArg = 2, STEP_verify = 3;
+        var arg, iA = 1, step = STEP_fetchArg;
+        var isYolo = false;
+        while(1) switch( step ){
+        case STEP_fetchArg: {
+            arg = argv[++iA];
+            step = (arg === undefined) ? STEP_verify : STEP_parseArg;
+            break; }
+        case STEP_parseArg: {
+            if(0){
+            }else if( arg == "--help" ){
+                app.isHelp = true; return 0;
+            }else if( arg == "--yolo" ){
+                isYolo = true;
+            }else{
+                log.write("EINVAL: "+ arg +"\n");
+                return -1;
+            }
+            step = STEP_fetchArg; break; }
+        case STEP_verify: {
+            if( !isYolo ){ log.write("EINVAL: Doing noting with zero args to prevent damage.\n"); return -1; }
+            return 0; }
+        default:
+            throw Error(step);
+        }
+        throw Error("unreachable");
     }
 
 
@@ -25,11 +65,11 @@
         if( typeof onDone != "function" ) throw TypeError("onDone");
         var child = child_process.spawn(
             "sh", [ "-c", "git status --porcelain | grep ." ],
-            {   cwd: workdirOfSync(app, thingyName), windowsHide: true, }
+            { cwd: workdirOfSync(app, thingyName), }
         );
         child.on("error", console.error.bind(console));
         child.stdout.on("data", noop);
-        child.stderr.on("data", function( buf ){ log.write(buf.toString()); });
+        child.stderr.on("data", logAsString);
         child.on("close", function( code, signal ){
             if( signal !== null ){
                 throw Error("code "+ code +", signal "+ signal +"");
@@ -111,12 +151,12 @@
                 { cwd: workdirOfSync(app, jettyService) },
             );
             child.on("error", console.error.bind(console));
-            child.stderr.on("data", function( buf ){ log.write(buf.toString()); });
+            child.stderr.on("data", logAsString);
             child.on("close", function(){
                 nextJettyService();
             });
         }
-        function onNoMoreJettyServices( app ){
+        function onNoMoreJettyServices(){
             onDone(null, null);
         }
     }
@@ -203,7 +243,7 @@
                 "sh", ["-c", "git apply"],
                 { cwd: workdirOfSync(app, "platform"), });
             gitApply.on("error", console.error.bind(console));
-            gitApply.stderr.on("data", function( buf ){ log.write(buf.toString()); });
+            gitApply.stderr.on("data", logAsString);
             gitApply.stdout.on("data", noop);
             gitApply.on("close", function( code, signal ){
                 if( code !== 0 || signal !== null ){ throw Error(""+ code +", "+ signal +""); }
@@ -243,7 +283,7 @@
             isHelp: false,
             maxParallel:  1,
         });
-        if( parseArgs(process.argv, app) !== 0 ){ os.exit(1); }
+        if( parseArgs(process.argv, app) !== 0 ){ process.exit(1); }
         if( app.isHelp ){ printHelp(); return; }
         run(app);
     }
