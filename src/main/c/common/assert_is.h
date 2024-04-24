@@ -2,7 +2,7 @@
 #if !NDEBUG
 #define TPL_assert_is(T, PRED) static inline T*assert_is_##T(void*p,\
 const char*f,int l){if(p==NULL){fprintf(stderr,"assert(" STR_QUOT(T)\
-" != NULL)  %s:%d\n",f,l);abort();}T*obj=p;if(!PRED){fprintf(stderr,\
+" != NULL)  %s:%d\n",f,l);abort();}T*obj=p;if(!(PRED)){fprintf(stderr,\
 "ssert(type is \""STR_QUOT(T)"\")  %s:%d\n",f,l);abort();}return p; }
 #else
 #define TPL_assert_is(T, PRED) static inline T*assert_is_##T(void*p,\
@@ -20,7 +20,7 @@ struct Person {
 };
 
 /* instantiate a checker */
-TPL_assert_is(Person, !strcmp(obj->tYPE, "Hi, I'm a Person"));
+TPL_assert_is(Person, !strcmp(obj->tYPE, "Hi, I'm a Person"))
 #define assert_is_Person(p) assert_is_Person(p, __FILE__, __LINE__)
 
 /* make sure magic is initialized (ALSO MAKE SURE TO PROPERLY INVALIDATE
