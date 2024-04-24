@@ -1,40 +1,140 @@
 ;(function(){ "use-strict";
 
     const child_process = require("child_process");
+    const fs = require("fs");
     const promisify = require("util").promisify;
     const zlib = require("zlib");
     const noop = function(){};
     const log = process.stderr;
+    const logAsString = function( buf ){ log.write(buf.toString()); };
 
     setImmediate(main);
 
 
+    function printHelp( argv, app ){
+        process.stdout.write("  \n"
+            +"  Autmoate some steps that are tedious manually.\n"
+            +"  \n"
+            +"  Options:\n"
+            +"  \n"
+            +"    --default\n"
+            +"      Perform default action (whatever default means).\n"
+            +"  \n"
+            +"    --print-isaVersion\n"
+            +"      Print a preflux isaVersion to stdout filled with the patched\n"
+            +"      services.\n"
+            +"  \n"
+            +"    --reset-hard-to-develop\n"
+            +"      Resets all the services back to develop. WARN if you've uncommitted\n"
+            +"      work in some of those repos, IT WILL BE LOST!\n"
+            +"  \n"
+            +"    --push | --push-force\n"
+            +"      Create commits for patched services and push them to upstream. If\n"
+            +"      not given, the change is only made locally (aka without cluttering\n"
+            +"      remote git repo). The force variant will replace existing branches\n"
+            +"      on the remnote. If given multiple times, less-invasive wins.\n"
+            +"  \n"
+            // not impl yet
+            //+"    --max-parallel <int>\n"
+            //+"      How many tasks to run concurrently. Defaults to 1. Which means to\n"
+            //+"      do all the work sequentially (HINT: very handy for debugging).\n"
+            //+"  \n"
+        );
+    }
+
+
     function parseArgs( argv, app ){
-        log.write("[WARN ] TODO impl parseArgs()\n");
+        var hasArgs = false;
+        for( var iA = 2 ; iA < argv.length ; ++iA ){
+            var arg = argv[iA];
+            if( arg == "--help" ){
+                app.isHelp = true; return 0;
+            }else if( arg == "--default" ){
+                hasArgs = true;
+            }else if( arg == "--push" ){
+                if( app.isPushForce ){ log.write("EINVAL: only one of push and push-force allowed\n"); return-1; }
+                app.isPush = true;
+                hasArgs = true;
+            }else if( arg == "--push-force" ){
+                if( app.isPush ){ log.write("EINVAL: only one of push and push-force allowed\n"); return-1; }
+                app.isPushForce = true;
+                hasArgs = true;
+            }else if( arg == "--print-isaVersion" ){
+                app.isPrintIsaVersion = true;
+                hasArgs = true;
+            }else if( arg == "--reset-hard-to-develop" ){
+                app.isResetHardToDevelop = true;
+                hasArgs = true;
+            //}else if( arg == "--max-parallel" ){
+            //    arg = argv[++iA];
+            //    if( !/^[0-9]+$/.test(arg) ){ log.write("EINVAL: --max-parallel "+ arg +"\n"); return -1; }
+            //    app.maxParallel = 0 + arg;
+            }else{
+                log.write("EINVAL: "+ arg +"\n");
+                return -1;
+            }
+        }
+        if( !hasArgs ){
+            log.write("EINVAL: Refuse to produce damage with zero args.\n");
+            return -1;
+        }
         return 0;
     }
 
 
+    function isThingyNameValid( app, thingyName ){
+        if( typeof thingyName !== "string" ) return false;
+        if( !/^[a-z-]+$/.test(thingyName) ) return false;
+        return true;
+    }
+
+
     function workdirOfSync( app, thingyName ){
-        if( typeof thingyName !== "string" || !/^[a-z-]+$/.test(thingyName) ) throw TypeError(thingyName);
-        return "C:/work/projects/isa-svc/"+ thingyName;
+        if( !isThingyNameValid(app, thingyName) ) throw TypeError(thingyName);
+        return app.workdir +"/"+ thingyName;
+    }
+
+
+    function gitUrlOfSync( app, thingyName ){
+        if( !isThingyNameValid(app, thingyName) ) throw TypeError(thingyName);
+        return "https://example.com/scm/isa/"+ thingyName +".git";
+    }
+
+
+    function isCloned( app, thingyName, onDone){
+        if( typeof onDone != "function" ) throw TypeError("onDone");
+        var child = child_process.spawn(
+            "git", ["status", "--porcelain"],
+            { cwd: workdirOfSync(app, thingyName), }
+        );
+        child.on("error", console.error.bind(console));
+        child.stdout.on("data", noop);
+        child.stderr.on("data", logAsString);
+        child.on("close", function( code, signal ){
+            if( code !== 0 || signal !== null ){
+                onDone(Error("code "+ code +", signal "+ signal));
+            }else{
+                onDone(null, true);
+            }
+        });
     }
 
 
     function isWorktreeClean( app, thingyName, onDone ){
         if( typeof onDone != "function" ) throw TypeError("onDone");
+        var isStdoutDirty = false;
         var child = child_process.spawn(
-            "sh", [ "-c", "git status --porcelain | grep ." ],
-            {   cwd: workdirOfSync(app, thingyName), windowsHide: true, }
+            "git", ["status", "--porcelain"],
+            { cwd: workdirOfSync(app, thingyName), }
         );
         child.on("error", console.error.bind(console));
-        child.stdout.on("data", noop);
-        child.stderr.on("data", function( buf ){ log.write(buf.toString()); });
+        child.stdout.on("data", function(){ isStdoutDirty = true; });
+        child.stderr.on("data", logAsString);
         child.on("close", function( code, signal ){
             if( signal !== null ){
                 throw Error("code "+ code +", signal "+ signal +"");
             }else{
-                onDone(null, code !== 0);
+                onDone(null, !isStdoutDirty);
             }
         });
     }
@@ -79,8 +179,183 @@
 
     function getJettyServiceNamesAsArray( app, onDone ){
         setImmediate(onDone, null, [ /*TODO get via args/file */
-            TODO_1zwCAF4NAgAfcAIA628CAJE4AgDnRgIA
+            "allitnil", "babelfish", "barman",
+            //"benjy", "bentstick", "blart", "captain", "caveman",
+            //"colin", "deep", "drdan", "guide", "heimdall", "hooli", "jeltz", "kwaltz", "lazlar",
+            //"loon", "magician", "megacamel", "minetti", "mown", "neutron", "nowwhat", "pobble",
+            //"poodoo", "prosser", "rob", "slarti", "streetmentioner", "thor", "towel", "trillian",
+            //"vannharl", "vogon", "vroom", "zaphake", "zem",
         ]);
+    }
+
+
+    function pushService( app, thingyName, onDone ){
+        if( typeof onDone != "function" ){ throw TypeError("onDone"); }
+        var iRemoteNameToTry = 0;
+        push();
+        function push( ex, isClean ){
+            if( ex ) throw ex;
+            var remoteName = app.remoteNamesToTry[iRemoteNameToTry++];
+            if( remoteName === undefined ){ endFn(Error("No more remote names. s="+ thingyName +"")); return; }
+            log.write("[DEBUG] "+ thingyName +" - git push "+ remoteName +" "
+                + app.branchName +(app.isPushForce?" --force":"")+"\n");
+            argv = ["push", remoteName, "refs/heads/"+app.branchName +":refs/heads/"+ app.branchName];
+            if( app.isPushForce ) argv.push("--force");
+            var child = child_process.spawn(
+                "git", argv,
+                { cwd:workdirOfSync(app, thingyName) }
+            );
+            child.on("error", console.error.bind(console));
+            child.stderr.on("data", logAsString);
+            child.on("close", function( code, signal ){
+                if( code === 128 ){ /* retry with next upstream name */
+                    push(); return;
+                }else if( code !== 0 || signal !== null ){
+                    endFn(Error("code="+ code +", signal="+ signal +""));
+                    return;
+                }
+                endFn();
+            });
+        }
+        function endFn( ex, ret ){
+            onDone(ex, ret);
+        }
+    }
+
+
+    function commitService( app, thingyName, onDone ){
+        if( typeof onDone != "function" ){ throw Error("onDone"); }
+        incrNumTasks(app);
+        isWorktreeClean(app, thingyName, gitAdd);
+        function gitAdd( ex, isClean ){
+            if( ex ) throw ex;
+            if( isClean ){
+                log.write("[INFO ] Nothing to commit in \""+ thingyName +"\"\n");
+                endFn(null, null); return;
+            }
+            log.write("[DEBUG] "+ thingyName +"$ git add Jenkinsfile\n");
+            var child = child_process.spawn(
+                "git", ["add", "Jenkinsfile"],
+                { cwd:workdirOfSync(app, thingyName) }
+            );
+            child.on("error", console.error.bind(console));
+            child.stderr.on("data", logAsString);
+            child.on("close", function( code, signal ){
+                if( code !== 0 || signal !== null ){
+                    endFn(Error("code="+ code +", signal="+ signal +""));
+                    return;
+                }
+                gitCommit();
+            });
+        }
+        function gitCommit( ex ){
+            if( ex ) throw ex;
+            log.write("[DEBUG] "+ thingyName +"$ git commit -m \""+ app.commitMsg +"\"\n");
+            var child = child_process.spawn(
+                "git", ["commit", "-m", app.commitMsg],
+                { cwd:workdirOfSync(app, thingyName) }
+            );
+            var stdoutBufs = [];
+            child.on("error", console.error.bind(console));
+            child.stderr.on("data", logAsString);
+            child.stdout.on("data", function( buf ){ stdoutBufs.push(buf); });
+            child.on("exit", function( code, signal ){
+                if( code !== 0 || signal !== null ){
+                    var stdoutStr = "";
+                    for( var buf in stdoutBufs ){ stdoutStr += buf.toString(); }
+                    if( stdoutStr.length ){ log.write(stdoutStr); }
+                    endFn(Error("code="+ code +", signal="+ signal +""));
+                    return;
+                }
+                createBranch(); return;
+            });
+        }
+        function createBranch( ex ){
+            if( ex ) throw ex;
+            log.write("[DEBUG] "+ thingyName +"$ git branch "+ app.branchName +"\n");
+            var child = child_process.spawn(
+                "git", ["branch", "-f", app.branchName],
+                { cwd:workdirOfSync(app, thingyName) }
+            );
+            child.on("error", console.error.bind(console));
+            child.stderr.on("data", logAsString);
+            child.on("exit", function( code, signal ){
+                if( code !== 0 || signal !== null ){
+                    endFn(Error("code="+ code +", signal="+ signal +""));
+                    return;
+                }
+                endFn(); return;
+            });
+        }
+        function endFn( ex, ret ){
+            decrNumTasks(app);
+            onDone(ex, ret);
+        }
+    }
+
+
+    function commitAllServices( app, onDone ){
+        var iSvc = 0;
+        var services;
+        incrNumTasks(app);
+        getJettyServiceNamesAsArray(app, onGetJettyServiceNamesAsArrayDone);
+        function onGetJettyServiceNamesAsArrayDone( ex, ret ){
+            if( ex ) throw ex;
+            services = ret;
+            nextService(null);
+        }
+        function nextService( ex ){
+            if( ex ) throw ex;
+            if( iSvc >= services.length ){ endFn(null); return; }
+            var thingyName = services[iSvc++];
+            if( !thingyName ) throw Error("assert(thingyName != NULL)");
+            commitService(app, thingyName, nextService);
+        }
+        function endFn( ex ){
+            decrNumTasks(app);
+            if( ex ) throw ex;
+            log.write("[DEBUG] No more services to commit\n");
+            onDone(null, null);
+        }
+    }
+
+
+    function setPlatformVersionInService( app, thingyName, onDone ){
+        if( typeof onDone != "function" ) throw TypeError("onDone");
+        updateParent();
+        function updateParent(){
+            log.write("[DEBUG] "+ thingyName +" - Set platform version "+ app.platformSnapVersion +"\n");
+            var child = child_process.spawn(
+                "mvn", ["versions:update-parent", "-DparentVersion="+ app.platformSnapVersion],
+                { cwd: workdirOfSync(app, jettyService) },
+            );
+            child.on("error", console.error.bind(console));
+            child.stderr.on("data", logAsString);
+            child.on("close", function( code, signal ){
+                if( code !== 0 || signal !== null ){
+                    onDone(Error("code "+ code +", signal "+ signal));
+                    return;
+                }
+                updateProperty();
+            });
+        }
+        function updateProperty( ex ){
+            if( ex ) throw ex;
+            log.write("[DEBUG] "+ thingyName +" - Set parent.version "+ app.platformSnapVersion +"\n");
+            var child = child_process.spawn(
+                "mvn", ["versions:set-property", "-Dproperty=parent.version", "-DnewVersion="+ app.platformSnapVersion],
+                { cwd: workdirOfSync(app, jettyService) },
+            );
+            child.on("error", console.error.bind(console));
+            child.stderr.on("data", logAsString);
+            child.on("close", function( code, signal ){
+                if( code !== 0 || signal !== null ){
+                    onDone(Error("code "+ code +", signal "+ signal));
+                    return;
+                }
+                onDone();
+            });
+        }
     }
 
 
@@ -88,20 +363,24 @@
         var iSvc = -1;
         var jettyServices;
         var jettyService;
+        incrNumTasks(app);
         getJettyServiceNamesAsArray(app, function( ex, jettyServices_ ){
-            if( ex ){ throw ex; }
+            if( ex ) throw ex;
             jettyServices = jettyServices_;
             nextJettyService();
         });
-        function nextJettyService(){
+        function nextJettyService( ex ){
+            decrNumTasks(app);
+            if( ex ) throw ex;
             if( ++iSvc >= jettyServices.length ){ onNoMoreJettyServices(); return; }
+            incrNumTasks(app);
             jettyService = jettyServices[iSvc];
             isWorktreeClean(app, jettyService, onIsWorktreeCleanRsp);
         }
         function onIsWorktreeCleanRsp( ex, isClean ){
             if( ex ) throw ex;
             if( !isClean ){
-                log.write("[WARN ] Worktree not clean. Will skip: "+ jettyService +"\n");
+                log.write("[WARN ] Wont patch: Worktree not clean: "+ jettyService +"\n");
                 nextJettyService();
                 return;
             }
@@ -111,139 +390,315 @@
                 { cwd: workdirOfSync(app, jettyService) },
             );
             child.on("error", console.error.bind(console));
-            child.stderr.on("data", function( buf ){ log.write(buf.toString()); });
+            child.stderr.on("data", logAsString);
             child.on("close", function(){
                 nextJettyService();
             });
         }
-        function onNoMoreJettyServices( app ){
+        function onNoMoreJettyServices(){
             onDone(null, null);
         }
     }
 
 
     function checkoutUpstreamDevelop( app, thingyName, onDone){
-        var child;
-        child = child_process.spawn(
-            "sh", ["-c", "git checkout upstream/develop || git checkout origin/develop"],
-            { cwd: workdirOfSync(app, thingyName), });
-        child.on("error", console.error.bind(console));
-        child.stderr.on("data", function( buf ){ log.write(buf); });
-        child.on("close", function( code, signal ){
-            if( code !== 0 || signal !== null ){
-                onDone(Error("code "+ code +", signal "+ signal));
-            }else{
-                onDone(null, null);
-            }
-        });
-    }
-
-
-    function checkoutUpstreamDevelopForAllJettyServices( app, onDone){
-        if( typeof onDone != "function" ) throw TypeError("onDone");
-        var iSvc = -1, jettyServices, jettyService;
-        getJettyServiceNamesAsArray(app, function( ex, ret ){
-            if( ex ) throw ex;
-            jettyServices = ret;
-            nextJettyService();
-        });
-        function nextJettyService( ex ){
-            if( ex ) throw ex;
-            if( ++iSvc >= jettyServices.length ){ onDone(null, null); return; }
-            jettyService = jettyServices[iSvc];
-            log.write("[DEBUG] git checkout "+ jettyService +"\n");
-            checkoutUpstreamDevelop(app, jettyService, nextJettyService);
+        var iRemoteName = 0;
+        checkout();
+        function checkout(){
+            var remoteName = app.remoteNamesToTry[iRemoteName];
+            if( remoteName === undefined ){ onDone(Error("No more remote names for "+ thingyName)); return; }
+            log.write("[DEBUG] git checkout "+ thingyName +" "+ remoteName +"/develop\n");
+            var child = child_process.spawn(
+                "git", ["checkout", remoteName+"/develop"],
+                { cwd: workdirOfSync(app, thingyName), });
+            child.on("error", console.error.bind(console));
+            child.stderr.on("data", function( buf ){ log.write(buf); });
+            child.on("close", function( code, signal ){
+                if( !"TODO_GlACAIQoAgDMTwIAIh8CAOJvAgALLgIA" ){
+                    checkout(); /* try next remote name */
+                }else if( code !== 0 || signal !== null ){
+                    onDone(Error("code "+ code +", signal "+ signal));
+                }else{
+                    onDone(null, null);
+                }
+            });
         }
     }
 
 
     function fetchChangesFromGitit( app, thingyName, onDone ){
         var child;
-        child = child_process.spawn(
-            "sh", ["-c", "git fetch upstream || git fetch origin"],
-            { cwd: workdirOfSync(app, thingyName), });
-        child.on("error", console.error.bind(console));
-        child.stderr.on("data", function( buf ){ log.write(buf); });
-        child.on("close", function( code, signal ){
-            if( code !== 0 || signal !== null ){
-                onDone(Error("code "+ code +", signal "+ signal));
-            }else{
+        var iRemoteName = 0;
+        mkAppWorkdir();
+        function mkAppWorkdir( ex ){
+            if( ex ) throw ex;
+            fs.mkdir(app.workdir, {recursive:true}, checkRepoExists);
+        }
+        function checkRepoExists( ex ){
+            if( ex ) throw ex;
+            fs.exists(workdirOfSync(app, thingyName) +"/.git", function( isLocalCloneExists ){
+                isLocalCloneExists ? fetch() : clone();
+            });
+        }
+        function clone( ex ){
+            if( ex ) throw ex;
+            log.write("[DEBUG] git clone "+ thingyName +"\n");
+            var child = child_process.spawn(
+                "git", ["clone", "--no-single-branch", "--depth", "4", gitUrlOfSync(app, thingyName)],
+                { cwd: app.workdir });
+            child.on("error", console.error.bind(console));
+            child.stderr.on("data", function( buf ){ log.write(buf); });
+            child.on("close", function( code, signal ){
+                if( code !== 0 || signal !== null ){
+                    onDone(Error("code "+ code +", signal "+ signal)); return;
+                }
                 onDone(null, null);
-            }
-        });
+            });
+        }
+        function fetch( ex ){
+            if( ex ) throw ex;
+            var remoteName = app.remoteNamesToTry[iRemoteName++];
+            if( remoteName === undefined ){
+                onDone(Error("No more remotes to try for "+ thingyName)); return; }
+            log.write("[DEBUG] "+ thingyName +" - git fetch "+ remoteName +"\n");
+            var child = child_process.spawn(
+                "git", ["fetch", remoteName],
+                { cwd: workdirOfSync(app, thingyName), });
+            child.on("error", console.error.bind(console));
+            child.stderr.on("data", function( buf ){ log.write(buf); });
+            child.on("close", function( code, signal ){
+                if( code !== 0 || signal !== null ){
+                    onDone(Error("code "+ code +", signal "+ signal)); return;
+                }
+                onDone(null, null);
+            });
+        }
     }
 
 
-    function fetchChangesFromGititForAllJettyServices( app, onDone ){
-        var iSvc = -1, jettyServices, jettyService;
-        getJettyServiceNamesAsArray(app, function( ex, ret ){
-            if( ex ) throw ex;
-            jettyServices = ret;
-            nextJettyService();
-        });
-        function nextJettyService( ex ){
-            if( ex ) throw ex;
-            if( ++iSvc >= jettyServices.length ){ onDone(null, null); return; }
-            jettyService = jettyServices[iSvc];
-            log.write("[DEBUG] git fetch "+ jettyService +"\n");
-            fetchChangesFromGitit(app, jettyService, nextJettyService);
+    function setVersionInPlatform( app, onDone ){
+        if( typeof onDone != "function" ) throw TypeError("onDone");
+        setVersion();
+        function setVersion(){
+            log.write("[DEBUG] platform - mvn versions:set "+ app.platformSnapVersion +"\n");
+            var child = child_process.spawn(
+                "mvn", ["versions:set", "-DgenerateBackupPoms=false", "-DnewVersion="+app.platformSnapVersion],
+                { cwd: workdirOfSync(app, "platform"), }
+            );
+            child.on("error", console.error.bind(console));
+            child.stdout.on("data", noop);
+            child.stderr.on("data", logAsString);
+            child.on("close", function( code, signal ){
+                if( code !== 0 || signal !== null ){
+                    endFn(Error("code "+ code +", signal "+ signal));
+                    return;
+                }
+                endFn();
+            });
+        }
+        function endFn( ex, ret ){
+            onDone(ex, ret);
         }
     }
 
 
     function patchAwaySlimPackagingInPlatform( app, onDone ){
+        var onDoneCalledNTimes = 0;
+        incrNumTasks(app);
         isWorktreeClean(app, "platform", function( ex, isClean ){
-            if( ex ){ throw ex; }
-            if( !isClean ){ onDone(Error("Platform worktree not clean")); return; }
+            if( ex ) throw ex;
+            if( !isClean ){ log.write("[WARN ] Skip platform patch: Worktree not clean\n");
+                endFn(); return; }
             getDropSlimArtifactsTagInPlatformPatch(app, onPatchBufReady);
         });
         function onPatchBufReady( ex, patch ){
-            if( ex ){ throw ex; }
+            if( ex ) throw ex;
+            var stdoutBufs = [];
             var gitApply = child_process.spawn(
-                "sh", ["-c", "git apply"],
+                "git", ["apply"],
                 { cwd: workdirOfSync(app, "platform"), });
             gitApply.on("error", console.error.bind(console));
-            gitApply.stderr.on("data", function( buf ){ log.write(buf.toString()); });
-            gitApply.stdout.on("data", noop);
+            gitApply.stderr.on("data", logAsString);
+            gitApply.stdout.on("data", stdoutBufs.push.bind(stdoutBufs));
             gitApply.on("close", function( code, signal ){
-                if( code !== 0 || signal !== null ){ throw Error(""+ code +", "+ signal +""); }
-                onDone(null, null);
+                if( code !== 0 || signal !== null ){
+                    for( var buf in stdoutBufs ){ log.write(buf.toString()); }
+                    throw Error(""+ code +", "+ signal +"");
+                }
+                endFn(null, null);
             });
             gitApply.stdin.write(patch);
             gitApply.stdin.end();
+        }
+        function endFn( ex, ret ){
+            if( onDoneCalledNTimes !== 0 ){ throw Error("assert(onDoneCalledNTimes == 0)"); }
+            onDoneCalledNTimes += 1;
+            decrNumTasks(app);
+            onDone(ex, ret);
+        }
+    }
+
+
+    function incrNumTasks( app ){
+        //if( app.numRunningTasks >= app.maxParallel ){
+        //    throw Error("assert(app.numRunningTasks < app.maxParallel)");
+        //}
+        app.numRunningTasks += 1;
+    }
+
+
+    function decrNumTasks( app ){
+        if( app.numRunningTasks <= 0 ) throw Error("assert(app.numRunningTasks > 0)");
+        app.numRunningTasks -= 1;
+    }
+
+
+    function forEachJettyService( app, onService, onDone ){
+        var iSvc = 0, services;
+        var isOnDoneCalled = false;
+        getJettyServiceNamesAsArray(app, onServicesArrived);
+        function onServicesArrived( ex, ret ){
+            if( ex ) throw ex;
+            services = ret;
+            nextService();
+        }
+        function nextService( ex ){
+            if( ex ){ endFn(ex); return; }
+            var service = services[iSvc++];
+            if( service === undefined ){ endFn(); return; }
+            onService(app, service, nextService);
+        }
+        function endFn( ex, ret ){
+            if( isOnDoneCalled ){
+                throw (ex) ? ex : Error("onDone MUST be called ONCE only");
+            }else{
+                isOnDoneCalled = true;
+                onDone(ex, ret);
+            }
+        }
+    }
+
+
+    function resetHardToDevelop( app, thingyName, onDone ){
+        if( typeof onDone !== "function" ) throw Error("onDone");
+        var iRemoteName = 0;
+        tryResetHard(iRemoteName++);
+        function tryResetHard( i ){
+            var remoteName = app.remoteNamesToTry[i];
+            if( remoteName === undefined ){ onDone(Error("no usable remote found")); return; }
+            log.write("[DEBUG] "+ thingyName +"$ git reset --hard "+ remoteName +"/develop\n");
+            var child = child_process.spawn(
+                "git", ["reset", "--hard", remoteName +"/develop"],
+                { cwd:workdirOfSync(app, thingyName) }
+            );
+            child.on("error", console.error.bind(console));
+            child.stderr.on("data", logAsString);
+            child.on("close", function( code, signal ){
+                if( signal !== null ){
+                    onDone(Error("code "+ code +", signal "+ signal));
+                }else if( code !== 0 ){
+                    tryResetHard(iRemoteName++);
+                }else{
+                    deleteBranch();
+                }
+            });
+        }
+        function deleteBranch( ex ){
+            if( ex ) throw ex;
+            log.write("[DEBUG] "+ thingyName +"$ git branch --delete --force "+ app.branchName +"\n");
+            var child = child_process.spawn(
+                "git", ["branch", "--delete", "--force", app.branchName],
+                { cwd:workdirOfSync(app, thingyName) }
+            );
+            child.on("error", console.error.bind(console));
+            child.stderr.on("data", logAsString);
+            child.on("close", function( code, signal ){
+                if( code == 1 ){ /* assume branch doesnt exist*/
+                    log.write("[INFO ] Ignore: Failed to delete branch '"+ app.branchName +"' in '"
+                        + thingyName +"'.\n");
+                    endFn(null, null);
+                }else if( code !== 0 || signal !== null ){
+                    onDone(Error("code "+ code +", signal "+ signal));
+                }else{
+                    endFn(null, null);
+                }
+            });
+        }
+        function endFn( ex, ret ){
+            onDone(ex, ret);
         }
     }
 
 
     function run( app ){
-        patchAwaySlimPackagingInPlatform(app, onPatchAwaySlimPackagingInPlatformDone);
-        function onPatchAwaySlimPackagingInPlatformDone( ex, ret ){
-            if( ex ){ log.write("[WARN ] "+ ex.message +"\n"); /*throw ex;*/ }
-            fetchChangesFromGititForAllJettyServices(app,
+        if( app.isResetHardToDevelop ){
+            forEachJettyService(app, resetHardToDevelop, endFn);
+            return;
+        }
+        updateFromRemote();
+        function updateFromRemote( ex ){
+            if( ex ) throw ex;
+            forEachJettyService(app, fetchChangesFromGitit,
                 onFetchChangesFromGititForAllJettyServicesDone);
         }
         function onFetchChangesFromGititForAllJettyServicesDone( ex ){
-            if( ex ){ throw ex; }
-            checkoutUpstreamDevelopForAllJettyServices(app,
-                onCheckoutUpstreamDevelopForAllJettyServicesDone);
-        }
-        function onCheckoutUpstreamDevelopForAllJettyServicesDone( ex ){
             if( ex ) throw ex;
+            forEachJettyService(app, checkoutUpstreamDevelop,
+                onCheckoutUpstreamDevelopDone);
+        }
+        function onCheckoutUpstreamDevelopDone( ex ){
+            if( ex ) throw ex;
+            patchAwaySlimPackagingInPlatform(app, onPatchAwaySlimPackagingInPlatformDone);
+        }
+        function onPatchAwaySlimPackagingInPlatformDone( ex, ret ){
+            if( ex ) throw ex;
+            setVersionInPlatform(app, onSetVersionInPlatformDone);
+        }
+        function onSetVersionInPlatformDone(){
             dropSlimFromAllJenkinsfiles(app, onDropSlimFromAllJenkinsfilesDone);
         }
         function onDropSlimFromAllJenkinsfilesDone( ex ){
-            if( ex ){ throw ex; }
+            if( ex ) throw ex;
+            forEachJettyService(app, setPlatformVersionInService, onSetPlatformVersionInServiceDone);
+        }
+        function onSetPlatformVersionInServiceDone( ex ){
+            if( ex ) throw ex;
+            if( app.isPush || app.isPushForce ){
+                commitAllServices(app, onCommitAllServicesDone);
+            }else{
+                log.write("[DEBUG] Skip commit/push (disabled)\n");
+                endFn();
+            }
+        }
+        function onCommitAllServicesDone( ex ){
+            if( ex ) throw ex;
+            if( !app.isPush && !app.isPushForce ) throw Error("assert(isPush || isPushForce)");
+            forEachJettyService(app, pushService, endFn);
+        }
+        function endFn( ex ){
+            if( ex ) throw ex;
             log.write("[INFO ] App done\n");
         }
     }
 
 
     function main(){
-        const app = Object.seal({
+        const app = {
             isHelp: false,
+            isPrintIsaVersion: false,
+            isPush: false,
+            isPushForce: false,
+            isResetHardToDevelop: false,
+            remoteNamesToTry: ["origin"],
+            platformSnapVersion: null,
+            workdir: "C:/work/tmp/git-scripted",
             maxParallel:  1,
-        });
-        if( parseArgs(process.argv, app) !== 0 ){ os.exit(1); }
+            numRunningTasks: 0,
+            branchName: "SDCISA-15648-RemoveSlimPackaging-n1",
+            commitMsg: "[SDCISA-15648] Remove slim packaging",
+        };
+        app.platformSnapVersion = "0.0.0-"+ app.branchName +"-SNAPSHOT";
+        if( parseArgs(process.argv, app) !== 0 ){ process.exit(1); }
         if( app.isHelp ){ printHelp(); return; }
         run(app);
     }
