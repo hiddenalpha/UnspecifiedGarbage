@@ -245,7 +245,7 @@ NOTE: Couldn't yet test any of those commands.
   && apk add openssh-server \
   && rc-update add sshd \
   && sed -i -E 's;^# *(PermitRootLogin).+$;\1 yes;' /etc/ssh/sshd_config \
-  && sed -i -E 's;^# *(http://dl-cdn.alpinelinux.org/alpine/v[^/]+/community)$;\1;' /etc/apk/repositories \
+  && sed -i -E 's;^# *(http://dl-cdn.alpinelinux.org/alpine/v.*?/community)$;\1;' /etc/apk/repositories \
   && mkdir /home/user && chown 1000:1000 /home/user && chmod 755 /home/user \
   && printf 'user:x:1000:1000:user:/home/user:/bin/ash\n' >> /etc/passwd \
   && printf 'user:x:1000:user\n' >> /etc/group \
