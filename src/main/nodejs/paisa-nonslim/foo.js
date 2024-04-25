@@ -1,3 +1,9 @@
+/*
+
+Related:
+- [Remove Slim Packaging](SDCISA-15648)
+
+*/
 ;(function(){ "use-strict";
 
     const child_process = require("child_process");
