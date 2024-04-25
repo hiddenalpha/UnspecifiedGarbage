@@ -4,13 +4,13 @@ Maven
 
 mvn dependency:help -Ddetail=true
 
-mvn versions:set -DgenerateBackupPoms=false -DnewVersion=
+mvn versions:set -DgenerateBackupPoms=false -DallowSnapshots=true -DnewVersion=
 
 mvn versions:set -DgenerateBackupPoms=false -DnextSnapshot
 
-mvn versions:update-parent -DparentVersion=
+mvn versions:update-parent -DgenerateBackupPoms=false -DallowDowngrade=true -DallowSnapshots=true -DforceUpdate=true -DskipResolution=true -DparentVersion=YOUR_VERSION
 
-mvn versions:set-property -Dproperty=foo.bar -DnewVersion=gugus
+mvn versions:set-property -DgenerateBackupPoms=false -DallowSnapshots=true -Dproperty=foo.bar -DnewVersion=gugus
 
 export MAVEN_OPTS="..."
 

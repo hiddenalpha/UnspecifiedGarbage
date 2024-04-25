@@ -17,16 +17,21 @@
             +"  \n"
             +"  Options:\n"
             +"  \n"
-            +"    --default\n"
-            +"      Perform default action (whatever default means).\n"
+            +"    --fetch\n"
+            +"      Update local repos from remote.\n"
             +"  \n"
-            +"    --print-isaVersion\n"
-            +"      Print a preflux isaVersion to stdout filled with the patched\n"
-            +"      services.\n"
+            +"    --reset-hard\n"
+            +"      Reset worktree to develop.\n"
             +"  \n"
-            +"    --reset-hard-to-develop\n"
-            +"      Resets all the services back to develop. WARN if you've uncommitted\n"
-            +"      work in some of those repos, IT WILL BE LOST!\n"
+            +"    --patch-platform\n"
+            +"      Remove slim packaging from patform and set snapshot version.\n"
+            +"  \n"
+            +"    --patch-services\n"
+            +"      Disable slim packaging in Jenkinsfile and use platform snapshot in\n"
+            +"      pom.\n"
+            +"  \n"
+            +"    --commit\n"
+            +"      Create a git commit with our changes.\n"
             +"  \n"
             +"    --push | --push-force\n"
             +"      Create commits for patched services and push them to upstream. If\n"
@@ -44,27 +49,32 @@
 
 
     function parseArgs( argv, app ){
-        var hasArgs = false;
+        if( argv.length <= 2 ){
+            log.write("EINVAL: Refuse to produce damage with zero args.\n");
+            return -1;
+        }
         for( var iA = 2 ; iA < argv.length ; ++iA ){
             var arg = argv[iA];
             if( arg == "--help" ){
                 app.isHelp = true; return 0;
-            }else if( arg == "--default" ){
-                hasArgs = true;
+            }else if( arg == "--fetch" ){
+                app.isFetch = true;
+            }else if( arg == "--reset-hard" ){
+                app.isResetHard = true;
+            }else if( arg == "--patch-platform" ){
+                app.isPatchPlatform = true;
+            }else if( arg == "--patch-services" ){
+                app.isPatchServices = true;
+            }else if( arg == "--commit" ){
+                app.isCommit = true;
             }else if( arg == "--push" ){
                 if( app.isPushForce ){ log.write("EINVAL: only one of push and push-force allowed\n"); return-1; }
                 app.isPush = true;
-                hasArgs = true;
             }else if( arg == "--push-force" ){
                 if( app.isPush ){ log.write("EINVAL: only one of push and push-force allowed\n"); return-1; }
                 app.isPushForce = true;
-                hasArgs = true;
-            }else if( arg == "--print-isaVersion" ){
-                app.isPrintIsaVersion = true;
-                hasArgs = true;
             }else if( arg == "--reset-hard-to-develop" ){
                 app.isResetHardToDevelop = true;
-                hasArgs = true;
             //}else if( arg == "--max-parallel" ){
             //    arg = argv[++iA];
             //    if( !/^[0-9]+$/.test(arg) ){ log.write("EINVAL: --max-parallel "+ arg +"\n"); return -1; }
@@ -73,10 +83,6 @@
                 log.write("EINVAL: "+ arg +"\n");
                 return -1;
             }
-        }
-        if( !hasArgs ){
-            log.write("EINVAL: Refuse to produce damage with zero args.\n");
-            return -1;
         }
         return 0;
     }
@@ -97,7 +103,7 @@
 
     function gitUrlOfSync( app, thingyName ){
         if( !isThingyNameValid(app, thingyName) ) throw TypeError(thingyName);
-        return "https://example.com/scm/isa/"+ thingyName +".git";
+        return "https://gitit.post.ch/scm/isa/"+ thingyName +".git";
     }
 
 
@@ -146,28 +152,36 @@
          * "poms/service/paisa-service-superpom/pom.xml" as described in
          * SDCISA-15648 */
         var patch = ""
-            +"tVnNcuMoEL7nKbTXzUKc2WRmQk1tZav2Ppd9AYRaEgoCCpBj79NvI0u2E9uJxUg+CJDpr4Fu+k+F"
-            +"LMuMkEqGjN9Z0/o7D24tBdxZLj0nw4j4zoLD/+McumlVlk+ZfSN1AZssL+9L8fj9cUXpt+JhxfFR"
-            +"Zver1deHhxtCyLQV3Nze3k5cxfNzRp5W9398f8puY/ste36+yT77/birDFf+rytmCqNLWXWOB2n0"
-            +"FQQ9kXUG1xkkIAtyFUmk8kq2fyNVyUWYQhh/3FiulORaADvq//iNkH9//vOTZRrW4LJCOhBBbbPO"
-            +"Q5FJnVnFQ2lcS8hEhqKm1vhAZaC9iChXMvJWvZgGce0ODxsHC6AXpuVSL4WOMhTg/VLwylSV1Iud"
-            +"zSvkCdDGVZR7iyrSsKF9BY6K0+uR49rLINcw6k++zbx1cRe7yX6yFp1h6MKCSotWo+Q+gEPbwYTi"
-            +"3rc8wMXd1TIHp3EGWePxFjwYl8RTG1DSeOrABwWBnXlHYRNolB72L66naaWWm6WWMDvbg6Iit9Zo"
-            +"GjWS7fq9dpIWAsdj5ZP3gwie5MB1F6Ty7OTNAkfYMxCmAMHejFKBlEKtRqfi2Zl3aaClVNBZZXjB"
-            +"Tl+lQUrDDt00CMV1xY4HiTA7i8nejWcFI9zK2QHZ0xNdobcCT7QJBDbSh2lMNNoHX1KoBRc1sKFN"
-            +"MPAj0H+tcbZmQzv3ZYlWfW866d50sjPm9FeAG77mG4qBlscDhRj5HBg0lpMv9H66PHuPZOPx0joE"
-            +"i+K0RoMOnvVDJbE/K2Kak76I18p2ajxx7BTxUMWLH031MCBco+LyNMP0GXZCAPQ5aPQpOWYocwBH"
-            +"rLC1b8HjC9J49+f96nJsVEOhjHhJuj9VDE5K6WuKoRzbqTqoaTgj1Z58+nXYUR7kz96/SLKY1Hea"
-            +"YpYj1yPoC3eBH71KWWUUWhQ6wm3y9HW9hUlTz1Mc2dqJ0ota0OTGezr6ln40epZFg9bI26vyoWGN"
-            +"UMRgFE764XKheb/b3t2wXTNRA0zBSUDbx/a9JM/YxAuuJN64obNELF4ZUymgMXqkJWpI3lWeRWOy"
-            +"epwGJg2tZKi7vPeFBIWOa0QkPzEoPRJ3p0gw54U9i4wHzzUocWyRa/9MzVcvAyY5/zFBOur3uRkK"
-            +"3wgZtksES2d4XmRzJnFL4GmQl1kw4RsqExj8DuleeoD9AWjMl9E0zYPpt+j5W+LRr3V+3nVimuuk"
-            +"mAkTheSIgwqDXpfqgs/hrqGWQqFi6Rdizet851pzBwUap7Ws5lzvESDezDmRY1kRE4pYQCUmj0qW"
-            +"iH6wq/0zEaAvsZWOt/Bq3AsbS27GflaVw8ixXYs053+B6a7ONxterNdcrtUctjHnHoRB4W4SkriP"
-            +"8eK3CWvcnLgp7vACGGwsOgs/ObL+ADLA1DLGB2Ao4zmxUO1TMoghYI4pyaH7SzWEMWpgn4YP0OZQ"
-            +"FGgom3YT4oTEEHpHTEc4doKbvJehtLUvcVlj1JcF9xND8igX4bo293RMp9k+r97Je2bQtKJa3inV"
-            +"47Yo52LLDt3Ee9w4g8kj2zXTU4xQm66qQ7wWnm4wUgDesqGd8Eny7t03ydurKd8SngBdyf74Q+qV"
-            +"fE3nBFw5O/4wMUer3RsAqjGhigVz+vvN/wsTxCQ="
+            +"tVrdb9s2EH/PX8EZ2OosIe2kadOw7Zaia4sM3Vo0fdhDgYGSKJkOJQok7dgr+r/vqA9/NHZisrIf"
+            +"IpIif3e8O94HlUSkKcI4ExaxQalyMzBcT0XMByUThuGmh82k5BreuzlklksU+cw+EEXCZyhKT9L4"
+            +"ybMnQ0LO2fmz6On56TN0Mhw+PTs7wBj7cXBwdHTkycXlJcIXw5Pjk5PH6Mg1LtDl5QF66PdikCkm"
+            +"zW87zIxVkYpsopkVqthhQbWo1AoYtYIDCbzTErfKSJG/glUpi63PQvdjqmRSClbEnK60X/yE8ecP"
+            +"f3ygqOBTrlEiNI+tnKOJ4QkSBSols6nSOcaeBOMRKZWxRFhS6YgwKRxtWemp0VctPHhovgf0ROVM"
+            +"FPtCBx3G3Jh9wUuVZaLYm2xueRQArXRGmCnBRMa0ed5yBoZT2ZFmhRFWTHlrP9EcmVK7XdSTjbcV"
+            +"bSCo7R6NFtxGyozlGpwHjSUzJmeWb93dSERcFzADT0G8CbNKB9EsFJdCGaK5sZJbumGM8JklTnvQ"
+            +"3srPOBeFmO2Lhc7JLg0VqOWqIM4iad2urBPn3DIQK/PeDyAYHHFWTKyQht4Z2YMIKwKxSnhM13qh"
+            +"QFKCVUNQMXTDWBhoKiSflFKxhN4dCoMUii6bYRCSFRld7QTC1B6TftfvFAyzUnQOSC8uyBCiFTe4"
+            +"UBbzmTDWj0gB/sGkhI9iFo84bZ4BDr4F+i9XuhzR5tn1YXFefeE6ycJ10g3u9EeAx2zKZgQSLQMC"
+            +"5S7zWRIYlwyfkhN/fVYRqXTiJSNrS1BnqQpeWEOrrhTQ7hQxLEhvxctF7ptPrAZFEGp8Y1pX3XQw"
+            +"K8BwWZhjegg7IAF6GNTFlAhKlC6AHZadl+vgbgCPjX58MtyeG414IlV8E3R+MpecpMKMCKRytDZ1"
+            +"Lv1w2lWL5f7HoV651D/9fiDIYxIzKQhUOWLagt4wbdnKUAiXTmlO6QA3i8L5WocJM8+7OCIvPbXn"
+            +"rGAcKWNIG1uqXhtZ9pq0OtpGpmdjOo4lVpCF46q7v9S82m0Vbmj98LQAlTBswffRRSsoMo7dAZcC"
+            +"TlzT2EcunimVSU5c9khSsJBokhnqnMnwiR+YUCQTdjSJqliIQenAIyAZz6R0Rd0Tia3arOxOdNxE"
+            +"rsaI3ROoVn9D69XtgEHBvy2QVtpVbQbKV7Gw830kSxtobiWzoXALoKmAltpjwdfcTEDy25R74Qn2"
+            +"PaCuXgbX1A2mmUPkz7GBuDYx3fIJZa4WcUeYoCSNNc8g6dWhIXgT7pSPRCzBsIobXKrb7uQ6Ypon"
+            +"4JymIuuS3xVAOJldIrtrRSgo3AUqVpEzskD0pV+t/gYCVFdsqWY5v1X6hrZXbqp86FYOMsd8GocF"
+            +"/y1E63u+zvDcfc32u5rlNrrcQ6xAubOAIu5+PPdxolS6S9yQcLgFjM9KCBbGO7O+B9Jy32uMe8BA"
+            +"x11igdmHVBBNwuxKkmXzh+4Q2qyBPpg+8DziSQKOcpzPrJsQmELXi0kLR+/gBu+ludpaXHGVSsnT"
+            +"Pe7HpeROL7Ge5JEhbTlNF3V1re+OQcMu1aKJlBVuDnpO5nTZDDzHY62geKT1w7/EsCM1yUbWHQtD"
+            +"ZpApcJbT5unxSXLw3TfJo51Xri+8A7Qjee8PqS+MmuiYe1gaFObgtSsHQAooqNyFOfn1AO+O8JHZ"
+            +"EXL7ey+iqv2yGjIk47YPOxhDyAQDETIhdb2s9Bwdod4AystB7/D57pRWiBCr3gKn/UOS3wCq6Tuc"
+            +"3ZESnqI1lQDTS2GTtVfgZ6Ww/d6XL+bIi113PK0s+r13Wk1KCoC8pmUViji6fn/1Vw4eCvVAGmsU"
+            +"D31o1PJlC245OCv0FbEU4V8y68FuK5cbPgdpsJRkju2rxOmKOh5hqCVz5Xm1WIki7feaPf+Ofsbn"
+            +"Q9M7dsQ8dut+IkX9df24DARSVtN3YIfoqx/egj2nKYQroaE5N0CFW2RiMAqnsEcg6akAh/4IsSIB"
+            +"J1PO0Z+vPrlXlmkw9cqcD3ueu3E/kGtN5iXqtVR6/jDV2XN8vdUqrzVYHWar3Ju+j+XegfysAHD1"
+            +"+EE2peSU91siBbj7EAqDQSv7lnPg99q6wNY/dJbXasQZYM3JyoQAYTuv4UymnC8oHjfAx+jagm6Z"
+            +"Tl5D/0Ppsh/y6c3H969ev/n3zT9X15+v/n7nu8lviEvDOzHKQvla17fdp+84FSJZE2F2ioVtPIKd"
+            +"APuqBCs6O32+BNmBns9/IL0Y8BmPJw/MXJkFcfV/3mNHXg=="
         ;
         patch = Buffer.from(patch, 'base64');
         patch = zlib.inflateRaw(patch, function( ex, patch ){
@@ -179,12 +193,7 @@
 
     function getJettyServiceNamesAsArray( app, onDone ){
         setImmediate(onDone, null, [ /*TODO get via args/file */
-            "allitnil", "babelfish", "barman",
-            //"benjy", "bentstick", "blart", "captain", "caveman",
-            //"colin", "deep", "drdan", "guide", "heimdall", "hooli", "jeltz", "kwaltz", "lazlar",
-            //"loon", "magician", "megacamel", "minetti", "mown", "neutron", "nowwhat", "pobble",
-            //"poodoo", "prosser", "rob", "slarti", "streetmentioner", "thor", "towel", "trillian",
-            //"vannharl", "vogon", "vroom", "zaphake", "zem",
+            TODO_GX0CAJ9hAgCNRAIA9hgCAP5jAgDGCgIA
         ]);
     }
 
@@ -235,7 +244,7 @@
             }
             log.write("[DEBUG] "+ thingyName +"$ git add Jenkinsfile\n");
             var child = child_process.spawn(
-                "git", ["add", "Jenkinsfile"],
+                "git", ["add", "--", "."],
                 { cwd:workdirOfSync(app, thingyName) }
             );
             child.on("error", console.error.bind(console));
@@ -262,9 +271,8 @@
             child.on("exit", function( code, signal ){
                 if( code !== 0 || signal !== null ){
                     var stdoutStr = "";
-                    for( var buf in stdoutBufs ){ stdoutStr += buf.toString(); }
-                    if( stdoutStr.length ){ log.write(stdoutStr); }
-                    endFn(Error("code="+ code +", signal="+ signal +""));
+                    for( var buf in stdoutBufs ){ log.write(buf.toString()); }
+                    endFn(Error("code="+ code +", signal="+ signal));
                     return;
                 }
                 createBranch(); return;
@@ -320,14 +328,39 @@
     }
 
 
+    function giveServiceOurSpecialVersion( app, thingyName, onDone ){
+        if( typeof onDone != "function" ) throw TypeError("onDone");
+        doit();
+        function doit( ex ){
+            if( ex ) throw ex;
+            var child = child_process.spawn(
+                "mvn", ["versions:set", "-DgenerateBackupPoms=false", "-DallowSnapshots=true",
+                    "-DnewVersion="+ app.serviceSnapVersion],
+                { cwd: workdirOfSync(app, thingyName) },
+            );
+            child.on("error", console.error.bind(console));
+            child.stderr.on("data", logAsString);
+            child.on("close", function( code, signal ){
+                if( code !== 0 || signal !== null ){
+                    onDone(Error("code "+ code +", signal "+ signal));
+                    return;
+                }
+                onDone();
+            });
+        }
+    }
+
+
     function setPlatformVersionInService( app, thingyName, onDone ){
         if( typeof onDone != "function" ) throw TypeError("onDone");
         updateParent();
         function updateParent(){
-            log.write("[DEBUG] "+ thingyName +" - Set platform version "+ app.platformSnapVersion +"\n");
+            log.write("[DEBUG] "+ thingyName +" - Set platform version "+ app.parentVersion +"\n");
             var child = child_process.spawn(
-                "mvn", ["versions:update-parent", "-DparentVersion="+ app.platformSnapVersion],
-                { cwd: workdirOfSync(app, jettyService) },
+                "mvn", ["versions:update-parent", "-DgenerateBackupPoms=false", "-DallowDowngrade=true",
+                    "-DallowSnapshots=true", "-DforceUpdate=true", "-DskipResolution=true",
+                    "-DparentVersion="+app.parentVersion],
+                { cwd: workdirOfSync(app, thingyName) },
             );
             child.on("error", console.error.bind(console));
             child.stderr.on("data", logAsString);
@@ -341,10 +374,11 @@
         }
         function updateProperty( ex ){
             if( ex ) throw ex;
-            log.write("[DEBUG] "+ thingyName +" - Set parent.version "+ app.platformSnapVersion +"\n");
+            log.write("[DEBUG] "+ thingyName +" - Set parent.version "+ app.parentVersion +"\n");
             var child = child_process.spawn(
-                "mvn", ["versions:set-property", "-Dproperty=parent.version", "-DnewVersion="+ app.platformSnapVersion],
-                { cwd: workdirOfSync(app, jettyService) },
+                "mvn", ["versions:set-property", "-DgenerateBackupPoms=false", "-DallowSnapshots=true",
+                    "-Dproperty=platform.version", "-DnewVersion="+ app.parentVersion],
+                { cwd: workdirOfSync(app, thingyName) },
             );
             child.on("error", console.error.bind(console));
             child.stderr.on("data", logAsString);
@@ -527,8 +561,10 @@
                 }
                 endFn(null, null);
             });
-            gitApply.stdin.write(patch);
-            gitApply.stdin.end();
+            setTimeout/*TODO why?*/(function(){
+                gitApply.stdin.write(patch);
+                gitApply.stdin.end();
+            }, 42);
         }
         function endFn( ex, ret ){
             if( onDoneCalledNTimes !== 0 ){ throw Error("assert(onDoneCalledNTimes == 0)"); }
@@ -553,38 +589,57 @@
     }
 
 
-    function forEachJettyService( app, onService, onDone ){
-        var iSvc = 0, services;
+    function forEachInArrayDo( app, array, onService, onDone ){
+        var iE = 0;
         var isOnDoneCalled = false;
-        getJettyServiceNamesAsArray(app, onServicesArrived);
-        function onServicesArrived( ex, ret ){
-            if( ex ) throw ex;
-            services = ret;
-            nextService();
-        }
-        function nextService( ex ){
+        nextElem();
+        function nextElem( ex ){
             if( ex ){ endFn(ex); return; }
-            var service = services[iSvc++];
-            if( service === undefined ){ endFn(); return; }
-            onService(app, service, nextService);
+            if( iE >= array.length ){ endFn(); return; }
+            onService(app, array[iE++], nextElem);
         }
-        function endFn( ex, ret ){
+        function endFn( ex ){
             if( isOnDoneCalled ){
                 throw (ex) ? ex : Error("onDone MUST be called ONCE only");
             }else{
                 isOnDoneCalled = true;
-                onDone(ex, ret);
+                onDone(ex);
             }
         }
     }
 
 
+    function forEachJettyService( app, onService, onDone ){
+        getJettyServiceNamesAsArray(app, onServicesArrived);
+        function onServicesArrived( ex, services ){
+            if( ex ) throw ex;
+            forEachInArrayDo(app, services, onService, onDone);
+        }
+    }
+
+
     function resetHardToDevelop( app, thingyName, onDone ){
-        if( typeof onDone !== "function" ) throw Error("onDone");
         var iRemoteName = 0;
-        tryResetHard(iRemoteName++);
-        function tryResetHard( i ){
-            var remoteName = app.remoteNamesToTry[i];
+        if( typeof onDone !== "function" ) throw Error("onDone");
+        detach();
+        function detach(){
+            log.write("[DEBUG] "+ thingyName +"$ git checkout --detach\n");
+            var child = child_process.spawn(
+                "git", ["checkout", "--detach"],
+                { cwd:workdirOfSync(app, thingyName) }
+            );
+            child.on("error", console.error.bind(console));
+            child.stderr.on("data", logAsString);
+            child.on("close", function( code, signal ){
+                if( code !== 0 || signal !== null ){
+                    onDone(Error("code "+ code +", signal "+ signal));
+                }else{
+                    tryResetHard();
+                }
+            });
+        }
+        function tryResetHard(){
+            var remoteName = app.remoteNamesToTry[iRemoteName++];
             if( remoteName === undefined ){ onDone(Error("no usable remote found")); return; }
             log.write("[DEBUG] "+ thingyName +"$ git reset --hard "+ remoteName +"/develop\n");
             var child = child_process.spawn(
@@ -597,7 +652,23 @@
                 if( signal !== null ){
                     onDone(Error("code "+ code +", signal "+ signal));
                 }else if( code !== 0 ){
-                    tryResetHard(iRemoteName++);
+                    tryResetHard(); /*try next remoteName*/
+                }else{
+                    wipeWorktree();
+                }
+            });
+        }
+        function wipeWorktree(){
+            log.write("[DEBUG] "+ thingyName +"$ git rimraf\n");
+            var child = child_process.spawn(
+                "git", ["rimraf"/*TODO make portable*/],
+                { cwd:workdirOfSync(app, thingyName) }
+            );
+            child.on("error", console.error.bind(console));
+            child.stderr.on("data", logAsString);
+            child.on("close", function( code, signal ){
+                if( code !== 0 || signal !== null ){
+                    onDone(Error("code "+ code +", signal "+ signal));
                 }else{
                     deleteBranch();
                 }
@@ -630,54 +701,65 @@
     }
 
 
+    function setPlatformVersionInAllServices( app, onDone ){
+        forEachJettyService(app, setPlatformVersionInService, onDone);
+    }
+
+
+    function fetchRemoteChanges( app, onDone ){
+        var platformAndServices = app.services.slice(0);
+        platformAndServices.unshift("platform");
+        forEachInArrayDo(app, platformAndServices, fetchChangesFromGitit, onDone);
+    }
+
+
+    function fetchListOfServices( app, onDone ){
+        getJettyServiceNamesAsArray(app, function( ex, ret ){
+            if( ex ) throw ex;
+            app.services = ret;
+            onDone();
+        });
+    }
+
+
     function run( app ){
-        if( app.isResetHardToDevelop ){
-            forEachJettyService(app, resetHardToDevelop, endFn);
-            return;
+        var actions = [ fetchListOfServices ];
+        if( app.isFetch ){ actions.push(fetchRemoteChanges); }
+        if( app.isResetHard ){
+            actions.push(function( app, onDone ){
+                forEachInArrayDo(app, app.services, checkoutUpstreamDevelop, onDone);
+            });
+            actions.push(function( app, onDone ){
+                forEachInArrayDo(app, app.services, resetHardToDevelop, onDone);
+            });
         }
-        updateFromRemote();
-        function updateFromRemote( ex ){
-            if( ex ) throw ex;
-            forEachJettyService(app, fetchChangesFromGitit,
-                onFetchChangesFromGititForAllJettyServicesDone);
+        if( app.isPatchPlatform ){
+            actions.push(patchAwaySlimPackagingInPlatform);
+            actions.push(setVersionInPlatform);
         }
-        function onFetchChangesFromGititForAllJettyServicesDone( ex ){
-            if( ex ) throw ex;
-            forEachJettyService(app, checkoutUpstreamDevelop,
-                onCheckoutUpstreamDevelopDone);
+        if( app.isPatchServices ){
+            actions.push(dropSlimFromAllJenkinsfiles);
+            actions.push(function( app, onDone ){
+                forEachInArrayDo(app, app.services, giveServiceOurSpecialVersion, onDone);
+            });
         }
-        function onCheckoutUpstreamDevelopDone( ex ){
-            if( ex ) throw ex;
-            patchAwaySlimPackagingInPlatform(app, onPatchAwaySlimPackagingInPlatformDone);
+        if( app.isCommit ) actions.push(function( app, onDone ){
+            forEachInArrayDo(app, app.services, commitService, onDone);
+        });
+        if( app.isPush || app.isPushForce ){
+            actions.push(function( app, onDone ){
+                forEachJettyService(app, pushService, onDone);
+            });
         }
-        function onPatchAwaySlimPackagingInPlatformDone( ex, ret ){
-            if( ex ) throw ex;
-            setVersionInPlatform(app, onSetVersionInPlatformDone);
-        }
-        function onSetVersionInPlatformDone(){
-            dropSlimFromAllJenkinsfiles(app, onDropSlimFromAllJenkinsfilesDone);
-        }
-        function onDropSlimFromAllJenkinsfilesDone( ex ){
-            if( ex ) throw ex;
-            forEachJettyService(app, setPlatformVersionInService, onSetPlatformVersionInServiceDone);
-        }
-        function onSetPlatformVersionInServiceDone( ex ){
-            if( ex ) throw ex;
-            if( app.isPush || app.isPushForce ){
-                commitAllServices(app, onCommitAllServicesDone);
-            }else{
-                log.write("[DEBUG] Skip commit/push (disabled)\n");
-                endFn();
-            }
-        }
-        function onCommitAllServicesDone( ex ){
-            if( ex ) throw ex;
-            if( !app.isPush && !app.isPushForce ) throw Error("assert(isPush || isPushForce)");
-            forEachJettyService(app, pushService, endFn);
-        }
-        function endFn( ex ){
-            if( ex ) throw ex;
+        actions.push(function( app, onDone ){
             log.write("[INFO ] App done\n");
+        });
+        triggerNextAction();
+        function triggerNextAction( ex ){
+            if( ex ) throw ex;
+            var action = actions.shift();
+            if( action === undefined ){ endFn(); return; }
+            action(app, triggerNextAction);
         }
     }
 
@@ -685,19 +767,26 @@
     function main(){
         const app = {
             isHelp: false,
-            isPrintIsaVersion: false,
+            isFetch: false,
+            isResetHard: false,
+            isPatchPlatform: false,
+            isPatchServices: false,
+            iscommit: false,
             isPush: false,
             isPushForce: false,
             isResetHardToDevelop: false,
             remoteNamesToTry: ["origin"],
-            platformSnapVersion: null,
             workdir: "C:/work/tmp/git-scripted",
             maxParallel:  1,
             numRunningTasks: 0,
+            services: null,
             branchName: "SDCISA-15648-RemoveSlimPackaging-n1",
             commitMsg: "[SDCISA-15648] Remove slim packaging",
+            platformSnapVersion: "0.0.0-SNAPSHOT",
+            serviceSnapVersion: "0.0.0-SNAPSHOT",
+            parentVersion: null,
         };
-        app.platformSnapVersion = "0.0.0-"+ app.branchName +"-SNAPSHOT";
+        app.parentVersion = "0.0.0-"+ app.branchName +"-SNAPSHOT";
         if( parseArgs(process.argv, app) !== 0 ){ process.exit(1); }
         if( app.isHelp ){ printHelp(); return; }
         run(app);

@@ -536,6 +536,8 @@ Links (Aka argument amplifiers)
 ## security
 - [SDCISA-4808] Security flaw due to no-security-if-no-identity policy Open
 - [Make ISA secure (again?)](https://wikit.post.ch/x/n984Mg)
+- [platform public IP exposed wont fix](https://jira.post.ch/browse/SDCISA-6998)
+- [houston public IP exposed](TODO)
 
 ## Bus Factor Faktor
 - [Bus factor definition wikipedia](https://en.wikipedia.org/wiki/Bus_factor)
