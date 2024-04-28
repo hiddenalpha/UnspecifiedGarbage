@@ -1,0 +1,13 @@
+
+fstab
+=====
+
+## Moving firefox cache to RAM
+
+Effect: Faster at runtime, slower at startup.
+
+fstab entry:
+none  /home/YOURNAME/.cache/mozilla/firefox  tmpfs  noatime,noexec,users  0 0
+
+
+

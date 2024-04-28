@@ -1,0 +1,20 @@
+
+## Install
+
+apt install genisoimage
+
+
+## Burn from ISO to optical media
+
+growisofs -dvd-compat -Z /dev/srX=path/to/my.iso
+
+
+## Get checksum of disc
+
+- Use isoinfo (from genisoimage pkg) to get size params.
+- Use dd parameterized by previous output.
+
+  isoinfo -d dev=/dev/srX
+  dd bs=${Logical block size} count=${Volume size} if=/dev/srX | md5sum -b
+
+
