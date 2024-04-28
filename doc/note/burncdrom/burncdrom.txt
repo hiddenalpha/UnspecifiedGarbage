@@ -1,7 +1,10 @@
 
-## Install
+How to handle CD/DVD burning
+============================
 
-apt install genisoimage
+## Install growisofs
+
+  apt install genisoimage
 
 
 ## Burn from ISO to optical media
@@ -16,5 +19,10 @@ growisofs -dvd-compat -Z /dev/srX=path/to/my.iso
 
   isoinfo -d dev=/dev/srX
   dd bs=${Logical block size} count=${Volume size} if=/dev/srX | md5sum -b
+
+
+## Create bootable USB from ISO
+
+  dd bs=4M if=path/to/my.iso of=/dev/sdX status=progress oflag=sync
 
 
