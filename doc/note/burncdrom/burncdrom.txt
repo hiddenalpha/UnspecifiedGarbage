@@ -7,9 +7,14 @@ How to handle CD/DVD burning
   apt install genisoimage
 
 
-## Burn from ISO to optical media
+## Burn to optical media from ISO
 
 growisofs -dvd-compat -Z /dev/srX=path/to/my.iso
+
+
+## "Burn" to USB from ISO
+
+  dd bs=4M if=path/to/my.iso of=/dev/sdX status=progress oflag=sync
 
 
 ## Get checksum of disc
@@ -21,8 +26,13 @@ growisofs -dvd-compat -Z /dev/srX=path/to/my.iso
   dd bs=${Logical block size} count=${Volume size} if=/dev/srX | md5sum -b
 
 
-## Create bootable USB from ISO
+## Get checksum of usb drive
 
-  dd bs=4M if=path/to/my.iso of=/dev/sdX status=progress oflag=sync
+- Use stat to get block/count.
+- Divide num by drive block size (likely 4096).
+- Use dd parameterized by previous output.
+
+  stat -c '%s' my.iso
+  dd bs=${Logical block size} count=${Volume size} if=/dev/sdx | md5sum -b
 
 
