@@ -30,6 +30,11 @@ request to "localhost:7080" on HOST.
 ssh -o 'ProxyCommand ncat -p12345 %h %p' MY_SERVER
 
 
+## Get rid of bullshit warnings
+
+  -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null
+
+
 ## Run Cmd via jumphost
 
 Source: "https://www.cyberciti.biz/faq/linux-unix-ssh-proxycommand-passing-through-one-host-gateway-server/"

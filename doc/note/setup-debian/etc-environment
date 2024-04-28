@@ -1,0 +1,18 @@
+
+# Originally copy-pasted from latitude-E6530
+
+# Need that duplicate here because openbox is too stupid to load its own env
+# file.
+
+# Configure UI colors
+# .. for GTK-2
+#GTK2_RC_FILES=/usr/share/themes/Adwaita-dark/gtk-2.0/gtkrc
+# .. for GTK-3
+#GTK_THEME=Adwaita:dark
+# .. Qt 5 (needs 'qt5-style-plugins' to be installed)
+#QT_QPA_PLATFORMTHEME=gtk2
+
+# Disable QT DPI scaling. Can be really helpful for eg vlc in a multi-monitor
+# setup.
+#QT_AUTO_SCREEN_SCALE_FACTOR=0
+
