@@ -1,0 +1,110 @@
+
+How to Setup debian for MY needs
+================================
+
+## Partitioning
+
+Use the smaller & faster SSD for the system. Make sure it consists of TWO
+partitions so system can be easily upgraded later by just replacing it by a new
+install in the other partition.
+
+I prefer to put users home to a larger (maybe a HDD) for data storage. If
+there's only ONE drive, we need an additional partition for the home too.
+
+
+## Base system
+
+Install base system through debians ISO installers. Usually net installer is
+fine.
+
+Do NOT install ANY additional bloat! Eg untick ALL extra software like desktops
+etc. Even disable the standard-system-utilities option.
+
+
+## Install core tools
+
+ALWAYS use '--no-install-recommends' when installing something to prevent
+useless bloat to be installed.
+
+  && apt install -y --no-install-recommends vim net-tools openssh-server openssh-client bash bash-completion
+
+
+## Setup firewall
+
+WARN: Does NOT setup the effective rules. Rules need to be filled in by admin.
+
+WARN: This snippet may cut-off network connections. Including your remote shell!
+
+  && $SUDO apt install -y --no-install-recommends iptables iptables-persistent \
+  && printf '# TODO add contents here\n' | $SUDO tee /etc/iptables/src-default >/dev/null \
+  && printf '\n[WARN ] Needs more setup: /etc/iptables/src-default\n\n' \
+  && printf '%s\n' \
+       '## Apply from file' '' \
+       'ncat /etc/iptables/src-default | $SUDO iptables-restore' '' \
+       '## store current session as default' '' \
+       '$SUDO iptables-save | $SUDO tee /etc/iptables/rules.v4 > /dev/null' \
+       | $SUDO tee /etc/iptables/README >/dev/null \
+  && printf '# TODO setup file contents\n' | $SUDO tee /etc/iptables/src-default4 >/dev/null \
+  && printf '%s\n' \
+       '*filter' '' \
+       '# Loopback' \
+       '-A INPUT  -i lo -j ACCEPT' \
+       '-A OUTPUT -o lo -j ACCEPT' '' \
+       '# Log blocked connection attemps' \
+       '-A INPUT   -j LOG --log-prefix "Fw6BadInn: " --log-level 6' \
+       '-A FORWARD -j LOG --log-prefix "Fw6BadFwd: " --log-level 6' \
+       '-A OUTPUT  -j LOG --log-prefix "Fw6BadOut: " --log-level 6' '' \
+       '# Disallow any non-whitelisted packets' \
+       '-A INPUT   -j DROP' \
+       '-A FORWARD -j REJECT' \
+       '-A OUTPUT  -j REJECT' '' \
+       'COMMIT' | $SUDO tee /etc/iptables/src-default6 >/dev/null \
+  && printf '%s\n' \
+       '*filter' \
+       '-A INPUT   -j ACCEPT' \
+       '-A FORWARD -j ACCEPT' \
+       '-A OUTPUT  -j ACCEPT' \
+       'COMMIT' | $SUDO tee /etc/iptables/src-allowAll4 >/dev/null \
+  && $SUDO touch /etc/iptables/src-tmp \
+
+
+## Mount home partition
+
+# /etc/fstab
+UUID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx  /mnt/nameOfHdd  ext4  noatime  0  2
+/mnt/nameOfHdd/home  /home  none  bind  0  0
+
+
+## Configure Locale
+
+- In "/etc/locale.gen" Enable all of:
+  "de_CH.UTF-8 UTF-8", "de_CH ISO-8859-1", "en_DK.UTF-8 UTF-8", "en_DK ISO-8859-1".
+- Run "locale-gen".
+- Check list with "locale -a".
+- Change "/etc/default/locale" contents to:
+    LANG=en_DK.UTF-8
+    LANGUAGE="en_US:en"
+
+
+## Install Desktop Env
+
+  && $SUDO apt install -y --no-install-recommends xorg openbox mate-terminal lightdm light-locker feh scrot lxpanel qalculate-gtk gmrun gnome-system-monitor vim-gtk3 \
+  && mkdir ~/.config ~/.config/openbox || true \
+  && update-alternatives  \
+
+Populate "/etc/environment" as described by "./etc-environment".
+
+
+## Install daily-use tools
+
+  && apt install -y --no-install-recommends vim htop pv openssh-client iptables iptables-persistence \
+       nginx-light vlc qemu-utils qemu-system keepassxc gpg firefox chromium thunderbird \
+       gnome-themes-extra file-roller zip unzip xz-utils p7zip-full alsamixer pulseaudio pavucontrol \
+       audacity eom darktable gimp git tigervnc-viewer samba wireshark file evince \
+       libreoffice-writer libreoffice-calc libreoffice-draw libxrender1 libgl1 \
+       fonts-crosextra-caladea fonts-crosextra-carlito fonts-dejavu fonts-liberation \
+       fonts-liberation2 fonts-linuxlibertine fonts-noto-core fonts-noto-mono fonts-noto-ui-core \
+       fonts-sil-gentium-basic \
+
+
+
