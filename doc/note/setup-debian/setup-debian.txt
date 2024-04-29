@@ -88,7 +88,7 @@ UUID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx  /mnt/nameOfHdd  ext4  noatime  0  2
 
 ## Install Desktop Env
 
-  && $SUDO apt install -y --no-install-recommends xorg openbox mate-terminal lightdm light-locker feh scrot lxpanel qalculate-gtk gmrun gnome-system-monitor \
+  && $SUDO apt install -y --no-install-recommends xorg openbox mate-terminal lightdm light-locker feh scrot lxpanel qalculate-gtk gmrun gnome-system-monitor vim-gtk3 \
   && mkdir ~/.config ~/.config/openbox || true \
   && update-alternatives  \
 
@@ -98,11 +98,13 @@ Populate "/etc/environment" as described by "./etc-environment".
 ## Install daily-use tools
 
   && apt install -y --no-install-recommends vim htop pv openssh-client iptables iptables-persistence \
-       nginx vlc qemu-utils qemu-system keepassxc gpg firefox thunderbird gnome-themes-extra \
-       file-roller zip unzip xz-utils p7zip-full alsamixer pulseaudio pavucontrol audacity eom \
-       darktable gimp \
-
-
+       nginx-light vlc qemu-utils qemu-system keepassxc gpg firefox chromium thunderbird \
+       gnome-themes-extra file-roller zip unzip xz-utils p7zip-full alsamixer pulseaudio pavucontrol \
+       audacity eom darktable gimp git tigervnc-viewer samba wireshark file evince \
+       libreoffice-writer libreoffice-calc libreoffice-draw libxrender1 libgl1 \
+       fonts-crosextra-caladea fonts-crosextra-carlito fonts-dejavu fonts-liberation \
+       fonts-liberation2 fonts-linuxlibertine fonts-noto-core fonts-noto-mono fonts-noto-ui-core \
+       fonts-sil-gentium-basic \
 
 
 

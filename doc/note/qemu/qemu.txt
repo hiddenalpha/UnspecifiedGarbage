@@ -194,7 +194,7 @@ true `# SMB client debian` \
 
 ### Add those in "/etc/fstab" to setup mount automatically at boot:
 ### HINT:  mkdir /home/user/build
-  //10.0.2.2/sharename  /mnt/sharename  cifs  password=,uid=1000,gid=1000,user  0  0
+  //10.0.2.2/sharename  /mnt/sharename  cifs  password=,uid=1000,gid=1000,user,vers=3.0  0  0
   /home/user/build  /mnt/sharename/build  none  bind  0  0
 
 List smb shares (eg debugging)
