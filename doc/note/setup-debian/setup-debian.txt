@@ -97,14 +97,14 @@ Populate "/etc/environment" as described by "./etc-environment".
 
 ## Install daily-use tools
 
-  && apt install -y --no-install-recommends vim htop pv openssh-client iptables iptables-persistence \
-       nginx-light vlc qemu-utils qemu-system keepassxc gpg firefox chromium thunderbird \
-       gnome-themes-extra file-roller zip unzip xz-utils p7zip-full alsamixer pulseaudio pavucontrol \
-       audacity eom darktable gimp git tigervnc-viewer samba wireshark file evince \
+  && $SUDO apt install -y --no-install-recommends vim htop pv openssh-client iptables \
+       iptables-persistent nginx-light vlc qemu-utils qemu-system keepassxc gpg firefox-esr \
+       chromium thunderbird gnome-themes-extra file-roller zip unzip xz-utils p7zip-full \
+       pulseaudio pavucontrol audacity eom darktable gimp git tigervnc-viewer samba wireshark file \
+       evince lame flac opus-tools pdftk-java \
        libreoffice-writer libreoffice-calc libreoffice-draw libxrender1 libgl1 \
        fonts-crosextra-caladea fonts-crosextra-carlito fonts-dejavu fonts-liberation \
        fonts-liberation2 fonts-linuxlibertine fonts-noto-core fonts-noto-mono fonts-noto-ui-core \
        fonts-sil-gentium-basic \
-
 
 

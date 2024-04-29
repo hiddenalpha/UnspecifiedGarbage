@@ -12,8 +12,10 @@
   # - set "server_name" to meaningful value.
   #
   #daemon off;  # run in foreground (eg from cli)
+  #user www-data;
+  #worker_processes auto;
+  pid /run/nginx.pid;
   events {}
-  pid /var/run/nginx.pid;
   http {
       access_log /dev/stdout;
       # Directories nginx needs configured to start up.
@@ -37,7 +39,6 @@
               return 200 "Example says hi";
           }
       }
-  
   }
 
 
