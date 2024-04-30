@@ -14,6 +14,8 @@ mvn versions:set-property -DgenerateBackupPoms=false -DallowSnapshots=true -Dpro
 
 export MAVEN_OPTS="..."
 
+## Get project version without any other bullshit
+mvn help:evaluate -o -q -DforceStdout -Dexpression=project.version && echo
 
 ## Deploy paisa snapshot
 mvn deploy -DaltDeploymentRepository=artifactory-snapshots::default::https://artifactory.tools.pnet.ch/artifactory/libs-snapshot-local

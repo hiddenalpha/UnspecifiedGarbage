@@ -12,6 +12,7 @@ Related:
     const zlib = require("zlib");
     const noop = function(){};
     const log = process.stderr;
+    const out = process.stdout;
     const logAsString = function( buf ){ log.write(buf.toString()); };
 
     setImmediate(main);
@@ -44,6 +45,9 @@ Related:
             +"      not given, the change is only made locally (aka without cluttering\n"
             +"      remote git repo). The force variant will replace existing branches\n"
             +"      on the remnote. If given multiple times, less-invasive wins.\n"
+            +"  \n"
+            +"    --print-isa-version\n"
+            +"      Prints an isaVersion JSON that can be fed to preflux.\n"
             +"  \n"
             // not impl yet
             //+"    --max-parallel <int>\n"
@@ -79,8 +83,8 @@ Related:
             }else if( arg == "--push-force" ){
                 if( app.isPush ){ log.write("EINVAL: only one of push and push-force allowed\n"); return-1; }
                 app.isPushForce = true;
-            }else if( arg == "--reset-hard-to-develop" ){
-                app.isResetHardToDevelop = true;
+            }else if( arg == "--print-isa-version" ){
+                app.isPrintIsaVersion = true;
             //}else if( arg == "--max-parallel" ){
             //    arg = argv[++iA];
             //    if( !/^[0-9]+$/.test(arg) ){ log.write("EINVAL: --max-parallel "+ arg +"\n"); return -1; }
@@ -201,6 +205,90 @@ Related:
         setImmediate(onDone, null, [ /*TODO get via args/file */
             TODO_GX0CAJ9hAgCNRAIA9hgCAP5jAgDGCgIA
         ]);
+    }
+
+
+    function getVersionByServiceName(app, svcName, onDone){
+        /* if we did patch services, we already know the version without
+         * lookup. This is a performance optimization, because maven performs
+         * absolutely terrible. Performance DOES matter! */
+        //if( app.isPatchServices ){
+            setImmediate(onDone, null, app.jenkinsSnapVersion);
+        //}else{
+        //    wasteOurTimeBecausePerformanceDoesNotMatter();
+        //}
+        //function wasteOurTimeBecausePerformanceDoesNotMatter( ex ){
+        //    if( ex ) throw ex;
+        //    var stdoutBufs = [];
+        //    /* SHOULD start maven with low prio to not kill windoof. But I
+        //     * guess spawning a process with other prio is YAGNI, and so we're
+        //     * now fucked. Therefore I wish you happy time-wasting, as the only
+        //     * option left is to NOT start too many maven childs
+        //     * simultaneously. */
+        //    var child = child_process.spawn(
+        //        "mvn", ["help:evaluate", "-o", "-q", "-DforceStdout", "-Dexpression=project.version"],
+        //        { cwd:workdirOfSync(app, svcName) }
+        //    );
+        //    child.on("error", console.error.bind(console));
+        //    child.stderr.on("data", logAsString);
+        //    child.stdout.on("data", stdoutBufs.push.bind(stdoutBufs));
+        //    child.on("close", function( code, signal ){
+        //        if( code !== 0 || signal !== null ){
+        //            endFn(Error("code="+ code +", signal="+ signal +""));
+        //            return;
+        //        }
+        //        if( stdoutBufs.length <= 0 ) throw Error("maven has failed");
+        //        var version = stdoutBufs.join().trim();
+        //        onDone(null, version);
+        //    });
+        //}
+    }
+
+
+    function printIsaVersion( app, onDone ){
+        var iSvcQuery = 0, iSvcPrinted = 0;
+        printIntro();
+        function printIntro( ex ){
+            if( ex ) throw ex;
+            var epochMs = Date.now();
+            out.write('{\n');
+            out.write('  "timestamp": "'+ new Date().toISOString() +'",\n');
+            out.write('  "isaVersionId": "SDCISA-15648-'+ epochMs +'",\n');
+            out.write('  "isaVersionName": "SDCISA-15648-'+ epochMs +'",\n');
+            out.write('  "trial": true,\n');
+            out.write('  "services": [\n');
+            out.write('    { "name": "eagle", "version": "02.23.01.00" },\n');
+            out.write('    { "name": "storage", "version": "00.25.00.02" },\n');
+            out.write('    { "name": "platform", "version": "'+ app.platformJenkinsVersion +'" }');
+            /* maven performance is an absolute terrible monster.
+             * Problem 1: Doing this sequentially takes forever.
+             * Problem 2: Doing this parallel for all makes windoof freeze.
+             * Workaround: Do at most a few of them in parallel. */
+            for( var i = 3 ; i ; --i ) nextService();
+        }
+        function nextService( ex ){
+            if( ex ) throw ex;
+            if( iSvcQuery >= app.services.length ){ /*printTail();*/ return; }
+            var svcName = app.services[iSvcQuery++];
+            getVersionByServiceName(app, svcName, function(e,r){ printService(e,r,svcName); });
+        }
+        function printService( ex, svcVersion, svcName ){
+            if( ex ) throw ex;
+            if( typeof svcVersion != "string") throw Error(svcVersion);
+            iSvcPrinted += 1;
+            out.write(",\n    ");
+            out.write('{ "name": "'+ svcName +'", "version": "'+ svcVersion +'" }');
+            if( iSvcPrinted >= app.services.length ){ printTail(); }else{ nextService(); }
+        }
+        function printTail( ex ){
+            if( ex ) throw ex;
+            out.write('\n');
+            out.write('  ],\n');
+            out.write('  "featureSwitches": [],\n');
+            out.write('  "mergedBundles": []\n');
+            out.write('}\n');
+            onDone(/*ex*/null, /*ret*/null);
+        }
     }
 
 
@@ -757,6 +845,7 @@ Related:
                 forEachJettyService(app, pushService, onDone);
             });
         }
+        if( app.isPrintIsaVersion ){ actions.push(printIsaVersion); }
         actions.push(function( app, onDone ){
             log.write("[INFO ] App done\n");
         });
@@ -780,7 +869,7 @@ Related:
             iscommit: false,
             isPush: false,
             isPushForce: false,
-            isResetHardToDevelop: false,
+            isPrintIsaVersion: false,
             remoteNamesToTry: ["origin"],
             workdir: "C:/work/tmp/git-scripted",
             maxParallel:  1,
@@ -790,6 +879,8 @@ Related:
             commitMsg: "[SDCISA-15648] Remove slim packaging",
             platformSnapVersion: "0.0.0-SNAPSHOT",
             serviceSnapVersion: "0.0.0-SNAPSHOT",
+            platformJenkinsVersion: "0.0.0-SDCISA-15648-RemoveSlimPackaging-n1-SNAPSHOT",
+            jenkinsSnapVersion: "0.0.0-SDCISA-15648-RemoveSlimPackaging-n1-SNAPSHOT",
             parentVersion: null,
         };
         app.parentVersion = "0.0.0-"+ app.branchName +"-SNAPSHOT";

@@ -590,3 +590,7 @@ Links (Aka argument amplifiers)
 ## (TODO put to a better place in here)
 - [how to handle vertx promise fail/errors properly](https://github.com/swisspost/vertx-redisques/pull/164#discussion_r1562105007)
 
+- [null VS empty](https://jira.post.ch/browse/SDCISA-14534)
+
+
+
