@@ -2,7 +2,7 @@
   Custom houston patch to have a "usable" service at all.
 
   Patch based on "develop" aka
-  "125344e940ebc090183bad7fc096938289f15e3f" from "2024-01-16".
+  "497a9477c9e2100130f9a29ec130c1131220c935" from "2024-04-22".
 
 
 --- a/pom.xml
@@ -50,9 +50,7 @@
 
 --- a/houston-process/pom.xml
 +++ b/houston-process/pom.xml
-@@ -25,6 +25,26 @@
-     </properties>
- 
+@@ -27,3 +27,23 @@
      <dependencies>
 +        <dependency>                              <!-- TODO: Remove -->
 +          <groupId>org.slf4j</groupId>            <!-- TODO: Remove -->
@@ -76,26 +74,36 @@
 +        </dependency>                             <!-- TODO: Remove -->
          <!-- project -->
          <dependency>
-             <groupId>ch.post.it.paisa.houston</groupId>
+
+
+--- a/houston-process/pom.xml
++++ b/houston-process/pom.xml
+@@ -212,6 +232,2 @@
+         </dependency>
+-        <dependency>
+-            <groupId>org.apache.logging.log4j</groupId>
+-            <artifactId>log4j-slf4j2-impl</artifactId>
+-        </dependency>
+         <dependency>
 
 
 --- a/houston-process/src/main/java/ch/post/it/paisa/houston/process/main/Deployer.java
 +++ b/houston-process/src/main/java/ch/post/it/paisa/houston/process/main/Deployer.java
-@@ -68,6 +68,9 @@ public class Deployer {
+@@ -98,6 +98,9 @@ public class Deployer {
    private static final Logger LOGGER = LoggerFactory.getLogger(Deployer.class);
  
    public static void main(String[] args) throws Exception {
 +    boolean isAssertIsEnabled = false;
 +    assert isAssertIsEnabled = true;
 +    if (!isAssertIsEnabled) throw new UnsupportedOperationException("Enable assertions to fix this problem -> https://stackoverflow.com/a/68893479/4415884");
-     setStartupProperties();
-     Props.prepare();
+     throwIfLoggerAmbiguous();
  
+     configureObjectMapper();
 
 
 --- a/houston-process/src/main/java/ch/post/it/paisa/houston/process/main/Deployer.java
 +++ b/houston-process/src/main/java/ch/post/it/paisa/houston/process/main/Deployer.java
-@@ -378,7 +378,7 @@ public class Deployer {
+@@ -471,7 +477,7 @@ public class Deployer {
                  // All other queues (typically to backend services) with a slow-down pattern after
                  // failed delivery
                  qc.add(
