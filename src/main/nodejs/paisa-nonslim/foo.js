@@ -519,9 +519,18 @@ Related:
             );
             child.on("error", console.error.bind(console));
             child.stderr.on("data", logAsString);
-            child.on("close", function(){
-                nextJettyService();
-            });
+            child.on("close", removeEmptyArray);
+        }
+        /* Pipeline is too dump for an empty array */
+        function removeEmptyArray( ex ){
+            if( ex ) throw ex;
+            var child = child_process.spawn(
+                "sed", [ "-i", "-E", "s_^(.*?).buildMaven\\(\\[\\]\\))(.*?)$_\\1\\2_", "Jenkinsfile" ],
+                { cwd: workdirOfSync(app, jettyService) },
+            );
+            child.on("error", console.error.bind(console));
+            child.stderr.on("data", logAsString);
+            child.on("close", nextJettyService);
         }
         function onNoMoreJettyServices(){
             onDone(null, null);
