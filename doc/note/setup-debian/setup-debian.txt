@@ -95,16 +95,30 @@ UUID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx  /mnt/nameOfHdd  ext4  noatime  0  2
 Populate "/etc/environment" as described by "./etc-environment".
 
 
-## Install daily-use tools
+## Install whatever needed
 
-  && $SUDO apt install -y --no-install-recommends vim htop pv openssh-client iptables \
-       iptables-persistent nginx-light vlc qemu-utils qemu-system keepassxc gpg firefox-esr \
-       chromium thunderbird gnome-themes-extra file-roller zip unzip xz-utils p7zip-full \
-       pulseaudio pavucontrol audacity eom darktable gimp git tigervnc-viewer samba wireshark file \
-       evince lame flac opus-tools pdftk-java sqlite3 xxd manpages-dev gdb ffmpeg \
+  && $SUDO apt install -y --no-install-recommends \
+       `# basic CLI` \
+       vim htop pv openssh-client iptables iptables-persistent xxd zip unzip xz-utils p7zip-full \
+       file \
+       `# basic UI` \
+       firefox-esr file-roller thunderbird chromium evince \
+       `# software devel` \
+       git sqlite3 manpages-dev gdb qemu-utils qemu-system wireshark samba tigervnc-viewer \
+       `# server` \
+       nginx-light \
+       `# multimedia` \
+       pulseaudio pavucontrol vlc audacity eom darktable gimp lame flac opus-tools ffmpeg \
+       `# encryption` \
+       keepassxc gpg \
+       `# UI customization` \
+       gnome-themes-extra \
+       `# Office Suite` \
        libreoffice-writer libreoffice-calc libreoffice-draw libxrender1 libgl1 \
        fonts-crosextra-caladea fonts-crosextra-carlito fonts-dejavu fonts-liberation \
        fonts-liberation2 fonts-linuxlibertine fonts-noto-core fonts-noto-mono fonts-noto-ui-core \
-       fonts-sil-gentium-basic \
+       fonts-sil-gentium-basic pdftk-java \
+       `# Others` \
+       lm-sensors fancontrol \
 
 
