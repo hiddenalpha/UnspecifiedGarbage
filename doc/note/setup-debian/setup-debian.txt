@@ -101,7 +101,7 @@ Populate "/etc/environment" as described by "./etc-environment".
        iptables-persistent nginx-light vlc qemu-utils qemu-system keepassxc gpg firefox-esr \
        chromium thunderbird gnome-themes-extra file-roller zip unzip xz-utils p7zip-full \
        pulseaudio pavucontrol audacity eom darktable gimp git tigervnc-viewer samba wireshark file \
-       evince lame flac opus-tools pdftk-java sqlite3 manpages-dev gdb ffmpeg \
+       evince lame flac opus-tools pdftk-java sqlite3 xxd manpages-dev gdb ffmpeg \
        libreoffice-writer libreoffice-calc libreoffice-draw libxrender1 libgl1 \
        fonts-crosextra-caladea fonts-crosextra-carlito fonts-dejavu fonts-liberation \
        fonts-liberation2 fonts-linuxlibertine fonts-noto-core fonts-noto-mono fonts-noto-ui-core \
