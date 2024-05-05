@@ -100,7 +100,7 @@ Populate "/etc/environment" as described by "./etc-environment".
   && $SUDO apt install -y --no-install-recommends \
        `# basic CLI` \
        vim htop pv openssh-client iptables iptables-persistent xxd zip unzip xz-utils p7zip-full \
-       file trash-cli \
+       file trash-cli genisoimage ncat \
        `# basic UI` \
        firefox-esr file-roller thunderbird chromium evince \
        `# software devel` \
