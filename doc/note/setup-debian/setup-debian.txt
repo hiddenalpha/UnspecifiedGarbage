@@ -100,7 +100,7 @@ Populate "/etc/environment" as described by "./etc-environment".
   && $SUDO apt install -y --no-install-recommends \
        `# basic CLI` \
        vim htop pv openssh-client iptables iptables-persistent xxd zip unzip xz-utils p7zip-full \
-       file \
+       file trash-cli \
        `# basic UI` \
        firefox-esr file-roller thunderbird chromium evince \
        `# software devel` \
@@ -121,6 +121,8 @@ Populate "/etc/environment" as described by "./etc-environment".
        `# Others` \
        lm-sensors fancontrol \
        `# Nvidia graphics (open)` \
-       mesa-utils \
+       mesa-utils clinfo mesa-opencl-icd \
+       `# Nvidia graphics (non-free, DoesNotWorkYet)` \
+       nvidia-detect nvidia-tesla-470-driver linux-headers-amd64 \
 
 
