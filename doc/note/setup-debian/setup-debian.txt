@@ -120,5 +120,7 @@ Populate "/etc/environment" as described by "./etc-environment".
        fonts-sil-gentium-basic pdftk-java \
        `# Others` \
        lm-sensors fancontrol \
+       `# Nvidia graphics (open)` \
+       mesa-utils \
 
 
