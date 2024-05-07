@@ -106,7 +106,9 @@ Populate "/etc/environment" as described by "./etc-environment".
        `# software devel` \
        git sqlite3 manpages-dev gdb qemu-utils qemu-system wireshark samba tigervnc-viewer \
        `# server` \
-       nginx-light \
+       nginx-light avahi-daemon  \
+       `# mDNS client & tools` \
+       libnss-mdns avahi-utils \
        `# multimedia` \
        pulseaudio pavucontrol vlc audacity eom darktable gimp lame flac opus-tools ffmpeg \
        `# encryption` \
