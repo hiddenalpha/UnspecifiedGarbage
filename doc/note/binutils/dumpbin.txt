@@ -2,17 +2,23 @@
 DumpBin For Windoof
 ===================
 
-## Analyze PE32 / PE32+ files.
+Scan for unwanted dependencies
+------------------------------
 
-TODO: This is unusable, because this only works with lots of bloat installed.
+Linux:
 
-Location: "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\dumpbin.exe"
+  find build/bin -type f -print0|xargs -0I? sh -c 'echo ?;readelf -d ?|egrep NEEDED|egrep -v "\\[(libc\\.|libz\\.|libm\\.|libdl\.|libpthread\.)"'
 
-Help
 
-  dumpbin /?
+Windoof:
 
-List needed DLLs.
+  find build/bin/*.exe -print0|xargs -0I? sh -c 'echo ?;objdump -p ?|egrep -i DLL\ Name:|egrep -iv "(KERNEL32.dll|msvcrt.dll|USER32.dll|WS2_32.dll)"'
 
-  dumpbin /DEPENDENTS foo.exe
+
+
+
+List Dll Dependencies Of A PE32 Executable
+------------------------------------------
+
+  x86_64-w64-mingw32-objdump -p out.exe | grep 'DLL Name:'
 
