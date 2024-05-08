@@ -174,7 +174,7 @@ Regular boot
   true `# SMB server debian` \
   && hostpath=/path/to/host/dir \
   && sharename=work \
-  && apt install --no-install-recommends -y samba
+  && apt install --no-install-recommends -y samba \
   && printf '[%s]\npath = %s\npublic = no\nwriteable = yes\nguest ok = yes\nforce user = andreas\n' "${sharename:?}" "${hostpath:?}" | $SUDO tee -a /etc/samba/smb.conf >/dev/null \
   && $SUDO /etc/init.d/smbd restart \
   && true
