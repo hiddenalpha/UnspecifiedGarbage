@@ -12,7 +12,7 @@ Linux:
 
 Windoof:
 
-  find build/bin/*.exe -print0|xargs -0I? sh -c 'echo ?;objdump -p ?|egrep -i DLL\ Name:|egrep -iv "(KERNEL32.dll|msvcrt.dll|USER32.dll|WS2_32.dll)"'
+  find build/bin/*.exe -print0|xargs -0I? sh -c 'echo ?;objdump -p ?|egrep -i DLL\ Name:|egrep -iv "(KERNEL32.dll|msvcrt.dll|USER32.dll|WS2_32.dll|ADVAPI32.dll|GDI32.dll|IMM32.dll|ole32.dll|OLEAUT32.dll|SETUPAPI.dll|SHELL32.dll|VERSION.dll|WINMM.dll)"'
 
 
 
