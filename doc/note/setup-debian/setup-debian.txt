@@ -114,7 +114,7 @@ Populate "/etc/environment" as described by "./etc-environment".
        `# encryption` \
        keepassxc gpg \
        `# UI customization` \
-       gnome-themes-extra \
+       gnome-themes-extra darkmint-gtk-theme \
        `# Office Suite` \
        libreoffice-writer libreoffice-calc libreoffice-draw libxrender1 libgl1 \
        fonts-crosextra-caladea fonts-crosextra-carlito fonts-dejavu fonts-liberation \
