@@ -54,6 +54,8 @@ ssh-keygen -y -f path/to/key > path/to/key.pub
 Print detailed DER file content:
   openssl x509 -in dumpcertfile -inform DER -text
 
+Print key of a host:
+  printf 'foo.com\nbar.com\n' | ssh-keyscan -t rsa,dsa -p22 -f-
 
 
 ## Export pub key in misc formats
@@ -71,6 +73,11 @@ PKCS1 to SPKI:
 TODO to PKCS8:
   ssh-keygen -i -f path/to/key.pub -e -m PKCS8 > path/to/pub.pem
 
+
+## Find entry in known_hosts
+
+  ssh-keygen -F example.com
+  ssh-keygen -F [example.com]:22
 
 
 ## Remove obsolete entry from known_hosts
