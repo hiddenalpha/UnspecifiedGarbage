@@ -14,7 +14,7 @@ else
     set +o ignoreeof
 fi
 
-export PS1='\033[1;32m[\033[0m$? \033[1;30m\u\033[0m\033[1;32m@\033[1;30m\h \033[1;34m\w\033[1;32m]\033[0m\n\$ '
+export PS1='\033[1;32m[\033[0m$? \033[1;30m\u\033[0m\033[1;32m@\033[1;$(test -n "$SSH_CONNECTION" && echo 31 || echo 30)m\h \033[1;34m\w\033[1;32m]\033[0m\n\$ '
 
 # Add global node modules to path
 #PATH=/opt/node-6.10.1/lib/node_modules/.bin:$PATH
