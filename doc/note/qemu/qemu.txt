@@ -125,48 +125,44 @@ Regular boot
   && qemu-system-x86_64 ${HOSTSPECIFICOPTS:?} ${MACHINE:?} -boot order=c ${HDAIMG:?} ${NETWORK:?} ${FIXMOUSEALIGN:?} \
 
 
-## aarch64 (not working yet)
+## raspberry pi 3b
 
-  #apt install -y --no-install-recommends qemu-uefi-aarch64
-  curl -sSLO https://github.com/dhruvvyas90/qemu-rpi-kernel/blob/master/kernel-qemu-5.10.63-bullseye
-  curl -sSLO https://github.com/dhruvvyas90/qemu-rpi-kernel/blob/master/versatile-pb-bullseye-5.10.63.dtb
-  curl -sSLO https://github.com/dhruvvyas90/qemu-rpi-kernel/blob/master/native-emulation/dtbs/bcm2711-rpi-4-b.dtb
-  curl -sSLO https://github.com/dhruvvyas90/qemu-rpi-kernel/blob/master/kernel-qemu-5.4.51-buster
-  curl -sSLO https://github.com/dhruvvyas90/qemu-rpi-kernel/blob/master/versatile-pb-buster-5.4.51.dtb
-  curl -sSLO https://downloads.raspberrypi.org/raspios_lite_arm64/images/raspios_lite_arm64-2023-05-03/2023-05-03-raspios-bullseye-arm64-lite.img.xz
-  xz -d 2023-05-03-raspios-bullseye-arm64-lite.img.xz
-  echo p | /sbin/fdisk 2023-05-03-raspios-bullseye-arm64-lite.img | egrep 'Linux$' | sed -E 's:^\S+\s+([0-9]+) .*$:\nmount -o offset=$(expr \1 \\* 512) ./2023-05-03-raspios-bullseye-arm64-lite.img /mnt/foo:'
-  qemu-img convert -f raw -O qcow2 2023-05-03-raspios-bullseye-arm64-lite.img raspbian-bullseye-lite.qcow2
-  qemu-img resize raspbian-bullseye-lite.qcow2 16G
-  mv raspbian-bullseye-lite.qcow2 hda.qcow2
+[src 1](https://youtube.com/watch?v=DSv9bDkPzsw)
+[src 2](https://youtube.com/watch?v=EYVkSUydqMI)
+[src 3](https://www.raspberrypi.com/news/raspberry-pi-bullseye-update-april-2022/)
 
-  qemu-system-aarch64 \
-    -m 256 -cpu arm1176 \
-    -M versatilepb \
-    -no-reboot \
-    -serial stdio \
-    -net nic -net user \
-    -drive file=2023-05-03-raspios-bullseye-arm64-lite.img,format=raw \
-    -boot 'dtb=versatile-pb-bullseye-5.10.63.dtb,kernel=kernel-qemu-5.10.63-bullseye,kernel_args=root=/dev/vda2 panic=1' \
+  && WORKDIR="/tmp/mypi" \
+  && FDISK=fdisk \
+  && SUDO= \
+  && IMG_URL='https://downloads.raspberrypi.com/raspios_lite_arm64/images/raspios_lite_arm64-2024-03-15/2024-03-15-raspios-bookworm-arm64-lite.img.xz' \
+  && ZIP_NAME="${IMG_URL##*/}" \
+  && IMG_NAME="${ZIP_NAME%.*}" \
+  && cd "${WORKDIR?}" \
+  && curl -sSL "${IMG_URL?}.sha1" -o "${ZIP_NAME?}.sha1" \
+  && curl -sSL "${IMG_URL?}.sig" -o "${ZIP_NAME?}.sig" \
+  && curl -SL "${IMG_URL?}" -o "${ZIP_NAME?}" \
+  && sha1sum -c "${ZIP_NAME?}.sha1" \
+  && xz -dk "${ZIP_NAME?}" \
+  && BLKSZ=$(${FDISK?} -l "${IMG_NAME?}" | grep -E '^Units:' | sed -E 's_^.* ([^ ]+) bytes$_\1_') \
+  && IMG1_OFF=$(${FDISK?} -l "${IMG_NAME?}" | grep '.img1 ' | awk '{print $2;}') \
+  && mkdir piboot \
+  && $SUDO mount -v -o offset=$(echo "${BLKSZ} * ${IMG1_OFF?}"|bc) "${IMG_NAME?}" piboot \
+  && cp -t . piboot/bcm2710-rpi-3-b.dtb  piboot/kernel8.img \
+  && $SUDO touch piboot/ssh \
+  && printf "user:$(echo '12345' | openssl passwd -6 -stdin)\n" | $SUDO tee piboot/userconf >/dev/null \
+  && $SUDO umount piboot \
+  && rmdir piboot \
+  && qemu-img resize -f raw "${IMG_NAME?}" 4G \
 
-  qemu-system-aarch64 \
-    -dtb ./bcm2711-rpi-4-b.dtb \
-    -m 256 -cpu arm1176 -M versatilepb \
-    -kernel kernel-qemu-5.10.63-bullseye -append "root=/dev/sda2 rootfstype=ext4 rw" \
-    -serial stdio \
-    -drive file=2023-05-03-raspios-bullseye-arm64-lite.img,format=raw \
-    -net nic -net user \
-    -no-reboot \
+qemu-system-aarch64 -nodefaults \
+    -machine type=raspi3b -cpu cortex-a53 -smp 4 -m 1G \
+    -kernel kernel8.img -dtb bcm2710-rpi-3-b.dtb -sd "${IMG_NAME?}" \
+    -device usb-net,netdev=net0 \
+    -netdev user,id=net0,hostfwd=tcp:127.0.0.1:${SSH_PORT:-2222}-:22 \
+    -append "rw earlyprintk loglevel=8 console=ttyAMA0,115200 dwc_otg.lpm_enable=0 root=/dev/mmcblk0p2 rootdelay=1" \
+    -no-reboot -nographic \
 
-  qemu-system-arm \
-    -M versatilepb \
-    -cpu arm1176 -m 256 \
-    -drive "file=2023-05-03-raspios-bullseye-arm64-lite.img,if=none,index=0,media=disk,format=raw,id=disk0" \
-    -device "virtio-blk-pci,drive=disk0,disable-modern=on,disable-legacy=off" \
-    -net "user,hostfwd=tcp::5022-:2222" \
-    -dtb "./versatile-pb-buster-5.4.51.dtb" \
-    -kernel "./kernel-qemu-5.4.51-buster" -append 'root=/dev/vda2 panic=1' \
-    -no-reboot
+ssh -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null -oUser=user "-p${SSH_PORT:-2222}" 127.0.0.1
 
 
 ## Shared host directory via CIFS/SMB
