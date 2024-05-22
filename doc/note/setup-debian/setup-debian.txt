@@ -102,7 +102,7 @@ Populate "/etc/environment" as described by "./etc-environment".
        vim htop pv openssh-client iptables iptables-persistent xxd zip unzip xz-utils p7zip-full \
        file trash-cli genisoimage ncat curl \
        `# basic UI` \
-       firefox-esr file-roller thunderbird chromium evince \
+       firefox-esr file-roller thunderbird chromium okular \
        `# software devel` \
        git sqlite3 manpages-dev gdb qemu-utils qemu-system wireshark samba tigervnc-viewer jq \
        `# server` \
@@ -114,7 +114,7 @@ Populate "/etc/environment" as described by "./etc-environment".
        `# encryption` \
        keepassxc gpg \
        `# UI customization` \
-       gnome-themes-extra darkmint-gtk-theme \
+       gnome-themes-extra darkmint-gtk-theme dconf-cli \
        `# Office Suite` \
        libreoffice-writer libreoffice-calc libreoffice-draw libxrender1 libgl1 \
        fonts-crosextra-caladea fonts-crosextra-carlito fonts-dejavu fonts-liberation \
