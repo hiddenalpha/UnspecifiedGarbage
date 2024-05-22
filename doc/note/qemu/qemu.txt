@@ -132,11 +132,13 @@ Regular boot
 [src 3](https://www.raspberrypi.com/news/raspberry-pi-bullseye-update-april-2022/)
 
   && WORKDIR="/tmp/mypi" \
-  && FDISK=fdisk \
-  && SUDO= \
+  && SUDO=sudo \
+  && FDISK="$SUDO fdisk" \
+  && RESIZE2FS="$SUDO resize2fs" \
   && IMG_URL='https://downloads.raspberrypi.com/raspios_lite_arm64/images/raspios_lite_arm64-2024-03-15/2024-03-15-raspios-bookworm-arm64-lite.img.xz' \
   && ZIP_NAME="${IMG_URL##*/}" \
   && IMG_NAME="${ZIP_NAME%.*}" \
+  && QCOW2_NAME="${IMG_NAME%.*}.qcow2" \
   && cd "${WORKDIR?}" \
   && curl -sSL "${IMG_URL?}.sha1" -o "${ZIP_NAME?}.sha1" \
   && curl -sSL "${IMG_URL?}.sig" -o "${ZIP_NAME?}.sig" \
@@ -145,21 +147,29 @@ Regular boot
   && xz -dk "${ZIP_NAME?}" \
   && BLKSZ=$(${FDISK?} -l "${IMG_NAME?}" | grep -E '^Units:' | sed -E 's_^.* ([^ ]+) bytes$_\1_') \
   && IMG1_OFF=$(${FDISK?} -l "${IMG_NAME?}" | grep '.img1 ' | awk '{print $2;}') \
-  && mkdir piboot \
-  && $SUDO mount -v -o offset=$(echo "${BLKSZ} * ${IMG1_OFF?}"|bc) "${IMG_NAME?}" piboot \
-  && cp -t . piboot/bcm2710-rpi-3-b.dtb  piboot/kernel8.img \
-  && $SUDO touch piboot/ssh \
-  && printf "user:$(echo '12345' | openssl passwd -6 -stdin)\n" | $SUDO tee piboot/userconf >/dev/null \
-  && $SUDO umount piboot \
-  && rmdir piboot \
-  && qemu-img resize -f raw "${IMG_NAME?}" 4G \
+  && IMG2_OFF=$(${FDISK?} -l "${IMG_NAME?}" | grep '.img2 ' | awk '{print $2;}') \
+  && qemu-img resize -f raw "${IMG_NAME?}" 8G \
+  && printf 'd\n2\nn\np\n2\n%s\n\np\nw\n' "${IMG2_OFF?}" | ${FDISK?} "${IMG_NAME?}" \
+  && mkdir part1 part2 \
+  && $SUDO mount -v -o offset=$(echo "${BLKSZ} * ${IMG1_OFF?}"|bc) "${IMG_NAME?}" part1 \
+  && cp -t . part1/bcm2710-rpi-3-b.dtb  part1/kernel8.img part1/cmdline.txt part1/config.txt \
+  && $SUDO touch part1/ssh \
+  && printf "user:$(echo '12345' | openssl passwd -6 -stdin)\n" | $SUDO tee part1/userconf >/dev/null \
+  && $SUDO umount part1 \
+  && DEVICE_uM0Znd=$($SUDO mount -v -o offset=$(echo "${BLKSZ} * ${IMG2_OFF?}"|bc) "${IMG_NAME?}" part2) \
+  && printf %s\\n "${DEVICE_uM0Znd?}" \
+  && DEVICE_uM0Znd=$(echo "${DEVICE_uM0Znd?}" | egrep ' /dev/loop.*part2' | sed -E 's_^.* (/dev/loop[^ ]+) .*$_\1_') \
+  && ${RESIZE2FS?} "${DEVICE_uM0Znd?}" \
+  && $SUDO umount part2 \
+  && rmdir part1 part2 \
+  && qemu-img convert -f raw -O qcow2 "${IMG_NAME?}" "${QCOW2_NAME?}" \
 
 qemu-system-aarch64 -nodefaults \
     -machine type=raspi3b -cpu cortex-a53 -smp 4 -m 1G \
-    -kernel kernel8.img -dtb bcm2710-rpi-3-b.dtb -sd "${IMG_NAME?}" \
+    -kernel kernel8.img -dtb bcm2710-rpi-3-b.dtb -sd "${QCOW2_NAME?}" \
     -device usb-net,netdev=net0 \
     -netdev user,id=net0,hostfwd=tcp:127.0.0.1:${SSH_PORT:-2222}-:22 \
-    -append "rw earlyprintk loglevel=8 console=ttyAMA0,115200 dwc_otg.lpm_enable=0 root=/dev/mmcblk0p2 rootdelay=1" \
+    -append "console=ttyAMA0,115200 root=PARTUUID=fb33757d-02 rootfstype=ext4 rootwait" \
     -no-reboot -nographic \
 
 ssh -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null -oUser=user "-p${SSH_PORT:-2222}" 127.0.0.1
