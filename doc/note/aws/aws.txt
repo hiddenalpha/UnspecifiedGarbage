@@ -1,0 +1,7 @@
+
+AWS cli usage
+=============
+
+HINT: See also "../kubernetes/kubectl.txt".
+
+

@@ -1,0 +1,65 @@
+
+- [Install kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl)
+
+
+## aws login
+
+[rollen bestellen](https://iamweb.pnet.ch/IdentityManager/page.axd?RuntimeFormID=a9e4cca0-b4a1-4ca2-a83a-85af3f098f98&aeweb_handler=p&aeweb_rp=&wproj=0&MenuID=Portal_IAM_MyIdentity&ContextID=CCC_ITShop_ProductSelection)
+
+Zu bestellende rolle: "APP_AWS-M15CN0001-DE".
+
+Nach erhalt via UI schauen login klappt (https://adfs.post.ch/adfs/ls/IdpInitiatedSignOn.aspx?loginToRp=urn:amazon:webservices).
+
+Dann Füdlewall öffnen:
+- [TODO give me a name](https://fwehadmin.pnet.ch:901/)
+- [TODO give me a nanme](https://fwehfnet.pnet.ch/connect/PortalMain)
+
+
+create "~/.saml2aws":
++-----------------------------------------------------------------------
+| [default]
+| name                    = default
+| app_id                  =
+| url                     = https://adfs.post.ch
+| username                = YOURFIRSTNAME.LASTNAME@post.ch
+| provider                = ADFS2
+| mfa                     = RSA
+| mfa_ip_address          =
+| skip_verify             = false
+| timeout                 = 6000
+| aws_urn                 = urn:amazon:webservices
+| aws_session_duration    = 3600
+| aws_profile             = saml
+| resource_id             =
+| subdomain               =
+| role_arn                =
+| region                  =
+| http_attempts_count     =
+| http_retry_delay        =
+| credentials_file        =
+| saml_cache              = false
+| saml_cache_file         =
+| target_url              =
+| disable_remember_device = false
+| disable_sessions        = false
+| prompter                = 
++-----------------------------------------------------------------------
+
+  saml2aws login
+  `# Username: "andreas.fankhauser@post.ch"`
+  `# Passowrd: AD-password`
+  `# Passcode: HardToken`
+  `# Role: (die mit "m15cn0001" und "-DE")`
+  `# Ready, continue with aws eks update-kubeconfig ...`
+
+
+## Make kubectl use aws stuff
+
+  && CLUSTER="eks-int-m15cn0001" \
+  && NAMESPACE="isa-houston-snapshot" \
+  && aws eks update-kubeconfig --name "${CLUSTER?}" \
+  && kubectl config set-context --current --namespace="${NAMESPACE?}" \
+  && `# Ready to perform kubectl commands` \
+
+
+

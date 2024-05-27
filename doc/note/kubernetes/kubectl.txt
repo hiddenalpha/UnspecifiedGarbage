@@ -1,0 +1,10 @@
+
+Kubectl usage
+=============
+
+HINT: See also "../aws/aws.txt".
+
+Commands look the same as with openshift.
+
+
+
