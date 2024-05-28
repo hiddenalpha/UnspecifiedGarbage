@@ -148,10 +148,10 @@ static void beginZipDownload( void*app_ ){
     REGISTER int err;
     App*const app = app_;
     assert(app->child == NULL);
-    static char tmpName[sizeof"./houston-20241231-235959Z.zip"];
+    static char tmpName[sizeof"./houston-20241231-235959Z.tgz"];
     time_t t = time(NULL);
     struct tm *tm = gmtime(&t);
-    err = strftime(tmpName, sizeof tmpName, "./houston-%Y%m%d-%H%M%SZ.zip", tm);
+    err = strftime(tmpName, sizeof tmpName, "./houston-%Y%m%d-%H%M%SZ.tgz", tm);
     if( err != sizeof tmpName -1 ){ LOGDBG("assert(strftime() != %d)  %s:%d\n", err, __FILE__, __LINE__); abort(); }
     LOGDBG("[DEBUG] currentOutfilePath := '%s'\n", tmpName);
     app->currentOutfilePath = tmpName;
@@ -161,7 +161,7 @@ static void beginZipDownload( void*app_ ){
     app->childMentor.argv = (char*[]){
         //"printf", "  %s",
         "oc", "-n", app->namespace, "exec", "-i", app->podName, "--",
-            "sh", "-c", "cd /usr/local/vertx/logs && cat houston.log.1.zip",
+            "sh", "-c", "cd /usr/local/vertx/logs && tar cz $(ls -d houston.log* | sort -r)",
         NULL
     };
     app->childMentor.envp = NULL;
