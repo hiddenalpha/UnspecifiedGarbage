@@ -1,0 +1,6 @@
+
+How to add an entry to the "Send To" explorer context menu. 
+
+Put Shortcuts to:
+"C:/Users/%USERNAME%/AppData/Roaming/Microsoft/Windows/SendTo/"
+
