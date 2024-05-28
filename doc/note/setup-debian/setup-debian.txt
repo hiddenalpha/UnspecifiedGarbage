@@ -121,7 +121,7 @@ Populate "/etc/environment" as described by "./etc-environment".
        fonts-liberation2 fonts-linuxlibertine fonts-noto-core fonts-noto-mono fonts-noto-ui-core \
        fonts-sil-gentium-basic pdftk-java \
        `# Others` \
-       lm-sensors fancontrol bc rsync \
+       lm-sensors fancontrol bc rsync qrencode \
        `# Nvidia graphics (open)` \
        mesa-utils clinfo mesa-opencl-icd \
        `# Nvidia graphics (non-free, DoesNotWorkYet)` \
