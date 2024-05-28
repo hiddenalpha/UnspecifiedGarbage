@@ -14,6 +14,10 @@ Dann Füdlewall öffnen:
 - [TODO give me a name](https://fwehadmin.pnet.ch:901/)
 - [TODO give me a nanme](https://fwehfnet.pnet.ch/connect/PortalMain)
 
+https://artifactory.tools.post.ch/artifactory/generic-github-remote/Versent/saml2aws/releases/download/v2.36.15/saml2aws_2.36.15_windows_amd64.zip
+
+Support anfragen: [AWS Workflow support](https://teams.microsoft.com/l/channel/19%3ad749f36da06c4849a7d9d46e8796b47c%40thread.tacv2/01%2520AWS%2520Workload%2520Support?groupId=98e3593c-95dc-4832-b249-fc2c7d153c78&tenantId=3ae7c479-0cf1-47f4-8f84-929f364eff67) 
+
 
 create "~/.saml2aws":
 +-----------------------------------------------------------------------
@@ -44,6 +48,16 @@ create "~/.saml2aws":
 | disable_sessions        = false
 | prompter                = 
 +-----------------------------------------------------------------------
+
+## TODO did not help
+&& export no_proxy=localhost,pnet.ch,tools.post.ch,gitit.post.ch,pnetcloud.ch,w00o2z,eu-central-1.eks.amazonaws.com \
+&& export https_proxy=http://127.0.0.1:3128 \
+&& export PROXY_PORT=3128 \
+&& export NO_PROXY=localhost,pnet.ch,tools.post.ch,gitit.post.ch,pnetcloud.ch,w00o2z,eu-central-1.eks.amazonaws.com \
+&& export HTTPS_PROXY=http://127.0.0.1:3128 \
+&& export HTTP_PROXY=http://127.0.0.1:3128 \
+&& export http_proxy=http://127.0.0.1:3128 \
+
 
   saml2aws login
   `# Username: "andreas.fankhauser@post.ch"`
