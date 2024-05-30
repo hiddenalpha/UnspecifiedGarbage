@@ -41,6 +41,7 @@
 
 
 typedef  struct App  App;
+typedef  struct Source  Source;
 
 
 #define App_mAGIC 0xB6AF5A16
@@ -49,34 +50,36 @@ struct App {
     int flg;
     int exitCode;
     int iSrc;
-    char **sources;
-    int sources_cap, sources_len;
-    FILE **srcFds;
-    int srcFds_cap, srcFds_len;
-    char **srcBufs;
-    int *srcBufsOff, *srcBufsLen, *srcBufsCap;
-    int srcBufs_cap, srcBufs_len;
+    Source *sources;
+    int sources_len, sources_cap;
     struct GarbageEnv **env;
     void *envMemory[SIZEOF_struct_GarbageEnv / sizeof(void*)];
+};
+
+
+struct Source {
+    char *filePath;
+    FILE *fd;
+    char *innBuf;
+    int innBuf_beg, innBuf_end, innBuf_cap;
+    int logBeg, logEnd; /*idx into innBuf where current log entry begins/ends */
 };
 
 
 char* strerrname(int);
 
 
-static void printHelp( void ){
-    fprintf(stdout, "%s%s%s",
+static void printHelp( char const*argv0 ){
+    fprintf(stdout, "%s%s%s%s%s",
         "  \n"
-        "  Fetch houston logs (v", STR_QUOT(PROJECT_VERSION),").\n"
+        "  Merge log files (v", STR_QUOT(PROJECT_VERSION),").\n"
         "  \n"
-        "  Example usage:\n"
-        "    this -- one.log two.log n.log > merged.log\n"
+        "  Merges log files based on the ISO timestamp which has to be the very\n"
+        "  first thing in every log entry.\n"
         "  \n"
-        "  HINT: double-dash required\n"
-        //"  Options:\n"
-        //"  \n"
-        //"    -n <str>, --namespace <str>\n"
-        //"      Namespace to use.\n"
+        "  Example usage (HINT: double-dash required):\n"
+        "  \n"
+        "    ", strrchr(argv0,'/')+1, " -- one.log two.log n.log > merged.log\n"
         "  \n"
     );
 }
@@ -106,7 +109,7 @@ nextNonOpt:;
         if( tmp == NULL ){ LOGERR("%s: realloc()\n", strerrname(errno)); return -1; }
         app->sources = tmp;
     }
-    app->sources[app->sources_len] = arg;
+    app->sources[app->sources_len].filePath = arg;
     app->sources_len += 1;
     goto nextNonOpt;
 verify:
@@ -115,35 +118,67 @@ verify:
 }
 
 
+static void TODO_0f86899eb2eda7503a0e16404ca5a5be( void*app_ ){
+    #define MIN(a, b) (((a) < (b)) * (a) + (a >= b) * (b))
+    REGISTER int err;
+    App*const app = app_; assert(app->mAGIC == App_mAGIC);
+    int lowestSrcIdx = 0;
+    for( err = 1 ; err < app->sources_len ; ++err ){
+        #define THAT_BUF (app->sources[err].innBuf)
+        #define THAT_BEG (app->sources[err].innBuf_beg)
+        #define THAT_CNT (app->sources[err].innBuf_end - app->sources[err].innBuf_beg)
+        #define OTHR_BUF (app->sources[lowestSrcIdx].innBuf)
+        #define OTHR_BEG (app->sources[lowestSrcIdx].innBuf_beg)
+        #define OTHR_CNT (app->sources[lowestSrcIdx].innBuf_end - app->sources[lowestSrcIdx].innBuf_beg)
+        int diff = memcmp(THAT_BUF + THAT_BEG, OTHR_BUF + OTHR_BEG, MIN(THAT_CNT, OTHR_CNT));
+        if( diff < 0 ){ lowestSrcIdx = err; }
+        #undef THAT_BUF
+        #undef THAT_BEG
+        #undef THAT_CNT
+        #undef OTHR_BUF
+        #undef OTHR_BEG
+        #undef OTHR_CNT
+    }
+    LOGDBG("[DEBUG] Looks like lowest src is idx %d\n", lowestSrcIdx);
+    assert(!"TODO_c184bce101f2a862ba34bd2d55e35664");
+    #undef MIN
+}
+
+
 static void refillBufferForNextSource( void*app_ ){
     REGISTER int err;
     App*const app = app_; assert(app->mAGIC == App_mAGIC);
     app->iSrc += 1;
-    if( app->iSrc >= app->sources_len ){ assert(!"TODO_bAXZbjYvpNcZpalr"); }
-    /* shift to buffer begin (if easily possible) */
-    #define BUF (app->srcBufs[app->iSrc])
-    #define CAP (app->srcBufsCap[app->iSrc])
-    #define OFF (app->srcBufsOff[app->iSrc])
-    #define LEN (app->srcBufsLen[app->iSrc])
-    #define CNT (app->srcBufsLen[app->iSrc] - app->srcBufsOff[app->iSrc])
-    #define FD (app->srcFds[app->iSrc])
+    if( app->iSrc >= app->sources_len ){
+        (*app->env)->enqueBlocking(app->env, TODO_0f86899eb2eda7503a0e16404ca5a5be, app);
+        return;
+    }
+    #define BUF (app->sources[app->iSrc].innBuf)
+    #define CAP (app->sources[app->iSrc].innBuf_cap)
+    #define BEG (app->sources[app->iSrc].innBuf_beg)
+    #define END (app->sources[app->iSrc].innBuf_end)
+    #define CNT (app->sources[app->iSrc].innBuf_end - app->sources[app->iSrc].innBuf_beg)
+    #define FD  (app->sources[app->iSrc].fd)
     /*shift to buf begin if no overlap*/
-    if( OFF > CNT ){
-        memcpy(BUF, BUF + OFF, CNT);
-        LEN -= OFF; OFF = 0;
+    if( BEG > CNT ){
+        memcpy(BUF, BUF + BEG, CNT);
+        /*need to update all our refs we have into buf*/
+        if( app->sources[app->iSrc].logBeg > 0 ){ app->sources[app->iSrc].logBeg -= BEG; }
+        if( app->sources[app->iSrc].logEnd > 0 ){ app->sources[app->iSrc].logEnd -= BEG; }
+        END -= BEG; BEG = 0;
     }
     /*fill remaining space (if any) */
-    if( CAP > LEN ){
-        err = fread(BUF + OFF, 1, CAP - LEN, FD);
+    if( CAP > END ){
+        err = fread(BUF + END, 1, CAP - END, FD);
         if( ferror(FD) ) assert(!"TODO_CuO1jsDccRYGGNsT");
-        LEN += err;
+        END += err;
     }
     /* loop to next src */
     (*app->env)->enqueBlocking(app->env, refillBufferForNextSource, app);
     #undef BUF
     #undef CAP
-    #undef OFF
-    #undef LEN
+    #undef BEG
+    #undef END
     #undef CNT
     #undef FD
 }
@@ -154,34 +189,18 @@ static void openSrcFiles( void*app_ ){
     App*const app = app_; assert(app->mAGIC == App_mAGIC);
     LOGDBG("[DEBUG] Sources are:\n");
     for( err = 0 ; err < app->sources_len ; ++err ){
-        LOGDBG("[DEBUG] - %s\n", app->sources[err]); }
+        LOGDBG("[DEBUG] - %s\n", app->sources[err].filePath); }
     LOGDBG("[DEBUG] EndOf sources\n");
-    /* open a handle for every input */
-    app->srcFds_cap = app->sources_len;
-    app->srcFds = malloc(app->srcFds_cap*sizeof*app->srcFds);
-    if( app->srcFds ==  NULL ){
-        LOGDBG("assert(malloc() errno != %d)  %s:%d\n", errno, __FILE__, __LINE__); abort(); }
-    app->srcBufsOff = malloc(app->sources_len*sizeof*app->srcBufsOff);
-    if( app->srcBufsOff ==  NULL ){
-        LOGDBG("assert(malloc() errno != %d)  %s:%d\n", errno, __FILE__, __LINE__); abort(); }
-    app->srcBufsLen = malloc(app->sources_len*sizeof*app->srcBufsLen);
-    if( app->srcBufsLen ==  NULL ){
-        LOGDBG("assert(malloc() errno != %d)  %s:%d\n", errno, __FILE__, __LINE__); abort(); }
-    app->srcBufsCap = malloc(app->sources_len*sizeof*app->srcBufsCap);
-    if( app->srcBufsCap ==  NULL ){
-        LOGDBG("assert(malloc() errno != %d)  %s:%d\n", errno, __FILE__, __LINE__); abort(); }
-    app->srcBufs_cap = app->srcBufs_len = app->sources_len;
-    app->srcBufs = malloc(app->srcBufs_cap*sizeof*app->srcBufs);
-    if( app->srcBufs ==  NULL ){
-        LOGDBG("assert(malloc() errno != %d)  %s:%d\n", errno, __FILE__, __LINE__); abort(); }
+    /* prepare state for sources */
     for( err = 0 ; err < app->sources_len ; ++err ){
-        app->srcFds[err] = fopen(app->sources[err], "rb");
-        if( app->srcFds[err] == NULL ){
-            LOGERR("%s: fopen(%s)\n", strerrname(errno), app->sources[err]);
+        app->sources[err].fd = fopen(app->sources[err].filePath, "rb");
+        if( app->sources[err].fd == NULL ){
+            LOGERR("%s: fopen(%s)\n", strerrname(errno), app->sources[err].filePath);
             app->exitCode = -1; return;
         }
-        app->srcBufsCap[err] = 8192;
-        app->srcBufs[err] = malloc(app->srcBufsCap[err]*sizeof*app->srcBufs[err]);
+        app->sources[err].innBuf_cap = 1<<16;
+        app->sources[err].innBuf = malloc(
+            app->sources[err].innBuf_cap*sizeof*app->sources[err].innBuf);
     }
     app->iSrc = -1;
     (*app->env)->enqueBlocking(app->env, refillBufferForNextSource, app);
@@ -194,7 +213,7 @@ int main( int argc, char**argv ){
     app->mAGIC = App_mAGIC;
     app->exitCode = -1;
     if( parseArgs(app, argc, argv) ){ goto endFn; }
-    if( app->flg & FLG_isHelp ){ printHelp(); goto endFn; }
+    if( app->flg & FLG_isHelp ){ printHelp(argv[0]); goto endFn; }
     app->env = GarbageEnv_ctor(app->envMemory, sizeof app->envMemory);
     assert(app->env != NULL);
     app->exitCode = 0;
