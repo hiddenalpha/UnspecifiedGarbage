@@ -1,0 +1,20 @@
+
+# Password      *******************
+# Use:
+#  cntlm -d PNET.CH -u %USERNAME% -c /path/to/cntlm.ini -H
+
+# Example output to be pasted to "cntlm.ini":
+
+PassLM          4A8FAAB9C0AWHU4F2D7C44F23784F152
+PassNT          32D93HG39H938C891B6D6611F50F0D5E
+PassNTLMv2      51C245SADGA2D1B829AB0520CF3721CC
+
+Workstation     yourhostname
+Proxy           172.21.18.74:3128
+NoProxy         localhost, 127.0.0.*, 10.*, 192.168.*
+Listen          127.0.0.1:3128
+Gateway         no
+Header          User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) Gecko/20100101 Firefox/23.0
+
+
+
