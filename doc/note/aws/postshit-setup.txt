@@ -1,79 +1,49 @@
 
-- [Install kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl)
-
-
-## aws login
+[How to: Setup-Guide saml2aws](https://wikit.post.ch/x/M4NlIw)
 
 [rollen bestellen](https://iamweb.pnet.ch/IdentityManager/page.axd?RuntimeFormID=a9e4cca0-b4a1-4ca2-a83a-85af3f098f98&aeweb_handler=p&aeweb_rp=&wproj=0&MenuID=Portal_IAM_MyIdentity&ContextID=CCC_ITShop_ProductSelection)
 
 Zu bestellende rolle: "APP_AWS-M15CN0001-DE".
 
 Nach erhalt via UI schauen login klappt (https://adfs.post.ch/adfs/ls/IdpInitiatedSignOn.aspx?loginToRp=urn:amazon:webservices).
-
-Dann Füdlewall öffnen:
-- [TODO give me a name](https://fwehadmin.pnet.ch:901/)
-- [TODO give me a nanme](https://fwehfnet.pnet.ch/connect/PortalMain)
-
-https://artifactory.tools.post.ch/artifactory/generic-github-remote/Versent/saml2aws/releases/download/v2.36.15/saml2aws_2.36.15_windows_amd64.zip
-
-Support anfragen: [AWS Workflow support](https://teams.microsoft.com/l/channel/19%3ad749f36da06c4849a7d9d46e8796b47c%40thread.tacv2/01%2520AWS%2520Workload%2520Support?groupId=98e3593c-95dc-4832-b249-fc2c7d153c78&tenantId=3ae7c479-0cf1-47f4-8f84-929f364eff67) 
+(https://eu-central-1.console.aws.amazon.com/)
 
 
-create "~/.saml2aws":
-+-----------------------------------------------------------------------
-| [default]
-| name                    = default
-| app_id                  =
-| url                     = https://adfs.post.ch
-| username                = YOURFIRSTNAME.LASTNAME@post.ch
-| provider                = ADFS2
-| mfa                     = RSA
-| mfa_ip_address          =
-| skip_verify             = false
-| timeout                 = 6000
-| aws_urn                 = urn:amazon:webservices
-| aws_session_duration    = 3600
-| aws_profile             = saml
-| resource_id             =
-| subdomain               =
-| role_arn                =
-| region                  =
-| http_attempts_count     =
-| http_retry_delay        =
-| credentials_file        =
-| saml_cache              = false
-| saml_cache_file         =
-| target_url              =
-| disable_remember_device = false
-| disable_sessions        = false
-| prompter                = 
-+-----------------------------------------------------------------------
-
-## TODO did not help
-&& export no_proxy=localhost,pnet.ch,tools.post.ch,gitit.post.ch,pnetcloud.ch,w00o2z,eu-central-1.eks.amazonaws.com \
-&& export https_proxy=http://127.0.0.1:3128 \
-&& export PROXY_PORT=3128 \
-&& export NO_PROXY=localhost,pnet.ch,tools.post.ch,gitit.post.ch,pnetcloud.ch,w00o2z,eu-central-1.eks.amazonaws.com \
-&& export HTTPS_PROXY=http://127.0.0.1:3128 \
-&& export HTTP_PROXY=http://127.0.0.1:3128 \
-&& export http_proxy=http://127.0.0.1:3128 \
+HINT: Windoof is broken. Give up and use some qemu linux VM instead.
 
 
-  saml2aws login
-  `# Username: "andreas.fankhauser@post.ch"`
-  `# Passowrd: AD-password`
-  `# Passcode: HardToken`
-  `# Role: (die mit "m15cn0001" und "-DE")`
-  `# Ready, continue with aws eks update-kubeconfig ...`
+Make sure environ contains proxy settings:
 
+  && export NO_PROXY=localhost,pnet.ch,post.ch,tools.post.ch,gitit.post.ch,pnetcloud.ch,w00o2z,eu-central-1.eks.amazonaws.com \
+  && export HTTP_PROXY=http://10.0.2.2:3128 \
+  && export HTTPS_PROXY=http://10.0.2.2:3128 \
+  && export no_proxy=localhost,pnet.ch,post.ch,tools.post.ch,gitit.post.ch,pnetcloud.ch,w00o2z,eu-central-1.eks.amazonaws.com \
+  && export http_proxy=http://10.0.2.2:3128 \
+  && export https_proxy=http://10.0.2.2:3128 \
 
-## Make kubectl use aws stuff
+Adapt thos properties to your needs before use:
 
+  && SAML_PROFILE="default" \
+  && AWS_PROFILE="saml" \
+  && REGION="eu-central-1" \
+  && ROLE="arn:aws:iam::TODO12345678:role/Z-AWS-TODO12345-DE" \
   && CLUSTER="eks-int-m15cn0001" \
-  && NAMESPACE="isa-houston-snapshot" \
-  && aws eks update-kubeconfig --name "${CLUSTER?}" \
-  && kubectl config set-context --current --namespace="${NAMESPACE?}" \
-  && `# Ready to perform kubectl commands` \
+  && NAMESPACE="TODO-snapshot" \
+  && USERNAME="TODOmax.TODOmuster@post.ch" \
+  && IDPPROVIDER=ADFS2 \
+  && MFA=RSA \
+  && SUDO=sudo \
+  && SAML_VERSION="2.36.16" \
 
+Set it up:
+
+  && $SUDO apt install -y --no-install-recommends curl awscli kubernetes-client \
+  && (cd /var/tmp && curl -O 'https://artifactory.tools.post.ch/artifactory/generic-github-remote/Versent/saml2aws/releases/download/v${SAML_VERSION?}/saml2aws_${SAML_VERSION?}_linux_amd64.tar.gz') \
+  && mkdir -p ~/.local/bin \
+  && (cd ~/.local/bin && tar xf saml2aws_${SAML_VERSION?}_linux_amd64.tar.gz -- saml2aws) \
+  && saml2aws configure -p "${SAML_PROFILE?}" --role="${ROLE?}" --region "${REGION?}" --url https://adfs.post.ch --username "${USERNAME?}" --idp-provider="${IDPPROVIDER?}" --mfa="${MFA?}" \
+  && saml2aws login \
+  && aws --profile "${AWS_PROFILE?}" --region "${REGION?}" eks update-kubeconfig --name "${CLUSTER?}" \
+  && kubectl config set-context --current --namespace="${NAMESPACE?}" \
 
 

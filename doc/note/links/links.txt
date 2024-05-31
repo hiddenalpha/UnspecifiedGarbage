@@ -237,6 +237,7 @@ Links (Aka argument amplifiers)
 - [Keep APIs scope narrow as possible](https://gitit.post.ch/projects/ISA/repos/timetable-reservation-api/pull-requests/12/overview?commentId=327819)
 
 ## Performance DOES matter
+- [Performance gefühlt viel zu langsam in Wikkit bei Linienaufruf und Export erstellen](https://jira.post.ch/browse/SDCISA-16103)
 - "https://github.com/swisspush/gateleen/pull/456#discussion_r844865066"
 - [Performance Excuses Debunked](https://m.youtube.com/watch?v=x2EOOJg8FkA)
 - [Is writing performant code too expensive?](https://www.youtube.com/watch?v=EpYr3T5VP6w&t=1109)
