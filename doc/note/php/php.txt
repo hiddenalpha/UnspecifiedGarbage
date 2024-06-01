@@ -1,0 +1,8 @@
+
+## Pack any short data for asci logging
+
+function packAsciSave( $srcStr ){
+    return base64_encode(gzcompress($srcStr, -1, ZLIB_ENCODING_DEFLATE));
+}
+
+
