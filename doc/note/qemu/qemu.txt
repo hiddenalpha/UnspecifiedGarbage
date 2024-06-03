@@ -2,6 +2,13 @@
 Qemu
 ================
 
+## TODO move this to the NFS section
+
+Example fstab entries:
+
+//10.0.2.2/sharename  /mnt/cee-misc-lib  nfs  user,noauto,forceuid,uid=1000,vers=3.0  0  0
+
+
 ## Qemu Setup
 
   apt install qemu-system-aarch64 qemu-efi-aarch64
