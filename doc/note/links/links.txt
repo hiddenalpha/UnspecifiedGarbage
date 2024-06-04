@@ -265,6 +265,7 @@ Links (Aka argument amplifiers)
 - [Houston readyness fails often](https://jira.post.ch/browse/SDCISA-13746?focusedId=1899551&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-1899551)
 - [Just one message per minute](https://gitit.post.ch/projects/ISA/repos/eagle/pull-requests/375/overview?commentId=330543)
 - [Houston down readyness probe timeout](https://wikit.post.ch/x/koO0Vg)
+- [Json serialization blocking EventLoop for too long #583](https://github.com/swisspost/gateleen/issues/583)
 
 ## Common Performance
 - [Java Exceptions performance is bad](https://www.baeldung.com/java-exceptions-performance)
@@ -482,6 +483,9 @@ Links (Aka argument amplifiers)
 - [Apikana broken by design](https://gitit.post.ch/projects/ISA/repos/notifications-api/pull-requests/7/overview?commentId=232144)
 - [Apikana broken by design](https://gitit.post.ch/projects/ISA/repos/deployment-playbook-api/pull-requests/11/overview?commentId=234691)
 
+## Java "var" keyword MUST have common sense
+- [Please don't be silly](https://gitit.post.ch/projects/ISA/repos/poodoo/pull-requests/68/overview?commentId=379722)
+
 ## Encoding mime application/octet-stream string utf8 unicode json payload data
 - [eagle queue browser](https://gitit.post.ch/projects/ISA/repos/eagle/pull-requests/331/overview?commentId=232322)
 
@@ -588,6 +592,9 @@ Links (Aka argument amplifiers)
 ## Format Date ISO 8601, UTC GMT localtime
 - [public service announcement](https://xkcd.com/1179/)
 - [3 simple rules](https://dev.to/corykeane/3-simple-rules-for-effectively-handling-dates-and-timezones-1pe0)
+
+## saml2aws broken on windoof
+- [saml2aws windoof broken needs VM](https://wikit.post.ch/x/M4NlIw#comment-1616906104)
 
 ## (TODO put to a better place in here)
 - [how to handle vertx promise fail/errors properly](https://github.com/swisspost/vertx-redisques/pull/164#discussion_r1562105007)
