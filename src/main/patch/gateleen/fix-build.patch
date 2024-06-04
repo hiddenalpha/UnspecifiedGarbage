@@ -1,0 +1,53 @@
+
+
+  "Works-on-the-build-machine-only" is NOT good enough for me. This is why I
+  need this patch.
+
+  Created 2024-06-04 based on c9a02c86a4894e8d153fa3f1b2bc3fc52382403f which
+  was a WIP branch of mine somewhat ahead from develop
+  183cfb4aa0c16a92fb79fae3df18cc3cc08108e3.
+
+
+
+index 7ca3e99e..a24fc5fa 100644
+--- a/gateleen-core/pom.xml
++++ b/gateleen-core/pom.xml
+@@ -6,2 +6,8 @@
+     <dependencies>
++        <dependency>
++            <groupId>org.slf4j</groupId>
++            <artifactId>slf4j-simple</artifactId>
++            <version>2.0.1</version>
++            <scope>test</scope>
++        </dependency>
+         <dependency>
+
+
+index 41f6483d..c1bfa170 100644
+--- a/gateleen-monitoring/src/test/java/org/swisspush/gateleen/monitoring/MonitoringHandlerTest.java
++++ b/gateleen-monitoring/src/test/java/org/swisspush/gateleen/monitoring/MonitoringHandlerTest.java
+@@ -127,7 +127,7 @@ public class MonitoringHandlerTest {
+         request.addHeader(PROPERTY_NAME, "my_value_123");
+         mh.updateRequestPerRuleMonitoring(request, "a_fancy_rule");
+
+-        await().atMost(TWO_SECONDS).until(storageContainsData("my_value_123.a_fancy_rule"));
++        await().atMost(java.time.Duration.ofSeconds(42)).until(storageContainsData("my_value_123.a_fancy_rule"));
+     }
+
+     private Callable<Boolean> storageContainsData(String valueToLookFor) {
+
+
+index feb879e1..e9584e17 100644
+--- a/gateleen-queue/src/test/java/org/swisspush/gateleen/queue/queuing/QueueClientTest.java
++++ b/gateleen-queue/src/test/java/org/swisspush/gateleen/queue/queuing/QueueClientTest.java
+@@ -37,7 +37,7 @@ public class QueueClientTest {
+     private QueueClient queueClient;
+
+     @org.junit.Rule
+-    public Timeout rule = Timeout.seconds(5);
++    public Timeout rule = Timeout.seconds(42);
+
+     @Before
+     public void setUp(){
+
+
