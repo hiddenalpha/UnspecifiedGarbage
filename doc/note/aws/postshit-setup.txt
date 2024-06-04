@@ -6,10 +6,10 @@
 Zu bestellende rolle: "APP_AWS-M15CN0001-DE".
 
 Nach erhalt via UI schauen login klappt (https://adfs.post.ch/adfs/ls/IdpInitiatedSignOn.aspx?loginToRp=urn:amazon:webservices).
-(https://eu-central-1.console.aws.amazon.com/)
 
 
-HINT: Windoof is broken. Give up and use some qemu linux VM instead.
+HINT: [Windoof is broken](https://wikit.post.ch/x/M4NlIw#comment-1616906104).
+Give up and use some qemu linux VM instead.
 
 
 Make sure environ contains proxy settings:
@@ -24,12 +24,12 @@ Make sure environ contains proxy settings:
 Adapt thos properties to your needs before use:
 
   && SAML_PROFILE="default" \
-  && AWS_PROFILE="saml" \
+  && AWS_PROFILE="default" \
   && REGION="eu-central-1" \
-  && ROLE="arn:aws:iam::TODO12345678:role/Z-AWS-TODO12345-DE" \
+  && ROLE="arn:aws:iam::_TODO______56:role/Z-AWS-_TODO___01-DE" \
   && CLUSTER="eks-int-m15cn0001" \
-  && NAMESPACE="TODO-snapshot" \
-  && USERNAME="TODOmax.TODOmuster@post.ch" \
+  && NAMESPACE="_TODO_-snapshot" \
+  && USERNAME="_TODO_max_._TODO_muster_@post.ch" \
   && IDPPROVIDER=ADFS2 \
   && MFA=RSA \
   && SUDO=sudo \

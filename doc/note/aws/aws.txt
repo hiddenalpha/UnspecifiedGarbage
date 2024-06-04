@@ -5,3 +5,8 @@ AWS cli usage
 HINT: See also "../kubernetes/kubectl.txt".
 
 
+## How to login
+
+See "../kubernetes/kubectl.txt"
+
+

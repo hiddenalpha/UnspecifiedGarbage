@@ -1,0 +1,10 @@
+
+How to get logs the vendor-lockin way
+=====================================
+
+[Kubernetes Inventory](https://wikit.post.ch/x/wSk0Ow)
+- dann "Mobility Services"
+- dann "houston" (entweder alle via hauptnode, oder instance via unten)
+- dann irgendwo auf logs
+
+

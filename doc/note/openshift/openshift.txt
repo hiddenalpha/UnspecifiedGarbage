@@ -29,19 +29,23 @@ When tar fails all the time, try:  --ignore-failed-read
 
 Templates:
 +------------------------------------------------------------------------------
-| oc -n NAMESPACE exec pod_name -- sh -c "echo 'gugus'"
-| 
-| # dload service logs via storage-manager
-| oc -n NAMESPACE exec storage-manager-XXX -- sh -c "cd /data/logs/SVC_NAME && tar --ignore-failed-read -cz *.log*" > `date +SVC_NAME-STAGE-logs-%Y%m%d-%H%M%S.tgz`
-| 
-| # DLoad logs directly from a service pod
-| oc -n NAMESPACE exec SVC_POD -- sh -c "cd /usr/local/jetty/logs && tar --ignore-failed-read --xform \"s:^:SVC_NAME-STAGE-logs-YYYYmmdd-HHMMSS/:\" -cz *.log*" > SAME_NAME_AS_BEFORE.tgz
-| 
-| # Download logs from HOUSTON:
-| oc -n NAMESPACE exec houston-XXX -- sh -c "cd /usr/local/vertx/logs && tar -cz *" > `date -uIs +"houston-STAGE-logs-%Y%m%d-%H%M%SZ.tgz"`
-| 
-| # Download logs from EAGLE:
-| oc -n NAMESPACE exec houston-XXX -- sh -c "cd /usr/local/vertx/logs && tar --xform \"s:^:houston-STAGE-logs-YYYYmmdd-HHMMSS-POD/:\" -cz *" > SAME_NAME_AS_BEFORE.tgz
+  oc -n NAMESPACE exec pod_name -- sh -c "echo 'gugus'"
+
+  # dload service logs via storage-manager
+  oc -n "${NAMESPACE?} exec storage-manager-XXX -- sh -c "cd /data/logs/SVC_NAME && tar --ignore-failed-read -cz *.log*" > `date +SVC_NAME-STAGE-logs-%Y%m%d-%H%M%S.tgz`
+
+  # DLoad logs directly from a service pod
+  oc -n "${NAMESPACE?}" exec SVC_POD -- sh -c "cd /usr/local/jetty/logs && tar --ignore-failed-read --xform \"s:^:SVC_NAME-STAGE-logs-YYYYmmdd-HHMMSS/:\" -cz *.log*" > SAME_NAME_AS_BEFORE.tgz
+
+  # realtime logs houston:
+  oc -n "${NAMESPACE?}" exec -ti "$(oc -n "${NAMESPACE?}" get pods|egrep ston-[0-9]|egrep -v deploy|cut -f1 -d' ')" -- sh -c "cd /usr/local/vertx/logs && tail -F houston.log"
+
+  # Download logs from HOUSTON:
+  oc -n "${NAMESPACE?}" exec "$(oc -n "${NAMESPACE?}" get pods|egrep ston-[0-9]|egrep -v deploy|cut -f1 -d' ')" -- sh -c "cd /usr/local/vertx/logs && tar -cz *n.log*" > $(date -u +"houston-STAGE-logs-%Y%m%d-%H%M%SZ.tgz")
+
+  # Download logs from EAGLE:
+  oc -n "${NAMESPACE?}" exec houston-XXX -- sh -c "cd /usr/local/vertx/logs && tar --xform \"s:^:houston-STAGE-logs-YYYYmmdd-HHMMSS-POD/:\" -cz *" > SAME_NAME_AS_BEFORE.tgz
+
 +------------------------------------------------------------------------------
 
 
