@@ -87,6 +87,7 @@ run () {
         --exclude="/.gmrun_history" \
         --exclude="/.lesshst" \
         --exclude="/.local/share" \
+        --exclude="/.local/srv" \
         --exclude="/.m2/repository" \
         --exclude="/mnt" \
         --exclude="/.mozilla/firefox" \
