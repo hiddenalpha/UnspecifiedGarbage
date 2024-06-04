@@ -1,7 +1,10 @@
 
+Step-by-step shell snippets how to build gateleen
+=================================================
 
-### Alpine
-true \
+
+## Alpine
+
   && PKGS_TO_ADD="curl maven nodejs npm redis openjdk11-jre-headless" \
   && SUDO="${HOME:?}/.local/bin/mysudo" \
   && PKGINIT=true \
@@ -10,27 +13,31 @@ true \
   && mkdir -p "${HOME:?}/.local/bin" \
   && printf '%s\n' '#!/bin/sh' 'printf "Sudo "' 'su root -c "$(echo "$@")"' > "${HOME:?}/.local/bin/mysudo" \
   && chmod u+x "${HOME:?}/.local/bin/mysudo" \
-  && true
 
 
-### Generic
-true \
+## Generic
+
   && GATELEEN_GIT_TAG="v1.3.28" \
   && WORKDIR="/${HOME:?}/work" \
   && CACHE_DIR="/var/tmp" \
-  && true
 
 
 ## Setup Dependencies & get sources
-true \
+
   && ${PKGINIT:?} && ${PKGADD:?} $PKGS_TO_ADD \
   \
   && curl -sSL https://github.com/swisspush/gateleen/archive/refs/tags/"${GATELEEN_GIT_TAG:?}".tar.gz > "${CACHE_DIR:?}/gateleen-${GATELEEN_GIT_TAG:?}.tgz" \
-  && true
 
 
-### Make
-true \
+## Corporation specific setup
+
+- Configure proxy if needed.
+- Configure "/home/user/.npmrc" if needed.
+- Configure "/home/user/.m2/settings.xml" if needed.
+
+
+## Make
+
   && mkdir -p "${WORKDIR:?}/gateleen" && cd "${WORKDIR:?}/gateleen" \
   && tar --strip-components 1 -xf "${CACHE_DIR:?}/gateleen-${GATELEEN_GIT_TAG:?}.tgz" \
   && (cd gateleen-hook-js && npm install) \
@@ -63,11 +70,10 @@ true \
   && sleep 3 \
   && (cd "${WORKDIR:?}/gateleen" && mvn clean) \
   && printf '\n  DONE\n\n' \
-  && true
 
 
 ### Run
-true \
+
   && ip a | grep inet \
   && (true \
      && (cd "${WORKDIR:?}/redis-state" && redis-server "${WORKDIR:?}/etc/redis.conf") \
@@ -75,5 +81,4 @@ true \
      && cd ~ \
      && java -cp "${WORKDIR:?}/classpath/"'*' org.swisspush.gateleen.playground.Server \
      ) \
-  && true
 
