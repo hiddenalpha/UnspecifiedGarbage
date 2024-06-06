@@ -8,3 +8,8 @@ How to get logs the vendor-lockin way
 - dann irgendwo auf logs
 
 
+## Houston auto chunk dload
+
+for N in 0 1 2; do kubectl exec -i "houston-${N?}" -- sh -c 'cd /usr/local/vertx/logs && tar cz *' > "/c/work/tmp/HoustonLogGetBash-${NAMESPACE?}/" && sleep 900 || break; done
+
+

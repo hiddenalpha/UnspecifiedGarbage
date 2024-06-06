@@ -407,9 +407,6 @@ Links (Aka argument amplifiers)
 - [slf4shell](https://nvd.nist.gov/vuln/detail/CVE-2021-44228)
 - [Parameterized logging with exceptions](https://www.slf4j.org/faq.html#paramException)
 
-## slf4j logger logging paisa platform alice
-- logger fail "https://jira.post.ch/browse/SDCISA-9903"
-
 ## java assert
 - [how to enable](https://stackoverflow.com/a/68893479/4415884)
 - [When to use them](https://softwareengineering.stackexchange.com/a/15518/306800)
@@ -474,16 +471,22 @@ Links (Aka argument amplifiers)
 - "https://gitit.post.ch/projects/ISA/repos/halfrunt/pull-requests/10/overview?commentId=76149"
 - "https://wikit.post.ch/pages/viewpage.action?pageId=193593428#JavaLanguage-Encoding"
 
+## slf4j logger logging paisa platform alice
+- logger fail "https://jira.post.ch/browse/SDCISA-9903"
+
 ## FileLogging is a MUST have (kibana is bullsh**)
 - [example](https://jira.post.ch/browse/SDCISA-8382?focusedCommentId=1554435&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-1554435)
 - [example](https://jira.post.ch/browse/SDCISA-13655)
 - [warning](https://jira.post.ch/browse/SDCISA-7230?focusedCommentId=1550476&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-1550476)
+- [fluentd block EventLoop houston](https://gitit.post.ch/projects/ISA/repos/eagle/pull-requests/402/overview?commentId=380655)
 
 ## Automatic variable dynamic version are evil
 - [Apikana broken by design](https://gitit.post.ch/projects/ISA/repos/notifications-api/pull-requests/7/overview?commentId=232144)
 - [Apikana broken by design](https://gitit.post.ch/projects/ISA/repos/deployment-playbook-api/pull-requests/11/overview?commentId=234691)
 
 ## Java "var" keyword MUST have common sense
+- [My personal standpoint with links](https://gitit.post.ch/projects/ISA/repos/poodoo/pull-requests/68/overview?commentId=380610)
+- [style guide about var. Scroll a bit there's more](https://openjdk.org/projects/amber/guides/lvti-style-guide#G3)
 - [Please don't be silly](https://gitit.post.ch/projects/ISA/repos/poodoo/pull-requests/68/overview?commentId=379722)
 
 ## Encoding mime application/octet-stream string utf8 unicode json payload data
