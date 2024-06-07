@@ -1,0 +1,55 @@
+
+Provisioning for "paisa-workhorse"
+==================================
+
+Intended to be used with debian.
+
+Configure
+
+  && `# Make sure to adjust those before use` \
+  && ROLE="arn:aws:iam::_TODO______56:role/Z-AWS-_TODO___01-DE" \
+  && NAMESPACE="_TODO_-snapshot" \
+  && USERNAME="_TODO_max_._TODO_muster_@post.ch" \
+  && http_proxy="http://10.0.2.2:3128" \
+  && `# Values from here on usually are ok as-is` \
+  && SUDO=sudo \
+  && HTTPS_PROXY="${http_proxy?}" \
+  && HTTP_PROXY="${http_proxy?}" \
+  && NO_PROXY=localhost,pnet.ch,post.ch,tools.post.ch,gitit.post.ch,pnetcloud.ch,w00o2z,eu-central-1.eks.amazonaws.com \
+  && https_proxy="${http_proxy?}" \
+  && no_proxy=localhost,pnet.ch,post.ch,tools.post.ch,gitit.post.ch,pnetcloud.ch,w00o2z,eu-central-1.eks.amazonaws.com \
+  && SAML_PROFILE="default" \
+  && AWS_PROFILE="default" \
+  && REGION="eu-central-1" \
+  && CLUSTER="eks-int-m15cn0001" \
+  && IDPPROVIDER=ADFS2 \
+  && MFA=RSA \
+  && SAML_VERSION="2.36.16" \
+  && CACHEDIR="/var/tmp" \
+
+Setup
+
+  && $SUDO apt install -y --no-install-recommends net-tools vim curl nfs-common \
+          kubernetes-client awscli \
+          gcc make libc6-dev \
+  && (cd "${CACHEDIR?}" && curl -o saml2aws_${SAML_VERSION?}_linux_amd64.tgz "https://artifactory.tools.post.ch/artifactory/generic-github-remote/Versent/saml2aws/releases/download/v${SAML_VERSION?}/saml2aws_${SAML_VERSION?}_linux_amd64.tar.gz") \
+  && mkdir -p ~/.local/bin ~/.local/opt \
+  && mkdir ~/.local/opt/saml2aws_${SAML_VERSION?} \
+  && mkdir ~/.local/opt/saml2aws_${SAML_VERSION?}/bin \
+  && (cd ~/.local/opt/saml2aws_${SAML_VERSION?}/bin && tar xf /var/tmp/saml2aws_${SAML_VERSION?}_linux_amd64.tgz -- saml2aws) \
+  && (cd ~/.local/bin && ln -s ../opt/saml2aws_${SAML_VERSION?}/bin/saml2aws .) \
+  && (printf 'export PATH="%s/.local/bin:$PATH"\n' ~) >> ~/.bashrc \
+  && export PATH="/home/${USER?}/.local/bin:$PATH" \
+  && saml2aws configure --skip-prompt -p "${SAML_PROFILE?}" --role="${ROLE?}" --region "${REGION?}" --url https://adfs.post.ch --username "${USERNAME?}" --idp-provider="${IDPPROVIDER?}" --mfa="${MFA?}" \
+  && $SUDO mkdir -p /c && $SUDO ln -s /mnt/cdrive/work /c/work \
+  && $SUDO mkdir /mnt/cdrive \
+  && (printf '/mnt/cdrive/work  /c/work  none  noauto,bind,user  0  0\n') | $SUDO tee -a /etc/fstab >/dev/null \
+  && (printf '10.0.2.2:/c  /mnt/cdrive  nfs  noauto,vers=3,user  0  0\n') | $SUDO tee -a /etc/fstab >/dev/null \
+
+Authorize (needs attention)
+
+  && saml2aws login \
+  && aws --profile "${AWS_PROFILE?}" --region "${REGION?}" eks update-kubeconfig --name "${CLUSTER?}" \
+  && kubectl config set-context --current --namespace="${NAMESPACE?}" \
+
+

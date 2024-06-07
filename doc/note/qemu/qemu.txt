@@ -78,6 +78,8 @@ qemu-system-x86_64 \
     -display sdl,grab-mod=rctrl \
     -display gtk,show-menubar=on \
     -display vnc=127.0.0.1:0,to=99 `#HINT: 0 is port 5900` \
+    `# TODO try this one. It should prevent any UI shit (https://serverfault.com/a/677232/673216)` \
+    `# -nographic -serial mon:stdio -append 'console=ttyS0' ` \
     ;
 
 ## Broken systems likely need some of those too
@@ -280,10 +282,10 @@ NOTE: Couldn't yet test any of those commands.
 TODO: move this to a better place. Eg: debian/setup.txt or whatever.
 
   true \
-  && no_proxy=127.0.0.1,10.0.2.* \
-  && http_proxy=http://10.0.2.2:3128 \
-  && https_proxy=http://10.0.2.2:3128 \
   && SUDO= \
+  && no_proxy="127.0.0.1,10.0.2.*" \
+  && http_proxy="http://10.0.2.2:3128" \
+  && https_proxy="http://10.0.2.2:3128" \
   && true \
   && if [ -n "$http_proxy" ]; then true \
     && (echo "Acquire::http::proxy \"${http_proxy}\";"

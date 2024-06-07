@@ -10,3 +10,30 @@ HINT: See also "../kubernetes/kubectl.txt".
 See "../kubernetes/kubectl.txt"
 
 
+## How to get logs from super-fancy-UI
+
+[Kubernetes Inventory](https://wikit.post.ch/x/wSk0Ow)
+- dann "Mobility Services"
+- dann "houston" (entweder alle via hauptnode, oder instance via unten)
+- dann irgendwo auf logs
+
+
+## Houston auto chunk logs dload
+
+for N in 0 1 2; do kubectl exec -i "houston-${N?}" -- sh -c 'cd /usr/local/vertx/logs && tar cz *' > "/c/work/tmp/HoustonLogGetBash-${NAMESPACE?}/" && sleep 900 || break; done
+
+
+
+
+## How to deploy a new houston release to snapshot
+
+HINT: Shouldn't be used. It is only a workaround bcause regular is broken.
+
+- Visit [k8 repo](https://gitit.post.ch/projects/ISA/repos/isa-k8s-deployment/browse/isa-houston)
+- "isa-houston/versions.yaml" ändern.
+- [argocd](https://deployment-eks-int-m15cn0001.eks.aws.pnetcloud.ch/applications?showFavorites=false&proj=&sync=&autoSync=&health=&namespace=&cluster=&labels=)
+- Houston suchen.
+- Dann oben "sync", nochmal "sync".
+
+
+
