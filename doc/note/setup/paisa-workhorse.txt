@@ -40,11 +40,11 @@ Setup
   && (cd ~/.local/bin && ln -s ../opt/saml2aws_${SAML_VERSION?}/bin/saml2aws .) \
   && (printf 'export PATH="%s/.local/bin:$PATH"\n' ~) >> ~/.bashrc \
   && export PATH="/home/${USER?}/.local/bin:$PATH" \
-  && saml2aws configure --skip-prompt -p "${SAML_PROFILE?}" --role="${ROLE?}" --region "${REGION?}" --url https://adfs.post.ch --username "${USERNAME?}" --idp-provider="${IDPPROVIDER?}" --mfa="${MFA?}" \
   && $SUDO mkdir -p /c && $SUDO ln -s /mnt/cdrive/work /c/work \
   && $SUDO mkdir /mnt/cdrive \
   && (printf '/mnt/cdrive/work  /c/work  none  noauto,bind,user  0  0\n') | $SUDO tee -a /etc/fstab >/dev/null \
   && (printf '10.0.2.2:/c  /mnt/cdrive  nfs  noauto,vers=3,user  0  0\n') | $SUDO tee -a /etc/fstab >/dev/null \
+  && saml2aws configure --skip-prompt -p "${SAML_PROFILE?}" --role="${ROLE?}" --region "${REGION?}" --url https://adfs.post.ch --username "${USERNAME?}" --idp-provider="${IDPPROVIDER?}" --mfa="${MFA?}" \
 
 Authorize (needs attention)
 

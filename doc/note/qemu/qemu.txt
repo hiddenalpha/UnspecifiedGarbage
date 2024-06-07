@@ -72,14 +72,12 @@ qemu-system-x86_64 \
     -device e1000,netdev=n1 \
     `# USB pass-through` \
     -usb -device usb-host,id=myUsbQemuId,vendorid=0xFFFF,productid=0xFFFF \
-    `# Choose ONE of those for graphic output` \
-    -nographic \
+    `# Choose ONE of those outputs (or none for defaut)` \
+    -nographic -serial mon:stdio `# HINT remove other monitor arg` \
     -device VGA \
     -display sdl,grab-mod=rctrl \
     -display gtk,show-menubar=on \
     -display vnc=127.0.0.1:0,to=99 `#HINT: 0 is port 5900` \
-    `# TODO try this one. It should prevent any UI shit (https://serverfault.com/a/677232/673216)` \
-    `# -nographic -serial mon:stdio -append 'console=ttyS0' ` \
     ;
 
 ## Broken systems likely need some of those too

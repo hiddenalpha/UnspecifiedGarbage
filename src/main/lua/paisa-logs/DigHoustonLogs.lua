@@ -39,6 +39,11 @@ function loadFilters( that )
 --        { action = "drop", beforeDate = "2024-10-18 03:00:00.000", },
 --        { action = "drop", afterDate  = "2024-01-31 23:59:59.999", },
 
+
+        -- { action = "keep", level = "WARN", file = "BlockedThreadChecker",
+        --     msgPattern = " blocked for %d%d%d+", stackPattern = "%.twimba%." },
+        -- { action = "drop" },
+
         { action = "drop", level = "TRACE" },
         { action = "drop", level = "DEBUG" },
         { action = "drop", level = "INFO" },
