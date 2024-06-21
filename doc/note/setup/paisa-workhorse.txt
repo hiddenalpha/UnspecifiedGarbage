@@ -31,7 +31,7 @@ Setup
 
   && $SUDO apt install -y --no-install-recommends net-tools vim curl nfs-common \
           kubernetes-client awscli \
-          gcc make libc6-dev \
+          gcc libc6-dev gcc-mingw-w64-x86-64-win32 \
   && (cd "${CACHEDIR?}" && curl -o saml2aws_${SAML_VERSION?}_linux_amd64.tgz "https://artifactory.tools.post.ch/artifactory/generic-github-remote/Versent/saml2aws/releases/download/v${SAML_VERSION?}/saml2aws_${SAML_VERSION?}_linux_amd64.tar.gz") \
   && mkdir -p ~/.local/bin ~/.local/opt \
   && mkdir ~/.local/opt/saml2aws_${SAML_VERSION?} \
