@@ -3,3 +3,13 @@ TODO move stuff from dotfiles to here. Them merge what we have here.
 
 set colorcolumn=101
 
+
+if has("win32")
+
+    " Fixes mouse scrolling in SOME cases on windoof.
+    nnoremap [B 3<C-e>
+    nnoremap [A 3<C-y>
+
+else
+endif
+
