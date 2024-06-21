@@ -235,6 +235,7 @@ Links (Aka argument amplifiers)
 - [thor-DerBlizHatEingeschlagen](https://gitit.post.ch/projects/ISA/repos/fis-masterdata-api/pull-requests/18/overview)
 - [PaISA api new enum values](https://gitit.post.ch/projects/ISA/repos/fis-control-api/pull-requests/14/overview?commentId=296012)
 - [Keep APIs scope narrow as possible](https://gitit.post.ch/projects/ISA/repos/timetable-reservation-api/pull-requests/12/overview?commentId=327819)
+- [remove but still in use](https://gitit.post.ch/projects/ISA/repos/vending-transaction-api/pull-requests/20/overview?commentId=385689)
 
 ## Performance DOES matter
 - [Performance gefühlt viel zu langsam in Wikkit bei Linienaufruf und Export erstellen](https://jira.post.ch/browse/SDCISA-16103)
@@ -479,6 +480,8 @@ Links (Aka argument amplifiers)
 - [example](https://jira.post.ch/browse/SDCISA-13655)
 - [warning](https://jira.post.ch/browse/SDCISA-7230?focusedCommentId=1550476&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-1550476)
 - [FluentD logging unreliable](https://jira.post.ch/browse/SDCISA-16205)
+- [K8S: Service logs not streamed to Kibana?](https://jira.post.ch/browse/SDCISA-16335)
+
 - [fluentd block EventLoop houston](https://gitit.post.ch/projects/ISA/repos/eagle/pull-requests/402/overview?commentId=380655)
 
 ## Automatic variable dynamic version are evil
