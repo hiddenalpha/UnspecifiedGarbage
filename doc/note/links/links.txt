@@ -600,6 +600,9 @@ Links (Aka argument amplifiers)
 ## saml2aws broken on windoof
 - [saml2aws windoof broken needs VM](https://wikit.post.ch/x/M4NlIw#comment-1616906104)
 
+## the c10k problem
+- [TODO read - long coder blog for c10k](http://www.kegel.com/c10k.html)
+
 ## (TODO put to a better place in here)
 - [how to handle vertx promise fail/errors properly](https://github.com/swisspost/vertx-redisques/pull/164#discussion_r1562105007)
 
