@@ -4,9 +4,9 @@ WINDOOF=$(if [ -d /c/Windows ]; then echo true; else echo false; fi)
 # Disable annoying "features", so that exclamation marks become usable again.
 set +o histexpand
 
-# Do NOT store duplicates in history. Do NOT store in history if
-# starts-with-space.
-HISTCONTROL=ignoreboth
+if test -z "$HISTCONTROL"; then export HISTCONTROL="ignorespace:ignoredups"; fi
+if test -z "$HISTFILESIZE"; then export HISTFILESIZE=99999; fi
+if test -z "$HISTSIZE"; then export HISTSIZE=99999; fi
 
 if [ $SHLVL -eq 1 ]; then
     set -o ignoreeof # Require explicit 'exit' cmd to exit shell.
