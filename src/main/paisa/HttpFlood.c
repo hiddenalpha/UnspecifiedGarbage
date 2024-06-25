@@ -26,11 +26,14 @@
 
 #include "Garbage.h"
 
-#define FLG_isHelp (1<<0)
 
 #define STR_QUOT_(s) #s
 #define STR_QUOT(s) STR_QUOT_(s)
 #define LOGERR(...) fprintf(stderr, __VA_ARGS__);
+#define MUTEX_T pthread_mutex_t
+#define MUTEX_INIT pthread_mutex_init
+#define MUTEX_LOCK pthread_mutex_lock
+#define MUTEX_UNLOCK pthread_mutex_unlock
 
 #if !NDEBUG
 #   define REGISTER
@@ -40,8 +43,13 @@
 #   define LOGDBG(...)
 #endif
 
+#define FLG_isHelp (1<<0)
+
 
 typedef  struct App  App;
+
+/* TODO remove as soon libgarbage is new enough */
+//#define Garbage_HttpMsg_Hdr Garbage_HttpClientReq_Hdr
 
 
 #define App_mAGIC 0x375B0200
@@ -49,17 +57,22 @@ struct App {
     int mAGIC;
     int flg;
     int exitCode;
-    int numThrds;
-    int port, maxParallel, interReqGapMs;
+    int port, nclients, pauseMs;
+    int numReqDone;
+    struct timespec progressPrintedAt;
     char const *host;
     char const *path;
+    char const *mthd;
     struct GarbageEnv **env;
     struct Garbage_ThreadPool **thrdPool;
+    struct Garbage_SocketMgr **socketMgr;
+    MUTEX_T progressMutx;
     void *envMemory[SIZEOF_struct_GarbageEnv / sizeof(void*)];
 };
 
 
 char* strerrname(int);
+static void sendAnotherRequest( int, void*app_ );
 
 
 static void printHelp( void ){
@@ -67,23 +80,31 @@ static void printHelp( void ){
         "  \n"
         "  hiddenalphas HTTP load gen utility (v", STR_QUOT(PROJECT_VERSION),").\n"
         "  \n"
+        "  Doh.. Who doesn't know them? Those funny bugs which only happen in\n"
+        "  production. Only when enough load is present. At least I had to hunt\n"
+        "  a lot of them. Even that tool has lots of imperfections, it still\n"
+        "  is a good help to me to reproduce such bugs locally.\n"
+        "  \n"
+        "  WARN: This is a debugging tool! Do ONLY use it in isolated\n"
+        "        environments and on your own risk!\n"
+        "  \n"
         "  Options:\n"
         "  \n"
         "    --host <ip|hostname>\n"
         "        Eg:  127.0.0.1\n"
         "  \n"
         "    --port <int>\n"
-        "        Eg:  7013\n"
+        "        Eg:  8080\n"
         "  \n"
         "    --path <str>\n"
-        "        Eg:  /houston/services/nullsink\n"
+        "        Eg:  /whatever/you/want/to/test\n"
         "  \n"
-        "    --max-parallel <int>\n"
-        "        Defaults to 1.\n"
+        "    --nclients <int>\n"
+        "        How many clients to emulate. Defaults to 1.\n"
         "  \n"
-        "    --inter-request-gap <int>\n"
-        "        Milliseconds to wait before starting another request when the\n"
-        "        previous one has ended. Defaults to 1000ms (aka one second).\n"
+        "    --pause <int>\n"
+        "        Milliseconds to wait after a request has completed before\n"
+        "        starting another one. Defaults to 1000ms (aka one second).\n"
         "  \n"
     );
 }
@@ -91,8 +112,8 @@ static void printHelp( void ){
 
 static int parseArgs( App*app, int argc, char**argv ){
     REGISTER int iA = 0;
-    app->maxParallel = 1;
-    app->interReqGapMs = 1000;
+    app->nclients = 1;
+    app->pauseMs = 1000;
 nextArg:;
     char *arg = argv[++iA];
     if( arg == NULL ){ goto verify; }
@@ -113,20 +134,20 @@ nextArg:;
         arg = argv[++iA];
         if( arg == NULL ){ LOGERR("EINVAL: %s needs value\n", argv[iA-1]); return-1; }
         app->path = arg;
-    }else if( !strcmp(arg, "--max-parallel") ){
+    }else if( !strcmp(arg, "--nclients") ){
         arg = argv[++iA];
         if( arg == NULL ){ LOGERR("EINVAL: %s needs value\n", argv[iA-1]); return-1; }
         errno = 0;
-        app->maxParallel = strtol(arg, NULL, 0);
+        app->nclients = strtol(arg, NULL, 0);
         if( errno ){ LOGERR("%s: %s\n", strerrname(errno), arg); return-1; }
-        if( app->maxParallel < 1 ){ LOGERR("ERANGE: --max-parallel %s\n", arg); return-1; }
-    }else if( !strcmp(arg, "--inter-request-gap") ){
+        if( app->nclients < 1 ){ LOGERR("ERANGE: --nclients %s\n", arg); return-1; }
+    }else if( !strcmp(arg, "--pause") ){
         arg = argv[++iA];
         if( arg == NULL ){ LOGERR("EINVAL: %s needs value\n", argv[iA-1]); return-1; }
         errno = 0;
-        app->interReqGapMs = strtol(arg, NULL, 0);
+        app->pauseMs = strtol(arg, NULL, 0);
         if( errno ){ LOGERR("%s: %s\n", strerrname(errno), arg); return-1; }
-        if( app->interReqGapMs < 1 ){ LOGERR("ERANGE: --inter-request-gap %s\n", arg); return-1; }
+        if( app->pauseMs < 1 ){ LOGERR("ERANGE: --pause %s\n", arg); return-1; }
     }else{
         LOGERR("EINVAL: %s\n", arg); return-1;
     }
@@ -140,102 +161,123 @@ verify:
 }
 
 
-static void pushIoTask( void(*task)(void*arg), void*arg, void*cls ){
-    assert(!"TODO_LCYCANB3AgBUHQIA");
-}
-
-
-static void sockAcquire( void*sockaddr, int sockaddr_len, void*mentorCls, void(*onDone)(int retval, void*sock, void*arg), void*arg ){
-    assert(!"TODO_VycCAEpaAgC0CgIA");
-}
-
-
-static void sockRelease( void*sock, int mustClose, void*mentorCls ){
-    assert(!"TODO_");
-}
-
-
-static void sockSend( void*sock, const void*buf, int buf_len, void*mentorCls, void(*onDone)(int retval, void*arg), void*arg ){
-    assert(!"TODO_");
-}
-
-
-static void sockFlush( void*sock, void*mentorCls, void(*onDone)(int,void*arg), void*arg ){
-    assert(!"TODO_");
-}
-
-
-static void sockRecv( void*sock, void*buf, int buf_len, void*mentorCls, void(*onDone)(int,void*arg), void*arg ){
-    assert(!"TODO_");
-}
-
-
 static void onError( int eno, void*mentorCls ){
-    assert(!"TODO_");
+    if( eno ){
+        LOGDBG("assert(onError() != %s)  %s:%d\n", strerrname(-eno), __FILE__, __LINE__); abort();
+    }
 }
 
 
-static void onRspHdr( const char*proto, int proto_len, int rspCode, const char*phrase, int phrase_len, const struct Garbage_HttpClientReq_Hdr*hdrs, int hdrs_cnt, struct Garbage_HttpClientReq**req, void*mentorCls ){
-    assert(!"TODO_");
+static void onRspHdr(
+    const char*proto, int proto_len, int rspCode, const char*phrase, int phrase_len,
+    const struct Garbage_HttpMsg_Hdr*hdrs, int hdrs_cnt,
+    struct Garbage_HttpClientReq**req, void*mentorCls
+){
+    if( rspCode != 200 && rspCode != 404 ){
+        LOGDBG("  %.*s %d %.*s\n", proto_len, proto, rspCode, phrase_len, phrase);
+        //for( int iH = 0 ; iH < hdrs_cnt ; ++iH ){
+        //    LOGDBG("  %.*s: %.*s\n", hdrs[iH].key_len, hdrs[iH].key, hdrs[iH].val_len, hdrs[iH].val);
+        //}
+    }
 }
 
 
 static void onRspBody( const char*buf, int buf_len, struct Garbage_HttpClientReq**req, void*mentorCls ){
-    assert(!"TODO_");
+    //LOGDBG("  BodyChunk{ len=%d }\n", buf_len);
 }
 
 
-static void onRspDone( struct Garbage_HttpClientReq**req, void*mentorCls ){
-    assert(!"TODO_");
-}
-
-
-static void TODO_bRACABpaAgDDXAIA( void*app_ ){
+static void onRspDone( struct Garbage_HttpClientReq**req, void*app_ ){
+    REGISTER int err;
     App*const app = app_; assert(app->mAGIC == App_mAGIC);
-    LOGDBG("[TODO ] Use port %d, maxParallel %d, interReqGapMs %d, host '%s', path '%s'\n",
-        app->port, app->maxParallel, app->interReqGapMs, app->host, app->path);
+    //LOGDBG("  EndOfResponse{}\n");
+    (*req)->unref(req);
+    err = MUTEX_LOCK(&app->progressMutx); assert(err == 0);
+    app->numReqDone += 1;
+    err = MUTEX_UNLOCK(&app->progressMutx); assert(err == 0);
+    (*app->env)->setTimeoutMs(app->env, app->pauseMs, sendAnotherRequest, app);
+}
+
+
+static void sendAnotherRequest( int eno, void*app_ ){
+    assert(eno == 0);
+    App*const app = app_; assert(app->mAGIC == App_mAGIC);
+    //LOGDBG("[TODO ] Use port %d, nclients %d, pauseMs %d, host '%s', path '%s'\n",
+    //    app->port, app->nclients, app->pauseMs, app->host, app->path);
     static struct Garbage_HttpClientReq_Mentor mentor = {
-        .pushIoTask = pushIoTask,
-        .sockAcquire = sockAcquire,
-        .sockRelease = sockRelease,
-        .sockSend = sockSend,
-        .sockFlush = sockFlush,
-        .sockRecv = sockRecv,
+        .pushIoTask = NULL,
+        .sockAcquire = NULL,
+        .sockRelease = NULL,
+        .sockSend = NULL,
+        .sockFlush = NULL,
+        .sockRecv = NULL,
         .onError = onError,
         .onRspHdr = onRspHdr,
         .onRspBody = onRspBody,
         .onRspDone = onRspDone,
     };
-    struct Garbage_HttpClientReq_Opts opts = {
-        .mthd = "GET",
+    struct Garbage_HttpClientReq **req = NULL;
+    req = (*app->env)->newHttpClientReq(app->env, &mentor, app, &(struct Garbage_HttpClientReq_Opts){
+        .mthd = app->mthd,
         .host = app->host,
         .url = app->path,
         .port = app->port,
         //struct Garbage_HttpClientReq_Hdr *hdrs;
         //int hdrs_cnt;
-    };
-    (void)mentor; (void)opts;
-    //struct Garbage_HttpClientReq **req = NULL;
-    //req = (*app->env)->newHttpClientReq(app->env, &mentor, app, &opts);
-    //(*req)->resume(req);
-    app->exitCode = -1;
+    });
+    assert(req != NULL);
+    (*req)->resume(req);
+}
+
+
+static void periodicallyPrintProgress( int eno, void*app_ ){
+    REGISTER int err = eno;
+    App*const app = app_; assert(app->mAGIC == App_mAGIC);
+    assert(err == 0);
+    err = MUTEX_LOCK(&app->progressMutx); assert(err == 0);
+    int numReqDone = app->numReqDone;
+    app->numReqDone = 0;
+    err = MUTEX_UNLOCK(&app->progressMutx); assert(err == 0);
+    struct timespec now;
+    err = clock_gettime(CLOCK_REALTIME, &now); assert(err == 0);
+    float durationMs = 0;
+    durationMs += (now.tv_sec - app->progressPrintedAt.tv_sec) * 1000.f;
+    durationMs += (now.tv_nsec - app->progressPrintedAt.tv_nsec) / 1000000.f;
+    float donePerSec = (numReqDone) / durationMs * 1000;
+    app->progressPrintedAt = now;
+    if( durationMs > 10000000.f ){
+        LOGDBG("[INFO_] Let %d clients, all %dms, do '%s %s:%d%s'\n",
+            app->nclients, app->pauseMs, app->mthd, app->host, app->port, app->path);
+    }else{
+        LOGDBG("[INFO_] %7d req/sec\n", (int)(donePerSec+.5f));
+    }
+    (*app->env)->setTimeoutMs(app->env, 3000, periodicallyPrintProgress, app_);
 }
 
 
 static void initStuff( void*app_ ){
     #define MIN(a, b) (((a) < (b)) * (a) + ((a) >= (b)) * (b))
+    REGISTER int err;
     App*const app = app_; assert(app->mAGIC == App_mAGIC);
+    err = MUTEX_INIT(&app->progressMutx, NULL); /*TODO unref*/
+    assert(err == 0);
     static struct Garbage_ThreadPool_Mentor tpMentorVt = {
         .foo = NULL,
     }, *tpMentor = &tpMentorVt;
     struct Garbage_ThreadPool_Opts tpOpts = {
-        /* TODO MIN(MAX(1, numSrc), 32). Using at least same as nSources for now to
-         * prevent deadlocks due to libgarbage having very short task queues. */
-        .numThrds = app->numThrds,
+        /* FIXME Using at least same as nSources for now bcause async io is not yet impl
+         * in libgarbage. */
+        .numThrds = MIN(1, app->nclients),
     };
     app->thrdPool = (*app->env)->newThreadPool(app->env, &tpMentor, &tpOpts);
     (*app->thrdPool)->start(app->thrdPool);
-    (*app->env)->enqueBlocking(app->env, TODO_bRACABpaAgDDXAIA, app);
+    app->socketMgr = (*app->env)->newSocketMgr(app->env, &(struct Garbage_SocketMgr_Opts){
+        .blockingIoWorker = app->thrdPool,
+    });
+    periodicallyPrintProgress(0, app);
+    for( int i=0 ; i < app->nclients ; ++i ){
+        sendAnotherRequest(0, app);
+    }
     #undef MIN
 }
 
@@ -244,8 +286,8 @@ int main( int argc, char**argv ){
     App app = {0}; assert((void*)0 == NULL);
     #define app (&app)
     app->mAGIC = App_mAGIC;
-    app->numThrds = 4;
     app->exitCode = -1;
+    app->mthd = "GET";
     if( parseArgs(app, argc, argv) ){ goto endFn; }
     if( app->flg & FLG_isHelp ){ printHelp(); goto endFn; }
     app->env = GarbageEnv_ctor(app->envMemory, sizeof app->envMemory);
