@@ -4,6 +4,8 @@ AWS cli usage
 
 HINT: See also "../kubernetes/kubectl.txt".
 
+TODO where to manage argocd stuff?
+
 
 ## How to login
 
@@ -16,6 +18,13 @@ See "../kubernetes/kubectl.txt"
 - dann "Mobility Services"
 - dann "houston" (entweder alle via hauptnode, oder instance via unten)
 - dann irgendwo auf logs
+
+
+## Houston Logs Tail follow
+
+  argocd --server "https://deployment-eks-prod-m15cp0001.eks.aws.pnetcloud.ch/applications/argocd" app list
+
+argocd login $(kubectl get service argocd-server -n argocd --output=jsonpath='{.status.loadBalancer.ingress[0].hostname}') --username admin --password $(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d; echo) --insecure
 
 
 ## Houston auto chunk logs dload
