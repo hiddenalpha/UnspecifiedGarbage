@@ -19,10 +19,11 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <limits.h>
+#include <pthread.h> /*TODO remove*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <pthread.h> /*TODO remove*/
 
 #include "Garbage.h"
 
@@ -59,6 +60,7 @@ struct App {
     int exitCode;
     int port, nclients, pauseMs;
     int numReqDone;
+    int printProgressEveryMs;
     struct timespec progressPrintedAt;
     char const *host;
     char const *path;
@@ -106,6 +108,10 @@ static void printHelp( void ){
         "        Milliseconds to wait after a request has completed before\n"
         "        starting another one. Defaults to 1000ms (aka one second).\n"
         "  \n"
+        "    --progress <int>\n"
+        "      How often (in seconds) the actual progress should be printed.\n"
+        "      Defaults to 3.\n"
+        "  \n"
     );
 }
 
@@ -114,6 +120,7 @@ static int parseArgs( App*app, int argc, char**argv ){
     REGISTER int iA = 0;
     app->nclients = 1;
     app->pauseMs = 1000;
+    app->printProgressEveryMs = 3000;
 nextArg:;
     char *arg = argv[++iA];
     if( arg == NULL ){ goto verify; }
@@ -127,8 +134,10 @@ nextArg:;
         arg = argv[++iA];
         if( arg == NULL ){ LOGERR("EINVAL: %s needs value\n", argv[iA-1]); return-1; }
         errno = 0;
-        app->port = strtol(arg, NULL, 0);
-        if( errno ){ LOGERR("%s: %s\n", strerrname(errno), arg); return-1; }
+        char *endptr;
+        app->port = strtol(arg, &endptr, 0);
+        if( endptr == arg || *endptr != '\0' ){ errno = EINVAL; }
+        if( errno ){ LOGERR("%s: %s %s\n", strerrname(errno), argv[iA-1], arg); return-1; }
         if( app->port <= 0 || app->port > 0xFFFF ){ LOGERR("ERANGE: port %d\n", app->port); return-1; }
     }else if( !strcmp(arg, "--path") ){
         arg = argv[++iA];
@@ -138,16 +147,31 @@ nextArg:;
         arg = argv[++iA];
         if( arg == NULL ){ LOGERR("EINVAL: %s needs value\n", argv[iA-1]); return-1; }
         errno = 0;
-        app->nclients = strtol(arg, NULL, 0);
-        if( errno ){ LOGERR("%s: %s\n", strerrname(errno), arg); return-1; }
-        if( app->nclients < 1 ){ LOGERR("ERANGE: --nclients %s\n", arg); return-1; }
+        char *endptr;
+        app->nclients = strtol(arg, &endptr, 0);
+        if( endptr == arg || *endptr != '\0' ){ errno = EINVAL; }
+        if( errno ){ LOGERR("%s: %s %s\n", strerrname(errno), argv[iA-1], arg); return-1; }
+        if( app->nclients < 1 ){ LOGERR("ERANGE: %s %s\n", argv[iA-1], arg); return-1; }
     }else if( !strcmp(arg, "--pause") ){
         arg = argv[++iA];
         if( arg == NULL ){ LOGERR("EINVAL: %s needs value\n", argv[iA-1]); return-1; }
         errno = 0;
-        app->pauseMs = strtol(arg, NULL, 0);
-        if( errno ){ LOGERR("%s: %s\n", strerrname(errno), arg); return-1; }
-        if( app->pauseMs < 1 ){ LOGERR("ERANGE: --pause %s\n", arg); return-1; }
+        char *endptr;
+        app->pauseMs = strtol(arg, &endptr, 0);
+        if( endptr == arg || *endptr != '\0' ){ errno = EINVAL; }
+        if( errno ){ LOGERR("%s: %s %s\n", strerrname(errno), argv[iA-1], arg); return-1; }
+        if( app->pauseMs < 0 ){ LOGERR("ERANGE: --pause %s\n", arg); return-1; }
+    }else if( !strcmp(arg, "--progress") ){
+        arg = argv[++iA];
+        if( arg == NULL ){ LOGERR("EINVAL: %s needs value\n", argv[iA-1]); return-1; }
+        errno = 0;
+        char *endptr;
+        app->printProgressEveryMs = strtol(arg, &endptr, 0);
+        if( endptr == arg || *endptr != '\0' ){ errno = EINVAL; }
+        if( errno ){ LOGERR("%s: %s %s\n", strerrname(errno), argv[iA-1], arg); return-1; }
+        if( app->printProgressEveryMs < 1 ){ LOGERR("ERANGE: --pause %s\n", arg); return-1; }
+        if( app->printProgressEveryMs >= INT_MAX/1000 ){ LOGERR("ERANGE: --pause %s\n", arg); return-1; }
+        app->printProgressEveryMs *= 1000;
     }else{
         LOGERR("EINVAL: %s\n", arg); return-1;
     }
@@ -245,13 +269,17 @@ static void periodicallyPrintProgress( int eno, void*app_ ){
     durationMs += (now.tv_nsec - app->progressPrintedAt.tv_nsec) / 1000000.f;
     float donePerSec = (numReqDone) / durationMs * 1000;
     app->progressPrintedAt = now;
+    time_t nowEpchSec = time(NULL);
+    char nowStr[24];
+    err = strftime(nowStr, sizeof nowStr, "%Y-%m-%d_%H:%M:%SZ", gmtime(&nowEpchSec));
+    assert(err < sizeof nowStr);
     if( durationMs > 10000000.f ){
-        LOGDBG("[INFO_] Let %d clients, all %dms, do '%s %s:%d%s'\n",
-            app->nclients, app->pauseMs, app->mthd, app->host, app->port, app->path);
+        LOGDBG("%s  Let %d clients, all %dms, do '%s %s:%d%s'\n",
+            nowStr, app->nclients, app->pauseMs, app->mthd, app->host, app->port, app->path);
     }else{
-        LOGDBG("[INFO_] %7d req/sec\n", (int)(donePerSec+.5f));
+        LOGDBG("%s  %7d req/sec\n", nowStr, (int)(donePerSec+.99999f));
     }
-    (*app->env)->setTimeoutMs(app->env, 3000, periodicallyPrintProgress, app_);
+    (*app->env)->setTimeoutMs(app->env, app->printProgressEveryMs, periodicallyPrintProgress, app_);
 }
 
 
