@@ -255,6 +255,7 @@ Links (Aka argument amplifiers)
 - [Fahrplanimports slow](https://jira.post.ch/browse/SDCISA-11528)
 - [Jenkinsbuild too slow](https://jira.post.ch/browse/SDCISA-14313?focusedId=1914236&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-1914236)
 - [Houston check too slow](https://jira.post.ch/browse/SDCISA-13746?focusedId=1937167&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-1937167)
+- [QueueStatisticsCollector takes up to 10 minutes for ONE SINGLE request](https://github.com/swisspost/vertx-redisques/issues/188)
 
 ## Performance is not an issue ...
 - [Houston OOM 2023-06-27](https://wikit.post.ch/x/_Bv6Rw)
