@@ -2,7 +2,18 @@
 Cross Compilation & Portability
 ===============================
 
-10 most essential rules for portable C code:
+## 10 most essential rules for portable C code (Rant)
 
   https://www.ski-epic.com/source_code_essays/ten_rules_for_writing_cross_platform_c_source_code.html
+
+
+## Windoof compiler opts
+
+  && CC=x86_64-w64-mingw32-gcc \
+  && LD=x86_64-w64-mingw32-gcc \
+  && OBJDUMP=x86_64-w64-mingw32-objdump \
+  && BINEXT=.exe \
+  && CFLAGS="-Wall -Werror -pedantic -fmax-errors=1" \
+  && LDFLAGS="-Wl,--gc-sections,--as-needed,-dn,-lgarbage,-lcJSON,-lexpat,-lmbedtls,-lmbedx509,-lmbedcrypto,-l:libwinpthread.a,-dy,-lws2_32,-Limport/lib" \
+
 
