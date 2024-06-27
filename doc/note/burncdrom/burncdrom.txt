@@ -4,12 +4,13 @@ How to handle CD/DVD burning
 
 ## Install growisofs
 
-  apt install genisoimage
+  apt install --no-install-recommends growisofs
+  MAYBE_OBSOLETE?: apt install --no-install-recommends genisoimage
 
 
 ## Burn to optical media from ISO
 
-growisofs -dvd-compat -Z /dev/srX=path/to/my.iso
+  growisofs -dvd-compat -Z /dev/srX=path/to/my.iso
 
 
 ## "Burn" to USB from ISO
