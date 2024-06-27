@@ -71,7 +71,7 @@ qemu-system-x86_64 \
     -netdev socket,id=n1,ipv6=off,mcast=230.0.0.1:1234 \
     -device e1000,netdev=n1 \
     `# USB pass-through by port or device. Use 'lsusb -t' or 'lsusb' to find IDs` \
-    `# qemu needs permission: 'chmod +rw /dev/bus/usb/002/035'` \
+    `# qemu needs permission: 'chmod o+w /dev/bus/usb/002/035'` \
     `# Or via "/etc/udev/rules.d/foo.rule": SUBSYSTEM=="usb", ATTR{idVendor}=="HEX1", ATTR{idProduct}=="HEX2", ATTR{serial}=="1234", MODE="0666"` \
     -device nec-usb-xhci \
     -device usb-host,hostbus=999,hostaddr=999 \
