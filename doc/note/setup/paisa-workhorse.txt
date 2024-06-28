@@ -25,14 +25,16 @@ Configure
   && IDPPROVIDER=ADFS2 \
   && MFA=RSA \
   && SAML_VERSION="2.36.16" \
+  && ARGOCD_VERSION="2.12.0-rc2" \
   && CACHEDIR="/var/tmp" \
 
 Setup
 
-  && $SUDO apt install -y --no-install-recommends net-tools vim curl nfs-common \
+  && $SUDO apt install -y --no-install-recommends net-tools vim curl nfs-common htop \
           kubernetes-client awscli \
           gcc libc6-dev gcc-mingw-w64-x86-64-win32 \
   && (cd "${CACHEDIR?}" && curl -o saml2aws_${SAML_VERSION?}_linux_amd64.tgz "https://artifactory.tools.post.ch/artifactory/generic-github-remote/Versent/saml2aws/releases/download/v${SAML_VERSION?}/saml2aws_${SAML_VERSION?}_linux_amd64.tar.gz") \
+  && (cd "${CACHEDIR?}" && curl -Lo "argocd-${ARGOCD_VERSION?}+linux-amd64" "https://github.com/argoproj/argo-cd/releases/download/v${ARGOCD_VERSION?}/argocd-linux-amd64") \
   && mkdir -p ~/.local/bin ~/.local/opt \
   && mkdir ~/.local/opt/saml2aws_${SAML_VERSION?} \
   && mkdir ~/.local/opt/saml2aws_${SAML_VERSION?}/bin \
