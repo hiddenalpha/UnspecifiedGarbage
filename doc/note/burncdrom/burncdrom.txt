@@ -2,37 +2,68 @@
 How to handle CD/DVD burning
 ============================
 
+WARN: Do NOT dump windoof ISO to USB! It won't work. See further down.
+
+
 ## Install growisofs
 
-  apt install genisoimage
+  apt install --no-install-recommends growisofs
+  MAYBE_OBSOLETE?: apt install --no-install-recommends genisoimage
 
 
-## Burn to optical media from ISO
+## Burn to optical media from ISO (NOT usb)
 
-growisofs -dvd-compat -Z /dev/srX=path/to/my.iso
+  growisofs -dvd-compat -Z /dev/srX=path/to/my.iso
 
 
-## "Burn" to USB from ISO
+## "Burn" to USB from ISO (NOT disc)
 
   dd bs=4M if=path/to/my.iso of=/dev/sdX status=progress oflag=sync
 
 
-## Get checksum of disc
+## Get checksum of disc (NOT usb)
 
 - Use isoinfo (from genisoimage pkg) to get size params.
 - Use dd parameterized by previous output.
 
-  isoinfo -d dev=/dev/srX
-  dd bs=${Logical block size} count=${Volume size} if=/dev/srX | md5sum -b
+  isoinfo -d dev=/dev/srX | egrep '(Logical block size|Volume size)'
+  dd bs=${Logical block size} count=${Volume size} if=/dev/srX | pv | md5sum -b
 
 
-## Get checksum of usb drive
+## Get checksum of usb drive (NOT disc)
 
-- Use stat to get block/count.
+- Use stat to get size.
 - Divide num by drive block size (likely 4096).
 - Use dd parameterized by previous output.
 
   stat -c '%s' my.iso
-  dd bs=${Logical block size} count=${Volume size} if=/dev/sdx | md5sum -b
+  dd bs=${Logical block size} count=${Volume size} if=/dev/sdx | pv | md5sum -b
+
+
+## Create a winshit USB installer
+
+WARN: InstallClutter ahead! (Use a VM)
+
+Dload an ISO of the windoof to install. Then create an usb image from it:
+[windoof ISO](https://www.microsoft.com/de-de/software-download/windows10ISO)
+
+  && ISO="path/to/win.iso" \
+  && DRIVE="/dev/sdX" \
+  && SUDO=sudo \
+  && WOEUSB_VERSION=5.2.4 \
+  && CACHEDIR=/var/tmp \
+  && WOEUSB="${CACHEDIR?}/woeusb" \
+  && `# HINT: Maybe some dependencies missing. See source link for more.` \
+  && $SUDO apt install -y --no-install-recommends parted wimtools dosfstools ntfs-3g grub-pc-bin \
+  && curl -L "https://github.com/WoeUSB/WoeUSB/releases/download/v${WOEUSB_VERSION?}/woeusb-${WOEUSB_VERSION?}.bash" -o "${WOEUSB?}" \
+  && $SUDO chmod +x "${WOEUSB?}" \
+  && $SUDO "${WOEUSB?}" --device "${ISO?}" "${DRIVE?}" \
+
+if "grub-install: error: cannot open `/dev/sdb': Read-only file system." then:
+- Check if lsblk says 'RO'
+- TODO try: ($SUDO blockdev --setrw /dev/sdb)
+- Verify again
+
+[src](https://linuxiac.com/how-to-create-a-windows-bootable-usb-on-linux/)
 
 
