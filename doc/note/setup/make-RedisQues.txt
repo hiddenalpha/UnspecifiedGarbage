@@ -26,6 +26,7 @@ Step-by-step shell snippets how to build RedisQues
   && git init \
   && git remote add upstream https://github.com/swisspost/vertx-redisques.git \
   && git fetch --depth=2 upstream refs/tags/v3.1.12:refs/tags/v3.1.12 \
+  && `# TODO I guess those two checkouts could be one? -> ToBeVerified` \
   && git checkout v3.1.12 \
   && git checkout "HEAD^" \
   && mvn clean verify \
