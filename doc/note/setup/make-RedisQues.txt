@@ -1,0 +1,33 @@
+
+Step-by-step shell snippets how to build RedisQues
+==================================================
+
+  && WORKDIR="/${HOME:?}/work" \
+  && SUDO=sudo \
+  && $SUDO apt install --no-install-recommends -y git maven redis \
+  && printf '%s\n' \
+       'bind 127.0.0.1 -::1' \
+       'port 6379' \
+       'protected-mode yes' \
+       'tcp-backlog 511' \
+       'timeout 0' \
+       'tcp-keepalive 100' \
+       'daemonize yes' \
+       'pidfile /run/redis/redis-server.pid' \
+       'logfile /var/log/redis/redis-server.log' \
+       'loglevel notice' \
+       'databases 16' \
+       'set-proc-title yes' \
+       'appendonly no' \
+       'save ""' \
+       | $SUDO tee >/dev/null /etc/redis/redis.conf \
+  && $SUDO /etc/init.d/redis-server restart \
+  && mkdir -p "${WORKDIR:?}/RedisQues" && cd "${WORKDIR:?}/RedisQues" \
+  && git init \
+  && git remote add upstream https://github.com/swisspost/vertx-redisques.git \
+  && git fetch --depth=2 upstream refs/tags/v3.1.12:refs/tags/v3.1.12 \
+  && git checkout v3.1.12 \
+  && git checkout "HEAD^" \
+  && mvn clean verify \
+
+
