@@ -1,0 +1,6 @@
+
+
+## List Leases
+
+  cat /var/lib/dnsmasq/dnsmasq.leases
+
