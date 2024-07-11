@@ -59,17 +59,13 @@ qemu-system-x86_64 \
     -hda "$(dirname "$(realpath "$0")")/hda.qcow2" \
     -nic none `# remove if network wanted` \
     `# Isolated Network plus host port/cmd reachable from guest` \
-    -netdev 'user,id=n1,ipv6=off,restrict=y,guestfwd=tcp:10.0.2.9:80-cmd:ncat 127.0.0.1 80' \
-    -device e1000,netdev=n1 \
+    -netdev 'user,id=n1,ipv6=off,restrict=y,guestfwd=tcp:10.0.2.9:80-cmd:ncat 127.0.0.1 80' -device e1000,netdev=n1 \
     `# Isolated Network with samba access to host` \
-    -netdev 'user,id=n2,ipv6=off,restrict=y,guestfwd=tcp:10.0.2.9:139-cmd:ncat 127.0.0.1 139,guestfwd=tcp:10.0.2.9:445-cmd:ncat 127.0.0.1 445' \
-    -device e1000,netdev=n2 \
+    -netdev 'user,id=n2,ipv6=off,restrict=y,guestfwd=tcp:10.0.2.9:139-cmd:ncat 127.0.0.1 139,guestfwd=tcp:10.0.2.9:445-cmd:ncat 127.0.0.1 445' -device e1000,netdev=n2 \
     `# 10.0.2.x network with host redirect` \
-    -netdev user,id=n0,ipv6=off,hostfwd=tcp:127.0.0.1:${SSH_PORT:-2222}-:22 \
-    -device e1000,netdev=n0 \
+    -netdev user,id=n0,ipv6=off,hostfwd=tcp:127.0.0.1:${SSH_PORT:-2222}-:22 -device e1000,netdev=n0 \
     `# socket mcast shared network adapter` \
-    -netdev socket,id=n1,ipv6=off,mcast=230.0.0.1:1234 \
-    -device e1000,netdev=n1 \
+    -netdev socket,id=n1,mcast=230.0.0.1:1234 -device e1000,netdev=n1 \
     `# USB pass-through by port or device. Use 'lsusb -t' or 'lsusb' to find IDs` \
     `# qemu needs permission: 'chmod o+w /dev/bus/usb/002/035'` \
     `# Or via "/etc/udev/rules.d/foo.rule": SUBSYSTEM=="usb", ATTR{idVendor}=="HEX1", ATTR{idProduct}=="HEX2", ATTR{serial}=="1234", MODE="0666"` \
@@ -93,6 +89,7 @@ qemu-system-x86_64 \
     -device usb-ehci,id=usb,bus=pci.0,addr=0x4 -device usb-tablet \
 
 [src udev rules](https://mirrors.edge.kernel.org/pub/linux/utils/kernel/hotplug/udev/udev.html)
+[TODO mcast broken](https://serverfault.com/q/1002977/673216)
 
 
 ## Inspect qcow2 by host mounting it

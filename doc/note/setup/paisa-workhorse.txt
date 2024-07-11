@@ -26,20 +26,24 @@ Configure
   && MFA=RSA \
   && SAML_VERSION="2.36.16" \
   && ARGOCD_VERSION="2.12.0-rc2" \
+  && GETADDRINFO_VERSION="0.0.2" \
   && CACHEDIR="/var/tmp" \
 
 Setup
 
-  && $SUDO apt install -y --no-install-recommends net-tools vim curl nfs-common htop \
+  && $SUDO apt install -y --no-install-recommends net-tools vim curl nfs-common htop ncat \
           kubernetes-client awscli \
           gcc libc6-dev gcc-mingw-w64-x86-64-win32 \
+          openjdk-17-jre-headless \
+  && (cd "${CACHEDIR?}" && curl -Lo "getaddrinfo-${GETADDRINFO_VERSION?}+x86_64-linux-gnu.tgz" "https://github.com/hiddenalpha/getaddrinfo-cli/releases/download/v${GETADDRINFO_VERSION?}/getaddrinfo-${GETADDRINFO_VERSION?}+x86_64-linux-gnu.tgz") \
   && (cd "${CACHEDIR?}" && curl -o saml2aws_${SAML_VERSION?}_linux_amd64.tgz "https://artifactory.tools.post.ch/artifactory/generic-github-remote/Versent/saml2aws/releases/download/v${SAML_VERSION?}/saml2aws_${SAML_VERSION?}_linux_amd64.tar.gz") \
   && (cd "${CACHEDIR?}" && curl -Lo "argocd-${ARGOCD_VERSION?}+linux-amd64" "https://github.com/argoproj/argo-cd/releases/download/v${ARGOCD_VERSION?}/argocd-linux-amd64") \
   && mkdir -p ~/.local/bin ~/.local/opt \
-  && mkdir ~/.local/opt/saml2aws_${SAML_VERSION?} \
-  && mkdir ~/.local/opt/saml2aws_${SAML_VERSION?}/bin \
-  && (cd ~/.local/opt/saml2aws_${SAML_VERSION?}/bin && tar xf /var/tmp/saml2aws_${SAML_VERSION?}_linux_amd64.tgz -- saml2aws) \
-  && (cd ~/.local/bin && ln -s ../opt/saml2aws_${SAML_VERSION?}/bin/saml2aws .) \
+  && $SUDO mkdir "/opt/getaddrinfo-${GETADDRINFO_VERSION?}" \
+  && (cd /opt/getaddrinfo-${GETADDRINFO_VERSION?} && $SUDO tar xf "${CACHEDIR?}/getaddrinfo-${GETADDRINFO_VERSION?}+x86_64-linux-gnu.tgz") \
+  && $SUDO mkdir "/opt/saml2aws_${SAML_VERSION?}" "/opt/saml2aws_${SAML_VERSION?}/bin" \
+  && (cd /opt/saml2aws_${SAML_VERSION?}/bin && $SUDO tar xf "${CACHEDIR?}"/saml2aws_${SAML_VERSION?}_linux_amd64.tgz -- saml2aws) \
+  && (cd ~/.local/bin && ln -s /opt/saml2aws_${SAML_VERSION?}/bin/saml2aws) \
   && (printf 'export PATH="%s/.local/bin:$PATH"\n' ~) >> ~/.bashrc \
   && export PATH="/home/${USER?}/.local/bin:$PATH" \
   && $SUDO mkdir -p /c && $SUDO ln -s /mnt/cdrive/work /c/work \
