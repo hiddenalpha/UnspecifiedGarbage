@@ -1,0 +1,29 @@
+
+# How to compile qemu
+
+set -e
+
+true \
+  && SUDO=sudo \
+  && WORKDIR=~/work \
+  && $SUDO apt update \
+  && $SUDO apt install --no-install-recommends -y git g++-mingw-w64 mingw-w64 mingw-w64-tools mingw-w64-i686-dev mingw-w64-x86-64-dev nsis python3-venv python3-sphinx python3-sphinx-rtd-theme ninja-build libc6-dev libglib2.0-dev meson \
+  && mkdir -p "${WORKDIR?}/qemu-src" \
+  && mkdir -p "${WORKDIR?}/qemu-build" \
+  && cd "${WORKDIR?}/qemu-src" \
+  && git init && git branch -m deleteMe \
+  && git remote add upstream https://gitlab.com/qemu-project/qemu.git \
+  && git remote add stefanweil http://repo.or.cz/w/qemu/ar7.git/ \
+  && git fetch --depth=1 upstream refs/tags/v9.0.1:refs/tags/v9.0.1 \
+  && git fetch --depth=1 stefanweil daf95bda0119425b5dec509f784a5a93be3e21da:refs/heads/master-of-stefanweil \
+  && git checkout --detach master-of-stefanweil \
+  && cd ../qemu-build \
+  && ../qemu-src/configure --cross-prefix=x86_64-w64-mingw32- --extra-cflags=-mthreads --disable-hexagon-idef-parser \
+  && printf '\n  DONE\n\n'
+
+  #&& export PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/pkgconfig \
+
+[Qemu doc Hosts/W32](https://wiki.qemu.org/Hosts/W32)
+[w32 build patches](http://repo.or.cz/w/qemu/ar7.git/)
+
+
