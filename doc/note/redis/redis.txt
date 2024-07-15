@@ -30,3 +30,9 @@ KEYS redisques:queues:vehicleoperation-events-for-vehicle-*
 redis-cli --scan --pattern schedulers:* | xargs redis-cli del
 
 
+## Quick-n-dirty config
+
+dir /var/tmp/redis
+save ""
+appendonly no
+

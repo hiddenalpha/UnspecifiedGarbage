@@ -1,6 +1,8 @@
 
 # How to compile qemu
 
+# WARN: WorkInProgress, and does NOT work.
+
 set -e
 
 true \
@@ -17,13 +19,17 @@ true \
   && git fetch --depth=1 upstream refs/tags/v9.0.1:refs/tags/v9.0.1 \
   && git fetch --depth=1 stefanweil daf95bda0119425b5dec509f784a5a93be3e21da:refs/heads/master-of-stefanweil \
   && git checkout --detach master-of-stefanweil \
-  && cd ../qemu-build \
-  && ../qemu-src/configure --cross-prefix=x86_64-w64-mingw32- --extra-cflags=-mthreads --disable-hexagon-idef-parser \
+  && .github/workflows/pacman.sh x86_64 \
+  && .github/workflows/build.sh x86_64 \
   && printf '\n  DONE\n\n'
 
-  #&& export PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/pkgconfig \
+# -c http.sslverify=false
+#  && cd ../qemu-build \
+#  && export PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/pkgconfig \
+#  && ../qemu-src/configure --cross-prefix=x86_64-w64-mingw32- --extra-cflags=-mthreads \
 
-[Qemu doc Hosts/W32](https://wiki.qemu.org/Hosts/W32)
-[w32 build patches](http://repo.or.cz/w/qemu/ar7.git/)
+# [win fork sources](https://github.com/stweil/qemu)
+# [w32 build patches](http://repo.or.cz/w/qemu/ar7.git/)
+# [use ubuntu-22.04 as cross build host](https://github.com/stweil/qemu/actions/runs/8140909522/workflow)
 
 

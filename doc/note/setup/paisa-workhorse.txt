@@ -31,10 +31,13 @@ Configure
 
 Setup
 
+  && `# 20240715: Removed: gcc-mingw-w64-x86-64-win32 gcc libc6-dev` \
   && $SUDO apt install -y --no-install-recommends net-tools vim curl nfs-common htop ncat \
           kubernetes-client awscli \
-          gcc libc6-dev gcc-mingw-w64-x86-64-win32 \
-          openjdk-17-jre-headless \
+          openjdk-17-jre-headless maven redis-server \
+  && $SUDO /etc/init.d/redis-server stop \
+  && $SUDO systemctl disable redis-server \
+  && printf '# TODO Put your redis config here\n' | $SUDO tee /etc/redis/redis.conf >/dev/null \
   && (cd "${CACHEDIR?}" && curl -Lo "getaddrinfo-${GETADDRINFO_VERSION?}+x86_64-linux-gnu.tgz" "https://github.com/hiddenalpha/getaddrinfo-cli/releases/download/v${GETADDRINFO_VERSION?}/getaddrinfo-${GETADDRINFO_VERSION?}+x86_64-linux-gnu.tgz") \
   && (cd "${CACHEDIR?}" && curl -o saml2aws_${SAML_VERSION?}_linux_amd64.tgz "https://artifactory.tools.post.ch/artifactory/generic-github-remote/Versent/saml2aws/releases/download/v${SAML_VERSION?}/saml2aws_${SAML_VERSION?}_linux_amd64.tar.gz") \
   && (cd "${CACHEDIR?}" && curl -Lo "argocd-${ARGOCD_VERSION?}+linux-amd64" "https://github.com/argoproj/argo-cd/releases/download/v${ARGOCD_VERSION?}/argocd-linux-amd64") \
@@ -52,7 +55,7 @@ Setup
   && (printf '/mnt/cdrive/work  /c/work  none  noauto,bind,user  0  0\n') | $SUDO tee -a /etc/fstab >/dev/null \
   && (printf '10.0.2.2:/c  /mnt/cdrive  nfs  noauto,vers=3,user  0  0\n') | $SUDO tee -a /etc/fstab >/dev/null \
   && saml2aws configure --skip-prompt -p "${SAML_PROFILE?}" --role="${ROLE?}" --region "${REGION?}" --url https://adfs.post.ch --username "${USERNAME?}" --idp-provider="${IDPPROVIDER?}" --mfa="${MFA?}" \
-  && printf 'MAVEN_OPTS="--add-opens jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED --add-opens jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED --add-opens jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED --add-opens jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED --add-opens jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.lang.reflect=ALL-UNNAMED --add-opens java.base/java.text=ALL-UNNAMED --add-opens java.desktop/java.awt.font=ALL-UNNAMED"' | tee >/dev/null -a /etc/environment \
+  && printf 'MAVEN_OPTS="--add-opens jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED --add-opens jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED --add-opens jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED --add-opens jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED --add-opens jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.lang.reflect=ALL-UNNAMED --add-opens java.base/java.text=ALL-UNNAMED --add-opens java.desktop/java.awt.font=ALL-UNNAMED"' | $SUDO tee >/dev/null -a /etc/environment \
 
 Authorize (needs attention)
 
