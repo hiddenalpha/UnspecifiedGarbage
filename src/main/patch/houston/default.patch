@@ -89,8 +89,8 @@
 
 --- a/houston-process/src/main/java/ch/post/it/paisa/houston/process/main/Deployer.java
 +++ b/houston-process/src/main/java/ch/post/it/paisa/houston/process/main/Deployer.java
-@@ -98,6 +98,9 @@ public class Deployer {
-   private static final Logger LOGGER = LoggerFactory.getLogger(Deployer.class);
+@@ -130,6 +130,9 @@ public class Deployer {
+   private static Semaphore getQueuesItemsCountRedisRequestQuota;
  
    public static void main(String[] args) throws Exception {
 +    boolean isAssertIsEnabled = false;

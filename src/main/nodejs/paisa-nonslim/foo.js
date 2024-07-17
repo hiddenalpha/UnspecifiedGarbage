@@ -7,6 +7,8 @@ Related:
 ;(function(){ "use-strict";
 
     const child_process = require("child_process");
+    const http = require("http");
+    const https = require("https");
     const fs = require("fs");
     const promisify = require("util").promisify;
     const zlib = require("zlib");
@@ -27,11 +29,17 @@ Related:
             +"    --fetch\n"
             +"      Update local repos from remote.\n"
             +"  \n"
-            +"    --reset-hard\n"
+            +"    --reset-platform\n"
             +"      Reset worktree to develop.\n"
             +"  \n"
             +"    --patch-platform\n"
             +"      Remove slim packaging from patform and set snapshot version.\n"
+            +"  \n"
+            +"    --push-platform\n"
+            +"      Same idea as '--push-services' but for platform.\n"
+            +"  \n"
+            +"    --reset-services\n"
+            +"      Reset worktree to develop.\n"
             +"  \n"
             +"    --patch-services\n"
             +"      Disable slim packaging in Jenkinsfile and use platform snapshot in\n"
@@ -69,10 +77,16 @@ Related:
                 app.isHelp = true; return 0;
             }else if( arg == "--fetch" ){
                 app.isFetch = true;
-            }else if( arg == "--reset-hard" ){
+            }else if( arg == "--reset-platform" ){
                 app.isResetHard = true;
             }else if( arg == "--patch-platform" ){
                 app.isPatchPlatform = true;
+            }else if( arg == "--commit-platform" ){
+                app.isCommitPlatform = true;
+            }else if( arg == "--push-platform" ){
+                app.isPushPlatform = true;
+            }else if( arg == "--reset-services" ){
+                app.isResetHard = true;
             }else if( arg == "--patch-services" ){
                 app.isPatchServices = true;
             }else if( arg == "--commit" ){
@@ -203,51 +217,55 @@ Related:
 
     function getJettyServiceNamesAsArray( app, onDone ){
         setImmediate(onDone, null, [ /*TODO get via args/file */
-            TODO_GX0CAJ9hAgCNRAIA9hgCAP5jAgDGCgIA
         ]);
     }
 
 
-    function getVersionByServiceName(app, svcName, onDone){
-        /* if we did patch services, we already know the version without
-         * lookup. This is a performance optimization, because maven performs
-         * absolutely terrible. Performance DOES matter! */
-        //if( app.isPatchServices ){
-            setImmediate(onDone, null, app.jenkinsSnapVersion);
-        //}else{
-        //    wasteOurTimeBecausePerformanceDoesNotMatter();
-        //}
-        //function wasteOurTimeBecausePerformanceDoesNotMatter( ex ){
-        //    if( ex ) throw ex;
-        //    var stdoutBufs = [];
-        //    /* SHOULD start maven with low prio to not kill windoof. But I
-        //     * guess spawning a process with other prio is YAGNI, and so we're
-        //     * now fucked. Therefore I wish you happy time-wasting, as the only
-        //     * option left is to NOT start too many maven childs
-        //     * simultaneously. */
-        //    var child = child_process.spawn(
-        //        "mvn", ["help:evaluate", "-o", "-q", "-DforceStdout", "-Dexpression=project.version"],
-        //        { cwd:workdirOfSync(app, svcName) }
-        //    );
-        //    child.on("error", console.error.bind(console));
-        //    child.stderr.on("data", logAsString);
-        //    child.stdout.on("data", stdoutBufs.push.bind(stdoutBufs));
-        //    child.on("close", function( code, signal ){
-        //        if( code !== 0 || signal !== null ){
-        //            endFn(Error("code="+ code +", signal="+ signal +""));
-        //            return;
-        //        }
-        //        if( stdoutBufs.length <= 0 ) throw Error("maven has failed");
-        //        var version = stdoutBufs.join().trim();
-        //        onDone(null, version);
-        //    });
-        //}
-    }
-
-
     function printIsaVersion( app, onDone ){
-        var iSvcQuery = 0, iSvcPrinted = 0;
-        printIntro();
+        var iSvcGetVersion = 0, iSvcQuery = 0, iSvcPrinted = 0;
+        var rspBody = "";
+        var versionsByThingy = {};
+        var services = app.services.slice(0);
+        services.unshift("platform");
+        collectNextVersionFromArtifactory();
+        function collectNextVersionFromArtifactory( ex ){
+            if( ex ){ onDone(ex); return; }
+            if( iSvcGetVersion < services.length ){
+                var thingyName = services[iSvcGetVersion++];
+                collectVersionFromArtifactoryByThingy(app, thingyName, collectNextVersionFromArtifactory);
+            }else{
+                printIntro();
+            }
+        }
+        function collectVersionFromArtifactoryByThingy( app, thingyName, onDone ){
+            var path = (thingyName == "platform")
+                ? "/artifactory/paisa/ch/post/it/paisa/alice/alice-service-web-core/"
+                : "/artifactory/paisa/ch/post/it/paisa/"+ thingyName +"/"+ thingyName +"-web/";
+            var req = https.request({
+                method: "GET",
+                host: "artifactory.pnet.ch", port: 443,
+                path: path,
+            });
+            req.on("error", console.log.bind(console));
+            req.on("response", TODO_EkICAO9WAgDCQQIA.bind(0, thingyName, onDone));
+            req.end();
+        }
+        function TODO_EkICAO9WAgDCQQIA( thingyName, onDone, rsp ){
+            if( rsp.statusCode != 200 ){
+                log.write("[ERROR] thingyName '"+ thingyName +"'\n");
+                log.write("[ERROR] HTTP "+ rsp.statusCode +"\n");
+                onDone(Error("HTTP "+ rsp.statusCode)); return;
+            }
+            rsp.on("data", function( cnk ){ rspBody += cnk.toString(); });
+            rsp.on("end", TODO_bkQCAHonAgDDgIAl.bind(0, thingyName, onDone));
+        }
+        function TODO_bkQCAHonAgDDgIAl( thingyName, onDone ){
+            var m = (new RegExp('\n<a href="(0.0.0-'+ app.issueKey +'-[^/]+-SNAPSHOT)/">')).exec(rspBody);
+            if( !m || !m[1] ){ onDone(Error("No version found for '"+ thingyName +"' in artifactory")); return; }
+            log.write("[DEBUG] versionsByThingy[\""+ thingyName +"\"] := \""+ m[1] +"\"\n");
+            versionsByThingy[thingyName] = m[1];
+            onDone(null, null);
+        }
         function printIntro( ex ){
             if( ex ) throw ex;
             var epochMs = Date.now();
@@ -257,9 +275,8 @@ Related:
             out.write('  "isaVersionName": "SDCISA-15648-'+ epochMs +'",\n');
             out.write('  "trial": true,\n');
             out.write('  "services": [\n');
-            out.write('    { "name": "eagle", "version": "02.23.01.00" },\n');
-            out.write('    { "name": "storage", "version": "00.25.00.02" },\n');
-            out.write('    { "name": "platform", "version": "'+ app.platformJenkinsVersion +'" }');
+            out.write('    { "name": "eagle", "version": "02.01.26.00" },\n');
+            out.write('    { "name": "storage", "version": "00.25.00.02" }');
             /* maven performance is an absolute terrible monster.
              * Problem 1: Doing this sequentially takes forever.
              * Problem 2: Doing this parallel for all makes windoof freeze.
@@ -268,17 +285,14 @@ Related:
         }
         function nextService( ex ){
             if( ex ) throw ex;
-            if( iSvcQuery >= app.services.length ){ /*printTail();*/ return; }
-            var svcName = app.services[iSvcQuery++];
-            getVersionByServiceName(app, svcName, function(e,r){ printService(e,r,svcName); });
-        }
-        function printService( ex, svcVersion, svcName ){
-            if( ex ) throw ex;
-            if( typeof svcVersion != "string") throw Error(svcVersion);
+            if( iSvcQuery >= services.length ){ /*printTail();*/ return; }
+            var thingyName = services[iSvcQuery++];
+            var svcVersion = versionsByThingy[thingyName];
+            if( typeof svcVersion != "string") throw Error(thingyName +", "+ svcVersion);
             iSvcPrinted += 1;
             out.write(",\n    ");
-            out.write('{ "name": "'+ svcName +'", "version": "'+ svcVersion +'" }');
-            if( iSvcPrinted >= app.services.length ){ printTail(); }else{ nextService(); }
+            out.write('{ "name": "'+ thingyName +'", "version": "'+ svcVersion +'" }');
+            if( iSvcPrinted >= services.length ){ printTail(); }else{ nextService(); }
         }
         function printTail( ex ){
             if( ex ) throw ex;
@@ -289,6 +303,11 @@ Related:
             out.write('}\n');
             onDone(/*ex*/null, /*ret*/null);
         }
+    }
+
+
+    function pushPlatform( app, onDone ){
+        pushService(app, "platform", onDone);
     }
 
 
@@ -323,6 +342,11 @@ Related:
         function endFn( ex, ret ){
             onDone(ex, ret);
         }
+    }
+
+
+    function commitPlatform( app, onDone ){
+        commitService(app, "platform", onDone);
     }
 
 
@@ -525,7 +549,7 @@ Related:
         function removeEmptyArray( ex ){
             if( ex ) throw ex;
             var child = child_process.spawn(
-                "sed", [ "-i", "-E", "s_^(.*?).buildMaven\\\\(\\\\[\\\\]\\\\)(.*?)$_\\1\\2_", "Jenkinsfile" ],
+                "sed", [ "-i", "-E", "s_^(.*?).buildMaven\\\\(\\\\[\\\\]\\\\)(.*?)$_\\\\1\\\\2_", "Jenkinsfile" ],
                 { cwd: workdirOfSync(app, jettyService) },
             );
             child.on("error", console.error.bind(console));
@@ -721,6 +745,11 @@ Related:
     }
 
 
+    function resetPlatform( app, onDone ){
+        resetHardToDevelop(app, "platform", onDone);
+    }
+
+
     function resetHardToDevelop( app, thingyName, onDone ){
         var iRemoteName = 0;
         if( typeof onDone !== "function" ) throw Error("onDone");
@@ -818,7 +847,7 @@ Related:
 
     function fetchListOfServices( app, onDone ){
         getJettyServiceNamesAsArray(app, function( ex, ret ){
-            if( ex ) throw ex;
+            if( ex ){ onDone(ex); return; }
             app.services = ret;
             onDone();
         });
@@ -836,10 +865,13 @@ Related:
                 forEachInArrayDo(app, app.services, resetHardToDevelop, onDone);
             });
         }
+        if( app.isResetPlatform ){ actions.push(resetPlatform); }
         if( app.isPatchPlatform ){
             actions.push(patchAwaySlimPackagingInPlatform);
             actions.push(setVersionInPlatform);
         }
+        if( app.isCommitPlatform ){ actions.push(commitPlatform); }
+        if( app.isPushPlatform ){ actions.push(pushPlatform); }
         if( app.isPatchServices ){
             actions.push(dropSlimFromAllJenkinsfiles);
             actions.push(function( app, onDone ){
@@ -855,9 +887,7 @@ Related:
             });
         }
         if( app.isPrintIsaVersion ){ actions.push(printIsaVersion); }
-        actions.push(function( app, onDone ){
-            log.write("[INFO ] App done\n");
-        });
+        actions.push(function( app, onDone ){ log.write("[INFO ] App done\n"); });
         triggerNextAction();
         function triggerNextAction( ex ){
             if( ex ) throw ex;
@@ -872,8 +902,10 @@ Related:
         const app = {
             isHelp: false,
             isFetch: false,
-            isResetHard: false,
+            isResetPlatform: false,
             isPatchPlatform: false,
+            isCommitPlatform: false,
+            isResetHard: false,
             isPatchServices: false,
             iscommit: false,
             isPush: false,
@@ -884,14 +916,15 @@ Related:
             maxParallel:  1,
             numRunningTasks: 0,
             services: null,
-            branchName: "SDCISA-15648-RemoveSlimPackaging-n1",
-            commitMsg: "[SDCISA-15648] Remove slim packaging",
+            issueKey: "SDCISA-15648",
+            branchName: null,
+            commitMsg: null,
             platformSnapVersion: "0.0.0-SNAPSHOT",
             serviceSnapVersion: "0.0.0-SNAPSHOT",
-            platformJenkinsVersion: "0.0.0-SDCISA-15648-RemoveSlimPackaging-n1-SNAPSHOT",
-            jenkinsSnapVersion: "0.0.0-SDCISA-15648-RemoveSlimPackaging-n1-SNAPSHOT",
             parentVersion: null,
         };
+        app.branchName = app.issueKey +"-RemoveSlimPackaging-n1";
+        app.commitMsg = "["+ app.issueKey +"] Remove slim packaging";
         app.parentVersion = "0.0.0-"+ app.branchName +"-SNAPSHOT";
         if( parseArgs(process.argv, app) !== 0 ){ process.exit(1); }
         if( app.isHelp ){ printHelp(); return; }
