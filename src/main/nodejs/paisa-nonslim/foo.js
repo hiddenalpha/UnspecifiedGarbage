@@ -525,7 +525,7 @@ Related:
         function removeEmptyArray( ex ){
             if( ex ) throw ex;
             var child = child_process.spawn(
-                "sed", [ "-i", "-E", "s_^(.*?).buildMaven\\(\\[\\]\\))(.*?)$_\\1\\2_", "Jenkinsfile" ],
+                "sed", [ "-i", "-E", "s_^(.*?).buildMaven\\\\(\\\\[\\\\]\\\\)(.*?)$_\\1\\2_", "Jenkinsfile" ],
                 { cwd: workdirOfSync(app, jettyService) },
             );
             child.on("error", console.error.bind(console));
@@ -880,7 +880,7 @@ Related:
             isPushForce: false,
             isPrintIsaVersion: false,
             remoteNamesToTry: ["origin"],
-            workdir: "C:/work/tmp/git-scripted",
+            workdir: "C:/work/tmp/SlimPkg-Repos",
             maxParallel:  1,
             numRunningTasks: 0,
             services: null,
