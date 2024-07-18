@@ -2,10 +2,17 @@
 
   && CC=gcc \
   && LD=gcc \
-  && OBJDUMP=objdump \
+  && OBJDUMP=true \
   && BINEXT= \
   && CFLAGS="-Wall -Werror -pedantic -fmax-errors=1 -Iimport/include" \
   && LDFLAGS="-Wl,--gc-sections,--as-needed,-dn,-lgarbage,-lcJSON,-lexpat,-lmbedtls,-lmbedx509,-lmbedcrypto,-lcustom_pthread,-dy,-lws2_32,-Limport/lib" \
+
+  && CC=x86_64-w64-mingw32-gcc \
+  && LD=x86_64-w64-mingw32-gcc \
+  && OBJDUMP=x86_64-w64-mingw32-objdump \
+  && BINEXT=.exe \
+  && CFLAGS="-Wall -Werror -pedantic -fmax-errors=1 -Iimport/include" \
+  && LDFLAGS="-Wl,--gc-sections,--as-needed,-dn,-lgarbage,-lcJSON,-lexpat,-lmbedtls,-lmbedx509,-lmbedcrypto,-l:libwinpthread.a,-dy,-lws2_32,-Limport/lib" \
 
   && PROJECT_VERSION="$(date -u +0.0.0-%Y%m%d.%H%M%S)" \
   && mkdir -p build/bin \
@@ -24,6 +31,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#if __WIN32
+#   include <windows.h>
+#endif
 
 #include "Garbage.h"
 
@@ -186,9 +196,7 @@ verify:
 
 
 static void onError( int eno, void*mentorCls ){
-    if( eno ){
-        LOGDBG("assert(onError() != %s)  %s:%d\n", strerrname(-eno), __FILE__, __LINE__); abort();
-    }
+    LOGDBG("assert(onError() != %s)  %s:%d\n", strerrname(-eno), __FILE__, __LINE__); abort();
 }
 
 
@@ -310,7 +318,20 @@ static void initStuff( void*app_ ){
 }
 
 
+#if __WIN32
+static void initBullshit( void ){
+    REGISTER int err;
+    WSADATA lpWSAData;
+    err = WSAStartup(htons(0x0100), &lpWSAData);
+    if( err ){ LOGDBG("%s: WSAStartup()\n", strerrname(err)); abort(); }
+}
+#endif
+
+
 int main( int argc, char**argv ){
+#if __WIN32
+    initBullshit();
+#endif
     App app = {0}; assert((void*)0 == NULL);
     #define app (&app)
     app->mAGIC = App_mAGIC;

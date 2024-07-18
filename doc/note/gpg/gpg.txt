@@ -119,3 +119,9 @@ PS: Why is this so fu***** damn complicated! Anyone still wondering why this
   gpg-connect-agent reloadagent /bye
 
 
+## "~/.gnupg/gpg-agent.conf"
+
+  default-cache-ttl 7200
+  max-cache-ttl 86400
+
+
