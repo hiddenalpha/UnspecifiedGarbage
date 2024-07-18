@@ -170,6 +170,26 @@ Related:
     }
 
 
+    function getPatch( app, patchKey, onDone ){
+        var path = __dirname +"/patches/"+ patchKey +".patch";
+        fs.readFile(path, 'utf8', TODO_sBECAHhRAgCcPAIA);
+        function TODO_sBECAHhRAgCcPAIA( ex, patchAsStr ){
+            console.log(ex);
+            if( ex && ex.code == "ENOENT" ){
+                onDone(null, null); return;
+            }else if( ex ){
+                onDone(ex); return;
+            }
+            getMangledPlatformVersion(app, TODO_OhICAAs2AgCwVgIA.bind(0, patchAsStr));
+        }
+        function TODO_OhICAAs2AgCwVgIA( patchAsStr, ex, mangledPlatformVersion ){
+            if( ex ){ onDone(ex); return; }
+            patchAsStr = patchAsStr.replace(/\${j21.platform.version}/g, mangledPlatformVersion);
+            onDone(null, patchAsStr);
+        }
+    }
+
+
     function getDropSlimArtifactsTagInPlatformPatch( app, onDone ){
         if( typeof onDone != "function" ) throw TypeError("onDone");
         /* patch which empties the <slimArtifacts> tag in
@@ -221,6 +241,56 @@ Related:
     }
 
 
+    function getMangledPlatformVersion( app, onDone ){
+        if( app.mangledPlatformVersion != null ){
+            setTimeout(TODO_TRQCAEYoAgAbPQIA, 0, null, app.mangledPlatformVersion);
+        }else{
+            getVersionPipelineMangledByThingyName(app, "platform", TODO_TRQCAEYoAgAbPQIA);
+        }
+        function TODO_TRQCAEYoAgAbPQIA( ex, mangledPlatformVersion ){
+            if( !mangledPlatformVersion ){ onDone(Error("mangledPlatformVersion failed")); return; }
+            if( app.mangledPlatformVersion != null && app.mangledPlatformVersion != mangledPlatformVersion ){
+                onDone(Error("assert("+ app.mangledPlatformVersion +" == "+ mangledPlatformVersion +")")); return;
+            }
+            onDone(null, app.mangledPlatformVersion = mangledPlatformVersion);
+        }
+    }
+
+
+    function getVersionPipelineMangledByThingyName( app, thingyName, onDone ){
+        var rspBody = "";
+        collectVersionFromArtifactory();
+        function collectVersionFromArtifactory(){
+            var host = "artifactory.pnet.ch", port = 443, method = "GET";
+            var path = (thingyName == "platform")
+                ? "/artifactory/paisa/ch/post/it/paisa/alice/alice-service-web-core/"
+                : "/artifactory/paisa/ch/post/it/paisa/"+ thingyName +"/"+ thingyName +"-web/";
+            log.write("[DEBUG] "+ method +" "+ host +":"+ port + path +"\n");
+            var req = https.request({
+                method: method, host: host, port: port, path: path,
+            });
+            req.on("error", console.log.bind(console));
+            req.on("response", TODO_Nw8CALZgAgCEbAIA);
+            req.end();
+        }
+        function TODO_Nw8CALZgAgCEbAIA( rsp ){
+            if( rsp.statusCode != 200 ){
+                log.write("[ERROR] thingyName '"+ thingyName +"'\n");
+                log.write("[ERROR] HTTP "+ rsp.statusCode +"\n");
+                onDone(Error("HTTP "+ rsp.statusCode)); return;
+            }
+            rsp.on("data", function( cnk ){ rspBody += cnk.toString(); });
+            rsp.on("end", TODO_MRYCAOIzAgAKFQIA);
+        }
+        function TODO_MRYCAOIzAgAKFQIA(){
+            var m = (new RegExp('\n<a href="(0.0.0-'+ app.issueKey +'-[^/]+-SNAPSHOT)/">')).exec(rspBody);
+            if( !m || !m[1] ){ onDone(Error("No version found for '"+ thingyName +"' in artifactory")); return; }
+            log.write("[DEBUG] getVersionPipelineMangledByThingyName("+ thingyName +") -> "+ m[1] +"\n");
+            onDone(null, m[1]);
+        }
+    }
+
+
     function printIsaVersion( app, onDone ){
         var iSvcGetVersion = 0, iSvcQuery = 0, iSvcPrinted = 0;
         var rspBody = "";
@@ -232,39 +302,15 @@ Related:
             if( ex ){ onDone(ex); return; }
             if( iSvcGetVersion < services.length ){
                 var thingyName = services[iSvcGetVersion++];
-                collectVersionFromArtifactoryByThingy(app, thingyName, collectNextVersionFromArtifactory);
+                getVersionPipelineMangledByThingyName(app, thingyName, TODO_OBgCAKAhAgCcXwIA.bind(0, thingyName));
             }else{
                 printIntro();
             }
         }
-        function collectVersionFromArtifactoryByThingy( app, thingyName, onDone ){
-            var path = (thingyName == "platform")
-                ? "/artifactory/paisa/ch/post/it/paisa/alice/alice-service-web-core/"
-                : "/artifactory/paisa/ch/post/it/paisa/"+ thingyName +"/"+ thingyName +"-web/";
-            var req = https.request({
-                method: "GET",
-                host: "artifactory.pnet.ch", port: 443,
-                path: path,
-            });
-            req.on("error", console.log.bind(console));
-            req.on("response", TODO_EkICAO9WAgDCQQIA.bind(0, thingyName, onDone));
-            req.end();
-        }
-        function TODO_EkICAO9WAgDCQQIA( thingyName, onDone, rsp ){
-            if( rsp.statusCode != 200 ){
-                log.write("[ERROR] thingyName '"+ thingyName +"'\n");
-                log.write("[ERROR] HTTP "+ rsp.statusCode +"\n");
-                onDone(Error("HTTP "+ rsp.statusCode)); return;
-            }
-            rsp.on("data", function( cnk ){ rspBody += cnk.toString(); });
-            rsp.on("end", TODO_bkQCAHonAgDDgIAl.bind(0, thingyName, onDone));
-        }
-        function TODO_bkQCAHonAgDDgIAl( thingyName, onDone ){
-            var m = (new RegExp('\n<a href="(0.0.0-'+ app.issueKey +'-[^/]+-SNAPSHOT)/">')).exec(rspBody);
-            if( !m || !m[1] ){ onDone(Error("No version found for '"+ thingyName +"' in artifactory")); return; }
-            log.write("[DEBUG] versionsByThingy[\""+ thingyName +"\"] := \""+ m[1] +"\"\n");
-            versionsByThingy[thingyName] = m[1];
-            onDone(null, null);
+        function TODO_OBgCAKAhAgCcXwIA( ex, thingyName, mangledVersion ){
+            log.write("[DEBUG] versionsByThingy[\""+ thingyName +"\"] = \""+ mangledVersion +"\"\n");
+            versionsByThingy[thingyName] = mangledVersion;
+            collectNextVersionFromArtifactory();
         }
         function printIntro( ex ){
             if( ex ) throw ex;
@@ -471,13 +517,17 @@ Related:
 
     function setPlatformVersionInService( app, thingyName, onDone ){
         if( typeof onDone != "function" ) throw TypeError("onDone");
-        updateParent();
-        function updateParent(){
-            log.write("[DEBUG] "+ thingyName +" - Set platform version "+ app.parentVersion +"\n");
+        TODO_vFICAIhVAgBuAgIA();
+        function TODO_vFICAIhVAgBuAgIA(){
+            getMangledPlatformVersion(app, updateParent);
+        }
+        function updateParent( ex, mangledPlatformVersion ){
+            if( !mangledPlatformVersion ){ onDone(Error("mangledPlatformVersion missing: "+ thingyName)); return; }
+            log.write("[DEBUG] "+ thingyName +" - Set platform version "+ mangledPlatformVersion +"\n");
             var child = child_process.spawn(
                 "mvn", ["versions:update-parent", "-DgenerateBackupPoms=false", "-DallowDowngrade=true",
                     "-DallowSnapshots=true", "-DforceUpdate=true", "-DskipResolution=true",
-                    "-DparentVersion="+app.parentVersion],
+                    "-DparentVersion="+ mangledPlatformVersion],
                 { cwd: workdirOfSync(app, thingyName) },
             );
             child.on("error", console.error.bind(console));
@@ -487,15 +537,14 @@ Related:
                     onDone(Error("code "+ code +", signal "+ signal));
                     return;
                 }
-                updateProperty();
+                updateProperty(mangledPlatformVersion);
             });
         }
-        function updateProperty( ex ){
-            if( ex ) throw ex;
-            log.write("[DEBUG] "+ thingyName +" - Set parent.version "+ app.parentVersion +"\n");
+        function updateProperty( mangledPlatformVersion ){
+            log.write("[DEBUG] "+ thingyName +" - Set parent.version "+ mangledPlatformVersion +"\n");
             var child = child_process.spawn(
                 "mvn", ["versions:set-property", "-DgenerateBackupPoms=false", "-DallowSnapshots=true",
-                    "-Dproperty=platform.version", "-DnewVersion="+ app.parentVersion],
+                    "-Dproperty=platform.version", "-DnewVersion="+ mangledPlatformVersion],
                 { cwd: workdirOfSync(app, thingyName) },
             );
             child.on("error", console.error.bind(console));
@@ -527,16 +576,34 @@ Related:
             if( ++iSvc >= jettyServices.length ){ onNoMoreJettyServices(); return; }
             incrNumTasks(app);
             jettyService = jettyServices[iSvc];
-            isWorktreeClean(app, jettyService, onIsWorktreeCleanRsp);
+            isWorktreeClean(app, jettyService, TODO_pCMCAEAFAgCfKwIA);
         }
-        function onIsWorktreeCleanRsp( ex, isClean ){
-            if( ex ) throw ex;
+        function TODO_pCMCAEAFAgCfKwIA( ex, isClean ){
+            if( ex ){ onDone(ex); return; }
             if( !isClean ){
                 log.write("[WARN ] Wont patch: Worktree not clean: "+ jettyService +"\n");
                 nextJettyService();
                 return;
             }
-            log.write("[DEBUG] Patching \""+ jettyService +"/Jenkinsfile\"\n");
+            getPatch(app, jettyService, TODO_UR0CABMRAgBOAgIA);
+        }
+        function TODO_UR0CABMRAgBOAgIA( ex, patchStr ){
+            if( ex ){ onDone(ex); return; }
+            if( !patchStr ){ TODO_qCICAFEnAgD7FgIA(); return; }
+            log.write("[DEBUG] Custom patch for '"+ jettyService +"'\n");
+            var child = child_process.spawn(
+                "patch", [ "-p", "1" ], { cwd: workdirOfSync(app, jettyService) }
+            );
+            child.on("error", console.error.bind(console));
+            child.stderr.on("data", logAsString);
+            child.stdout.on("data", logAsString);
+            child.on("close", nextJettyService);
+            child.stdin.write(patchStr);
+            child.stdin.end();
+        }
+        function TODO_qCICAFEnAgD7FgIA( ex ){
+            if( ex ) throw ex;
+            log.write("[DEBUG] Generic patch \""+ jettyService +"/Jenkinsfile\"\n");
             var child = child_process.spawn(
                 "sed", [ "-i", "-E", "s_^(.*?buildMaven.*?),? *slim: *true,? *(.*?)$_\\1\\2_", "Jenkinsfile" ],
                 { cwd: workdirOfSync(app, jettyService) },
@@ -545,11 +612,11 @@ Related:
             child.stderr.on("data", logAsString);
             child.on("close", removeEmptyArray);
         }
-        /* Pipeline is too dump for an empty array */
+        /* Pipeline cannot handle an empty array */
         function removeEmptyArray( ex ){
             if( ex ) throw ex;
             var child = child_process.spawn(
-                "sed", [ "-i", "-E", "s_^(.*?).buildMaven\\\\(\\\\[\\\\]\\\\)(.*?)$_\\\\1\\\\2_", "Jenkinsfile" ],
+                "sed", [ "-i", "-E", "s_^(.*?.buildMaven)\\\\(\\\\[\\\\]\\\\)(.*?)$_\\\\1()\\\\2_", "Jenkinsfile" ],
                 { cwd: workdirOfSync(app, jettyService) },
             );
             child.on("error", console.error.bind(console));
@@ -874,6 +941,7 @@ Related:
         if( app.isPushPlatform ){ actions.push(pushPlatform); }
         if( app.isPatchServices ){
             actions.push(dropSlimFromAllJenkinsfiles);
+            actions.push(setPlatformVersionInAllServices);
             actions.push(function( app, onDone ){
                 forEachInArrayDo(app, app.services, giveServiceOurSpecialVersion, onDone);
             });
