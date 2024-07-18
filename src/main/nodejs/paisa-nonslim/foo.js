@@ -170,21 +170,33 @@ Related:
     }
 
 
-    function getPatch( app, patchKey, onDone ){
-        var path = __dirname +"/patches/"+ patchKey +".patch";
+    function getPatch( app, thingyName, onDone ){
+        var path = __dirname +"/patches/"+ thingyName +".patch";
+        var patchAsStr;
+        var mangledPlatformVersion, mangledServiceVersion;
         fs.readFile(path, 'utf8', TODO_sBECAHhRAgCcPAIA);
-        function TODO_sBECAHhRAgCcPAIA( ex, patchAsStr ){
-            console.log(ex);
+        function TODO_sBECAHhRAgCcPAIA( ex, patchAsStr_ ){
             if( ex && ex.code == "ENOENT" ){
                 onDone(null, null); return;
             }else if( ex ){
                 onDone(ex); return;
             }
-            getMangledPlatformVersion(app, TODO_OhICAAs2AgCwVgIA.bind(0, patchAsStr));
+            patchAsStr = patchAsStr_;
+            getMangledPlatformVersion(app, TODO_OhICAAs2AgCwVgIA);
         }
-        function TODO_OhICAAs2AgCwVgIA( patchAsStr, ex, mangledPlatformVersion ){
+        function TODO_OhICAAs2AgCwVgIA( ex, mangledPlatformVersion_ ){
+            mangledPlatformVersion = mangledPlatformVersion_;
+            if( /\${j21.service.mangledVersion}/.test(patchAsStr) ){
+                getVersionPipelineMangledByThingyName(app, thingyName, TODO_wx0CAAUJAgBQfgIA);
+            }else{
+                TODO_wx0CAAUJAgBQfgIA(null, null);
+            }
+        }
+        function TODO_wx0CAAUJAgBQfgIA( ex, mangledServiceVersion_ ){
             if( ex ){ onDone(ex); return; }
+            mangledServiceVersion = mangledServiceVersion_;
             patchAsStr = patchAsStr.replace(/\${j21.platform.version}/g, mangledPlatformVersion);
+            patchAsStr = patchAsStr.replace(/\${j21.service.mangledVersion}/g, mangledServiceVersion);
             onDone(null, patchAsStr);
         }
     }
@@ -259,13 +271,12 @@ Related:
 
     function getVersionPipelineMangledByThingyName( app, thingyName, onDone ){
         var rspBody = "";
+        var path, host = "artifactory.pnet.ch", port = 443, method = "GET";
         collectVersionFromArtifactory();
         function collectVersionFromArtifactory(){
-            var host = "artifactory.pnet.ch", port = 443, method = "GET";
-            var path = (thingyName == "platform")
+            path = (thingyName == "platform")
                 ? "/artifactory/paisa/ch/post/it/paisa/alice/alice-service-web-core/"
                 : "/artifactory/paisa/ch/post/it/paisa/"+ thingyName +"/"+ thingyName +"-web/";
-            log.write("[DEBUG] "+ method +" "+ host +":"+ port + path +"\n");
             var req = https.request({
                 method: method, host: host, port: port, path: path,
             });
@@ -284,8 +295,10 @@ Related:
         }
         function TODO_MRYCAOIzAgAKFQIA(){
             var m = (new RegExp('\n<a href="(0.0.0-'+ app.issueKey +'-[^/]+-SNAPSHOT)/">')).exec(rspBody);
-            if( !m || !m[1] ){ onDone(Error("No version found for '"+ thingyName +"' in artifactory")); return; }
-            log.write("[DEBUG] getVersionPipelineMangledByThingyName("+ thingyName +") -> "+ m[1] +"\n");
+            if( !m || !m[1] ){
+                log.write("[DEBUG] "+ method +" "+ host +":"+ port + path +"\n");
+                onDone(Error("No version found for '"+ thingyName +"' in artifactory")); return;
+            }
             onDone(null, m[1]);
         }
     }
