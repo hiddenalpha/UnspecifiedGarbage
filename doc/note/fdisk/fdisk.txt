@@ -1,0 +1,18 @@
+
+Disk formatting
+===============
+
+
+## Format thumbdrive to exFAT
+
+apt install --no-install-recommends exfat-fuse exfatprogs
+mkfs.exfat -n "${DRIVE_NAME?}" /dev/sdXn
+
+
+## Inspect thumbdrive
+
+fdisk -l /dev/sdX
+fdisk -l /dev/sdXn
+dump.exfat /dev/sdXn
+
+

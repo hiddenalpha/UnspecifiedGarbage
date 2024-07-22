@@ -2,6 +2,11 @@
 How to Setup debian for MY needs
 ================================
 
+TODO:
+TODO: INSTALL PRINTER PACKAGES!!
+TODO:
+
+
 ## Partitioning
 
 Use the smaller & faster SSD for the system. Make sure it consists of TWO
@@ -121,7 +126,7 @@ Populate "/etc/environment" as described by "./etc-environment".
        fonts-liberation2 fonts-linuxlibertine fonts-noto-core fonts-noto-mono fonts-noto-ui-core \
        fonts-sil-gentium-basic pdftk-java \
        `# Others` \
-       lm-sensors fancontrol bc rsync qrencode \
+       lm-sensors fancontrol bc rsync qrencode exfat-fuse exfatprogs \
        `# Nvidia graphics (open)` \
        mesa-utils clinfo mesa-opencl-icd \
        `# Nvidia graphics (non-free, DoesNotWorkYet)` \

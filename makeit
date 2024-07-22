@@ -1,0 +1,23 @@
+
+set -e
+
+rm -f build/bin/*
+
+tar c src/main/paisa/LogMerge.c | ssh qemu -oRemoteCommand='cd work && tar x'
+
+ssh qemu -oRemoteCommand='cd work \
+  && CC=gcc \
+  && LD=gcc \
+  && BINEXT= \
+  && CFLAGS="-Wall -Werror -pedantic -O0 -g -fmax-errors=1 -Iimport/include" \
+  && LDFLAGS="-Wl,--gc-sections,--as-needed,-dn,-lgarbage,-lcJSON,-lexpat,-lmbedtls,-lmbedx509,-lmbedcrypto,-dy,-lpthread,-Limport/lib" \
+  && PROJECT_VERSION="$(date -u +0.0.0-%%Y%%m%%d.%%H%%M%%S)" \
+  && mkdir -p build/bin \
+  && echo \
+  && ${CC:?} -c -o /tmp/UJ0lnr5UIy1so7Rc src/main/paisa/LogMerge.c ${CFLAGS:?} -DPROJECT_VERSION=${PROJECT_VERSION:?} \
+  && echo \
+  && ${LD:?} -o build/bin/LogMerge$BINEXT /tmp/UJ0lnr5UIy1so7Rc ${LDFLAGS:?} \
+  && true '
+
+ssh qemu -oRemoteCommand='cd work && tar c build/bin' | tar x
+
