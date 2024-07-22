@@ -1,0 +1,23 @@
+
+
+--- a/Jenkinsfile
++++ b/Jenkinsfile
+@@ -12,13 +12,13 @@ serviceBuildPipeline([
+     jslPipeline
+             .checkout()
+             .setBranchVersion()
+-            .buildMaven([spotless: true, slim: true])
++            .buildMaven([spotless: true])
+             .withInstances([
+                     instances: [
+                             vehicleInstance: [
+                                     services: [
+                                             eagle:    [version: '02.01.22.00'],
+-                                            platform: [version: '03.06.41.00'],
++                                            platform: [version: '${j21.platform.version}'],
+                                             storage:  [version: '00.24.00.00'],
+                                             jeltz:    [version: '%currentBranch%']
+                                     ]
+
+
+
