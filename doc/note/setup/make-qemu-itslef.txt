@@ -1,7 +1,8 @@
 
 # How to compile qemu
 
-# WARN: WorkInProgress, and does NOT work.
+# WARN: WorkInProgress. Does NOT work.
+# Originally used with ubuntu 24.04.
 
 set -e
 
@@ -15,10 +16,11 @@ true \
   && cd "${WORKDIR?}/qemu-src" \
   && git init && git branch -m deleteMe \
   && git remote add upstream https://gitlab.com/qemu-project/qemu.git \
-  && git remote add stefanweil http://repo.or.cz/w/qemu/ar7.git/ \
+  && git remote add stefanweil https://repo.or.cz/qemu.git \
   && git fetch --depth=1 upstream refs/tags/v9.0.1:refs/tags/v9.0.1 \
-  && git fetch --depth=1 stefanweil daf95bda0119425b5dec509f784a5a93be3e21da:refs/heads/master-of-stefanweil \
-  && git checkout --detach master-of-stefanweil \
+  && git fetch --depth=1 stefanweil 960a67e9170f534e9a5009195f75b6868bdd1183:refs/heads/stable-8.2-of-stweil \
+  && git checkout --detach stable-8.2-of-stweil \
+  && sed -i -E 's_^ *set .*$_set -e_' .github/workflows/* \
   && .github/workflows/pacman.sh x86_64 \
   && .github/workflows/build.sh x86_64 \
   && printf '\n  DONE\n\n'
