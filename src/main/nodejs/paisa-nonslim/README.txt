@@ -7,7 +7,7 @@ Currently working on "SDCISA-15648".
 [j21 migration branches sandro](https://wikit.post.ch/display/ISA/ISA+Java21+Update)
 
 
-[rob dependencies cannot start](https://jenkinspaisa-temp.tools.pnet.ch/job/rob/job/SDCISA-15648-RemoveSlimPackaging-n1/)
+[rob NoClassDefFoundError](https://jenkinspaisa-temp.tools.pnet.ch/job/rob/job/SDCISA-15648-RemoveSlimPackaging-n1/)
 
 Exception in thread "Thread-0" java.lang.NoClassDefFoundError: ch/qos/logback/classic/spi/ThrowableProxy
 	at ch.qos.logback.classic.spi.LoggingEvent.<init>(LoggingEvent.java:145)

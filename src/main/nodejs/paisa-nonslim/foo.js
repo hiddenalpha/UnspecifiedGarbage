@@ -173,7 +173,10 @@ Related:
     function getPatch( app, thingyName, onDone ){
         var path = __dirname +"/patches/"+ thingyName +".patch";
         var patchAsStr;
-        var mangledPlatformVersion, mangledServiceVersion;
+        var mangledPlatformVersion, mangledServiceVersion, mangledSlartiVersion;
+        var propsToReplace = [ "j21.service.mangledVersion", "j21.platform.version",
+            "j21.captain.mangledVersion", "j21.slarti.mangledVersion" ];
+        var propValsByKey = {};
         fs.readFile(path, 'utf8', TODO_sBECAHhRAgCcPAIA);
         function TODO_sBECAHhRAgCcPAIA( ex, patchAsStr_ ){
             if( ex && ex.code == "ENOENT" ){
@@ -182,21 +185,30 @@ Related:
                 onDone(ex); return;
             }
             patchAsStr = patchAsStr_;
-            getMangledPlatformVersion(app, TODO_OhICAAs2AgCwVgIA);
+            getNextProperty();
         }
-        function TODO_OhICAAs2AgCwVgIA( ex, mangledPlatformVersion_ ){
-            mangledPlatformVersion = mangledPlatformVersion_;
-            if( /\${j21.service.mangledVersion}/.test(patchAsStr) ){
-                getVersionPipelineMangledByThingyName(app, thingyName, TODO_wx0CAAUJAgBQfgIA);
-            }else{
-                TODO_wx0CAAUJAgBQfgIA(null, null);
-            }
+        function getNextProperty(){
+            var k = propsToReplace.shift();
+            if( !k ){ replaceProperties(); return; }
+            if( !new RegExp("\\${"+ k +"}").test(patchAsStr) ){ getNextProperty(); return; }
+            var subj = false ? null
+                : (k == "j21.service.mangledVersion") ? thingyName
+                : (k == "j21.platform.version") ? "platform"
+                : null;
+            if( !subj ){ subj = /^j21.([^.]+).mangledVersion$/.exec(k)[1]; }
+            if( !subj ){ onDone(Error("TODO_NkICAG1HAgCDYgIA "+ k)); return; }
+            getVersionPipelineMangledByThingyName(app, subj, function( ex, val ){
+                if( ex ){ onDone(ex); return; }
+                propValsByKey[k] = val;
+                getNextProperty();
+            });
         }
-        function TODO_wx0CAAUJAgBQfgIA( ex, mangledServiceVersion_ ){
+        function replaceProperties( ex ){
             if( ex ){ onDone(ex); return; }
-            mangledServiceVersion = mangledServiceVersion_;
-            patchAsStr = patchAsStr.replace(/\${j21.platform.version}/g, mangledPlatformVersion);
-            patchAsStr = patchAsStr.replace(/\${j21.service.mangledVersion}/g, mangledServiceVersion);
+            for( var k of Object.keys(propValsByKey) ){
+                var v = propValsByKey[k];
+                patchAsStr = patchAsStr.replace(new RegExp("\\${"+ k +"}", "g"), v);
+            }
             onDone(null, patchAsStr);
         }
     }
@@ -294,12 +306,24 @@ Related:
             rsp.on("end", TODO_MRYCAOIzAgAKFQIA);
         }
         function TODO_MRYCAOIzAgAKFQIA(){
-            var m = (new RegExp('\n<a href="(0.0.0-'+ app.issueKey +'-[^/]+-SNAPSHOT)/">')).exec(rspBody);
-            if( !m || !m[1] ){
+            var pat = new RegExp('\n<a href="(0.0.0-'+ app.issueKey +'-[^/]+-SNAPSHOT)/">[^<]+</a> +([0-9]{2})-([A-Za-z]{3})-([0-9]{4}) ([0-9]{2}):([0-9]{2}) +-');
+            var latestVersion, latestDate;
+            rspBody.replace(pat, function( match, version, day, mthShrt, yr, hrs, mins, off, rspBody, groupNameMap ){
+                /* [FUCK those FUCKING DAMN bullshit formats!!!](https://xkcd.com/1179/) */
+                var mth = (mthShrt == "Jul") ? "07" : null;
+                if( !mth ){ throw Error("TODO_1iUCAA1ZAgBALgIA "+ mthShrt); }
+                var builtAt = yr +"-"+ mth +"-"+ day +" "+ hrs +":"+ mins;
+                if( latestVersion == null || builtAt > latestDate ){
+                    latestVersion = version;
+                    latestDate = builtAt;
+                }
+                return match;
+            });
+            if( !latestVersion ){
                 log.write("[DEBUG] "+ method +" "+ host +":"+ port + path +"\n");
                 onDone(Error("No version found for '"+ thingyName +"' in artifactory")); return;
             }
-            onDone(null, m[1]);
+            onDone(null, latestVersion);
         }
     }
 
