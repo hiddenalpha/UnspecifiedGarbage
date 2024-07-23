@@ -1,0 +1,26 @@
+
+
+--- a/Jenkinsfile
++++ b/Jenkinsfile
+@@ -9,5 +9,5 @@ serviceBuildPipeline([
+     jslPipeline
+         .checkout()
+         .setBranchVersion()
+-        .buildMaven([spotless: true, slim: true])
++        .buildMaven([spotless: true])
+         .runKarma()
+         .buildDocker()
+         .withInstances([
+
+
+--- a/Jenkinsfile
++++ b/Jenkinsfile
+@@ -17,7 +17,7 @@ serviceBuildPipeline([
+                 testInstance: [
+                     services: [
+                         eagle:    [version: '02.01.19.00'],
+-                        platform: [version: '03.06.40.00'],
++                        platform: [version: '${j21.platform.version}'],
+                         storage:  [version: '00.24.00.00'],
+
+

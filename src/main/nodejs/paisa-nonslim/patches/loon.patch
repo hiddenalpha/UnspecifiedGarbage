@@ -1,0 +1,21 @@
+
+
+--- a/Jenkinsfile
++++ b/Jenkinsfile
+@@ -9,11 +9,11 @@ serviceBuildPipeline([
+     jslPipeline
+         .checkout()
+         .setBranchVersion()
+-        .buildMaven([slim: true])
++        .buildMaven()
+         .withInstances([
+             instances: [
+                 testInstance: [
+                     services: [
+                         eagle:    [version: '02.01.19.00'],
+-                        platform: [version: '03.06.41.00'],
++                        platform: [version: '${j21.platform.version}'],
+                         storage:  [version: '00.24.00.00'],
+
+
+

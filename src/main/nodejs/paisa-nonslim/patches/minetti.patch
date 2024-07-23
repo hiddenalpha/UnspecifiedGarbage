@@ -1,0 +1,23 @@
+
+--- a/Jenkinsfile
++++ b/Jenkinsfile
+@@ -12,7 +12,7 @@ serviceBuildPipeline([
+     jslPipeline
+             .checkout()
+             .setBranchVersion()
+-            .buildMaven([slim: true, spotless: true])
++            .buildMaven([spotless: true])
+             .runKarma()
+             .withInstances([
+                     instances: [
+@@ -25,7 +25,7 @@ serviceBuildPipeline([
+                             vehicleInstance: [
+                                     services: [
+                                             eagle:    [version: '02.01.19.00'],
+-                                            platform: [version: '03.06.38.00'],
++                                            platform: [version: '${j21.platform.version}'],
+                                             storage:  [version: '00.24.00.00'],
+-                                            slarti:   [version: '03.14.37.00'],
++                                            slarti:   [version: '${j21.service.mangledVersion}'],
+                                             minetti:  [version: '%currentBranch%']
+
