@@ -5,7 +5,7 @@
   && CC=cc \
   && LD=cc \
   && CFLAGS="-Wall -Wextra -Werror -pedantic -O0" \
-  && LDFLAGS="" \
+  && LDFLAGS="-static" \
   && BINEXT= \
 
   && CC=x86_64-w64-mingw32-gcc \
