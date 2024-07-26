@@ -21,7 +21,6 @@
  */
 
 #include <assert.h>
-#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -36,6 +35,7 @@
 #   define SOCK long long unsigned
 #   define SOCK_isValid(s) ((s) != INVALID_SOCKET)
 #else
+#   include <errno.h>
 #   include <arpa/inet.h>
 #   include <sys/socket.h>
 #   define WINDOOF 0
@@ -94,9 +94,8 @@ static void printHelp( void ){
 static int parseArgs( App*app, char**argv ){
     int iA = 0;
     app->port = -1;
-nextOpt:
-    iA += 1;
-    char *arg = argv[iA];
+nextOpt:;
+    char *arg = argv[++iA];
     if( arg == NULL ){
         goto verify;
     }else if( !strcmp(arg, "--help") ){
@@ -188,6 +187,7 @@ nextClient:
     /* Good :) Then release client socket after a while and go handle next client. */
     sleepMs(42);
     err = close(app->sockRemote);
+    /* TODO why is windoof behavior different from others here? */
 #if WINDOOF
     assert(err == -1 && WSAGetLastError() == WSAECONNABORTED);
 #else
@@ -219,18 +219,19 @@ static int runClient( App*app ){
     err = send(app->sock, "A", 1, MSG_NOSIGNAL);  assert(err == 1);
     err = shutdown(app->sock, SHUT_WR);  assert(err == 0);
     /* Lets say some broken code tries to send 'B' a moment later ON THE
-     * ALREADY CLOSED outgoing stream.
-     * NOTE: TCP stack MUST NOT accept our data! It has to report an error to
-     * us. Something like EPIPE or equivalent. */
+     * ALREADY CLOSED outgoing stream. As sending on a closed stream is
+     * nonsense, we expect an error of course. */
     sleepMs(150);
     err = send(app->sock, "B", 1, MSG_NOSIGNAL);
     assert(err == -1);
 #if WINDOOF
-    assert(WSAGetLastError() != 0);
+    err = WSAGetLastError();
+    assert(err != 0);
+    LOGDBG("[SUCCESS] Well done TCP :) Thx for reporting code 0x%X\n", err);
 #else
     assert(errno != 0);
-#endif
     LOGDBG("[SUCCESS] Well done TCP :) Thx for reporting errno %d, aka: %s\n", errno, strerror(errno));
+#endif
     return 0;
 }
 
