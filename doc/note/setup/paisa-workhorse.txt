@@ -25,7 +25,7 @@ Configure
   && IDPPROVIDER=ADFS2 \
   && MFA=RSA \
   && SAML_VERSION="2.36.16" \
-  && ARGOCD_VERSION="2.12.0-rc2" \
+  && ARGOCD_VERSION="2.11.7" \
   && GETADDRINFO_VERSION="0.0.2" \
   && CACHEDIR="/var/tmp" \
 
@@ -41,13 +41,16 @@ Setup
   && (cd "${CACHEDIR?}" && curl -Lo "getaddrinfo-${GETADDRINFO_VERSION?}+x86_64-linux-gnu.tgz" "https://github.com/hiddenalpha/getaddrinfo-cli/releases/download/v${GETADDRINFO_VERSION?}/getaddrinfo-${GETADDRINFO_VERSION?}+x86_64-linux-gnu.tgz") \
   && (cd "${CACHEDIR?}" && curl -o saml2aws_${SAML_VERSION?}_linux_amd64.tgz "https://artifactory.tools.post.ch/artifactory/generic-github-remote/Versent/saml2aws/releases/download/v${SAML_VERSION?}/saml2aws_${SAML_VERSION?}_linux_amd64.tar.gz") \
   && (cd "${CACHEDIR?}" && curl -Lo "argocd-${ARGOCD_VERSION?}+linux-amd64" "https://github.com/argoproj/argo-cd/releases/download/v${ARGOCD_VERSION?}/argocd-linux-amd64") \
-  && mkdir -p ~/.local/bin ~/.local/opt \
-  && $SUDO mkdir "/opt/getaddrinfo-${GETADDRINFO_VERSION?}" \
+  && mkdir -p ~/.local/bin \
+  && $SUDO mkdir -p "/opt/getaddrinfo-${GETADDRINFO_VERSION?}" "/opt/argocd-${ARGOCD_VERSION?}/bin" \
   && (cd /opt/getaddrinfo-${GETADDRINFO_VERSION?} && $SUDO tar xf "${CACHEDIR?}/getaddrinfo-${GETADDRINFO_VERSION?}+x86_64-linux-gnu.tgz") \
   && (cd ~/.local/bin && ln -s "/opt/getaddrinfo-${GETADDRINFO_VERSION?}/bin/getaddrinfo") \
   && $SUDO mkdir "/opt/saml2aws_${SAML_VERSION?}" "/opt/saml2aws_${SAML_VERSION?}/bin" \
   && (cd /opt/saml2aws_${SAML_VERSION?}/bin && $SUDO tar xf "${CACHEDIR?}"/saml2aws_${SAML_VERSION?}_linux_amd64.tgz -- saml2aws) \
+  && (cd /opt/argocd-${ARGOCD_VERSION?}/bin && $SUDO cp "${CACHEDIR?}/argocd-${ARGOCD_VERSION?}+linux-amd64" .) \
+  && $SUDO chmod 0655 "/opt/argocd-${ARGOCD_VERSION?}/bin/argocd-${ARGOCD_VERSION?}+linux-amd64" \
   && (cd ~/.local/bin && ln -s /opt/saml2aws_${SAML_VERSION?}/bin/saml2aws) \
+  && (cd ~/.local/bin && ln -s /opt/argocd-${ARGOCD_VERSION?}/bin/argocd-${ARGOCD_VERSION?}+linux-amd64 argocd) \
   && (printf 'export PATH="%s/.local/bin:$PATH"\n' ~) >> ~/.bashrc \
   && export PATH="/home/${USER?}/.local/bin:$PATH" \
   && $SUDO mkdir -p /c && $SUDO ln -s /mnt/cdrive/work /c/work \
@@ -62,5 +65,8 @@ Authorize (needs attention)
   && saml2aws login \
   && aws --profile "${AWS_PROFILE?}" --region "${REGION?}" eks update-kubeconfig --name "${CLUSTER?}" \
   && kubectl config set-context --current --namespace="${NAMESPACE?}" \
+
+
+[Maybe saml2aws becomes obsolete](https://wikit.post.ch/display/CDAF/How+to%3A+Setup-Guide+saml2aws?focusedCommentId=1741722098&src=mail&src.mail.product=confluence-server&src.mail.timestamp=1721914205401&src.mail.notification=com.atlassian.confluence.plugins.confluence-notifications-batch-plugin%3Abatching-notification&src.mail.recipient=8a81e4a6427b972601427b98b9262c20&src.mail.action=view#comment-1741722098)
 
 

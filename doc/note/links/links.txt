@@ -232,6 +232,7 @@ Links (Aka argument amplifiers)
 - [java streams are ugly](https://gitit.post.ch/projects/ISA/repos/nsync/pull-requests/55/overview?commentId=328210)
 
 ## Backward compatibility, Breaking Changes
+- [preflux 2024 storage/redis aws isaVersion](https://gitit.post.ch/projects/ISA/repos/preflux/pull-requests/780/overview?commentId=396322)
 - "https://www.redstar.be/backward-compatibility-in-software-development-what-and-why/"
 - [UserInformation SAP 2023](https://gitit.post.ch/projects/ISA/repos/user-information-api/pull-requests/20/overview?commentId=270157)
 - [new mandatory fields](https://gitit.post.ch/projects/ISA/repos/vehicleoperation-recording-api/pull-requests/36/overview?commentId=272214)
@@ -242,6 +243,7 @@ Links (Aka argument amplifiers)
 - [remove but still in use](https://gitit.post.ch/projects/ISA/repos/vending-transaction-api/pull-requests/20/overview?commentId=385689)
 
 ## Performance DOES matter
+- [aws database HMS 2024](https://jira.post.ch/browse/SDCISA-16381)
 - [Performance gefühlt viel zu langsam in Wikkit bei Linienaufruf und Export erstellen](https://jira.post.ch/browse/SDCISA-16103)
 - "https://github.com/swisspush/gateleen/pull/456#discussion_r844865066"
 - [Performance Excuses Debunked](https://m.youtube.com/watch?v=x2EOOJg8FkA)

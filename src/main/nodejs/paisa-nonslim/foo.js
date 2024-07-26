@@ -344,7 +344,8 @@ Related:
                 printIntro();
             }
         }
-        function TODO_OBgCAKAhAgCcXwIA( ex, thingyName, mangledVersion ){
+        function TODO_OBgCAKAhAgCcXwIA( thingyName, ex, mangledVersion ){
+            if( ex ){ onDone(ex); return; }
             log.write("[DEBUG] versionsByThingy[\""+ thingyName +"\"] = \""+ mangledVersion +"\"\n");
             versionsByThingy[thingyName] = mangledVersion;
             collectNextVersionFromArtifactory();
