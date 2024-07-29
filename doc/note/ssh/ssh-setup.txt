@@ -13,11 +13,11 @@ SSH Setup & Key Management
 Create "path/to/key" and "path/to/key.pub" as a 2048 bit RSA with
 "your comment" as comment (you can skip "-C comment" if you dont care).
 
-```sh
-ssh-keygen -t rsa -b 2048 -f path/to/key -C "your comment"
-```
+TODO: mättu sagt evtl noch "-a 256" angeben für keygen.
 
-Create "path/to/key" and "path/to/key.pub" as an elliptic curve.
+```sh
+ssh-keygen -t rsa -b 3072 -f path/to/key -C "your comment"
+```
 
 ```sh
 ssh-keygen -t ed25519 -f path/to/key -C "your comment"
@@ -47,6 +47,7 @@ Print public key hash as md5:
 ssh-keygen -E md5 -l -f path/to/key.pub
 ```
 
+Extract public key part:
 ```sh
 ssh-keygen -y -f path/to/key > path/to/key.pub
 ```
