@@ -57,6 +57,10 @@ Related:
             +"    --print-isa-version\n"
             +"      Prints an isaVersion JSON that can be fed to preflux.\n"
             +"  \n"
+            +"    --print-baseline-version\n"
+            +"      Prints an isaVersion JSON that can be fed to preflux. Consisting\n"
+            +"      of the latest versions found for each service.\n"
+            +"  \n"
             // not impl yet
             //+"    --max-parallel <int>\n"
             //+"      How many tasks to run concurrently. Defaults to 1. Which means to\n"
@@ -99,6 +103,8 @@ Related:
                 app.isPushForce = true;
             }else if( arg == "--print-isa-version" ){
                 app.isPrintIsaVersion = true;
+            }else if( arg == "--print-baseline-version" ){
+                app.isPrintBaselineVersion = true;
             //}else if( arg == "--max-parallel" ){
             //    arg = argv[++iA];
             //    if( !/^[0-9]+$/.test(arg) ){ log.write("EINVAL: --max-parallel "+ arg +"\n"); return -1; }
@@ -316,7 +322,7 @@ Related:
             rsp.on("end", TODO_MRYCAOIzAgAKFQIA);
         }
         function TODO_MRYCAOIzAgAKFQIA(){
-            var pat = new RegExp('\n<a href="(0.0.0-'+ app.issueKey +'-[^/]+-SNAPSHOT)/">[^<]+</a> +([0-9]{2})-([A-Za-z]{3})-([0-9]{4}) ([0-9]{2}):([0-9]{2}) +-');
+            var pat = new RegExp('\n<a href="(0.0.0-'+ app.issueKey +'-[^/]+-SNAPSHOT)/">[^<]+</a> +([0-9]{2})-([A-Za-z]{3})-([0-9]{4}) ([0-9]{2}):([0-9]{2}) +-', "g");
             var latestVersion, latestDate;
             rspBody.replace(pat, function( match, version, day, mthShrt, yr, hrs, mins, off, rspBody, groupNameMap ){
                 /* [FUCK those FUCKING DAMN bullshit formats!!!](https://xkcd.com/1179/) */
@@ -338,10 +344,63 @@ Related:
     }
 
 
-    function printIsaVersion( app, onDone ){
+    function getVersionLatestRelease( app, thingyName, onDone ){
+        var rspBody = "";
+        var path, host = "artifactory.pnet.ch", port = 443, method = "GET";
+        collectVersionFromArtifactory();
+        function collectVersionFromArtifactory(){
+            path = (thingyName == "platform")
+                ? "/artifactory/paisa/ch/post/it/paisa/alice/alice-service-web-core/"
+                : "/artifactory/paisa/ch/post/it/paisa/"+ thingyName +"/"+ thingyName +"-web/";
+            var req = https.request({
+                method: method, host: host, port: port, path: path,
+            });
+            req.on("error", console.log.bind(console));
+            req.on("response", TODO_7QwCACAXAgDYFAIA);
+            req.end();
+        }
+        function TODO_7QwCACAXAgDYFAIA( rsp ){
+            if( rsp.statusCode != 200 ){
+                log.write("[ERROR] thingyName '"+ thingyName +"'\n");
+                log.write("[ERROR] HTTP "+ rsp.statusCode +"\n");
+                onDone(Error("HTTP "+ rsp.statusCode)); return;
+            }
+            rsp.on("data", function( cnk ){ rspBody += cnk.toString(); });
+            rsp.on("end", TODO_xwwCAHdnAgBOVQIA);
+        }
+        function TODO_xwwCAHdnAgBOVQIA(){
+            var pat = new RegExp('\n<a href="([0-9]+\\.[0-9]+\\.[0-9]+\\.(?:[0-9]+)?)/">[^<]+</a> +([0-9]{2})-([A-Za-z]{3})-([0-9]{4}) ([0-9]{2}):([0-9]{2}) +-', "g");
+            var latestVersion, latestDate;
+            rspBody.replace(pat, function( match, version, day, mthShrt, yr, hrs, mins, off, rspBody, groupNameMap ){
+                /* [FUCK those FUCKING DAMN bullshit formats!!!](https://xkcd.com/1179/) */
+                var mth = (false) ? null
+                    : (mthShrt == "Jan") ? "01" : (mthShrt == "Feb") ? "02" : (mthShrt == "Mar") ? "03"
+                    : (mthShrt == "Apr") ? "04" : (mthShrt == "May") ? "05" : (mthShrt == "Jun") ? "06"
+                    : (mthShrt == "Jul") ? "07" : (mthShrt == "Aug") ? "08" : (mthShrt == "Sep") ? "09"
+                    : (mthShrt == "Oct") ? "10" : (mthShrt == "Nov") ? "11" : (mthShrt == "Dec") ? "12"
+                    : null;
+                if( !mth ){ throw Error("TODO_pAwCADRpAgB3TwIA "+ mthShrt); }
+                var builtAt = yr +"-"+ mth +"-"+ day +" "+ hrs +":"+ mins;
+                if( latestVersion == null || builtAt > latestDate ){
+                    latestVersion = version;
+                    latestDate = builtAt;
+                }
+                return match;
+            });
+            if( !latestVersion ){
+                log.write("[DEBUG] "+ method +" "+ host +":"+ port + path +"\n");
+                onDone(Error("No version found for '"+ thingyName +"' in artifactory")); return;
+            }
+            onDone(null, latestVersion);
+        }
+
+    }
+
+
+    function printIsaVersionNoslim( app, onDone ){
         var iSvcGetVersion = 0, iSvcQuery = 0, iSvcPrinted = 0;
         var rspBody = "";
-        var versionsByThingy = {};
+        var nameVersionArr = [];
         var services = app.services.slice(0);
         services.unshift("platform");
         collectNextVersionFromArtifactory();
@@ -351,15 +410,45 @@ Related:
                 var thingyName = services[iSvcGetVersion++];
                 getVersionPipelineMangledByThingyName(app, thingyName, TODO_OBgCAKAhAgCcXwIA.bind(0, thingyName));
             }else{
-                printIntro();
+                printIsaVersion(app, nameVersionArr, onDone);
             }
         }
         function TODO_OBgCAKAhAgCcXwIA( thingyName, ex, mangledVersion ){
             if( ex ){ onDone(ex); return; }
             log.write("[DEBUG] versionsByThingy[\""+ thingyName +"\"] = \""+ mangledVersion +"\"\n");
-            versionsByThingy[thingyName] = mangledVersion;
+            nameVersionArr.push({ name:thingyName, version:mangledVersion });
             collectNextVersionFromArtifactory();
         }
+    }
+
+
+    function printBaselineVersion( app, onDone ){
+        var iSvcGetVersion = 0;
+        var services = app.services.slice(0);
+        var nameVersionArr = [];
+        services.unshift("platform");
+        collectNextVersionFromArtifactory();
+        function collectNextVersionFromArtifactory( ex ){
+            if( ex ){ onDone(ex); return; }
+            if( iSvcGetVersion < services.length ){
+                var thingyName = services[iSvcGetVersion++];
+                getVersionLatestRelease(app, thingyName, TODO_vwECAA4wAgCgEgIA.bind(0, thingyName));
+            }else{
+                printIsaVersion(app, nameVersionArr, onDone);
+            }
+        }
+        function TODO_vwECAA4wAgCgEgIA( thingyName, ex, version ){
+            if( ex ){ onDone(ex); return; }
+            log.write("[DEBUG] versionsByThingy[\""+ thingyName +"\"] = \""+ version +"\"\n");
+            nameVersionArr.push({ name:thingyName, version:version });
+            collectNextVersionFromArtifactory();
+        }
+    }
+
+
+    function printIsaVersion( app, nameVersionArr, onDone ){
+        var iSvcQuery = 0, iSvcPrinted = 0;
+        printIntro();
         function printIntro( ex ){
             if( ex ) throw ex;
             var epochMs = Date.now();
@@ -371,22 +460,19 @@ Related:
             out.write('  "services": [\n');
             out.write('    { "name": "eagle", "version": "02.01.26.00" },\n');
             out.write('    { "name": "storage", "version": "00.25.00.02" }');
-            /* maven performance is an absolute terrible monster.
-             * Problem 1: Doing this sequentially takes forever.
-             * Problem 2: Doing this parallel for all makes windoof freeze.
-             * Workaround: Do at most a few of them in parallel. */
-            for( var i = 3 ; i ; --i ) nextService();
+            nextService();
         }
         function nextService( ex ){
             if( ex ) throw ex;
-            if( iSvcQuery >= services.length ){ /*printTail();*/ return; }
-            var thingyName = services[iSvcQuery++];
-            var svcVersion = versionsByThingy[thingyName];
+            if( iSvcQuery >= nameVersionArr.length ){ /*printTail();*/ return; }
+            var thingy = nameVersionArr[iSvcQuery++];
+            var thingyName = thingy.name;
+            var svcVersion = thingy.version;
             if( typeof svcVersion != "string") throw Error(thingyName +", "+ svcVersion);
             iSvcPrinted += 1;
             out.write(",\n    ");
             out.write('{ "name": "'+ thingyName +'", "version": "'+ svcVersion +'" }');
-            if( iSvcPrinted >= services.length ){ printTail(); }else{ nextService(); }
+            if( iSvcPrinted >= nameVersionArr.length ){ printTail(); }else{ nextService(); }
         }
         function printTail( ex ){
             if( ex ) throw ex;
@@ -1002,7 +1088,8 @@ Related:
                 forEachJettyService(app, pushService, onDone);
             });
         }
-        if( app.isPrintIsaVersion ){ actions.push(printIsaVersion); }
+        if( app.isPrintIsaVersion ){ actions.push(printIsaVersionNoslim); }
+        if( app.isPrintBaselineVersion ){ actions.push(printBaselineVersion); }
         actions.push(function( app, onDone ){ log.write("[INFO ] App done\n"); });
         triggerNextAction();
         function triggerNextAction( ex ){
@@ -1027,6 +1114,7 @@ Related:
             isPush: false,
             isPushForce: false,
             isPrintIsaVersion: false,
+            isPrintBaselineVersion: false,
             remoteNamesToTry: ["origin"],
             workdir: "C:/work/tmp/SlimPkg-Repos",
             maxParallel:  1,
