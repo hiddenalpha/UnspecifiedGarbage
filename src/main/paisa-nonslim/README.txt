@@ -46,4 +46,22 @@ git d -w $(git mb origin/develop origin/SDCISA-15636-Migrate-to-Java-21) origin/
 git d -w $(git mb origin/develop origin/SDCISA-15636-Migrate-to-Java-21-test) origin/SDCISA-15636-Migrate-to-Java-21-test --name-status
 
 
+  DSTDIR=/tmp
+  tar czf "${DSTDIR:?}"/andy-noslim-$(date -u +%Y%m%d-%H%M%S).tgz -- conf isa-launch-* isa.sh logs preflux prefluxer-* puppetconfig_version repo
+
+
+## Measurements
+
+  && while true; do ssh donner -oRemoteCommand='true \
+       && while true; do true \
+         && printf '\''%%s  %%s  %%s\n'\'' \
+           "$(date +%%s)" \
+           "$(uptime)" \
+           "$(free | grep Mem)" \
+         && sleep $((5 - $(date +%%s) %% 5)) || break \
+       ;done' | tee -a donner-perf-$(date -u +%Y%m%d-%H%M%SZ).log \
+     && sleep 5 || break; done \
+
+
+
 
