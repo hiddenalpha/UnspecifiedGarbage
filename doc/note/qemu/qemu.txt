@@ -52,7 +52,7 @@ Windoof:
 ## Example Params (Usage: CopyPaste, then delege what is not needed)
 qemu-system-x86_64 \
     -nodefaults `# <- TODO Fix network when using this` \
-    -accel kvm,whpx,hax,tcg -m size=2G -smp cores=$(nproc) \
+    -accel kvm,whpx,hax,tcg -m size=2G -smp cores=$(nproc) --no-reboot \
     `# Drives & Boot.` \
     -boot order=dc \
     -cdrom "path/to/cd.iso" \
@@ -63,7 +63,7 @@ qemu-system-x86_64 \
     `# Isolated Network with samba access to host` \
     -netdev 'user,id=n2,ipv6=off,restrict=y,guestfwd=tcp:10.0.2.9:139-cmd:ncat 127.0.0.1 139,guestfwd=tcp:10.0.2.9:445-cmd:ncat 127.0.0.1 445' -device e1000,netdev=n2 \
     `# 10.0.2.x network with host redirect` \
-    -netdev user,id=n0,ipv6=off,hostfwd=tcp:127.0.0.1:${SSH_PORT?}-:22 -device e1000,netdev=n0 \
+    -netdev user,id=n0,ipv6=off,hostfwd=tcp:127.0.0.1:${SSH_PORT:?}-:22 -device e1000,netdev=n0 \
     `# socket mcast shared network adapter` \
     -netdev socket,id=n1,mcast=230.0.0.1:1234 -device e1000,netdev=n1 \
     `# USB pass-through by port or device. Use 'lsusb -t' or 'lsusb' to find IDs` \

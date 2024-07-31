@@ -30,6 +30,11 @@ request to "localhost:7080" on HOST.
 ssh -o 'ProxyCommand ncat -p12345 %h %p' MY_SERVER
 
 
+## Use cli provided identities ONLY
+
+ssh -oIdentitiesOnly=yes -i path/to/id_foo
+
+
 ## Get rid of bullshit warnings
 
   -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null
