@@ -449,7 +449,28 @@ Related:
             out.write('  "trial": true,\n');
             out.write('  "services": [\n');
             out.write('    { "name": "eagle", "version": "02.01.26.00" },\n');
-            out.write('    { "name": "storage", "version": "00.25.00.02" }');
+            out.write('    { "name": "storage", "version": "00.25.00.02" },\n');
+            out.write('    { "name": "desiato", "version": "00.15.00.00" },\n');
+            out.write('    { "name": "fenchurch", "version": "04.01.00.01" },\n');
+            out.write('    { "name": "nova", "version": "14.181.1" },\n');
+            out.write('    { "name": "hafas", "version": "5.41.SBB.4.15.8" },\n');
+            out.write('    { "name": "data-fis-106", "version": "00.36.09.27" },\n');
+            out.write('    { "name": "data-fis-17", "version": "00.36.09.24" },\n');
+            out.write('    { "name": "data-fis-13", "version": "00.36.09.25" },\n');
+            out.write('    { "name": "data-fis-32", "version": "00.36.09.25" },\n');
+            out.write('    { "name": "data-fis-63", "version": "00.36.09.24" },\n');
+            out.write('    { "name": "data-fis-65", "version": "00.36.05.48.int" },\n');
+            out.write('    { "name": "data-fis-4", "version": "00.36.09.22" },\n');
+            out.write('    { "name": "data-sale", "version": "01.38.268.01" },\n');
+            out.write('    { "name": "data-nova", "version": "14.181.0.20240704-1311.P.P.8937.0" },\n');
+            out.write('    { "name": "data-fis-9", "version": "00.36.09.34" },\n');
+            out.write('    { "name": "data-fis-1", "version": "00.36.09.25" },\n');
+            out.write('    { "name": "data-fpd", "version": "36.24.28.02" },\n');
+            out.write('    { "name": "data-fis-14", "version": "00.36.09.22" },\n');
+            out.write('    { "name": "data-forms", "version": "01.03.02.03" },\n');
+            out.write('    { "name": "data-fis-3", "version": "00.36.09.27" },\n');
+            out.write('    { "name": "data-fis-105", "version": "00.36.09.27" },\n');
+            out.write('    { "name": "data-fis-64", "version": "00.36.09.26" }');
             nextService();
         }
         function nextService( ex ){
