@@ -18,6 +18,13 @@ git d -w $(git mb origin/develop origin/SDCISA-15636-Migrate-to-Java-21-test) or
   tar czf "${DSTDIR:?}"/andy-noslim-$(date -u +%Y%m%d-%H%M%S).tgz -- conf isa-launch-* isa.sh logs preflux prefluxer-* puppetconfig_version repo
 
 
+JSSC USERS -> babelfish, benjy, blart, caveman, jeltz, loon, megacamel, vogon
+
+jssc sollte hier drin sein -> "alice-docker-service-base*.jar"
+
+Evtl für diese services den jssc als "provided" angeben.
+
+
 ## Measurements
 
   && `# Eddie` \

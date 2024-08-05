@@ -2,12 +2,10 @@
 
 --- a/Jenkinsfile
 +++ b/Jenkinsfile
-@@ -9,11 +9,11 @@ serviceBuildPipeline([
-     jslPipeline
-         .checkout()
+@@ -11,11 +11,11 @@ serviceBuildPipeline([
          .setBranchVersion()
--        .buildMaven([slim: true])
-+        .buildMaven()
+-        .buildMaven([spotless: true, slim: true])
++        .buildMaven([spotless: true, ])
          .withInstances([
              instances: [
                  testInstance: [
@@ -16,16 +14,18 @@
 -                        platform: [version: '03.06.41.00'],
 +                        platform: [version: '${j21.platform.version}'],
                          storage:  [version: '00.24.00.00'],
+                         caveman:  [version: '%currentBranch%']
+                     ]
 
 
-
---- a/loon-web/pom.xml
-+++ b/loon-web/pom.xml
-@@ -50,4 +50,5 @@
+--- a/caveman-web/pom.xml
++++ b/caveman-web/pom.xml
+@@ -71,4 +71,5 @@
          <dependency>
              <groupId>io.github.java-native</groupId>
              <artifactId>jssc</artifactId>
 +            <scope>provided</scope>
          </dependency>
+
 
 

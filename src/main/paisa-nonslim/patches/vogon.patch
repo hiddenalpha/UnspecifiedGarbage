@@ -2,30 +2,33 @@
 
 --- a/Jenkinsfile
 +++ b/Jenkinsfile
-@@ -9,11 +9,11 @@ serviceBuildPipeline([
+@@ -9,13 +9,13 @@ serviceBuildPipeline([
      jslPipeline
          .checkout()
          .setBranchVersion()
--        .buildMaven([slim: true])
-+        .buildMaven()
+-        .buildMaven([slim: true, spotless: true])
++        .buildMaven([spotless: true])
          .withInstances([
              instances: [
                  testInstance: [
                      services: [
-                         eagle:    [version: '02.01.19.00'],
+                         eagle:    [version: '02.01.22.00'],
 -                        platform: [version: '03.06.41.00'],
 +                        platform: [version: '${j21.platform.version}'],
                          storage:  [version: '00.24.00.00'],
+                         vogon:    [version: '%currentBranch%']
+                     ]
 
 
-
---- a/loon-web/pom.xml
-+++ b/loon-web/pom.xml
-@@ -50,4 +50,5 @@
+--- a/vogon-web/pom.xml
++++ b/vogon-web/pom.xml
+@@ -39,5 +39,6 @@
          <dependency>
              <groupId>io.github.java-native</groupId>
              <artifactId>jssc</artifactId>
+             <version>${java-native.jssc.version}</version>
 +            <scope>provided</scope>
          </dependency>
+
 
 
