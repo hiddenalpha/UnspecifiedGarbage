@@ -1,28 +1,28 @@
-/*
+#if 0
 
   && HOST_=x86_64-w64-mingw32- \
   && CC=${HOST_}gcc \
   && LD=${HOST_}gcc \
   && OBJDUMP=${HOST_}objdump \
   && BINEXT=.exe \
-  && CFLAGS="-Wall -Werror -pedantic -fmax-errors=1 -Iimport/include" \
-  && LDFLAGS="-Wl,--gc-sections,--as-needed,-dn,-lgarbage,-lcJSON,-lexpat,-lmbedtls,-lmbedx509,-lmbedcrypto,-lcustom_pthread,-dy,-lws2_32,-Limport/lib" \
+  && CFLAGS="-Wall -Werror -Wextra -pedantic -fmax-errors=3 -Iimport/include" \
+  && LDFLAGS="-Wl,--gc-sections,--as-needed,-dn,-lgarbage,-lcJSON,-lexpat,-lmbedtls,-lmbedx509,-lmbedcrypto,-l:libwinpthread.a,-dy,-lws2_32,-Limport/lib" \
 
   && PROJECT_VERSION="$(date -u +0.0.0-%Y%m%d.%H%M%S)" \
   && mkdir -p build/bin \
-  && ${CC:?} -c -o /tmp/ZwQCAGohAgDuOwIA src/main/paisa/JenkinsReBuild.c ${CFLAGS:?} -DPROJECT_VERSION=${PROJECT_VERSION:?} \
-  && ${LD:?} -o build/bin/JenkinsReBuild$BINEXT /tmp/ZwQCAGohAgDuOwIA ${LDFLAGS:?} \
+  && ${CC:?} -c -o /tmp/rBcCAJFNAgDObAIA src/main/paisa/JenkinsReBuild.c ${CFLAGS:?} -DPROJECT_VERSION=${PROJECT_VERSION:?} \
+  && ${LD:?} -o build/bin/JenkinsReBuild$BINEXT /tmp/rBcCAJFNAgDObAIA ${LDFLAGS:?} \
 
   && bullshit=$(${OBJDUMP?} -p build/bin/JenkinsReBuild$BINEXT|grep DLL\ Name|egrep -v ' (KERNEL32.dll|SHELL32.dll|WS2_32.dll|ADVAPI32.dll|msvcrt.dll)$'||true) \
   && if test -n "$bullshit"; then printf '\n  ERROR: Bullshit has sneaked in:\n\n%s\n\n' "$bullshit"; rm build/bin/JenkinsReBuild$BINEXT; false; fi \
 
- */
+#endif
 
 
 typedef  struct App  App;
 
 
-#define App_mAGIC 0x787C0200
+#define App_mAGIC (signed)0x88180200
 struct App {
     int mAGIC;
     int flg;
@@ -33,9 +33,9 @@ struct App {
 static void printHelp( void ){
     fprintf(stdout, "%s%s%s",
         "  \n"
-        "  PatchReverse (v", STR_QUOT(PROJECT_VERSION),").\n"
+        "  JenkinsReBuild (v", STR_QUOT(PROJECT_VERSION),").\n"
         "  \n"
-        "  Read a patch file from stdin and write it in reversed form to stdout.\n"
+        "  Fights annoying just-trigger-another-build workaround.\n"
         "  \n"
     );
 }
