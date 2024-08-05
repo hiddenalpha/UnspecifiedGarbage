@@ -24,6 +24,35 @@ jssc sollte hier drin sein -> "alice-docker-service-base*.jar"
 
 Evtl für diese services den jssc als "provided" angeben.
 
+TODO awaiting builds again with (hopefully fixed jssc.so):
+
+    `# Build OK` \
+    allitnil, babelfish, barman, benjy, bentstick, captain, colin, hooli,
+    kwaltz, megacamel, minetti, neutron, pobble, prosser, towel, vannharl,
+    vroom, zaphake, poodoo, streetmentioner, thor, zem, heimdall, slarti
+
+    `# Build UNSTABLE` \
+    https://jenkinspaisa-temp.tools.pnet.ch/job/deep/job/SDCISA-15648-RemoveSlimPackaging-n1/ \
+    https://jenkinspaisa-temp.tools.pnet.ch/job/guide/job/SDCISA-15648-RemoveSlimPackaging-n1/ \
+    https://jenkinspaisa-temp.tools.pnet.ch/job/nowwhat/job/SDCISA-15648-RemoveSlimPackaging-n1/ \
+
+  && PATH_TO_THE_ONLY_REAL_BROWSER="C:/Users/fankhauseand/.opt/FirefoxPortable-105.0.1/FirefoxPortable.exe" \
+  && "${PATH_TO_THE_ONLY_REAL_BROWSER:?}" \
+    `# Build FIRST_RUN` \
+    https://jenkinspaisa-temp.tools.pnet.ch/job/rob/job/SDCISA-15648-RemoveSlimPackaging-n1/ \
+    `# Build FAILED` \
+    https://jenkinspaisa-temp.tools.pnet.ch/job/blart/job/SDCISA-15648-RemoveSlimPackaging-n1/ \
+    https://jenkinspaisa-temp.tools.pnet.ch/job/caveman/job/SDCISA-15648-RemoveSlimPackaging-n1/ \
+    https://jenkinspaisa-temp.tools.pnet.ch/job/drdan/job/SDCISA-15648-RemoveSlimPackaging-n1/ \
+    https://jenkinspaisa-temp.tools.pnet.ch/job/jeltz/job/SDCISA-15648-RemoveSlimPackaging-n1/ \
+    https://jenkinspaisa-temp.tools.pnet.ch/job/loon/job/SDCISA-15648-RemoveSlimPackaging-n1/ \
+    https://jenkinspaisa-temp.tools.pnet.ch/job/magician/job/SDCISA-15648-RemoveSlimPackaging-n1/ \
+    https://jenkinspaisa-temp.tools.pnet.ch/job/mown/job/SDCISA-15648-RemoveSlimPackaging-n1/ \
+    https://jenkinspaisa-temp.tools.pnet.ch/job/vogon/job/SDCISA-15648-RemoveSlimPackaging-n1/ \
+    https://jenkinspaisa-temp.tools.pnet.ch/job/trillian/job/SDCISA-15648-RemoveSlimPackaging-n1/ \
+
+
+
 
 ## Measurements
 

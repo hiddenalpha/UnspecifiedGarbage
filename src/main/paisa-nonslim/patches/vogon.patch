@@ -22,13 +22,14 @@
 
 --- a/vogon-web/pom.xml
 +++ b/vogon-web/pom.xml
-@@ -39,5 +39,6 @@
+@@ -39,6 +39,7 @@
          <dependency>
              <groupId>io.github.java-native</groupId>
              <artifactId>jssc</artifactId>
              <version>${java-native.jssc.version}</version>
 +            <scope>provided</scope>
          </dependency>
+         <dependency>
 
 
 

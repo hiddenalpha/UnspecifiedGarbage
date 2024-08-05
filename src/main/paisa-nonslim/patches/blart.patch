@@ -2,31 +2,28 @@
 
 --- a/Jenkinsfile
 +++ b/Jenkinsfile
-@@ -11,11 +11,11 @@ serviceBuildPipeline([
+@@ -11,3 +11,3 @@ serviceBuildPipeline([
          .setBranchVersion()
 -        .buildMaven([slim: true, spotless: true])
 +        .buildMaven([spotless: true])
          .withInstances([
-             instances: [
-                 testInstance: [
-                     services: [
+@@ -17,3 +17,3 @@ serviceBuildPipeline([
                          eagle:    [version: '02.01.19.00'],
-                         storage:  [version: '00.24.00.00'],
 -                        platform: [version: '03.06.41.00'],
 +                        platform: [version: '${j21.platform.version}'],
-                         blart:    [version: '%currentBranch%']
-                     ]
+                         storage:  [version: '00.24.00.00'],
 
 
 --- a/blart-web/pom.xml
 +++ b/blart-web/pom.xml
-@@ -84,5 +84,6 @@
+@@ -84,6 +84,7 @@
          <dependency>
              <groupId>io.github.java-native</groupId>
              <artifactId>jssc</artifactId>
              <version>${java-native.jssc.version}</version>
 +            <scope>provided</scope>
          </dependency>
+         <dependency>
 
 
 
