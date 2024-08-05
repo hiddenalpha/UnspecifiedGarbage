@@ -1,0 +1,37 @@
+
+RHEL9 Eddie emulation
+
+HINT: Install base with user "isa" may make things simpler, as "isa" should
+      have uid 1000 (then adapt below).
+
+  && SUDO=sudo \
+  && PROXY_URL="http://10.0.2.2:3128" \
+  && PROXY_NO='127.0.0.1,10.0.2.*' \
+  && if test -n "${PROXY_URL?}"; then true \
+      && printf 'proxy=%s\n' "${PROXY_URL:?}" \
+          | $SUDO tee -a /etc/dnf/dnf.conf >/dev/null \
+     ;fi \
+  && $SUDO dnf install -y openssh-server podman \
+  && $SUDO systemctl enable sshd \
+  && $SUDO systemctl start sshd \
+  && if test -n "${PROXY_URL?}"; then true \
+      && printf %s\\n \
+          "export http_proxy=\"${PROXY_URL:?}\"" \
+          "export https_proxy=\"${PROXY_URL:?}\"" \
+          "export no_proxy=\"${PROXY_NO?}\"" \
+          "export HTTP_PROXY=\"${PROXY_URL:?}\"" \
+          "export HTTPS_PROXY=\"${PROXY_URL:?}\"" \
+          "export NO_PROXY=\"${PROXY_NO?}\"" \
+          | $SUDO tee -a /etc/profile >/dev/null \
+     ;fi \
+  && printf 'isa:x:991:991:isa:/home/isa:/bin/bash\n' | $SUDO tee -a /etc/passwd >/dev/null \
+  && printf 'isa:x:991:\n' | $SUDO tee -a /etc/group >/dev/null \
+  && printf 'app:x:990:isa\n' | $SUDO tee -a /etc/group >/dev/null \
+  && $SUDO mkdir -p /home/isa \
+  && $SUDO chown isa:app /home/isa \
+  && $SUDO mkdir -p /data/instances \
+  && $SUDO chgrp app /data/instances \
+  && $SUDO chmod 775 /data/instances \
+  && echo 'DONE :)' \
+
+

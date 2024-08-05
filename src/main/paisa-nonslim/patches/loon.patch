@@ -19,3 +19,13 @@
 
 
 
+--- a/loon-web/pom.xml
++++ b/loon-web/pom.xml
+@@ -50,4 +50,5 @@
+         <dependency>
+             <groupId>io.github.java-native</groupId>
+             <artifactId>jssc</artifactId>
++            <scope>provided</scope>
+         </dependency>
+
+

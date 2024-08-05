@@ -19,6 +19,9 @@ function printHelp()
         .."    --no-fetch\n"
         .."      Do NOT update refs from remote. Just use what we have local.\n"
         .."  \n"
+        .."    --tags\n"
+        .."      Pass '--tags' to git-log.\n"
+        .."  \n"
         )
 end
 
@@ -39,6 +42,8 @@ function parseArgs( app )
             app.remoteName = arg
         elseif arg == "--no-fetch" then
             app.isFetch = false
+        elseif arg == "--tags" then
+            app.isTags = true
         elseif arg == "--help" then
             app.isHelp = true; return 0
         else
@@ -125,8 +130,9 @@ function run( app )
     end
     -- Collect input
     local git = "git log --date-order --first-parent --decorate --since \"".. app.since.."\""
-        .." \"".. app.remoteName .."/master\""
-        .." \"".. app.remoteName .."/develop\""
+    if app.isTags then git = git .." --tags" end
+    git = git .." \"".. app.remoteName .."/master\""
+    git = git .." \"".. app.remoteName .."/develop\""
     log:write("[DEBUG] ".. git .."\n")
     local git = io.popen(git)
     while true do
@@ -180,6 +186,7 @@ function main()
         since = false,
         remoteName = false,
         isFetch = true,
+        isTags = false,
         fullHistory = {},
         fullHistoryRdBeg = 1,
         commits = {},

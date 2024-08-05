@@ -1,0 +1,28 @@
+
+
+--- a/Jenkinsfile
++++ b/Jenkinsfile
+@@ -9,7 +9,7 @@ serviceBuildPipeline([
+     jslPipeline
+         .checkout()
+         .setBranchVersion()
+-        .buildMaven([spotless: true, slim: true])
++        .buildMaven([spotless: true, ])
+         .finalizeAndUpdateVersion()
+         .saveArtifacts()
+         .executeSonar()
+
+
+--- a/benjy-web/pom.xml
++++ b/benjy-web/pom.xml
+@@ -37,6 +37,7 @@
+             <groupId>io.github.java-native</groupId>
+             <artifactId>jssc</artifactId>
+             <version>${java-native.jssc.version}</version>
++            <scope>provided</scope>
+         </dependency>
+         <dependency>
+             <groupId>javax.annotation</groupId>
+
+
+

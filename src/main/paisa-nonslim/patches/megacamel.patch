@@ -1,0 +1,24 @@
+
+
+--- a/Jenkinsfile
++++ b/Jenkinsfile
+@@ -9,5 +9,5 @@ serviceBuildPipeline([
+     jslPipeline
+             .checkout()
+             .setBranchVersion()
+-            .buildMaven([slim: true])
++            .buildMaven()
+             .buildDocker()
+
+
+--- a/megacamel-web/pom.xml
++++ b/megacamel-web/pom.xml
+@@ -62,4 +62,5 @@
+         <dependency>
+             <groupId>io.github.java-native</groupId>
+             <artifactId>jssc</artifactId>
++            <scope>provided</scope>
+         </dependency>
+
+
+

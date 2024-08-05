@@ -1,0 +1,27 @@
+
+
+--- a/Jenkinsfile
++++ b/Jenkinsfile
+@@ -9,7 +9,7 @@ serviceBuildPipeline([
+     jslPipeline
+         .checkout()
+         .setBranchVersion()
+-        .buildMaven([slim: true, spotless: true])
++        .buildMaven([spotless: true])
+         .finalizeAndUpdateVersion()
+         .saveArtifacts()
+         .executeSonar()
+
+
+--- a/babelfish-web/pom.xml
++++ b/babelfish-web/pom.xml
+@@ -85,6 +85,7 @@
+             <groupId>io.github.java-native</groupId>
+             <artifactId>jssc</artifactId>
+             <version>${java-native.jssc.version}</version>
++            <scope>provided</scope>
+         </dependency>
+         <dependency>
+             <groupId>com.igormaznitsa</groupId>
+
+
