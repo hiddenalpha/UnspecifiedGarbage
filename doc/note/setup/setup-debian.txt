@@ -125,11 +125,41 @@ Populate "/etc/environment" as described by "./etc-environment".
        fonts-crosextra-caladea fonts-crosextra-carlito fonts-dejavu fonts-liberation \
        fonts-liberation2 fonts-linuxlibertine fonts-noto-core fonts-noto-mono fonts-noto-ui-core \
        fonts-sil-gentium-basic pdftk-java \
+       `# Cups Printing` \
+       cups avahi-daemon \
        `# Others` \
        lm-sensors fancontrol bc rsync qrencode exfat-fuse exfatprogs \
        `# Nvidia graphics (open)` \
        mesa-utils clinfo mesa-opencl-icd \
        `# Nvidia graphics (non-free, DoesNotWorkYet)` \
        nvidia-detect nvidia-tesla-470-driver linux-headers-amd64 \
+
+
+## Cups Printing
+
+# Example "/etc/cups/cupsd.conf"
+#
+# [online doc](https://www.cups.org/doc/man-cupsd.conf.html)
+#
+ServerAdmin root@localhost
+LogLevel warn
+#
+WebInterface Yes
+Listen localhost:631
+Listen /run/cups/cups.sock
+ServerTokens None
+#
+DefaultPaperSize A4
+MaxJobTime 1800
+PreserveJobFiles 86400
+DefaultShared Yes
+#ServerName example.com
+#DNSSDHostName example.com
+FilterNice 8
+#
+# Keep the original <foobar> stuff that is following in original file
+#
+
+To discover printer URIs use "ippfind".
 
 
