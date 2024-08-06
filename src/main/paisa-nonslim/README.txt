@@ -27,24 +27,13 @@ Evtl für diese services den jssc als "provided" angeben.
 TODO awaiting builds again with (hopefully fixed jssc.so):
 
   && PATH_TO_THE_ONLY_REAL_BROWSER="C:/Users/fankhauseand/.opt/FirefoxPortable-105.0.1/FirefoxPortable.exe" \
-  && "${PATH_TO_THE_ONLY_REAL_BROWSER:?}" \
-    `# Build FAILED` \
-    https://jenkinspaisa-temp.tools.pnet.ch/job/blart/job/SDCISA-15648-RemoveSlimPackaging-n1/ \
-    https://jenkinspaisa-temp.tools.pnet.ch/job/caveman/job/SDCISA-15648-RemoveSlimPackaging-n1/ \
-    https://jenkinspaisa-temp.tools.pnet.ch/job/drdan/job/SDCISA-15648-RemoveSlimPackaging-n1/ \
-    https://jenkinspaisa-temp.tools.pnet.ch/job/jeltz/job/SDCISA-15648-RemoveSlimPackaging-n1/ \
-    https://jenkinspaisa-temp.tools.pnet.ch/job/loon/job/SDCISA-15648-RemoveSlimPackaging-n1/ \
-    https://jenkinspaisa-temp.tools.pnet.ch/job/magician/job/SDCISA-15648-RemoveSlimPackaging-n1/ \
-    https://jenkinspaisa-temp.tools.pnet.ch/job/vogon/job/SDCISA-15648-RemoveSlimPackaging-n1/ \
-    https://jenkinspaisa-temp.tools.pnet.ch/job/trillian/job/SDCISA-15648-RemoveSlimPackaging-n1/ \
 
-blart: error: testInstance seem not to be running
-caveman: error: testInstance seem not to be running
-drdan: error: testInstance seem not to be running
-jeltz: error: vehicleInstance seem not to be running
-loon: error: testInstance seem not to be running
-vogon: error: testInstance seem not to be running
-trillian: error: vehicle2 seem not to be running
+  && "${PATH_TO_THE_ONLY_REAL_BROWSER:?}" \
+    `# Remaining builds` \
+    https://jenkinspaisa-temp.tools.pnet.ch/job/heimdall/job/SDCISA-15648-RemoveSlimPackaging-n1/ \
+    https://jenkinspaisa-temp.tools.pnet.ch/job/nowwhat/job/SDCISA-15648-RemoveSlimPackaging-n1/ \
+    https://jenkinspaisa-temp.tools.pnet.ch/job/rob/job/SDCISA-15648-RemoveSlimPackaging-n1/ \
+    https://jenkinspaisa-temp.tools.pnet.ch/job/slarti/job/SDCISA-15648-RemoveSlimPackaging-n1/ \
 
 
 ## Installation
