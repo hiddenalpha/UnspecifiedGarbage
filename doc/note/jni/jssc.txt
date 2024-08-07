@@ -2,6 +2,8 @@
 Some personal notes about jssc
 ==============================
 
+[see also](https://github.com/hiddenalpha/jssc/tree/master/contrib/hiddenalpha-buildEnv-one)
+
 # Try To build it
 
 HINT: Only works for paisa fork most probably due to company firewall.
