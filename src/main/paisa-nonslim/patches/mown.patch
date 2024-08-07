@@ -1,0 +1,414 @@
+
+
+--- a/Jenkinsfile
++++ b/Jenkinsfile
+@@ -12,5 +12,5 @@ serviceBuildPipeline([
+         .checkout()
+         .setBranchVersion()
+-        .buildMaven([slim: true, spotless: true])
++        .buildMaven([spotless: true])
+         .finalizeAndUpdateVersion()
+         .mergeTranslationBranch()
+
+
+--- a/mown-process/src/test/java/ch/post/it/paisa/mown/process/nova/SearchServiceTest.java
++++ /dev/null
+@@ -1,394 +0,0 @@
+-package ch.post.it.paisa.mown.process.nova;
+-
+-import static ch.post.it.paisa.mown.process.nova.ProductSearchResultBuilder.fromDescription;
+-import static ch.post.it.paisa.mown.process.nova.ProductSearchResultBuilder.fromDescriptionParameter;
+-import static ch.post.it.paisa.mown.process.nova.ProductSearchResultBuilder.fromNovaProductNumber;
+-import static ch.post.it.paisa.mown.process.nova.matcher.ValidCorrelationKontext.isValidCorrelationKontext;
+-import static ch.post.it.paisa.mown.process.utils.StringUtils.getLocalizedString;
+-import static ch.voev.nova.services.v14.vertriebsbase.KlassenTypCode.KLASSENWECHSEL;
+-import static ch.voev.nova.services.v14.vertriebsbase.KlassenTypCode.KLASSE_1;
+-import static ch.voev.nova.services.v14.vertriebsbase.KlassenTypCode.KLASSE_2;
+-import static org.junit.Assert.assertEquals;
+-import static org.mockito.Matchers.any;
+-import static org.mockito.Matchers.argThat;
+-import static org.mockito.Matchers.eq;
+-import static org.mockito.Mockito.mock;
+-import static org.mockito.Mockito.verify;
+-import static org.mockito.Mockito.when;
+-
+-import ch.post.it.paisa.alice.service.process.nova.NovaServiceFactory;
+-import ch.post.it.paisa.alice.service.process.nova.configuration.NovaParameters;
+-import ch.post.it.paisa.mown.process.nova.matcher.ClientIdentifierMatcher;
+-import ch.post.it.paisa.mown.process.nova.matcher.SucheSwissPassMatcher;
+-import ch.post.it.paisa.mown.process.nova.matcher.ValidCorrelationKontext;
+-import ch.post.it.paisa.mown.process.translation.TranslationService;
+-import ch.voev.nova.services.base.ClientIdentifier;
+-import ch.voev.nova.services.base.Status;
+-import ch.voev.nova.services.swisspass.SucheSwissPassResponse;
+-import ch.voev.nova.services.swisspass.SwissPassServicePortTypeSOAPv14;
+-import ch.voev.nova.services.v14.geschaeftspartner.Partner;
+-import ch.voev.nova.services.vertrieb.LeistungsSuchErgebnis;
+-import ch.voev.nova.services.vertrieb.LeistungsSuchResponse;
+-import ch.voev.nova.services.vertrieb.VertriebsServicePortTypeSOAPv14;
+-import ch.voev.nova.services.vertrieb.vertriebsstammdaten.ProduktTaxonomie;
+-import ch.voev.nova.services.vertrieb.vertriebsstammdaten.ProduktTaxonomienResponse;
+-import ch.voev.nova.services.vertrieb.vertriebsstammdaten.TaxonomieKlasse;
+-import ch.voev.nova.services.vertrieb.vertriebsstammdaten.VertriebsstammdatenServicePortTypeSOAPv14;
+-import java.util.ArrayList;
+-import java.util.Arrays;
+-import java.util.List;
+-import java.util.UUID;
+-import org.joda.time.LocalDate;
+-import org.junit.Before;
+-import org.junit.Test;
+-
+-public class SearchServiceTest {
+-  private NovaParameters novaParameters;
+-  private SearchService service;
+-  private SwissPassServicePortTypeSOAPv14 swisspassService;
+-  private NovaServiceFactory novaServiceFactory;
+-  private SucheSwissPassResponse findSwisspassResponse;
+-  private Partner partner;
+-  private LeistungsSuchResponse findProductsResponse;
+-
+-  @Before
+-  public void generalSetup() throws Exception {
+-    novaParameters = mock(NovaParameters.class);
+-    when(novaParameters.getNovaLeistungsvermittler()).thenReturn("801");
+-    when(novaParameters.getNovaKanal()).thenReturn("956");
+-
+-    NovaParametersFactory novaParametersFactory = mock(NovaParametersFactory.class);
+-    when(novaParametersFactory.getNovaParameters()).thenReturn(novaParameters);
+-
+-    novaServiceFactory = mock(NovaServiceFactory.class);
+-
+-    service = new SearchService(novaParametersFactory, novaServiceFactory);
+-  }
+-
+-  @Before
+-  public void setupSwisspassService() {
+-    swisspassService = mock(SwissPassServicePortTypeSOAPv14.class);
+-    when(novaServiceFactory.getSwissPassService14_2(eq(novaParameters), any()))
+-        .thenReturn(swisspassService);
+-
+-    findSwisspassResponse = mock(SucheSwissPassResponse.class);
+-    when(swisspassService.sucheSwissPass(any())).thenReturn(findSwisspassResponse);
+-
+-    partner = mock(Partner.class);
+-    when(findSwisspassResponse.getKunde()).thenReturn(partner);
+-  }
+-
+-  @Before
+-  public void setupSalesMasterdataService() {
+-    VertriebsstammdatenServicePortTypeSOAPv14 salesMasterdataService =
+-        mock(VertriebsstammdatenServicePortTypeSOAPv14.class);
+-    when(novaServiceFactory.getVertriebsstammdatenServicev14_2(eq(novaParameters), any()))
+-        .thenReturn(salesMasterdataService);
+-
+-    ProduktTaxonomienResponse productTaxonomiesResponse = mock(ProduktTaxonomienResponse.class);
+-    when(productTaxonomiesResponse.getProduktTaxonomie()).thenReturn(createProductTaxonomies());
+-
+-    when(salesMasterdataService.getProduktTaxonomien(any())).thenReturn(productTaxonomiesResponse);
+-  }
+-
+-  @Before
+-  public void setupSalesService() {
+-    VertriebsServicePortTypeSOAPv14 salesService = mock(VertriebsServicePortTypeSOAPv14.class);
+-    when(novaServiceFactory.getVertriebsServiceV14_2(eq(novaParameters), any()))
+-        .thenReturn(salesService);
+-
+-    List<LeistungsSuchErgebnis> findProductsResults = new ArrayList<>();
+-
+-    findProductsResponse = mock(LeistungsSuchResponse.class);
+-    when(findProductsResponse.getLeistungsSuchErgebnis()).thenReturn(findProductsResults);
+-
+-    when(salesService.sucheLeistungen(any())).thenReturn(findProductsResponse);
+-  }
+-
+-  @Test
+-  public void findSwisspassCustomer_returnsTkid() throws Exception {
+-    when(partner.getTkid()).thenReturn("239c03cb-ce4d-4982-a680-2a6ea27deebf");
+-
+-    SwisspassCustomer swisspassCustomer = service.findSwisspassCustomer("0123456");
+-    assertEquals("239c03cb-ce4d-4982-a680-2a6ea27deebf", swisspassCustomer.getTkid());
+-  }
+-
+-  @Test
+-  public void findSwisspassCustomer_usesClientIdentifier() throws Exception {
+-    ClientIdentifier clientIdentifier = new ClientIdentifier();
+-    when(novaParameters.getClientIdentifier()).thenReturn(clientIdentifier);
+-
+-    service.findSwisspassCustomer("0123456");
+-
+-    verify(swisspassService)
+-        .sucheSwissPass(
+-            argThat(
+-                SucheSwissPassMatcher.matching(
+-                    "0123456",
+-                    ClientIdentifierMatcher.matching(clientIdentifier),
+-                    ValidCorrelationKontext.any())));
+-  }
+-
+-  @Test
+-  public void findSwisspassCustomer_usesValidCorrelationKontext() throws Exception {
+-    service.findSwisspassCustomer("0123456");
+-
+-    verify(swisspassService)
+-        .sucheSwissPass(
+-            argThat(
+-                SucheSwissPassMatcher.matching(
+-                    "0123456", ClientIdentifierMatcher.any(), isValidCorrelationKontext())));
+-  }
+-
+-  @Test(expected = NotFoundException.class)
+-  public void findSwisspassCustomer_throwsNotFoundExceptionIfStatusNok() throws Exception {
+-    when(findSwisspassResponse.getStatus()).thenReturn(Status.NOK);
+-
+-    service.findSwisspassCustomer("0123456");
+-  }
+-
+-  @Test(expected = NotFoundException.class)
+-  public void findSwisspassCustomer_throwsNotFoundExceptionIfNoCustomer() throws Exception {
+-    when(findSwisspassResponse.getKunde()).thenReturn(null);
+-
+-    service.findSwisspassCustomer("0123456");
+-  }
+-
+-  @Test
+-  public void findSwisspassProducts_returnsAllProducts() throws Exception {
+-    LeistungsSuchErgebnis productSearchResult1 = fromDescription("My product 1").create();
+-    LeistungsSuchErgebnis productSearchResult2 = fromDescription("My product 2").create();
+-    LeistungsSuchErgebnis productSearchResult3 = fromDescription("My product 3").create();
+-
+-    findProductsResponse
+-        .getLeistungsSuchErgebnis()
+-        .addAll(Arrays.asList(productSearchResult1, productSearchResult2, productSearchResult3));
+-
+-    SwisspassCustomer customer = SwisspassCustomer.createFromTkid(UUID.randomUUID().toString());
+-    List<SwisspassProduct> swisspassProducts = service.findSwisspassProducts(customer);
+-
+-    assertEquals(3, swisspassProducts.size());
+-    assertEquals("My product 1", swisspassProducts.get(0).getDescription().getDefaultWert());
+-    assertEquals("My product 2", swisspassProducts.get(1).getDescription().getDefaultWert());
+-    assertEquals("My product 3", swisspassProducts.get(2).getDescription().getDefaultWert());
+-  }
+-
+-  @Test
+-  public void findSwisspassProducts_prefersDescriptionOverParameter() throws Exception {
+-    LeistungsSuchErgebnis productSearchResult =
+-        fromDescription("Product description")
+-            .withDescriptionParameter("Description parameter")
+-            .create();
+-
+-    findProductsResponse.getLeistungsSuchErgebnis().add(productSearchResult);
+-
+-    SwisspassCustomer customer = SwisspassCustomer.createFromTkid(UUID.randomUUID().toString());
+-    List<SwisspassProduct> swisspassProducts = service.findSwisspassProducts(customer);
+-
+-    assertEquals(1, swisspassProducts.size());
+-    assertEquals("Product description", swisspassProducts.get(0).getDescription().getDefaultWert());
+-  }
+-
+-  @Test
+-  public void findSwisspassProducts_prefersParameterOverProductNumber() throws Exception {
+-    LeistungsSuchErgebnis productSearchResult =
+-        fromDescriptionParameter("Description parameter").withNovaProductNumber(1).create();
+-
+-    findProductsResponse.getLeistungsSuchErgebnis().add(productSearchResult);
+-
+-    SwisspassCustomer customer = SwisspassCustomer.createFromTkid(UUID.randomUUID().toString());
+-    List<SwisspassProduct> swisspassProducts = service.findSwisspassProducts(customer);
+-
+-    assertEquals(1, swisspassProducts.size());
+-    assertEquals(
+-        "Description parameter", swisspassProducts.get(0).getDescription().getDefaultWert());
+-  }
+-
+-  @Test
+-  public void findSwisspassProducts_usesNovaProductNumberAsLastResort() throws Exception {
+-    LeistungsSuchErgebnis productSearchResult = fromNovaProductNumber(4).create();
+-
+-    findProductsResponse.getLeistungsSuchErgebnis().add(productSearchResult);
+-
+-    SwisspassCustomer customer = SwisspassCustomer.createFromTkid(UUID.randomUUID().toString());
+-    List<SwisspassProduct> swisspassProducts = service.findSwisspassProducts(customer);
+-
+-    assertEquals(1, swisspassProducts.size());
+-    assertEquals(
+-        "BüGA-Abonnemente description", swisspassProducts.get(0).getDescription().getDefaultWert());
+-  }
+-
+-  @Test
+-  public void findSwisspassProducts_alsoSearchesSubClassesForProductNumber() throws Exception {
+-    LeistungsSuchErgebnis productSearchResult = fromNovaProductNumber(6).create();
+-
+-    findProductsResponse.getLeistungsSuchErgebnis().add(productSearchResult);
+-
+-    SwisspassCustomer customer = SwisspassCustomer.createFromTkid(UUID.randomUUID().toString());
+-    List<SwisspassProduct> swisspassProducts = service.findSwisspassProducts(customer);
+-
+-    assertEquals(1, swisspassProducts.size());
+-    assertEquals(
+-        "Subclass description", swisspassProducts.get(0).getDescription().getDefaultWert());
+-  }
+-
+-  @Test
+-  public void findSwisspassProducts_returnsClassTypeIfAvailable() throws Exception {
+-    LeistungsSuchErgebnis productSearchResult1 =
+-        fromDescription("My 1st class product").withClassType(KLASSE_1).create();
+-
+-    LeistungsSuchErgebnis productSearchResult2 =
+-        fromDescription("My 2nd class product").withClassType(KLASSE_2).create();
+-
+-    LeistungsSuchErgebnis productSearchResult3 =
+-        fromDescription("My class upgrade product").withClassType(KLASSENWECHSEL).create();
+-
+-    findProductsResponse.getLeistungsSuchErgebnis().add(productSearchResult1);
+-    findProductsResponse.getLeistungsSuchErgebnis().add(productSearchResult2);
+-    findProductsResponse.getLeistungsSuchErgebnis().add(productSearchResult3);
+-
+-    SwisspassCustomer customer = SwisspassCustomer.createFromTkid(UUID.randomUUID().toString());
+-    List<SwisspassProduct> swisspassProducts = service.findSwisspassProducts(customer);
+-
+-    assertEquals(KLASSE_1, swisspassProducts.get(0).getClassType());
+-    assertEquals(KLASSE_2, swisspassProducts.get(1).getClassType());
+-    assertEquals(KLASSENWECHSEL, swisspassProducts.get(2).getClassType());
+-  }
+-
+-  @Test
+-  public void findSwisspassProducts_listsZonesIfAvailable() throws Exception {
+-    TranslationService translationService = new TranslationService(null);
+-
+-    LeistungsSuchErgebnis productSearchResult =
+-        fromDescription("Product with zones").withVias("100", "101", "102", "103").create();
+-
+-    findProductsResponse.getLeistungsSuchErgebnis().add(productSearchResult);
+-
+-    SwisspassCustomer customer = SwisspassCustomer.createFromTkid(UUID.randomUUID().toString());
+-    List<SwisspassProduct> swisspassProducts = service.findSwisspassProducts(customer);
+-
+-    List<String> zones =
+-        translationService.translateSwisspassProduct(swisspassProducts.get(0)).getVias();
+-    assertEquals(Arrays.asList("100", "101", "102", "103"), zones);
+-  }
+-
+-  @Test
+-  public void findSwisspassProducts_returnsValidityPeriod() throws Exception {
+-    LeistungsSuchErgebnis productSearchResult =
+-        fromDescription("Product with validity")
+-            .withValidityPeriod(LocalDate.parse("2020-01-01"), LocalDate.parse("2020-12-31"))
+-            .create();
+-
+-    findProductsResponse.getLeistungsSuchErgebnis().add(productSearchResult);
+-
+-    SwisspassCustomer customer = SwisspassCustomer.createFromTkid(UUID.randomUUID().toString());
+-    List<SwisspassProduct> swisspassProducts = service.findSwisspassProducts(customer);
+-
+-    assertEquals(LocalDate.parse("2020-01-01"), swisspassProducts.get(0).getValidFrom());
+-    assertEquals(LocalDate.parse("2020-12-31"), swisspassProducts.get(0).getValidTo());
+-  }
+-
+-  @Test
+-  public void findSwisspassProducts_returnsOrigin() throws Exception {
+-    LeistungsSuchErgebnis productSearchResult =
+-        fromDescription("Product with validity").withOrigin("origin").create();
+-
+-    findProductsResponse.getLeistungsSuchErgebnis().add(productSearchResult);
+-
+-    SwisspassCustomer customer = SwisspassCustomer.createFromTkid(UUID.randomUUID().toString());
+-    List<SwisspassProduct> swisspassProducts = service.findSwisspassProducts(customer);
+-
+-    assertEquals("origin", swisspassProducts.get(0).getOrigin().getDefaultWert());
+-  }
+-
+-  @Test
+-  public void findSwisspassProducts_returnsDestination() throws Exception {
+-    LeistungsSuchErgebnis productSearchResult =
+-        fromDescription("Product with validity").withDestination("destination").create();
+-
+-    findProductsResponse.getLeistungsSuchErgebnis().add(productSearchResult);
+-
+-    SwisspassCustomer customer = SwisspassCustomer.createFromTkid(UUID.randomUUID().toString());
+-    List<SwisspassProduct> swisspassProducts = service.findSwisspassProducts(customer);
+-
+-    assertEquals("destination", swisspassProducts.get(0).getDestination().getDefaultWert());
+-  }
+-
+-  @Test
+-  public void findSwisspassProducts_usesClassNameIfNoDescription() throws OfflineException {
+-    LeistungsSuchErgebnis productSearchResult = fromNovaProductNumber(7).create();
+-
+-    findProductsResponse.getLeistungsSuchErgebnis().add(productSearchResult);
+-
+-    SwisspassCustomer customer = SwisspassCustomer.createFromTkid(UUID.randomUUID().toString());
+-    List<SwisspassProduct> swisspassProducts = service.findSwisspassProducts(customer);
+-
+-    assertEquals(1, swisspassProducts.size());
+-    assertEquals("Halbtax", swisspassProducts.get(0).getDescription().getDefaultWert());
+-  }
+-
+-  private List<ProduktTaxonomie> createProductTaxonomies() {
+-    List<ProduktTaxonomie> productTaxonomies = new ArrayList<>();
+-
+-    TaxonomieKlasse class002 = new TaxonomieKlasse();
+-    class002.setName("002");
+-    class002.setBezeichnung(getLocalizedString("002 description"));
+-    class002.getProduktNummer().add(1);
+-    class002.getProduktNummer().add(2);
+-    class002.getProduktNummer().add(3);
+-
+-    ProduktTaxonomie taxonomy002 = new ProduktTaxonomie();
+-    taxonomy002.setName("Basistaxonomie Reporting");
+-    taxonomy002.getKlasse().add(class002);
+-
+-    TaxonomieKlasse class99 = new TaxonomieKlasse();
+-    class99.setName("Class 99 name");
+-    class99.setBezeichnung(getLocalizedString("Class 99 description"));
+-    class99.getProduktNummer().add(1);
+-    class99.getProduktNummer().add(2);
+-    class99.getProduktNummer().add(3);
+-
+-    ProduktTaxonomie taxonomy99 = new ProduktTaxonomie();
+-    taxonomy99.setName("Beratungsprovision GA_HTA");
+-    taxonomy99.getKlasse().add(class99);
+-
+-    TaxonomieKlasse class1 = new TaxonomieKlasse();
+-    class1.setName("BüGA-Abonnemente");
+-    class1.setBezeichnung(getLocalizedString("BüGA-Abonnemente description"));
+-    class1.getProduktNummer().add(4);
+-
+-    ProduktTaxonomie taxonomy1 = new ProduktTaxonomie();
+-    taxonomy1.setName("BüGA-Abonnemente");
+-    taxonomy1.getKlasse().add(class1);
+-
+-    TaxonomieKlasse class2 = new TaxonomieKlasse();
+-    class2.setName("Generalabonnementee");
+-    class2.setBezeichnung(getLocalizedString("Generalabonnemente description"));
+-    class2.getProduktNummer().add(5);
+-
+-    ProduktTaxonomie taxonomy2 = new ProduktTaxonomie();
+-    taxonomy2.setName("Generalabo");
+-    taxonomy2.getKlasse().add(class2);
+-
+-    TaxonomieKlasse subClass = new TaxonomieKlasse();
+-    subClass.setName("Subclass name");
+-    subClass.setBezeichnung(getLocalizedString("Subclass description"));
+-    subClass.getProduktNummer().add(6);
+-
+-    TaxonomieKlasse class3 = new TaxonomieKlasse();
+-    class3.setName("Halbtax");
+-    class3.getSubTaxonomieKlasse().add(subClass);
+-    class3.getProduktNummer().add(7);
+-
+-    ProduktTaxonomie taxonomy3 = new ProduktTaxonomie();
+-    taxonomy3.setName("Halbtax");
+-    taxonomy3.getKlasse().add(class3);
+-
+-    productTaxonomies.add(taxonomy99);
+-    productTaxonomies.add(taxonomy1);
+-    productTaxonomies.add(taxonomy2);
+-    productTaxonomies.add(taxonomy3);
+-
+-    return productTaxonomies;
+-  }
+-}
+
+
+
+

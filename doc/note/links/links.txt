@@ -264,6 +264,8 @@ Links (Aka argument amplifiers)
 - [QueueStatisticsCollector takes up to 10 minutes for ONE SINGLE request](https://github.com/swisspost/vertx-redisques/issues/188)
 
 ## Performance is not an issue ...
+- [houston kafka navigation position 2024](https://gitit.post.ch/projects/ISA/repos/houston/pull-requests/633/overview?commentId=396921)
+- [NowWhat info resource timeout 2024](https://jira.post.ch/browse/SDCISA-16515)
 - [Houston OOM 2023-06-27](https://wikit.post.ch/x/_Bv6Rw)
 - [Houston OOM 2023-01-20](https://wikit.post.ch/x/iRepPQ)
 - [Houston OOM Killed](https://jira.post.ch/browse/SDCISA-10871)

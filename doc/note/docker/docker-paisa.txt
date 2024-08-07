@@ -1,0 +1,12 @@
+
+How to access dockerd on jenkins
+================================
+
+
+Im jenkinsbuild teddie name finden.
+
+Dann "ssh teddieXX".
+
+Dann docker command wie gehabt.
+
+

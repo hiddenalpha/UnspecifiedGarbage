@@ -26,32 +26,31 @@ Evtl für diese services den jssc als "provided" angeben.
 
 TODO awaiting builds again with (hopefully fixed jssc.so):
 
-    `# Build OK` \
-    allitnil, babelfish, barman, benjy, bentstick, captain, colin, hooli,
-    kwaltz, megacamel, minetti, neutron, pobble, prosser, towel, vannharl,
-    vroom, zaphake, poodoo, streetmentioner, thor, zem, heimdall, slarti
-
-    `# Build UNSTABLE` \
-    https://jenkinspaisa-temp.tools.pnet.ch/job/deep/job/SDCISA-15648-RemoveSlimPackaging-n1/ \
-    https://jenkinspaisa-temp.tools.pnet.ch/job/guide/job/SDCISA-15648-RemoveSlimPackaging-n1/ \
-    https://jenkinspaisa-temp.tools.pnet.ch/job/nowwhat/job/SDCISA-15648-RemoveSlimPackaging-n1/ \
-
   && PATH_TO_THE_ONLY_REAL_BROWSER="C:/Users/fankhauseand/.opt/FirefoxPortable-105.0.1/FirefoxPortable.exe" \
+
   && "${PATH_TO_THE_ONLY_REAL_BROWSER:?}" \
-    `# Build FIRST_RUN` \
+    `# Remaining builds` \
+    https://jenkinspaisa-temp.tools.pnet.ch/job/heimdall/job/SDCISA-15648-RemoveSlimPackaging-n1/ \
+    https://jenkinspaisa-temp.tools.pnet.ch/job/nowwhat/job/SDCISA-15648-RemoveSlimPackaging-n1/ \
     https://jenkinspaisa-temp.tools.pnet.ch/job/rob/job/SDCISA-15648-RemoveSlimPackaging-n1/ \
-    `# Build FAILED` \
-    https://jenkinspaisa-temp.tools.pnet.ch/job/blart/job/SDCISA-15648-RemoveSlimPackaging-n1/ \
-    https://jenkinspaisa-temp.tools.pnet.ch/job/caveman/job/SDCISA-15648-RemoveSlimPackaging-n1/ \
-    https://jenkinspaisa-temp.tools.pnet.ch/job/drdan/job/SDCISA-15648-RemoveSlimPackaging-n1/ \
-    https://jenkinspaisa-temp.tools.pnet.ch/job/jeltz/job/SDCISA-15648-RemoveSlimPackaging-n1/ \
-    https://jenkinspaisa-temp.tools.pnet.ch/job/loon/job/SDCISA-15648-RemoveSlimPackaging-n1/ \
-    https://jenkinspaisa-temp.tools.pnet.ch/job/magician/job/SDCISA-15648-RemoveSlimPackaging-n1/ \
-    https://jenkinspaisa-temp.tools.pnet.ch/job/mown/job/SDCISA-15648-RemoveSlimPackaging-n1/ \
-    https://jenkinspaisa-temp.tools.pnet.ch/job/vogon/job/SDCISA-15648-RemoveSlimPackaging-n1/ \
-    https://jenkinspaisa-temp.tools.pnet.ch/job/trillian/job/SDCISA-15648-RemoveSlimPackaging-n1/ \
+    https://jenkinspaisa-temp.tools.pnet.ch/job/slarti/job/SDCISA-15648-RemoveSlimPackaging-n1/ \
 
 
+## Installation
+
+{
+  "timestamp": "2024-08-06T10:09:42.042+02:00",
+  "hostname": "eddie00849",
+  "instanceName": "default",
+  "eaglePort": 7012,
+  "activations": {
+    "SDCISA-15648-1722427419206-legacy": "2024-07-01T00:01:00.000Z",
+    "SDCISA-15648-1722427417010-noslim": "2024-07-01T00:00:00.000Z",
+    "bundle-sw_4011-data_3997": "2024-07-29T11:49:53.152Z",
+    "bundle-sw_4012-data_3997": "2024-07-25T02:00:00.000Z",
+    "bundle-sw_4012-data_4005": "2024-07-16T23:00:00.000Z"
+  }
+}
 
 
 ## Measurements
