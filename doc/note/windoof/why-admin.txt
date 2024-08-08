@@ -1,0 +1,14 @@
+
+Why admin privileges are necessary.
+
+- npcap / wireshark.
+- Read Firewall logs (dropped packets).
+- Qemu (custom built!!) with hardware acceleration.
+- Custom USB devices for programming.
+
+
+## Examples
+
+[firewall blocking  bonjour traffic](https://jira.post.ch/browse/SDCISA-16610?focusedId=2096998&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-2096998)
+
+

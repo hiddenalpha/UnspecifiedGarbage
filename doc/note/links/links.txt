@@ -277,6 +277,9 @@ Links (Aka argument amplifiers)
 - [Houston down readyness probe timeout](https://wikit.post.ch/x/koO0Vg)
 - [Json serialization blocking EventLoop for too long #583](https://github.com/swisspost/gateleen/issues/583)
 
+## Wie gesagt .. "DNS probleme gibts in AWS nicht ..."
+- [houston DNS beeble unresolvable](https://wikit.post.ch/x/KFyqa)
+
 ## Common Performance
 - [Java Exceptions performance is bad](https://www.baeldung.com/java-exceptions-performance)
 - [going fast is about doing less](https://m.youtube.com/watch?v=5rb0vvJ7NCY)

@@ -55,6 +55,10 @@ mvn '-Dtest=!BadTestClass,!AlsoNotWanted' test
 
 ## Download dependencies
 
-  mvn dependency:copy-dependencies -DoutputDirectory=target/dependencies
+  mvn dependency:copy-dependencies \
+    -pl example-web \
+    -DexcludeArtifactIds=log4j-api,log4j-core \
+    -DincludeScope=runtime,provided,system \
+    -DoutputDirectory=target/dependencies \
 
 

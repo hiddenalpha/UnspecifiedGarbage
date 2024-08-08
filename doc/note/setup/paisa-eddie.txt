@@ -1,8 +1,7 @@
 
 RHEL9 Eddie emulation
 
-HINT: Install base with user "isa" may make things simpler, as "isa" should
-      have uid 1000 (then adapt below).
+WARN: This will assign uid 1000 to user "isa"!
 
   && SUDO=sudo \
   && PROXY_URL="http://10.0.2.2:3128" \
@@ -12,6 +11,7 @@ HINT: Install base with user "isa" may make things simpler, as "isa" should
           | $SUDO tee -a /etc/dnf/dnf.conf >/dev/null \
      ;fi \
   && $SUDO dnf install -y openssh-server podman \
+  && $SUDO dnf remove -y firewalld \
   && $SUDO systemctl enable sshd \
   && $SUDO systemctl start sshd \
   && if test -n "${PROXY_URL?}"; then true \
@@ -24,14 +24,20 @@ HINT: Install base with user "isa" may make things simpler, as "isa" should
           "export NO_PROXY=\"${PROXY_NO?}\"" \
           | $SUDO tee -a /etc/profile >/dev/null \
      ;fi \
-  && printf 'isa:x:991:991:isa:/home/isa:/bin/bash\n' | $SUDO tee -a /etc/passwd >/dev/null \
-  && printf 'isa:x:991:\n' | $SUDO tee -a /etc/group >/dev/null \
+  && printf 'isa:x:1000:1000:isa:/home/isa:/bin/bash\n' | $SUDO tee -a /etc/passwd >/dev/null \
+  && printf 'isa:x:1000:\n' | $SUDO tee -a /etc/group >/dev/null \
   && printf 'app:x:990:isa\n' | $SUDO tee -a /etc/group >/dev/null \
   && $SUDO mkdir -p /home/isa \
   && $SUDO chown isa:app /home/isa \
   && $SUDO mkdir -p /data/instances \
   && $SUDO chgrp app /data/instances \
   && $SUDO chmod 775 /data/instances \
+  && echo 'DONE :)' \
+
+
+Additional packages, helpful for some debugging scenarios etc
+
+  && $SUDO dnf install -y java-11-openjdk-devel.x86_64 \
   && echo 'DONE :)' \
 
 

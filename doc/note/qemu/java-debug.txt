@@ -1,0 +1,15 @@
+
+Connect host java debugger to JVM inside VM
+===========================================
+
+Make sure host can reach guest port.
+
+  hostfwd=tcp:127.0.0.1:${DBG_PORT:?}-:1241
+
+Make debugger listen on that port.
+
+  -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:1241
+
+Now debugger is reachable from host via DBG_PORT.
+
+

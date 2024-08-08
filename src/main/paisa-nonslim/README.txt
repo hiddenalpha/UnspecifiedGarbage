@@ -30,27 +30,25 @@ TODO awaiting builds again with (hopefully fixed jssc.so):
 
   && "${PATH_TO_THE_ONLY_REAL_BROWSER:?}" \
     `# Remaining builds` \
-    https://jenkinspaisa-temp.tools.pnet.ch/job/heimdall/job/SDCISA-15648-RemoveSlimPackaging-n1/ \
-    https://jenkinspaisa-temp.tools.pnet.ch/job/nowwhat/job/SDCISA-15648-RemoveSlimPackaging-n1/ \
-    https://jenkinspaisa-temp.tools.pnet.ch/job/rob/job/SDCISA-15648-RemoveSlimPackaging-n1/ \
-    https://jenkinspaisa-temp.tools.pnet.ch/job/slarti/job/SDCISA-15648-RemoveSlimPackaging-n1/ \
+    https://jenkinspaisa-temp.tools.pnet.ch/job/SERVICE/job/SDCISA-15648-RemoveSlimPackaging-n1/ \
 
 
 ## Installation
 
 {
-  "timestamp": "2024-08-06T10:09:42.042+02:00",
+  "timestamp": "2024-08-06T16:54:42.042+02:00",
   "hostname": "eddie00849",
   "instanceName": "default",
   "eaglePort": 7012,
   "activations": {
-    "SDCISA-15648-1722427419206-legacy": "2024-07-01T00:01:00.000Z",
-    "SDCISA-15648-1722427417010-noslim": "2024-07-01T00:00:00.000Z",
+    "SDCISA-15648-1722955735781-legacy": "2024-07-01T00:04:00.000Z",
+    "SDCISA-15648-1722955733398-noslim": "2024-07-01T00:03:00.000Z",
     "bundle-sw_4011-data_3997": "2024-07-29T11:49:53.152Z",
     "bundle-sw_4012-data_3997": "2024-07-25T02:00:00.000Z",
     "bundle-sw_4012-data_4005": "2024-07-16T23:00:00.000Z"
   }
 }
+
 
 
 ## Measurements
