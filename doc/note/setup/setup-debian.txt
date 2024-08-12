@@ -115,7 +115,7 @@ Populate "/etc/environment" as described by "./etc-environment".
        `# mDNS client & tools` \
        libnss-mdns avahi-utils \
        `# multimedia` \
-       pulseaudio pavucontrol vlc audacity eom darktable gimp lame flac opus-tools ffmpeg \
+       pulseaudio pavucontrol vlc audacity eom darktable gimp hugin lame flac opus-tools ffmpeg \
        `# encryption` \
        keepassxc gpg \
        `# UI customization` \
@@ -128,7 +128,7 @@ Populate "/etc/environment" as described by "./etc-environment".
        `# Cups Printing` \
        cups avahi-daemon \
        `# Others` \
-       lm-sensors fancontrol bc rsync qrencode exfat-fuse exfatprogs \
+       lm-sensors fancontrol bc rsync qrencode exfat-fuse exfatprogs libxml2-utils \
        `# Nvidia graphics (open)` \
        mesa-utils clinfo mesa-opencl-icd \
        `# Nvidia graphics (non-free, DoesNotWorkYet)` \
