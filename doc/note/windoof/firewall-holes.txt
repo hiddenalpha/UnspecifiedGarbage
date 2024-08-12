@@ -1,0 +1,55 @@
+
+Open Holes in Windoof firewall
+==============================
+
+Beispiel 1: Gerät im Netz 192.168.0.0/16 und Port 4001.
+
++-----------------------------------------------------------------------
+| Windows Registry Editor Version 5.00
+|  
+| [HKEY_LOCAL_MACHINE\Software\WOW6432Node\AutoInst\WindowsFirewall\016_Projekte_ISA_Blart_Moxa]
+| "000local-0000-0010-0010-000000000018"="v2.30|Action=Allow|Active=TRUE|Dir=Out|Protocol=6|Profile=Private|Profile=Public|RPort=4001|RPort=80||RA4=192.168.0.0/16|Name=public_local_ISA_VBlart-out|Desc=public_local_ISA_Blart-out: Erlaubt die Kommunikation zu den Moxa-Modulen in einer Entwicklungsumgebung.-H_1091491750156241733740250200912062244690|"
++-----------------------------------------------------------------------
+
+Beispiel 2 (Vannharl):
+
++-----------------------------------------------------------------------
+| Windows Registry Editor Version 5.00
+|  
+| [HKEY_LOCAL_MACHINE\Software\WOW6432Node\AutoInst\WindowsFirewall\016_Projekte_ISA_VannHarl_IOBox]
+| "000local-0000-0001-0010-000000000018"="v2.30|Action=Allow|Active=TRUE|Dir=In|Protocol=6|Profile=Private|Profile=Public|LPort=7012|LA4=192.168.10.1|RA4=192.168.10.32/255.255.255.224|App=%JAVA_HOME%\\bin\\java.exe|Name=public_local_ISA_VannHarl-in|Desc=public_local_ISA_VannHarl-in: Erlaubt eingehende Verbindungen von den IO-Boxen auf das lokale Port 7012 aus dem Adressbereich 192.168.10.33 - 192.168.10.62-H_13814721412413714412113511955223174487557189|"
+| "000local-0000-0010-0010-000000000018"="v2.30|Action=Allow|Active=TRUE|Dir=Out|Protocol=6|Profile=Private|Profile=Public|RPort=21|RPort=22|RPort=80|LA4=192.168.10.1|RA4=192.168.10.32/255.255.255.224|Name=public_local_ISA_VannHarl-out|Desc=public_local_ISA_VannHarl-out: Erlaubt die Kommunikation zu den IO-Boxen in einer Entwicklungsumgebung.-H_1091491750156241733740250200912062244690|"
+| "000local-0000-0001-0010-000000000019"="v2.30|Action=Allow|Active=TRUE|Dir=In|Protocol=17|Profile=Private|Profile=Public|LPort=67|RPort=68|Name=public_dhcpserver|Desc=public_dhcpserver: Erlaubt die eingehenden DHCP-Anfragen der IO-Boxen.-H_1792042076111438215498482365810324418264|"
+| "000local-0000-0010-0010-000000000019"="v2.30|Action=Allow|Active=TRUE|Dir=Out|Protocol=17|Profile=Private|Profile=Public|LPort=67|RPort=68|Name=public_dhcpserver|Desc=public_dhcpserver: Erlaubt alle ausgehenden DHCP-Antworten an die IO-Boxen.-H_65143246207102249188115157124281886222713371|"
++-----------------------------------------------------------------------
+
+Beispiel 3 (Lazlar, UNTESTED):
+
++-----------------------------------------------------------------------
+| Windows Registry Editor Version 5.00
+| 
+| [HKEY_LOCAL_MACHINE\Software\WOW6432Node\AutoInst\WindowsFirewall\016_Projekte_ISA_Lazlar_mDNS]
+| "000local-0000-0010-0010-000000000018"="v2.30|Action=Allow|Active=TRUE|Dir=Out|Protocol=17|Profile=Public|RPort=5353|RA4=192.168.0.0/16|Name=public_local_ISA_Lazlar-out|Desc=public_local_ISA_Lazlar-out: Bonjour service discovery development|"
+| "000local-0000-0001-0010-000000000018"="v2.30|Action=Allow|Active=TRUE|Dir=In|Protocol=17|Profile=Public|LPort=5353|LA4=192.168.0.0/16|Name=public_local_ISA_Lazlar-inn|Desc=public_local_ISA_Lazlar-inn: Bonjour service discovery development|"
++-----------------------------------------------------------------------
+
+SideNote:
+
+- Protocol (6 für TCP, 17 für UDP)
+- RPort (Remote Port)
+- LPort (Local Port)
+- RA4 (Remote Address IPv4)
+- LA4 (Local Address IPv4)
+- Dir (Direction In/Out)
+
+Mehrere Ports/Adressen kombinierbar mit | (pipe). Für Gegenrichtung, statt
+RPort und RA4, LPort und LA4 verwenden. 
+
+Nach reg-file import noch folgendes command:
+
++-----------------------------------------------------------------------
+| gpupdate /target:computer /force
++-----------------------------------------------------------------------
+
+[src](https://wikit.post.ch/x/HW47MQ)
+
