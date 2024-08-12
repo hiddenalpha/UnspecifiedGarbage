@@ -1,14 +1,18 @@
 
+  WARN: now based on "SDCISA-15636-Migrate-to-Java-21" branch.
+
 
 --- a/Jenkinsfile
 +++ b/Jenkinsfile
-@@ -9,5 +9,5 @@ serviceBuildPipeline([
+@@ -10,7 +10,7 @@
      jslPipeline
              .checkout()
              .setBranchVersion()
--            .buildMaven([slim: true])
+-            .buildMaven()
 +            .buildMaven()
              .buildDocker()
+             .finalizeAndUpdateVersion()
+             .saveArtifacts()
 
 
 --- a/megacamel-web/pom.xml

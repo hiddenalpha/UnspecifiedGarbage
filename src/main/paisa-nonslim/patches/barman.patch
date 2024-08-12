@@ -1,0 +1,41 @@
+
+
+--- a/Jenkinsfile
++++ a/Jenkinsfile
+@@ -13,7 +13,7 @@
+     jslPipeline
+             .checkout()
+             .setBranchVersion()
+-            .buildMaven()
++            .buildMaven()
+             .runKarma()
+             .withInstances([
+                     instances: [
+@@ -20,7 +20,7 @@
+                             testInstance: [
+                                     services: [
+                                             eagle:    [version: '02.01.26.01-PR-379-SNAPSHOT'],
+-                                            platform: [version: '03.06.40.01-PR-388-SNAPSHOT'],
++                                            platform: [version: '${j21.platform.version}'],
+                                             storage:  [version: '00.24.00.00'],
+                                             barman:   [version: '%currentBranch%']
+                                     ]
+
+
+--- a/pom.xml
++++ b/pom.xml
+@@ -86,6 +86,11 @@
+                 <artifactId>linti</artifactId>
+                 <version>${linti.version}</version>
+             </dependency>
++            <dependency>
++                <groupId>org.glassfish</groupId>
++                <artifactId>jakarta.el</artifactId>
++                <version>4.0.2</version> <!-- TODO move this version somewhere else -->
++            </dependency>
+         </dependencies>
+     </dependencyManagement>
+
+
+
+

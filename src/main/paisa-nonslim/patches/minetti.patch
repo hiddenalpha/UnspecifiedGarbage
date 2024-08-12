@@ -1,23 +1,35 @@
 
+  WARN: Now based on "SDCISA-15636-Migrate-to-Java-21" branch.
+
 --- a/Jenkinsfile
 +++ b/Jenkinsfile
-@@ -12,7 +12,7 @@ serviceBuildPipeline([
+@@ -13,7 +13,7 @@
      jslPipeline
              .checkout()
              .setBranchVersion()
--            .buildMaven([slim: true, spotless: true])
+-            .buildMaven([spotless: true])
 +            .buildMaven([spotless: true])
              .runKarma()
              .withInstances([
                      instances: [
-@@ -25,7 +25,7 @@ serviceBuildPipeline([
+@@ -20,16 +20,16 @@
+                             backendInstance: [
+                                     services: [
+                                             houston:  [version: '02.01.66.01-PR-519-SNAPSHOT'],
+-                                            platform: [version: '03.06.40.01-PR-388-SNAPSHOT'],
++                                            platform: [version: '${j21.platform.version}'],
+                                             storage:  [version: '00.24.00.00']
+                                     ]
+                             ],
                              vehicleInstance: [
                                      services: [
-                                             eagle:    [version: '02.01.19.00'],
--                                            platform: [version: '03.06.38.00'],
+                                             eagle:    [version: '02.01.26.01-PR-379-SNAPSHOT'],
+-                                            platform: [version: '03.06.40.01-PR-388-SNAPSHOT'],
 +                                            platform: [version: '${j21.platform.version}'],
                                              storage:  [version: '00.24.00.00'],
--                                            slarti:   [version: '03.14.37.00'],
-+                                            slarti:   [version: '${j21.service.mangledVersion}'],
+                                             slarti:   [version: '03.15.09.01-PR-1019-SNAPSHOT'],
                                              minetti:  [version: '%currentBranch%']
+                                     ],
+                                     houstonInstance: 'backendInstance'
+
 

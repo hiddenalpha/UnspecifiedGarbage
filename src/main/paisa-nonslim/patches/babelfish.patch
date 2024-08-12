@@ -1,16 +1,20 @@
 
+  WARN: Now based on "SDCISA-15636-Migrate-to-Java-21" branch.
 
---- a/Jenkinsfile
-+++ b/Jenkinsfile
-@@ -9,7 +9,7 @@ serviceBuildPipeline([
-     jslPipeline
-         .checkout()
-         .setBranchVersion()
--        .buildMaven([slim: true, spotless: true])
-+        .buildMaven([spotless: true])
-         .finalizeAndUpdateVersion()
-         .saveArtifacts()
-         .executeSonar()
+--- a/pom.xml
++++ b/pom.xml
+@@ -85,6 +85,11 @@
+                 <artifactId>jbbp</artifactId>
+                 <version>${jbbp.version}</version>
+             </dependency>
++            <dependency>
++                <groupId>org.eclipse.jetty.ee10</groupId>
++                <artifactId>jetty-ee10-webapp</artifactId>
++                <version>12.0.12</version><!-- TODO move version to properties -->
++            </dependency>
+         </dependencies>
+     </dependencyManagement>
+ 
 
 
 --- a/babelfish-web/pom.xml

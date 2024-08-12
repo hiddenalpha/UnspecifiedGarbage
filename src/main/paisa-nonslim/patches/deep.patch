@@ -1,102 +1,23 @@
 
+  WARN: Now based on "SDCISA-15636-Migrate-to-Java-21" branch.
 
 --- a/Jenkinsfile
 +++ b/Jenkinsfile
-@@ -19,10 +19,10 @@ serviceBuildPipeline([
+@@ -20,11 +20,11 @@
                  testInstance: [
                      services: [
-                         eagle:    [version: '02.01.19.00'],
--                        platform: [version: '03.06.37.00'],
+                         eagle:    [version: '02.01.26.01-PR-379-SNAPSHOT'],
+-                        platform: [version: '03.06.40.01-PR-388-SNAPSHOT'],
 +                        platform: [version: '${j21.platform.version}'],
                          storage:  [version: '00.24.00.00'],
                          deep:     [version: '%currentBranch%'],
--                        slarti:   [version: '03.14.33.00'],
--                        guide:    [version: '02.14.10.00'],
--                        trillian: [version: '03.00.38.00']
+-                        slarti:   [version: '03.15.12.01-PR-1019-SNAPSHOT'],
 +                        slarti:   [version: '${j21.service.mangledVersion}'],
+-                        guide:    [version: '02.14.13.01-PR-122-SNAPSHOT'],
 +                        guide:    [version: '${j21.service.mangledVersion}'],
+-                        trillian: [version: '03.00.38.01-PR-413-SNAPSHOT']
 +                        trillian: [version: '${j21.service.mangledVersion}']
                      ]
-
-
---- a/deep-process/src/test/java/ch/post/it/paisa/deep/process/event/definition/TrailerDefinitionTest.java
-+++ b/deep-process/src/test/java/ch/post/it/paisa/deep/process/event/definition/TrailerDefinitionTest.java
-@@ -29,75 +29,5 @@ import static org.mockito.Matchers.argThat;
-  */
- @RunWith(MockitoJUnitRunner.class)
- public class TrailerDefinitionTest {
--
--    @Mock
--    AttributeProvider attributeProvider;
--    @Mock
--    BackendPositionProvider backendPositionProvider;
--    @Mock
--    StateMachine stateMachine;
--    @Mock
--    EventCompensator eventCompensator;
--    @Mock
--    EventSender eventSender;
--
--    TrailerDefinition trailerDefinition;
--
--    @Before
--    public void init() {
--        trailerDefinition = new TrailerDefinition();
--        trailerDefinition.setAttributeProvider(attributeProvider);
--        trailerDefinition.setBackendPositionProvider(backendPositionProvider);
--        trailerDefinition.setStateMachine(stateMachine);
--        trailerDefinition.setEventCompensator(eventCompensator);
--        trailerDefinition.setEventSender(eventSender);
--
--        Mockito.when(attributeProvider.getTrailerId()).thenReturn("5802");
--    }
--
--    @Test
--    public void testTrailerTransition() {
--        InOrder inOrder = Mockito.inOrder(eventSender);
--
--        // receives TRAILER_PRESENT_BUT_NOT_CONFIGURED -> no event is sent
--        TrailerStatus trailerStatus = new TrailerStatus().withTimestamp(DateTime.now()).withTrailerSituation(TrailerSituation.TRAILER_PRESENT_BUT_NOT_CONFIGURED);
--        trailerDefinition.process(trailerStatus);
--        inOrder.verifyNoMoreInteractions();
--
--        // receives TRAILER_PRESENT_AND_CONFIGURED -> sent TRAILER_COUPLED
--        trailerStatus = new TrailerStatus().withTimestamp(DateTime.now()).withTrailerSituation(TrailerSituation.TRAILER_PRESENT_AND_CONFIGURED).withTrailerId("5802");
--        trailerDefinition.process(trailerStatus);
--        inOrder.verify(eventSender).send(anEventOfTypeWithTrailerId(EventType.TRAILER_COUPLED, "5802"));
--
--        // receives TRAILER_PRESENT_BUT_NOT_CONFIGURED -> sent TRAILER_UNCOUPLED
--        trailerStatus = new TrailerStatus().withTimestamp(DateTime.now()).withTrailerSituation(TrailerSituation.TRAILER_PRESENT_BUT_NOT_CONFIGURED);
--        trailerDefinition.process(trailerStatus);
--        inOrder.verify(eventSender).send(anEventOfTypeWithTrailerId(EventType.TRAILER_UNCOUPLED, "5802"));
--
--        // receives NO_TRAILER -> no event is sent
--        trailerStatus = new TrailerStatus().withTimestamp(DateTime.now()).withTrailerSituation(TrailerSituation.NO_TRAILER);
--        trailerDefinition.process(trailerStatus);
--        inOrder.verifyNoMoreInteractions();
--    }
--
--
--    @Test
--    public void testTernarySignalRepetition() {
--        InOrder inOrder = Mockito.inOrder(eventSender);
--
--        // receives TRAILER_PRESENT_AND_CONFIGURED -> sent TRAILER_COUPLED
--        TrailerStatus trailerStatus = new TrailerStatus().withTimestamp(DateTime.now()).withTrailerSituation(TrailerSituation.TRAILER_PRESENT_AND_CONFIGURED).withTrailerId("5802");
--        trailerDefinition.process(trailerStatus);
--        inOrder.verify(eventSender).send(anEventOfTypeWithTrailerId(EventType.TRAILER_COUPLED, "5802"));
--
--        // receives TRAILER_PRESENT_AND_CONFIGURED again -> no event is sent
--        trailerStatus = new TrailerStatus().withTimestamp(DateTime.now()).withTrailerSituation(TrailerSituation.TRAILER_PRESENT_AND_CONFIGURED).withTrailerId("5802");
--        trailerDefinition.process(trailerStatus);
--        inOrder.verifyNoMoreInteractions();
--    }
--
--
--    private Event anEventOfTypeWithTrailerId(EventType expectedEventType, String trailerId) {
--        return argThat(Matchers.allOf(Matchers.hasProperty("eventType", is(expectedEventType)), Matchers.hasProperty("trailerId", is(trailerId))));
--    }
-+    @Test public void makeSurefireHappy() {}
- }
+                 ]
 
 

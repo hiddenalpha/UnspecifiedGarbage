@@ -1,22 +1,24 @@
 
+  WARN: now based on "SDCISA-15636-Migrate-to-Java-21" branch.
 
 --- a/Jenkinsfile
 +++ b/Jenkinsfile
-@@ -9,11 +9,11 @@ serviceBuildPipeline([
+@@ -10,13 +10,13 @@
      jslPipeline
          .checkout()
          .setBranchVersion()
--        .buildMaven([slim: true])
+-        .buildMaven()
 +        .buildMaven()
          .withInstances([
              instances: [
                  testInstance: [
                      services: [
-                         eagle:    [version: '02.01.19.00'],
--                        platform: [version: '03.06.41.00'],
+                         eagle:    [version: '02.01.26.01-PR-379-SNAPSHOT'],
+-                        platform: [version: '03.06.40.01-PR-388-SNAPSHOT'],
 +                        platform: [version: '${j21.platform.version}'],
                          storage:  [version: '00.24.00.00'],
-
+                         loon:     [version: '%currentBranch%']
+                     ]
 
 
 --- a/loon-web/pom.xml

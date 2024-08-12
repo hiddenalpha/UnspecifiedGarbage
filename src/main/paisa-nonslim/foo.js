@@ -30,7 +30,7 @@ Related:
             +"      Update local repos from remote.\n"
             +"  \n"
             +"    --reset-platform\n"
-            +"      Reset worktree to develop.\n"
+            +"      Reset worktree to base commit.\n"
             +"  \n"
             +"    --patch-platform\n"
             +"      Remove slim packaging from patform and set snapshot version.\n"
@@ -42,7 +42,7 @@ Related:
             +"      Same idea as '--push-services' but for platform.\n"
             +"  \n"
             +"    --reset-services\n"
-            +"      Reset worktree to develop.\n"
+            +"      Reset worktree to base commit.\n"
             +"  \n"
             +"    --patch-services\n"
             +"      Disable slim packaging in Jenkinsfile and use platform snapshot in\n"
@@ -770,19 +770,27 @@ Related:
 
     function checkoutUpstreamDevelop( app, thingyName, onDone){
         var iRemoteName = 0;
+        var iBranchName = 0;
         checkout();
         function checkout(){
             var remoteName = app.remoteNamesToTry[iRemoteName];
-            if( remoteName === undefined ){ onDone(Error("No more remote names for "+ thingyName)); return; }
-            log.write("[DEBUG] git checkout "+ thingyName +" "+ remoteName +"/develop\n");
+            var branchName = app.j21BranchesToTry[iBranchName++];
+            if( branchName === undefined ){
+                iBranchName = 0;
+                iRemoteName += 1;
+                checkout();
+                return;
+            }
+            if( remoteName === undefined ){ onDone(Error("No more remotes/branches for "+ thingyName)); return; }
+            log.write("[DEBUG] git checkout "+ thingyName +" "+ remoteName +"/"+ branchName +"\n");
             var child = child_process.spawn(
-                "git", ["checkout", remoteName+"/develop"],
+                "git", ["checkout", remoteName+"/"+ branchName],
                 { cwd: workdirOfSync(app, thingyName), });
             child.on("error", console.error.bind(console));
             child.stderr.on("data", function( buf ){ log.write(buf); });
             child.on("close", function( code, signal ){
-                if( !"TODO_GlACAIQoAgDMTwIAIh8CAOJvAgALLgIA" ){
-                    checkout(); /* try next remote name */
+                if( code === 1 && signal === null ){
+                    checkout(); /* try next remote/branch name */
                 }else if( code !== 0 || signal !== null ){
                     onDone(Error("code "+ code +", signal "+ signal));
                 }else{
@@ -876,7 +884,7 @@ Related:
             if( ex ) throw ex;
             if( !isClean ){ log.write("[WARN ] Skip platform patch: Worktree not clean\n");
                 endFn(); return; }
-            getDropSlimArtifactsTagInPlatformPatch(app, onPatchBufReady);
+            getPatch(app, "platform", onPatchBufReady);
         });
         function onPatchBufReady( ex, patch ){
             if( ex ) throw ex;
@@ -952,12 +960,13 @@ Related:
 
 
     function resetPlatform( app, onDone ){
-        resetHardToDevelop(app, "platform", onDone);
+        resetHardToFirstAvailBranch(app, "platform", onDone);
     }
 
 
-    function resetHardToDevelop( app, thingyName, onDone ){
+    function resetHardToFirstAvailBranch( app, thingyName, onDone ){
         var iRemoteName = 0;
+        var iBranchName = 0;
         if( typeof onDone !== "function" ) throw Error("onDone");
         detach();
         function detach(){
@@ -977,11 +986,18 @@ Related:
             });
         }
         function tryResetHard(){
-            var remoteName = app.remoteNamesToTry[iRemoteName++];
-            if( remoteName === undefined ){ onDone(Error("no usable remote found")); return; }
-            log.write("[DEBUG] "+ thingyName +"$ git reset --hard "+ remoteName +"/develop\n");
+            var remoteName = app.remoteNamesToTry[iRemoteName];
+            var branchName = app.j21BranchesToTry[iBranchName++];
+            if( branchName === undefined ){
+                iRemoteName += 1;
+                iBranchName = 0;
+                tryResetHard();
+                return;
+            }
+            if( remoteName === undefined ){ onDone(Error("no usable remote/branch found")); return; }
+            log.write("[DEBUG] "+ thingyName +"$ git reset --hard "+ remoteName +"/"+ branchName +"\n");
             var child = child_process.spawn(
-                "git", ["reset", "--hard", remoteName +"/develop"],
+                "git", ["reset", "--hard", remoteName +"/"+ branchName],
                 { cwd:workdirOfSync(app, thingyName) }
             );
             child.on("error", console.error.bind(console));
@@ -1060,6 +1076,11 @@ Related:
     }
 
 
+    function resetHardByThingyName( app, thingyName, onDone ){
+        resetHardToFirstAvailBranch(app, thingyName, onDone);
+    }
+
+
     function run( app ){
         var actions = [ fetchListOfServices ];
         if( app.isFetch ){ actions.push(fetchRemoteChanges); }
@@ -1068,7 +1089,7 @@ Related:
                 forEachInArrayDo(app, app.services, checkoutUpstreamDevelop, onDone);
             });
             actions.push(function( app, onDone ){
-                forEachInArrayDo(app, app.services, resetHardToDevelop, onDone);
+                forEachInArrayDo(app, app.services, resetHardByThingyName, onDone);
             });
         }
         if( app.isResetPlatform ){ actions.push(resetPlatform); }
@@ -1121,6 +1142,8 @@ Related:
             isPrintIsaVersion: false,
             isPrintBaselineVersion: false,
             remoteNamesToTry: ["origin"],
+            j21BranchesToTry: ["SDCISA-15636-Migrate-to-Java-21", "java-21",
+                "SDCISA-13957-platform-Java-21", "SDCISA-13957-Java-21-update-spring"],
             workdir: "C:/work/tmp/SlimPkg-Repos",
             maxParallel:  1,
             numRunningTasks: 0,
