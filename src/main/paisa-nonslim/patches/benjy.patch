@@ -14,6 +14,26 @@
          .executeSonar()
 
 
+--- a/pom.xml
++++ b/pom.xml
+@@ -32,6 +32,16 @@
+ 
+ 	</properties>
+ 
++	<dependencyManagement>
++		<dependencies>
++			<dependency>
++				<groupId>jakarta.annotation</groupId>
++				<artifactId>jakarta.annotation-api</artifactId>
++				<version>3.0.0</version> <!-- TODO move this version somewhere else -->
++			</dependency>
++		</dependencies>
++	</dependencyManagement>
++
+ 	<!-- All Projects which inherit setting from this parent project -->
+ 	<modules>
+ 		<module>benjy-web</module>
+
 
 --- a/benjy-web/pom.xml
 +++ b/benjy-web/pom.xml

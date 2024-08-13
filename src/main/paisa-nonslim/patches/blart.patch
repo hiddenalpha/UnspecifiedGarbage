@@ -10,6 +10,22 @@
                          storage:  [version: '00.24.00.00'],
 
 
+
+--- a/pom.xml
++++ b/pom.xml
+@@ -83,6 +83,11 @@
+                     </exclusion>
+                 </exclusions>
+             </dependency>
++            <dependency>
++                <groupId>org.eclipse.jetty.ee10</groupId>
++                <artifactId>jetty-ee10-webapp</artifactId>
++                <version>12.0.12</version> <!-- TODO move this version somewhere else -->
++            </dependency>
+         </dependencies>
+     </dependencyManagement>
+
+
 --- a/blart-web/pom.xml
 +++ b/blart-web/pom.xml
 @@ -84,6 +84,7 @@
