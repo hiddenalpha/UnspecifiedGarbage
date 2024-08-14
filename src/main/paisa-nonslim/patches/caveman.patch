@@ -2,20 +2,38 @@
 
 --- a/Jenkinsfile
 +++ b/Jenkinsfile
-@@ -11,11 +11,11 @@ serviceBuildPipeline([
+@@ -10,13 +10,13 @@
+     jslPipeline
+         .checkout()
          .setBranchVersion()
--        .buildMaven([spotless: true, slim: true])
+-        .buildMaven([spotless: true])
 +        .buildMaven([spotless: true])
          .withInstances([
              instances: [
                  testInstance: [
                      services: [
-                         eagle:    [version: '02.01.19.00'],
--                        platform: [version: '03.06.44.00'],
+                         eagle:    [version: '02.01.26.01-PR-379-SNAPSHOT'],
+-                        platform: [version: '03.06.40.01-PR-388-SNAPSHOT'],
 +                        platform: [version: '${j21.platform.version}'],
                          storage:  [version: '00.24.00.00'],
                          caveman:  [version: '%currentBranch%']
                      ]
+
+
+--- a/pom.xml
++++ b/pom.xml
+@@ -115,6 +115,11 @@
+                 <version>${jimfs.version}</version>
+                 <scope>test</scope>
+             </dependency>
++            <dependency>
++                <groupId>org.eclipse.jetty.ee10</groupId>
++                <artifactId>jetty-ee10-webapp</artifactId>
++                <version>12.0.12</version> <!-- TODO move this version somewhere else -->
++            </dependency>
+         </dependencies>
+     </dependencyManagement>
+ 
 
 
 --- a/caveman-web/pom.xml

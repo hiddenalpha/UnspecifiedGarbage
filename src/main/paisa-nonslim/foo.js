@@ -656,12 +656,9 @@ Related:
 
     function setPlatformVersionInService( app, thingyName, onDone ){
         if( typeof onDone != "function" ) throw TypeError("onDone");
-        TODO_vFICAIhVAgBuAgIA();
-        function TODO_vFICAIhVAgBuAgIA(){
-            getMangledPlatformVersion(app, updateParent);
-        }
+        getMangledPlatformVersion(app, updateParent);
         function updateParent( ex, mangledPlatformVersion ){
-            if( !mangledPlatformVersion ){ onDone(Error("mangledPlatformVersion missing: "+ thingyName)); return; }
+            if( !mangledPlatformVersion ){ endFn(Error("mangledPlatformVersion missing: "+ thingyName)); return; }
             log.write("[DEBUG] "+ thingyName +" - Set platform version "+ mangledPlatformVersion +"\n");
             var child = child_process.spawn(
                 "mvn", ["versions:update-parent", "-DgenerateBackupPoms=false", "-DallowDowngrade=true",
@@ -673,7 +670,7 @@ Related:
             child.stderr.on("data", logAsString);
             child.on("close", function( code, signal ){
                 if( code !== 0 || signal !== null ){
-                    onDone(Error("code "+ code +", signal "+ signal));
+                    endFn(Error("code "+ code +", signal "+ signal));
                     return;
                 }
                 updateProperty(mangledPlatformVersion);
@@ -690,11 +687,14 @@ Related:
             child.stderr.on("data", logAsString);
             child.on("close", function( code, signal ){
                 if( code !== 0 || signal !== null ){
-                    onDone(Error("code "+ code +", signal "+ signal));
+                    endFn(Error("code "+ code +", signal "+ signal));
                     return;
                 }
-                onDone();
+                endFn();
             });
+        }
+        function endFn( ex, ret ){
+            onDone(ex, ret);
         }
     }
 

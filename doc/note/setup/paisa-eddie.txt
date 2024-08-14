@@ -38,6 +38,7 @@ WARN: This will assign uid 1000 to user "isa"!
 Additional packages, helpful for some debugging scenarios etc
 
   && $SUDO dnf install -y java-11-openjdk-devel.x86_64 \
+  && $SUDO dnf install -y nss-mdns avahi avahi-tools \
   && echo 'DONE :)' \
 
 
