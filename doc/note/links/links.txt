@@ -283,6 +283,7 @@ Links (Aka argument amplifiers)
 ## Common Performance
 - [Java Exceptions performance is bad](https://www.baeldung.com/java-exceptions-performance)
 - [going fast is about doing less](https://m.youtube.com/watch?v=5rb0vvJ7NCY)
+- [HowTo write Java Code MATTERS](https://m.youtube.com/watch?v=EFXxXFHpS0M)
 - [CppCon Tuning Benchmarks clang CPUs Compilers" ](https://m.youtube.com/watch?v=nXaxk27zwlk)
 
 ## Bugs are not an issue
