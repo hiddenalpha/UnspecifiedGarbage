@@ -109,7 +109,7 @@ Populate "/etc/environment" as described by "./etc-environment".
        `# basic UI` \
        firefox-esr file-roller thunderbird chromium okular \
        `# software devel` \
-       git sqlite3 manpages-dev gdb qemu-utils qemu-system wireshark samba tigervnc-viewer jq \
+       git sqlite3 manpages-dev gdb qemu-utils qemu-system wireshark samba tigervnc-viewer jq universal-ctags \
        `# server` \
        nginx-light avahi-daemon  \
        `# mDNS client & tools` \
