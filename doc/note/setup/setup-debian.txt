@@ -109,13 +109,13 @@ Populate "/etc/environment" as described by "./etc-environment".
        `# basic UI` \
        firefox-esr file-roller thunderbird chromium okular \
        `# software devel` \
-       git sqlite3 manpages-dev gdb qemu-utils qemu-system wireshark samba tigervnc-viewer jq \
+       git sqlite3 manpages-dev gdb qemu-utils qemu-system wireshark samba tigervnc-viewer jq universal-ctags \
        `# server` \
        nginx-light avahi-daemon  \
        `# mDNS client & tools` \
        libnss-mdns avahi-utils \
        `# multimedia` \
-       pulseaudio pavucontrol vlc audacity eom darktable gimp lame flac opus-tools ffmpeg \
+       pulseaudio pavucontrol vlc audacity eom darktable gimp hugin lame flac opus-tools ffmpeg \
        `# encryption` \
        keepassxc gpg \
        `# UI customization` \
@@ -128,7 +128,7 @@ Populate "/etc/environment" as described by "./etc-environment".
        `# Cups Printing` \
        cups avahi-daemon \
        `# Others` \
-       lm-sensors fancontrol bc rsync qrencode exfat-fuse exfatprogs \
+       lm-sensors fancontrol bc rsync qrencode exfat-fuse exfatprogs libxml2-utils \
        `# Nvidia graphics (open)` \
        mesa-utils clinfo mesa-opencl-icd \
        `# Nvidia graphics (non-free, DoesNotWorkYet)` \
