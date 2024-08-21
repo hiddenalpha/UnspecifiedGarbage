@@ -264,6 +264,7 @@ Links (Aka argument amplifiers)
 - [QueueStatisticsCollector takes up to 10 minutes for ONE SINGLE request](https://github.com/swisspost/vertx-redisques/issues/188)
 
 ## Performance is not an issue ...
+- [houston GC 100%](https://teams.microsoft.com/l/message/19:261fb671bd664d4fb30d6d9e09869a7f@thread.tacv2/1723705177293?tenantId=3ae7c479-0cf1-47f4-8f84-929f364eff67&groupId=dce34a79-5661-41ab-b495-60a46b69d38e&parentMessageId=1723705177293&teamName=SDC-ISA&channelName=%F0%9F%A4%96SDC-ISA%20DevOps-Support&createdTime=1723705177293)
 - [houston kafka navigation position 2024](https://gitit.post.ch/projects/ISA/repos/houston/pull-requests/633/overview?commentId=396921)
 - [NowWhat info resource timeout 2024](https://jira.post.ch/browse/SDCISA-16515)
 - [Houston OOM 2023-06-27](https://wikit.post.ch/x/_Bv6Rw)
@@ -286,6 +287,7 @@ Links (Aka argument amplifiers)
 - [CppCon Tuning Benchmarks clang CPUs Compilers" ](https://m.youtube.com/watch?v=nXaxk27zwlk)
 
 ## Bugs are not an issue
+- [God Spring JavaMelody ENOMEM stream collect](https://gitit.post.ch/projects/ISA/repos/god-backend/pull-requests/417/diff#god-app%2Fsrc%2Fmain%2Fjava%2Fch%2Fpost%2Fit%2Fpaisa%2Fgod%2Fartifactory%2FArtifactoryConfiguration.java)
 - [Bistr gateleen Forwarder exception](https://jira.post.ch/browse/SDCISA-11147)
 
 ## POSIX shell language syntax
@@ -617,5 +619,7 @@ Links (Aka argument amplifiers)
 
 - [null VS empty](https://jira.post.ch/browse/SDCISA-14534)
 
+## Proxy environ names
+- (https://about.gitlab.com/blog/2021/01/27/we-need-to-talk-no-proxy/)
 
 
