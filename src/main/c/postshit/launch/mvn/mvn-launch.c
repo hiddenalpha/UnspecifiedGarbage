@@ -6,7 +6,7 @@
   instead doing our work. Grrr...
 
   ${CC:?} -o build/bin/mvn-launch.exe \
-    -Wall -Werror -fmax-errors=3 -Wno-error=unused-function -Wno-error=unused-variable \
+    -Wall -Werror -fmax-errors=1 \
     -DPROJECT_VERSION=0.0.0-$(date -u +%s) \
     src/main/c/postshit/launch/mvn/mvn-launch.c \
 
@@ -139,9 +139,7 @@ int main( int argc, char**argv ){
     int cmdline_len = 0;
 
     err = 0
-        || appendRaw(cmdline, &cmdline_len, cmdline_cap, "C:/Users/", 9) < 0
-        || appendRaw(cmdline, &cmdline_len, cmdline_cap, username, username_len) < 0
-        || appendRaw(cmdline, &cmdline_len, cmdline_cap, "/.opt/java/bin/java.exe", 23) < 0
+        || appendRaw(cmdline, &cmdline_len, cmdline_cap, "C:/work/opt/java-open-jdk-11.0.11-9-x64/bin/java.exe", 52) < 0
         || appendFromEnvironIfNotEmpty(cmdline, &cmdline_len, cmdline_cap, "JVM_CONFIG_MAVEN_PROPS") < 0
         || appendFromEnvironIfNotEmpty(cmdline, &cmdline_len, cmdline_cap, "MAVEN_OPTS") < 0
         || appendFromEnvironIfNotEmpty(cmdline, &cmdline_len, cmdline_cap, "MAVEN_DEBUG_OPTS") < 0
