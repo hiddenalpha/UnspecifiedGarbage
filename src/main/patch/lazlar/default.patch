@@ -35,3 +35,30 @@
          <dependency>
 
 
+  This is needed if I wanna run mDNS tests in my virtual machine. So the
+  registered service route is of any use for my eddie which runs outside the VM
+  and so has no chance to see lazlar via its IP inside the VM.
+
+--- a/lazlar-web/src/test/java/ch/post/it/paisa/lazlar/web/LazlarStarter.java
++++ b/lazlar-web/src/test/java/ch/post/it/paisa/lazlar/web/LazlarStarter.java
+@@ -7,6 +7,18 @@
+     boolean a = false;
+     assert a = true;
+     if (!a) throw new RuntimeException("https://stackoverflow.com/a/68893479/4415884");
+-    ServiceStarter.create().start();
++    String chPostItHost = System.getProperty("ch.post.it.host");
++    String paisaServiceHost = System.getProperty("paisa.service.host");
++    new Thread(() -> {
++      for(int i = 0 ; i < 5000 ; ++i ){
++        System.setProperty("ch.post.it.host", chPostItHost);
++        System.setProperty("paisa.service.host", paisaServiceHost);
++        try{
++          Thread.sleep(1);
++        }catch(InterruptedException ex){ throw new UnsupportedOperationException/*TODO*/("not impl yet",ex);}
++      }
++    }).start();
++    Thread.yield();
++    ServiceStarter.create().withName("lazlar").withPort(7042).start();
+   }
+ }
+
