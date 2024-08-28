@@ -24,7 +24,7 @@ debian page which says 64k.
   && USERNAME="andreas" \
   && PASS="TODO_insertYourPwHashHere" \
   && USERID="1000" \
-  && PUB_KEY_FILE="/home/andreas/.ssh/pub/id_m.pub.ssh2" \
+  && PUB_KEY_FILE="path/to/pub/key.ssh2" \
   && CHROOT="/mnt/d" \
   && true \
   && SSHD_CONFIG="${CHROOT:?}/etc/ssh/sshd_config" \
@@ -121,7 +121,7 @@ debian page which says 64k.
 
 ## mDNS
 
-  true \
+  && (set -e \
   && HOSTNAME="example.local" \
   && FILE="/etc/avahi/services/nginx.xml" \
   && true \
@@ -143,21 +143,17 @@ debian page which says 64k.
      && echo '  </service>' \
      && echo '</service-group>' \
      ) > "${FILE:?}" \
-  && true
+  && true) \
 
 
 ## Install packages due to personal preference
 
 I guess MUST be run on the actual target machine.
 
-  true \
   && apt install -y --no-install-recommends sudo net-tools vim nginx fcgiwrap ntfs-3g \
-  && true
 
 
 ## Set timezone
 
-  true \
   && ln -sf /usr/share/zoneinfo/Europe/Zurich /etc/localtime \
-  && true
 
