@@ -1,0 +1,15 @@
+
+## Print why a package is installed
+
+  apt-cache rdepends --no-suggests --no-conflicts --no-breaks --no-replaces \
+      --no-enhances --installed --recurse \
+      ${PKG_NAME:?}
+
+WARN: I saw cases where above still misses to print relevant packages. Then I
+      found another hack-around which did work for me. Just pretent to
+      uninstall the package. Then the list might give some hints why it
+      was installed:
+
+  sudo apt purge --dry-run ${PKG_NAME:?}
+
+
