@@ -2,19 +2,8 @@
 How to Setup debian for MY needs
 ================================
 
-TODO:
 TODO: INSTALL PRINTER PACKAGES!!
-TODO:
-
-
-## Partitioning
-
-Use the smaller & faster SSD for the system. Make sure it consists of TWO
-partitions so system can be easily upgraded later by just replacing it by a new
-install in the other partition.
-
-I prefer to put users home to a larger (maybe a HDD) for data storage. If
-there's only ONE drive, we need an additional partition for the home too.
+TODO: Document how to install certbot.
 
 
 ## Base system
@@ -45,7 +34,7 @@ WARN: This snippet may cut-off network connections. Including your remote shell!
   && printf '\n[WARN ] Needs more setup: /etc/iptables/src-default\n\n' \
   && printf '%s\n' \
        '## Apply from file' '' \
-       'ncat /etc/iptables/src-default | $SUDO iptables-restore' '' \
+       'cat /etc/iptables/src-default | $SUDO iptables-restore' '' \
        '## store current session as default' '' \
        '$SUDO iptables-save | $SUDO tee /etc/iptables/rules.v4 > /dev/null' \
        | $SUDO tee /etc/iptables/README >/dev/null \
@@ -93,7 +82,7 @@ UUID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx  /mnt/nameOfHdd  ext4  noatime  0  2
 
 ## Install Desktop Env
 
-  && $SUDO apt install -y --no-install-recommends xorg openbox mate-terminal lightdm light-locker feh scrot lxpanel qalculate-gtk gmrun gnome-system-monitor vim-gtk3 \
+  && $SUDO apt install -y --no-install-recommends xorg openbox mate-terminal lightdm light-locker feh scrot lxpanel qalculate-gtk gmrun gnome-system-monitor \
   && mkdir ~/.config ~/.config/openbox || true \
   && update-alternatives  \
 
@@ -129,7 +118,7 @@ Populate "/etc/environment" as described by "./etc-environment".
        `# Cups Printing` \
        cups avahi-daemon \
        `# Others` \
-       lm-sensors fancontrol bc rsync qrencode exfat-fuse exfatprogs libxml2-utils \
+       systemd-sysv lm-sensors fancontrol bc rsync qrencode exfat-fuse exfatprogs libxml2-utils \
        `# Nvidia graphics (open)` \
        mesa-utils clinfo mesa-opencl-icd \
        `# Nvidia graphics (non-free, DoesNotWorkYet)` \
