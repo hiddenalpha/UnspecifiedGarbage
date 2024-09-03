@@ -33,6 +33,19 @@ twice with colon in between):
   git fetch origin --depth=1 refs/tags/v1.2.3:refs/tags/v1.2.3
 
 
+## Auto-destroy code-format
+
+  && REMOTENAME=upstream \
+  && BRANCH= \
+  && ISSUENR= \
+  && if test -n "$(git status --porcelain)"; then echo "working tree not clean" && false; fi \
+  && git detach \
+  && mvn spotless:apply \
+  && git add -- . && git commit -m "[${ISSUENR:?}] Auto-destroy code-format" \
+  && git l2 \
+  && printf '\nTODO git br %s HEAD\n\n' "${BRANCH:?}" \
+  && printf '\nTODO git push %s HEAD:%s\n\n' "${REMOTENAME:?}" "HEAD:${BRANCH:?}" \
+
 
 ## Reduce local disk usage
 

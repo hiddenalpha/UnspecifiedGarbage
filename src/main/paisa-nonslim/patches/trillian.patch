@@ -11,21 +11,30 @@
          .runKarma()
          .buildDocker()
          .withInstances([instances: [
-@@ -20,44 +20,44 @@
+
+
+--- a/Jenkinsfile
++++ b/Jenkinsfile
+@@ -20,7 +20,7 @@
              backend: [
                  services: [
                      houston:  [version: '02.01.68.01-PR-519-SNAPSHOT'],
--                    platform: [version: '03.06.40.01-java-21-support-trillian-SNAPSHOT'],
+-                    platform: [version: '03.06.40.01-PR-388-SNAPSHOT'],
 +                    platform: [version: '${j21.platform.version}'],
                      storage:  [version: '00.24.00.00'],
 -                    astra:    [version: '04.00.11.01-PR-168-SNAPSHOT']
 +                    astra:    [version: '04.00.13.00']
                  ]
              ],
+
+
+--- a/Jenkinsfile
++++ b/Jenkinsfile
+@@ -28,12 +28,12 @@
              vehicle1: [
                  services: [
                      eagle:     [version: '02.01.26.01-PR-379-SNAPSHOT'],
--                    platform:  [version: '03.06.40.01-java-21-support-trillian-SNAPSHOT'],
+-                    platform:  [version: '03.06.40.01-PR-388-SNAPSHOT'],
 +                    platform:  [version: '${j21.platform.version}'],
                      storage:   [version: '00.24.00.00'],
                      trillian:  [version: '%currentBranch%'],
@@ -37,10 +46,15 @@
                  ],
                  houstonInstance: 'backend'
              ],
+
+
+--- a/Jenkinsfile
++++ b/Jenkinsfile
+@@ -40,12 +40,12 @@
              vehicle2: [
                  services: [
                      eagle:     [version: '02.01.26.01-PR-379-SNAPSHOT'],
--                    platform:  [version: '03.06.40.01-java-21-support-trillian-SNAPSHOT'],
+-                    platform:  [version: '03.06.40.01-PR-388-SNAPSHOT'],
 +                    platform:  [version: '${j21.platform.version}'],
                      storage:   [version: '00.24.00.00'],
                      trillian:  [version: '%currentBranch%'],
@@ -52,10 +66,15 @@
                  ],
                  houstonInstance: 'backend'
              ],
+
+
+--- a/Jenkinsfile
++++ b/Jenkinsfile
+@@ -52,12 +52,12 @@
              vehicle3: [
                  services: [
                      eagle:     [version: '02.01.26.01-PR-379-SNAPSHOT'],
--                    platform:  [version: '03.06.40.01-java-21-support-trillian-SNAPSHOT'],
+-                    platform:  [version: '03.06.40.01-PR-388-SNAPSHOT'],
 +                    platform:  [version: '${j21.platform.version}'],
                      storage:   [version: '00.24.00.00'],
                      trillian:  [version: '%currentBranch%'],

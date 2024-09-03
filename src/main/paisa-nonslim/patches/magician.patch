@@ -12,37 +12,20 @@
              vehicleInstance: [
                  services: [
                      eagle:    [version: '02.01.26.01-PR-379-SNAPSHOT'],
--                    platform: [version: '03.06.39.01-PR-388-SNAPSHOT'],
+-                    platform: [version: '03.06.40.01-PR-388-SNAPSHOT'],
 +                    platform: [version: '${j21.platform.version}'],
                      storage:  [version: '00.24.00.00'],
                      magician: [version: '%currentBranch%']
                  ]
 
 
---- a/magician-process/pom.xml
-+++ b/magician-process/pom.xml
-@@ -43,4 +43,9 @@
-             <artifactId>system-diagnostics-api</artifactId>
-         </dependency>
-+
-+        <dependency>
-+            <groupId>commons-fileupload</groupId>
-+            <artifactId>commons-fileupload</artifactId>
-+        </dependency>
-     </dependencies>
- 
-
-
 --- a/pom.xml
 +++ b/pom.xml
-@@ -42,5 +42,6 @@
-         <font-awesome.version>5.9.0</font-awesome.version>
-         <google-http-client.version>1.23.0</google-http-client.version>
+@@ -44,2 +44,3 @@
+         <jakarta.ws.rs-api.version>3.1.0</jakarta.ws.rs-api.version>
 +        <common-fileupload.version>1.5</common-fileupload.version>
-         <jersey.version>2.27</jersey.version>
-         <javax.ws.rs-api.version>2.1</javax.ws.rs-api.version>
      </properties>
-@@ -89,4 +90,10 @@
+@@ -94,3 +95,9 @@
              </dependency>
  
 +            <dependency>
@@ -52,9 +35,16 @@
 +            </dependency>
 +
              <!-- Testing -->
-             <dependency>
 
 
-
+--- a/magician-process/pom.xml
++++ b/magician-process/pom.xml
+@@ -49,2 +49,6 @@
+         </dependency>
++        <dependency>
++            <groupId>commons-fileupload</groupId>
++            <artifactId>commons-fileupload</artifactId>
++        </dependency>
+     </dependencies>
 
 

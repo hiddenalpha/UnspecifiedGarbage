@@ -15,12 +15,12 @@ See "../kubernetes/kubectl.txt"
 ## How to get logs from super-fancy-UI
 
 [Kubernetes Inventory](https://wikit.post.ch/x/wSk0Ow)
-- dann "Mobility Services"
+- "Mobility Services" -> "Argo CD"
 - dann "houston" (entweder alle via hauptnode, oder instance via unten)
 - dann irgendwo auf logs
 
 
-## Houston Logs Tail follow
+## Houston Logs CLI
 
   argocd --server "https://deployment-eks-prod-m15cp0001.eks.aws.pnetcloud.ch/applications/argocd" app list
 
@@ -29,6 +29,8 @@ See "../kubernetes/kubectl.txt"
   [broken](https://stackoverflow.com/questions/39454962/kubectl-logs-continuously#comment102504454_39455930)
 
   kubectl -n "${NAMESPACE?}" exec -ti houston-0 -- sh -c 'cd /usr/local/vertx/logs && tail -F houston.log | egrep -v '\''( Forwarder | INFO ClusterWatchdogVerticle |  at io|^ *["}]| HttpMultiGetServer | BisectClient )'\'''
+
+  kubectl -n "${NAMESPACE?}" exec -ti houston-0 -- sh -c 'cd /usr/local/vertx/logs && tar cz *log*' > houston-"${stage:?}"-0-log-$(date -u +%Y%m%d-%H%M%SZ).tgz
 
 
 ## Houston auto chunk logs dload
