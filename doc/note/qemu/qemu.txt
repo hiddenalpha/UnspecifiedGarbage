@@ -31,6 +31,10 @@ Example fstab entries:
 ### Create Standalone image based on snapshot image
   qemu-img convert -O qcow2 derived.qcow2 standalone.qcow2
 
+## Convert to based from standalone
+  qemu-img create -f qcow2 -b old.qcow2 new.qcow2
+  qemu-img rebase -b base.qcow2 new.qcow2
+
 ## Shrink/compact img
 
 Normal systems:
@@ -39,7 +43,6 @@ Normal systems:
 Windoof:
   sdelete -z C:
   qemu-img convert -O qcow2 input.qcow output.qcow2
-
 
 ## Shrink snapshot layer
 

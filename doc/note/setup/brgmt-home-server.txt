@@ -1,0 +1,67 @@
+
+WARN: not working yet!
+
+  && SUDO=sudo \
+  && $SUDO apt install --no-install-recommends -y nginx fcgiwrap \
+  && $SUDO /etc/init.d/fcgiwrap start \
+  && $SUDO mkdir -p /srv/www/cgi-bin \
+  && $SUDO mkdir -p /srv/www/homeauto/beispiel-anlage-1 \
+  && $SUDO find /srv -exec chown root:www-data {} + \
+  && $SUDO find /srv -type d -exec chmod 755 {} + \
+  && $SUDO find /srv -type f -exec chmod 644 {} + \
+  && $SUDO find /srv/www/homeauto/beispiel-anlage-1 -type d -exec chmod 775 {} + \
+  && $SUDO find /srv/www/homeauto/beispiel-anlage-1 -type f -exec chmod 664 {} + \
+  && echo 'H4sIAKad12YAA1NW1E/KzNNPzStTyClN5CooyswrUfIICQnQN9QzUDAxtFAISU1VcM44vCcpNSdTCarAOT+vJDWvRDeksiDVSqEktaJEP6MkNwcmDaPdS9NLi4HaFMozUxXSUzNLiu0VfEoTFYqBTIXUYrCQQnppaomeEhcAokc+ZYkAAAA='|base64 -d|gunzip|$SUDO tee >/dev/null /srv/www/cgi-bin/fileserver.lua \
+  && $SUDO chmod +x /srv/www/cgi-bin/fileserver.lua \
+  && $SUDO rm -rf /etc/nginx/* \
+  && echo '
+
+pid /run/nginx.pid;
+events {}
+error_log /var/log/nginx/error.log info; # debug, info, notice, warn, error, crit, alert, emerg.
+http {
+    client_body_temp_path /tmp/nginx;
+    proxy_temp_path /tmp/nginx;
+    fastcgi_temp_path /tmp/nginx;
+    uwsgi_temp_path /tmp/nginx;
+    scgi_temp_path /tmp/nginx;
+    server_tokens off;
+    server {
+        listen 80 default_server;
+        listen [::]:80 default_server;
+        root /srv/www;
+        location ~ "/beispiel-anlage-1/?$" {
+            root /srv/www/homeauto;
+            autoindex on;
+        }
+        location ~ "/beispiel-anlage-1/([0-9a-zA-Z-.]+)$" {
+            gzip off;
+            fastcgi_pass  unix:/var/run/fcgiwrap.socket;
+            fastcgi_param SCRIPT_FILENAME  /srv/www/cgi-bin/fileserver.lua;
+            fastcgi_param SCRIPT_NAME       fileserver.lua;
+            fastcgi_param QUERY_STRING      $query_string;
+            fastcgi_param REQUEST_METHOD    $request_method;
+            fastcgi_param CONTENT_TYPE      $content_type;
+            fastcgi_param CONTENT_LENGTH    $content_length;
+            #fastcgi_param SCRIPT_FILENAME   $document_root$fastcgi_script_name;
+            #fastcgi_param SCRIPT_NAME       $fastcgi_script_name;
+            fastcgi_param REQUEST_URI       $request_uri;
+            fastcgi_param DOCUMENT_URI      $document_uri;
+            fastcgi_param DOCUMENT_ROOT     $document_root;
+            fastcgi_param SERVER_PROTOCOL   $server_protocol;
+            fastcgi_param GATEWAY_INTERFACE CGI/1.1;
+            fastcgi_param SERVER_SOFTWARE   nginx/$nginx_version;
+            fastcgi_param REMOTE_ADDR       $remote_addr;
+            fastcgi_param REMOTE_PORT       $remote_port;
+            fastcgi_param SERVER_ADDR       $server_addr;
+            fastcgi_param SERVER_PORT       $server_port;
+            fastcgi_param SERVER_NAME       $host;
+        }
+    }
+}
+
+' |base64 -d|gunzip|$SUDO tee >/dev/null /etc/nginx/nginx.conf \
+  && nginx -t || true \
+  && $SUDO /etc/init.d/nginx reload \
+  && printf '\nDONE\n\n' \
+

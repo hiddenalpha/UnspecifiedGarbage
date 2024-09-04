@@ -95,8 +95,8 @@ Populate "/etc/environment" as described by "./etc-environment".
        `# basic CLI` \
        vim htop pv openssh-client iptables iptables-persistent xxd zip unzip xz-utils p7zip-full \
        file trash-cli ncat curl \
-       `# basic UI` \
-       firefox-esr file-roller thunderbird chromium okular \
+       `# basic UI (vim-gtk required for system clipboard)` \
+       vim-gtk3 firefox-esr file-roller thunderbird chromium okular \
        `# software devel` \
        git sqlite3 manpages-dev gdb qemu-utils qemu-system-x86 qemu-system-arm wireshark samba \
        tigervnc-viewer jq universal-ctags \
