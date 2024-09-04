@@ -1,0 +1,16 @@
+
+  && SUDO=sudo \
+  && $SUDO apt install --no-install-recommends -y nginx fcgiwrap \
+  && $SUDO mkdir -p /srv/www/cgi-bin \
+  && $SUDO find /srv -exec chown root:www-data {} + \
+  && $SUDO find /srv -type d -exec chmod 755 {} + \
+  && $SUDO find /srv -type f -exec chmod 644 {} + \
+  && echo 'H4sIAOos2GYAAzXJsQrCQBCE4T5PMZ6FlR6ChaSxsBAhnb7Aisu5cLkc7q7RtzeIqeZnvuUi3qRELi9kp6Y+pVi4GJlri912j/OqB8GY6nAPfz8OxbjY+vqp3E72tviwPs8878mTK2fBKIzEYnpA5wSdEqy/C8nZNqH5AuOUoNSIAAAA'|base64 -d|gunzip|$SUDO tee >/dev/null /srv/www/cgi-bin/example.lua \
+  && $SUDO chmod +x /srv/www/cgi-bin/example.lua \
+  && $SUDO rm -rf /etc/nginx/* \
+  && echo 'H4sIAG0t2GYAA41UwW7iMBC95ysslSMl29sKTghSilQIa9ytqtXKchMTrCa2154A3Yp/XzuQNq22aeZAQua9mZc342iRotCUMpSZkIeBFuko4DsuwaKXY1BabtB+v79MGbDXm1HAkoRbS3OVoXDHTOhuTgXCU2bgM4kqHoXkvqAxyvwPXSUqsJAbNUIXKOWPZdav/vaRVCAS3kd7ZmQfVeA+SoyAPmI5N+7CC26yQbAF0OglQC6SXDj19FGlzxR4oalmsEUhFPrUc1ShtFGHtvyGWUgy0YIo97Y1b9vpztgdNxTUE5cWqc2m+fj8Kj5yYYFL9P2bc2bDyhzoCTL6iPg1HP4etsCMUoBCa3ahG2ODrRIGQkkU8gMrdM4Hecka/X1kf4V+k1hHbZFm1jo7pDgMq+n6Zdq4xN4wPbAqeeLwGdGwAq0neL4i9Hp+Gy3Hi8jla5GhA126DWoq61DpXMXHp8SLrzT0UpWUhV8k71uvhlu3fBqoZAXvUrAh5esS7yv8uIvwA10TPF/OzhX+lNw8UwtGyKyNiiNHXhO6iMhNPK2ohjuyBVpw2Kq0jTyJlyRaEkoeVmfpvURJ8E7As26VXFOdiTNy846ac5nBtovoOzyvHatFl0a0Mafx5G7h+75S34bXlYrjmHyg+rm3bluEf0aYrnBM4kl867nnM+2+LaASlbexZ2MS3Y8f6NxZhq/HkwhNZvPwanDVoeU6vib3Y+zHc/qK9qoLdb2tO8ntLi9iEtHxdIrfXC4UcMrS1HRgrmJMPjC1Ml2MavY8G/VVz9riRs/a4m49m+dvq2yDcgxOv8fgH5VJlHABBwAA' |base64 -d|gunzip|$SUDO tee >/dev/null /etc/nginx/nginx.conf \
+  && nginx -t || true \
+  && $SUDO /etc/init.d/fcgiwrap restart \
+  && $SUDO /etc/init.d/nginx restart \
+  && printf '\nDONE\n\n' \
+
