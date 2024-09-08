@@ -33,6 +33,11 @@ twice with colon in between):
   git fetch origin --depth=1 refs/tags/v1.2.3:refs/tags/v1.2.3
 
 
+## History digging for specific file
+
+  git log --follow -- path/to/file
+
+
 ## Auto-destroy code-format
 
   && REMOTENAME=upstream \

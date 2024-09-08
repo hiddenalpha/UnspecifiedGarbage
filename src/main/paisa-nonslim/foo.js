@@ -184,7 +184,7 @@ Related:
         var patchAsStr;
         var mangledPlatformVersion, mangledServiceVersion, mangledSlartiVersion;
         var propsToReplace = [ "j21.service.mangledVersion", "j21.platform.version",
-            "j21.captain.mangledVersion", "j21.slarti.mangledVersion" ];
+            "j21.captain.mangledVersion", "j21.slarti.mangledVersion", "j21.megacamel.mangledVersion" ];
         var propValsByKey = {};
         fs.readFile(path, 'utf8', TODO_sBECAHhRAgCcPAIA);
         function TODO_sBECAHhRAgCcPAIA( ex, patchAsStr_ ){
@@ -202,6 +202,7 @@ Related:
             if( !new RegExp("\\${"+ k +"}").test(patchAsStr) ){ getNextProperty(); return; }
             var subj = false ? null
                 : (k == "j21.service.mangledVersion") ? thingyName
+                : (k == "j21.megacamel.mangledVersion") ? thingyName
                 : (k == "j21.platform.version") ? "platform"
                 : null;
             if( !subj ){ subj = /^j21.([^.]+).mangledVersion$/.exec(k)[1]; }
@@ -218,6 +219,8 @@ Related:
                 var v = propValsByKey[k];
                 patchAsStr = patchAsStr.replace(new RegExp("\\${"+ k +"}", "g"), v);
             }
+            var m = /(\$\{j21.*})/.exec(patchAsStr);
+            if( m ){ onDone(Error("Unresolved property '"+ m[1] +"' in '"+ path +"'")); return; }
             onDone(null, patchAsStr);
         }
     }
@@ -731,7 +734,7 @@ Related:
             if( !patchStr ){ TODO_qCICAFEnAgD7FgIA(); return; }
             log.write("[DEBUG] Custom patch for '"+ jettyService +"'\n");
             var child = child_process.spawn(
-                "patch", [ "-p", "1" ], { cwd: workdirOfSync(app, jettyService) }
+                "patch", [ "-p", "1", "--no-backup-if-mismatch" ], { cwd: workdirOfSync(app, jettyService) }
             );
             child.on("error", console.error.bind(console));
             child.stderr.on("data", logAsString);

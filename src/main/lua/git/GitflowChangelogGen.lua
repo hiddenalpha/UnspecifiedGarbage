@@ -161,15 +161,26 @@ function run( app )
         if version ~= prevVersion or not dateEntry then
             if dateEntry then table.insert(entries, dateEntry) end
             dateEntry = {
-                txt = date .." - ".. version .."\n\nResolved issues:\n\n"
+                txt = date .." - ".. version .."\n\n" --.."Resolved issues:\n\n"
             }
             prevDate = date
         end
-        if prNr then
-            dateEntry.txt = dateEntry.txt .. short .." (PR ".. prNr ..")\n"
-        else
-            dateEntry.txt = dateEntry.txt .. v.msg .."\n"
+        -- Drop some crappy bloat
+        local msg = short or v.msg
+        local jiraNr = msg:match("^(SDCISA%-%d%d%d%d%d?)[^%d]")
+        if false
+        or msg:find("^Develop$")
+        or msg:find("^Release$")
+        or msg:find("^%[P2%] merge master back to develop$")
+        or msg:find("^%[P2%] release [^ ]+ %[skip ci%]$")
+        then
+            goto nextCommit
         end
+        if jiraNr then dateEntry.txt = dateEntry.txt .."[".. jiraNr .."] " end
+        dateEntry.txt = dateEntry.txt .. msg
+        if prNr then dateEntry.txt = dateEntry.txt .." (PR ".. prNr ..")" end
+        dateEntry.txt = dateEntry.txt .."\n"
+        ::nextCommit::
     end
     if dateEntry then table.insert(entries, dateEntry) end
     -- output
