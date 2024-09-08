@@ -61,6 +61,8 @@ function vapourizeUrlVariables( app, uri )
     if uri:find("^/houston/users/[^/]+/user/.*$") then return uri end
     --
     -- Try to do some clever guesses to group URIs wich only differ in variable segments
+    uri = uri:gsub("/eddie%d%d%d%d%d/", "/{eddieName}/") -- "eddie12345"
+    uri = uri:gsub("(/executeTask/host/{eddieName}/instance/default/task/)[^/]+", "%1{taskType}")
     uri = uri:gsub("(/|-)[%dI_-]+/", "%1{}/"):gsub("(/|-)[%dI-]+/", "%1{}/") -- two turns, to also get consecutive number segments
     uri = uri:gsub("([/-])[%dI_-]+$", "%1{}")
     uri = uri:gsub("/%d+(%.%w+)$", "/{}%1")
@@ -98,14 +100,14 @@ function printHttpRequestStats( app )
     out:write(string.format("Throughput  %.1f HTTP requests per second\n", overallCount / dumpDurationSec))
     out:write("\n")
     out:write("   .-- HTTP Requests per Second\n")
-    out:write("   |       .-- URI\n")
-    out:write(".--+--.  .-+---------\n")
+    out:write("   |        .-- URI\n")
+    out:write(".--+---.  .-+---------\n")
     local chartWidth = 60
     local cntPrinted = 0
     for i, elem in ipairs(sorted) do
         local count, httpMethod, httpUri = elem.count, elem.httpMethod, elem.httpUri
         local cntPerSec = math.floor((count / dumpDurationSec)*10+.5)/10
-        out:write(string.format("%7.1f  %s\n", cntPerSec, httpUri))
+        out:write(string.format("%7.2f  %s\n", cntPerSec, httpUri))
         cntPrinted = cntPrinted + 1
         ::nextPort::
     end
