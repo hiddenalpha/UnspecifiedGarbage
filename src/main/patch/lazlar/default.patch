@@ -13,7 +13,7 @@
 
 --- a/lazlar-mdns/pom.xml
 +++ b/lazlar-mdns/pom.xml
-@@ -20,2 +20,7 @@
+@@ -14,2 +14,7 @@
      <dependencies>
 +        <dependency>                              <!-- TODO remove -->
 +            <groupId>org.slf4j</groupId>          <!-- TODO remove -->

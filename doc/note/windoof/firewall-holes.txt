@@ -29,8 +29,8 @@ Beispiel 3 (Lazlar, UNTESTED):
 | Windows Registry Editor Version 5.00
 | 
 | [HKEY_LOCAL_MACHINE\Software\WOW6432Node\AutoInst\WindowsFirewall\016_Projekte_ISA_Lazlar_mDNS]
-| "000local-0000-0010-0010-000000000018"="v2.30|Action=Allow|Active=TRUE|Dir=Out|Protocol=17|Profile=Public|RPort=5353|RA4=224.0.0.251/4|Name=public_local_ISA_Lazlar-out|Desc=public_local_ISA_Lazlar-out: Bonjour service discovery development|"
-| "000local-0000-0001-0010-000000000018"="v2.30|Action=Allow|Active=TRUE|Dir=In|Protocol=17|Profile=Public|LPort=5353|LA4=224.0.0.251/4|Name=public_local_ISA_Lazlar-inn|Desc=public_local_ISA_Lazlar-inn: Bonjour service discovery development|"
+| "000local-0000-0010-0010-000000000018"="v2.30|Action=Allow|Active=TRUE|Dir=Out|Protocol=17|Profile=Public|RPort=5353|RA4=224.0.0.251/4|Name=public_local_ISA_Lazlar_mdns-out|Desc=public_local_ISA_Lazlar_mdns-out: Bonjour service discovery development|"
+| "000local-0000-0001-0010-000000000018"="v2.30|Action=Allow|Active=TRUE|Dir=In|Protocol=17|Profile=Public|LPort=5353|LA4=224.0.0.251/4|Name=public_local_ISA_Lazlar_mdns-inn|Desc=public_local_ISA_Lazlar_mdns-inn: Bonjour service discovery development|"
 +-----------------------------------------------------------------------
 
 SideNote:

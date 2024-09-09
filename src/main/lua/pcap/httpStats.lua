@@ -29,7 +29,7 @@ function onPcapFrame( app, it )
     if sec > app.youngestEpochSec then app.youngestEpochSec = sec end
     --
     local portOfInterest = 7012
-    if dstPort == portOfInterest then
+    if   true or  dstPort == portOfInterest then
         local httpMethod, httpUri =
             it:trspPayload():match("^([A-Z]+) ([^ ]+) [^ \r\n]+\r?\n")
         if httpMethod then
