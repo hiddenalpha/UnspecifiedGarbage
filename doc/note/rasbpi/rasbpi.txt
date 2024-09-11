@@ -12,50 +12,70 @@ https://raspi.debian.net/
 USE "bs=4M" (raspberrypi.stackexchange.com/a/26443/154841) do NOT trust
 debian page which says 64k.
 
-  xzcat foo.xz | dd bs=4M of=/dev/sd_
+  xzcat foo.xz | $SUDO dd bs=4M of=/dev/sd_   (<- device, NOT partition!)
+
+
+## Enable UART serial
+
+Check in "${BOOTROOT:?}/config.txt" that "enable_uart=1" is on (it sould
+already be on).
+
+Chech in "${BOOTROOT:?}/cmdline.txt" that "console=serial0,9600n8" is
+contained. Add it BEFORE the "console=ttyS1..." one.
+
+Then use:   cu --nortscts -s 9600n8 -l /dev/ttyUSB?
 
 
 ## Create sudo ssh user
 
+Problem: raspbian image comes WITHOUT sudo installed.
+Workaround: Put ssh pub key to "/root/.ssh/authorized_keys" and remove
+    after setup is complete.
+
   # Prepare a password
   mkpasswd --method=sha-512 --stdin
 
-  true \
   && USERNAME="andreas" \
-  && PASS="TODO_insertYourPwHashHere" \
+  && PASS="TODO_put_your_HASHED_pw_here" \
   && USERID="1000" \
-  && PUB_KEY_FILE="path/to/pub/key.ssh2" \
-  && CHROOT="/mnt/d" \
+  && PUB_KEY_FILE="/tmp/path-to-pub-key.ssh2" \
+  && SYSROOT="/mnt/_" \
   && true \
-  && SSHD_CONFIG="${CHROOT:?}/etc/ssh/sshd_config" \
-  && if grep -q ":${USERID:?}:" "${CHROOT:?}/etc/passwd"; then echo "User ${USERNAME} already exists"; false; fi \
-  && echo "${USERNAME:?}:x:${USERID:?}:${USERID:?}::/home/${USERNAME:?}:/bin/bash" | tee -a "${CHROOT:?}/etc/passwd" >/dev/null \
-  && if grep -q ":${USERID:?}:" "${CHROOT:?}/etc/group"; then echo "Group ${USERID} already exists"; false; fi \
-  && echo "${USERNAME:?}:x:${USERID:?}:" | tee -a "${CHROOT:?}/etc/group" >/dev/null \
-  && if grep -q ":${USERID:?}:" "${CHROOT:?}/etc/shadow"; then echo "Password for ${USERNAME} already exists"; false; fi \
-  && echo "${USERNAME:?}::0::::::" | tee -a "${CHROOT:?}/etc/shadow" >/dev/null \
-  && if ! pwck --read-only --root "${CHROOT:?}"; then echo "HINT: I don't care ..."; sleep 5; fi \
-  && mkdir "${CHROOT:?}/home/${USERNAME:?}" \
-  && mkdir "${CHROOT:?}/home/${USERNAME:?}/.ssh" \
-  && sed -i -E 's_^#(Port 22)$_\1_' "${SSHD_CONFIG:?}" \
-  && sed -i -E 's_^#(AddressFamily any)$_\1_' "${SSHD_CONFIG:?}" \
-  && sed -i -E 's_^#(ListenAddress 0.0.0.0)$_\1_' "${SSHD_CONFIG:?}" \
-  && sed -i -E 's_^#(ListenAddress ::)$_\1_' "${SSHD_CONFIG:?}" \
-  && sed -i -E 's_^#(PasswordAuthentication )(yes)$_\1no_' "${SSHD_CONFIG:?}" \
-  && cat "${PUB_KEY_FILE:?}" | tee -a "${CHROOT:?}/home/${USERNAME:?}/.ssh/authorized_keys" >/dev/null \
-  && find "${CHROOT:?}/home/${USERNAME}" -exec chown "${USERNAME:?}:${USERNAME:?}" {} + \
-  && find "${CHROOT:?}/home/${USERNAME}" -type d -exec chmod 755 {} + \
-  && find "${CHROOT:?}/home/${USERNAME}" -type f -exec chmod 644 {} + \
-  && find "${CHROOT:?}/home/${USERNAME}/.ssh" -type d -exec chmod 700 {} + \
-  && find "${CHROOT:?}/home/${USERNAME}/.ssh" -type f -exec chmod 600 {} + \
-  && sed -i -E 's_^(sudo:x:([0-9]+):)$_\1'${USERNAME:?}'_' /etc/group \
-  && true
+  && SSHD_CONFIG="${SYSROOT:?}/etc/ssh/sshd_config" \
+  && if grep -q ":${USERID:?}:" "${SYSROOT:?}/etc/passwd"; then echo "User ${USERNAME} already exists"; false; fi \
+  && echo "${USERNAME:?}:x:${USERID:?}:${USERID:?}::/home/${USERNAME:?}:/bin/bash" | $SUDO tee -a "${SYSROOT:?}/etc/passwd" >/dev/null \
+  && if grep -q ":${USERID:?}:" "${SYSROOT:?}/etc/group"; then echo "Group ${USERID} already exists"; false; fi \
+  && echo "${USERNAME:?}:x:${USERID:?}:" | $SUDO tee -a "${SYSROOT:?}/etc/group" >/dev/null \
+  && if $SUDO grep -q ":${USERID:?}:" "${SYSROOT:?}/etc/shadow"; then echo "Password for ${USERNAME} already exists"; false; fi \
+  && echo "${USERNAME:?}::0::::::" | $SUDO tee -a "${SYSROOT:?}/etc/shadow" >/dev/null \
+  && if ! pwck --read-only --root "${SYSROOT:?}"; then echo "HINT: I don't care ..."; sleep 5; fi \
+  && $SUDO sed -i -E 's_^(%sudo'"$(printf '\t')"'ALL=\(ALL:ALL\) )(ALL)$_\1NOPASSWD:\2_' \
+  && $SUDO mkdir "${SYSROOT:?}/home/${USERNAME:?}" \
+  && $SUDO mkdir "${SYSROOT:?}/home/${USERNAME:?}/.ssh" \
+  && cat "${PUB_KEY_FILE:?}" | $SUDO tee -a "${SYSROOT:?}/home/${USERNAME:?}/.ssh/authorized_keys" >/dev/null \
+  && $SUDO find "${SYSROOT:?}/home/${USERNAME}" -exec chown "${USERNAME:?}:${USERNAME:?}" {} + \
+  && $SUDO find "${SYSROOT:?}/home/${USERNAME}" -type d -exec chmod 755 {} + \
+  && $SUDO find "${SYSROOT:?}/home/${USERNAME}" -type f -exec chmod 644 {} + \
+  && $SUDO find "${SYSROOT:?}/home/${USERNAME}/.ssh" -type d -exec chmod 700 {} + \
+  && $SUDO find "${SYSROOT:?}/home/${USERNAME}/.ssh" -type f -exec chmod 600 {} + \
+  && $SUDO sed -i -E 's_^(sudo:x:([0-9]+):)$_\1'${USERNAME:?}'_' "${SYSROOT:?}/etc/group" \
+  && `# sshd config (hardened) ` \
+  && $SUDO sed -i -E 's_^#(Port 22)$_\1_' "${SSHD_CONFIG:?}" \
+  && $SUDO sed -i -E 's_^#(AddressFamily any)$_\1_' "${SSHD_CONFIG:?}" \
+  && $SUDO sed -i -E 's_^#(ListenAddress 0.0.0.0)$_\1_' "${SSHD_CONFIG:?}" \
+  && $SUDO sed -i -E 's_^#(ListenAddress ::)$_\1_' "${SSHD_CONFIG:?}" \
+  && $SUDO sed -i -E 's_^#(PasswordAuthentication )(yes)$_\1no_' "${SSHD_CONFIG:?}" \
 
 
 ## iptables
 
-  true \
-  && apt install -y --no-install-recommends iptables iptables-persistent \
+After apply, manually inspect "/etc/iptables/rules.v4" and make sure
+needed services (eg ssh, http) are allowed.
+
+WARN: This only prepares the files in chroot. 2nd (install) step needs
+to be run from a raspi shell.
+
+  && $SUDO mkdir "${SYSROOT:?}/etc/iptables" \
   && (  echo "*filter" \
      && echo "" \
      && echo "# Loopback" \
@@ -107,28 +127,28 @@ debian page which says 64k.
      && echo "-A OUTPUT  -j REJECT" \
      && echo "" \
      && echo "COMMIT" \
-     ) > /etc/iptables/rules.v4 \
-  && true
+     ) | $SUDO tee "${SYSROOT:?}/etc/iptables/rules.v4" > /dev/null \
+
+(To be run on target machine)
+
+  && $SUDO apt install -y --no-install-recommends iptables iptables-persistent \
 
 
 ## Prefer IPv4
 
-  true \
-  && sed -i -E 's_^#(precedence ::ffff:0:0/96  100)$_\1_' /etc/gai.conf \
-  && sed -i -E 's_^#(scopev4 ::ffff:0.0.0.0/96       14)$_\1_' /etc/gai.conf \
-  && true
+  && $SUDO sed -i -E 's_^#(precedence ::ffff:0:0/96  100)$_\1_' "${SYSROOT:?}/etc/gai.conf" \
+  && $SUDO sed -i -E 's_^#(scopev4 ::ffff:0.0.0.0/96       14)$_\1_' "${SYSROOT:?}/etc/gai.conf" \
 
 
 ## mDNS
 
   && (set -e \
-  && HOSTNAME="example.local" \
-  && FILE="/etc/avahi/services/nginx.xml" \
-  && true \
-  && apt install -y --no-install-recommends avahi-daemon libnss-mdns \
-  && echo "${HOSTNAME:?}" > /etc/hostname \
-  && printf "127.0.0.1\t%s\n" "${HOSTNAME:?}" >> /etc/hosts \
+  && HOSTNAME="pi-two.local" \
+  && FILE="${SYSROOT:?}/etc/avahi/services/nginx.xml" \
   && if [ -e "${FILE:?}" ]; then echo "ALREADY EXISTS: ${FILE:?}"; false; fi \
+  && echo "${HOSTNAME:?}" | $SUDO tee "${SYSROOT:?}/etc/hostname" > /dev/null \
+  && printf "127.0.0.1\t%s\n" "${HOSTNAME:?}" | $SUDO tee -a "${SYSROOT:?}/etc/hosts" > /dev/null \
+  && $SUDO mkdir "${SYSROOT:?}/etc/avahi" "${SYSROOT:?}/etc/avahi/services" \
   && (  echo '<?xml version="1.0" standalone="no"?>' \
      && echo '<!DOCTYPE service-group SYSTEM "avahi-service.dtd">' \
      && echo '<service-group>' \
@@ -142,18 +162,24 @@ debian page which says 64k.
      && echo '    <port>443</port>' \
      && echo '  </service>' \
      && echo '</service-group>' \
-     ) > "${FILE:?}" \
+     ) | $SUDO tee "${FILE:?}" > /dev/null \
   && true) \
+
+(To be run on target machine)
+
+  && $SUDO apt install -y --no-install-recommends avahi-daemon libnss-mdns \
 
 
 ## Install packages due to personal preference
 
-I guess MUST be run on the actual target machine.
+(To be run on target machine)
 
-  && apt install -y --no-install-recommends sudo net-tools vim nginx fcgiwrap ntfs-3g \
+  && $SUDO apt install -y --no-install-recommends sudo net-tools vim nginx fcgiwrap ntfs-3g \
 
 
 ## Set timezone
 
-  && ln -sf /usr/share/zoneinfo/Europe/Zurich /etc/localtime \
+(To be run on target machine)
+
+  && $SUDO ln -sf /usr/share/zoneinfo/Europe/Zurich /etc/localtime \
 
