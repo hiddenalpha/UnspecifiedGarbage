@@ -176,7 +176,7 @@ to be run from a raspi shell.
 
 (To be run on target machine)
 
-  && $SUDO apt install -y --no-install-recommends sudo net-tools vim nginx fcgiwrap ntfs-3g \
+  && $SUDO apt install -y --no-install-recommends sudo net-tools vim nginx fcgiwrap gpiod libgpiod-dev ntfs-3g \
 
 
 ## Set timezone
