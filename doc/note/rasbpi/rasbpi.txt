@@ -17,6 +17,8 @@ debian page which says 64k.
 
 ## Enable UART serial
 
+WARN: No matter what I try, UART is NOT going to work.
+
 Check in "${BOOTROOT:?}/config.txt" that "enable_uart=1" is on (it sould
 already be on).
 
@@ -30,18 +32,18 @@ Then use:   cu --nortscts -s 9600n8 -l /dev/ttyUSB?
 
 Problem: raspbian image comes WITHOUT sudo installed.
 Workaround: Put ssh pub key to "/root/.ssh/authorized_keys" and remove
-    after setup is complete.
+    after setup is complete (aka drop file again and disable root login).
 
   # Prepare a password
   mkpasswd --method=sha-512 --stdin
 
-  && USERNAME="andreas" \
+  && USERNAME="TODO_chooose_pi_username" \
   && PASS="TODO_put_your_HASHED_pw_here" \
   && USERID="1000" \
   && PUB_KEY_FILE="/tmp/path-to-pub-key.ssh2" \
   && SYSROOT="/mnt/_" \
-  && true \
   && SSHD_CONFIG="${SYSROOT:?}/etc/ssh/sshd_config" \
+  && `# user setup ` \
   && if grep -q ":${USERID:?}:" "${SYSROOT:?}/etc/passwd"; then echo "User ${USERNAME} already exists"; false; fi \
   && echo "${USERNAME:?}:x:${USERID:?}:${USERID:?}::/home/${USERNAME:?}:/bin/bash" | $SUDO tee -a "${SYSROOT:?}/etc/passwd" >/dev/null \
   && if grep -q ":${USERID:?}:" "${SYSROOT:?}/etc/group"; then echo "Group ${USERID} already exists"; false; fi \
@@ -59,7 +61,7 @@ Workaround: Put ssh pub key to "/root/.ssh/authorized_keys" and remove
   && $SUDO find "${SYSROOT:?}/home/${USERNAME}/.ssh" -type d -exec chmod 700 {} + \
   && $SUDO find "${SYSROOT:?}/home/${USERNAME}/.ssh" -type f -exec chmod 600 {} + \
   && $SUDO sed -i -E 's_^(sudo:x:([0-9]+):)$_\1'${USERNAME:?}'_' "${SYSROOT:?}/etc/group" \
-  && `# sshd config (hardened) ` \
+  && `# sshd config` \
   && $SUDO sed -i -E 's_^#(Port 22)$_\1_' "${SSHD_CONFIG:?}" \
   && $SUDO sed -i -E 's_^#(AddressFamily any)$_\1_' "${SSHD_CONFIG:?}" \
   && $SUDO sed -i -E 's_^#(ListenAddress 0.0.0.0)$_\1_' "${SSHD_CONFIG:?}" \
