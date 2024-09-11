@@ -17,7 +17,6 @@ WARN: Do NOT use 'alias' directive! It is broken as hell. Use 'root'.
   # - set "server_name" to meaningful value.
   #
   #daemon off;  # run in foreground (eg from cli)
-  #user www-data;
   #worker_processes auto;
   pid /run/nginx.pid;
   events {}

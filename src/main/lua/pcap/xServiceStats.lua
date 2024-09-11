@@ -28,11 +28,11 @@ function onPcapFrame( app, it )
     if sec < app.oldestEpochSec then app.oldestEpochSec = sec end
     if sec > app.youngestEpochSec then app.youngestEpochSec = sec end
     --
-    local portsOfInterest = {
-        [  80] = true,
-        [8080] = true,
-        [7012] = true,
-    }
+    --local portsOfInterest = {
+    --    [  80] = true,
+    --    [8080] = true,
+    --    [7012] = true,
+    --}
     --if not portsOfInterest[dstPort] and not portsOfInterest[srcPort] then return end
     local trspPayload = it:trspPayload()
     local httpReqLinePart1, httpReqLinePart2, httpReqLinePart3 =
