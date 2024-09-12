@@ -117,8 +117,12 @@ Populate "/etc/environment" as described by "./etc-environment".
        fonts-sil-gentium-basic pdftk-java \
        `# Cups Printing` \
        cups avahi-daemon \
+       `# Graphics processing` \
+       imagemagick \
+       `# Low level ` \
+       lm-sensors fancontrol exfat-fuse exfatprogs \
        `# Others` \
-       systemd-sysv lm-sensors fancontrol bc rsync qrencode exfat-fuse exfatprogs libxml2-utils \
+       systemd-sysv bc rsync qrencode libxml2-utils \
        `# Nvidia graphics (open)` \
        mesa-utils clinfo mesa-opencl-icd \
        `# Nvidia graphics (non-free, DoesNotWorkYet)` \
