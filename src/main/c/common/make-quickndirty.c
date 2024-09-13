@@ -15,4 +15,8 @@
   && bullshit=$(${OBJDUMP?} -p "${OUTFILE:?}"|grep DLL\ Name|egrep -v ' (KERNEL32.dll|SHELL32.dll|WS2_32.dll|ADVAPI32.dll|msvcrt.dll)$'||true) \
   && if test -n "$bullshit"; then printf '\n  ERROR: Bullshit has sneaked in:\n\n%s\n\n' "$bullshit"; rm "${OUTFILE:?}"; false; fi \
 
+  Shitty systems maybe need adaptions like:
+
+  && LDFLAGS="-Wl,-lws2_32,-l:libwinpthread.a" \
+
 #endif

@@ -286,6 +286,11 @@ In GUEST to access it do:
   && printf 'user:12345\n' | chpasswd \
   && /etc/init.d/sshd restart \
 
+  && `# host auto-mount helper script ` \
+  && mkdir ~/.local ~/.local/bin \
+  && echo H4sIAAUQ5GYAA0WOsQ7CMAxE93yFCUgFiTbQEaliYWArA8wRFJNkaFI1CR2Af8cpSJ1sv/P5PJ+Jm7HCa+YxQI7s2R6dDxePfXWuD7XsYpCaiIyEpMYemY+nYRJVRFJ754Lsht9CNPeKL5bmDnlccaamUdGIjXbAF690Zv/h8AYfIfkhbyBrXbTUBWjMw0PuIOXaa4tVRp7pO3Jm6xSUMNXdCNQfqD8ALsR2U2yKsijF+LLX1x7TPU5aa8OPjqmdMzbwjH0BleXnHxQBAAA= |base64 -d|gzip -d > ~/.local/bin/setup \
+  && printf '\n  TODO: Resolve the todos in %s\n\n' ~/.local/bin/setup \
+
 
 ## Debian PostInstall
 
