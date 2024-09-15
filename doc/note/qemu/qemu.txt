@@ -118,82 +118,16 @@ true \
 
 ## amd64
 
-  # Choose whichever fits the need
-  && HDAIMG="-hda path/to/maindisk.qcow2" \
-  && MACHINE="-m size=4G -smp cores=2" \
-  && BIOSDIR="path/to/Bios"
-  && BIOSFILE="${BIOSDIR:?}/bios-256k.bin" \
-  && FIXMOUSEALIGN="-device usb-ehci,id=usb,bus=pci.0,addr=0x4 -device usb-tablet" \
-  && NETWORK="-net nic -net user" \
-  && NETWORK="-device e1000,netdev=n0 -netdev user,id=n0,hostfwd=tcp:127.0.0.1:2222-:22" \
-  && HOSTSPECIFICOPTS="--enable-kvm" \
-  && HOSTSPECIFICOPTS="-L ${BIOSDIR:?} -bios ${BIOSFILE:?}" \
+(see also "../../../doc/note/rasbpi/rasbpi.txt")
 
-Start with installation disk
-
-  && CDROM="-cdrom path/to/installer.iso" \
-  && qemu-system-x86_64 ${HOSTSPECIFICOPTS:?} ${MACHINE:?} -boot order=dc ${CDROM} ${HDAIMG:?} ${NETWORK:?} ${FIXMOUSEALIGN:?} \
-
-Regular boot
-
-  && qemu-system-x86_64 ${HOSTSPECIFICOPTS:?} ${MACHINE:?} -boot order=c ${HDAIMG:?} ${NETWORK:?} ${FIXMOUSEALIGN:?} \
-
-
-## raspberry pi 3b
-
-[src 1](https://youtube.com/watch?v=DSv9bDkPzsw)
-[src 2](https://youtube.com/watch?v=EYVkSUydqMI)
-[src 3](https://www.raspberrypi.com/news/raspberry-pi-bullseye-update-april-2022/)
-
-  && (set -e \
-  && WORKDIR="/tmp/mypi" \
-  && SUDO=sudo \
-  && FDISK="$SUDO fdisk" \
-  && RESIZE2FS="$SUDO resize2fs" \
-  && IMG_URL='https://downloads.raspberrypi.com/raspios_lite_arm64/images/raspios_lite_arm64-2024-03-15/2024-03-15-raspios-bookworm-arm64-lite.img.xz' \
-  && ZIP_NAME="${IMG_URL##*/}" \
-  && IMG_NAME="${ZIP_NAME%.*}" \
-  && QCOW2_NAME="${IMG_NAME%.*}.qcow2" \
-  && cd "${WORKDIR:?}" \
-  && curl -sSL "${IMG_URL:?}.sha1" -o "${ZIP_NAME:?}.sha1" \
-  && curl -sSL "${IMG_URL:?}.sig" -o "${ZIP_NAME:?}.sig" \
-  && curl -SL "${IMG_URL:?}" -o "${ZIP_NAME:?}" \
-  && sha1sum -c "${ZIP_NAME:?}.sha1" \
-  && xz -dk "${ZIP_NAME:?}" \
-  && BLKSZ=$(${FDISK:?} -l "${IMG_NAME:?}" | grep -E '^Units:' | sed -E 's_^.* ([^ ]+) bytes$_\1_') \
-  && IMG1_OFF=$(${FDISK:?} -l "${IMG_NAME:?}" | grep '.img1 ' | awk '{print $2;}') \
-  && IMG2_OFF=$(${FDISK:?} -l "${IMG_NAME:?}" | grep '.img2 ' | awk '{print $2;}') \
-  && qemu-img resize -f raw "${IMG_NAME:?}" 8G \
-  && printf 'd\n2\nn\np\n2\n%s\n\np\nw\n' "${IMG2_OFF:?}" | ${FDISK:?} "${IMG_NAME:?}" \
-  && mkdir part1 part2 \
-  && $SUDO mount -v -o offset=$(echo "${BLKSZ} * ${IMG1_OFF:?}"|bc) "${IMG_NAME:?}" part1 \
-  && cp -t . part1/bcm2710-rpi-3-b.dtb  part1/kernel8.img part1/cmdline.txt part1/config.txt \
-  && $SUDO touch part1/ssh \
-  && printf "user:$(echo '12345' | openssl passwd -6 -stdin)\n" | $SUDO tee part1/userconf >/dev/null \
-  && $SUDO umount part1 \
-  && DEVICE_uM0Znd=$($SUDO mount -v -o offset=$(echo "${BLKSZ} * ${IMG2_OFF:?}"|bc) "${IMG_NAME:?}" part2) \
-  && printf %s\\n "${DEVICE_uM0Znd:?}" \
-  && DEVICE_uM0Znd=$(echo "${DEVICE_uM0Znd:?}" | egrep ' /dev/loop.*part2' | sed -E 's_^.* (/dev/loop[^ ]+) .*$_\1_') \
-  && ${RESIZE2FS:?} "${DEVICE_uM0Znd:?}" \
-  && $SUDO umount part2 \
-  && rmdir part1 part2 \
-  && qemu-img convert -f raw -O qcow2 "${IMG_NAME:?}" "${QCOW2_NAME:?}" \
-  && md5sum -b "${QCOW2_NAME:?}" > "${QCOW2_NAME%.*}.md5" \
-  && true) \
-
-  && (set -e \
-  && partuuid="$(cat cmdline.txt | sed -E 's_^.* root=PARTUUID=([^ ]+) .*$_\1_')" \
-  && printf 'partuuid: %s\n' "${partuuid:?}" \
-  && qemu-system-aarch64 -nodefaults \
-       -machine type=raspi3b -cpu cortex-a53 -smp 4 -m 1G \
-       -kernel kernel8.img -dtb bcm2710-rpi-3-b.dtb -sd "${QCOW2_NAME:?}" \
-       -device usb-net,netdev=net0 \
-       -netdev user,id=net0,hostfwd=tcp:127.0.0.1:${SSH_PORT:?}-:22 \
-       -append "console=ttyAMA0,115200 root=PARTUUID=${partuuid:?} rootfstype=ext4 rootwait" \
-       -no-reboot -nographic \
-  && true) \
-
-ssh -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null -oUser=user "-p${SSH_PORT:?}" 127.0.0.1
+# Example Raspi
+qemu-system-aarch64 -nodefaults \
+    -machine type=raspi3b -cpu cortex-a53 -smp 4 -m 1G \
+    -kernel kernel8.img -dtb bcm2710-rpi-3-b.dtb -sd "$(dirname "$(realpath "$0")")/sd.qcow2" \
+    -device usb-net,netdev=net0 \
+    -netdev user,id=net0,hostfwd=tcp:127.0.0.1:${SSH_PORT:?}-:22 \
+    -append "console=ttyAMA0,115200 root=PARTUUID=fb33757d-02 rootfstype=ext4 rootwait" \
+    -no-reboot -nographic \
 
 
 ## Shared host directory via CIFS/SMB
