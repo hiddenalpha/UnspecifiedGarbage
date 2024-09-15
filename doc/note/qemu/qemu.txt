@@ -121,7 +121,8 @@ true \
 (see also "../../../doc/note/rasbpi/rasbpi.txt")
 
 # Example Raspi
-qemu-system-aarch64 -nodefaults \
+qemu-system-aarch64
+    -nodefaults -accel tcg,thread=multi `# TODO confirm thread=multi works ` \
     -machine type=raspi3b -cpu cortex-a53 -smp 4 -m 1G \
     -kernel kernel8.img -dtb bcm2710-rpi-3-b.dtb -sd "$(dirname "$(realpath "$0")")/sd.qcow2" \
     -device usb-net,netdev=net0 \
