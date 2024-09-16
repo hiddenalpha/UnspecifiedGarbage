@@ -38,6 +38,19 @@ twice with colon in between):
   git log --follow -- path/to/file
 
 
+## History search for file contents
+
+Commit message contains:  git log --grep foo
+
+  git log -S foo               File contents "foo" (literal) num occur has changed:
+  git log --pickaxe-regex foo  File contents "foo" (regex) num occur has changed:
+  git log -G foo               Diff contains "foo" (regex):
+
+For "-G" add "--patch" to get diff in place of ref.
+
+[src](https://stackoverflow.com/a/1340245/4415884)
+
+
 ## Auto-destroy code-format
 
   && REMOTENAME=upstream \
