@@ -268,6 +268,16 @@ Related:
     }
 
 
+    function getJ21BranchNameByThingy( app, thingyName, onDone ){
+        var branchName = app.j21BranchesByThingyName[thingyName];
+        if( !branchName ){
+            onDone(Error("assert(j21BranchesByThingyName["+ thingyName +"] != NULL)"));
+            return;
+        }
+        onDone(null, branchName);
+    }
+
+
     function getMangledPlatformVersion( app, onDone ){
         if( app.mangledPlatformVersion != null ){
             setTimeout(TODO_TRQCAEYoAgAbPQIA, 0, null, app.mangledPlatformVersion);
@@ -309,7 +319,7 @@ Related:
             rsp.on("end", TODO_MRYCAOIzAgAKFQIA);
         }
         function TODO_MRYCAOIzAgAKFQIA(){
-            var pat = new RegExp('\n<a href="(0.0.0-'+ app.issueKey +'-[^/]+-SNAPSHOT)/">[^<]+</a> +([0-9]{2})-([A-Za-z]{3})-([0-9]{4}) ([0-9]{2}):([0-9]{2}) +-', "g");
+            var pat = new RegExp('\n<a href="('+ app.versionPrefix +'[A-Za-z0-9]+-SNAPSHOT)/">[^<]+</a> +([0-9]{2})-([A-Za-z]{3})-([0-9]{4}) ([0-9]{2}):([0-9]{2}) +-', "g");
             var latestVersion, latestDate;
             rspBody.replace(pat, function( match, version, day, mthShrt, yr, hrs, mins, off, rspBody, groupNameMap ){
                 /* [FUCK those FUCKING DAMN bullshit formats!!!](https://xkcd.com/1179/) */
@@ -641,7 +651,7 @@ Related:
             if( ex ) throw ex;
             var child = child_process.spawn(
                 "mvn", ["versions:set", "-DgenerateBackupPoms=false", "-DallowSnapshots=true",
-                    "-DnewVersion="+ app.serviceSnapVersion],
+                    "-DnewVersion="+ app.versionPrefix + app.serviceSnapVersion],
                 { cwd: workdirOfSync(app, thingyName) },
             );
             child.on("error", console.error.bind(console));
@@ -772,18 +782,13 @@ Related:
 
 
     function checkoutUpstreamDevelop( app, thingyName, onDone){
-        var iRemoteName = 0;
-        var iBranchName = 0;
         checkout();
         function checkout(){
-            var remoteName = app.remoteNamesToTry[iRemoteName];
-            var branchName = app.j21BranchesToTry[iBranchName++];
-            if( branchName === undefined ){
-                iBranchName = 0;
-                iRemoteName += 1;
-                checkout();
-                return;
-            }
+            getJ21BranchNameByThingy(app, thingyName, onBranchNameReady);
+        }
+        function onBranchNameReady( ex, branchName ){
+            if( ex ) throw ex;
+            var remoteName = app.remoteNamesToTry[0];
             if( remoteName === undefined ){ onDone(Error("No more remotes/branches for "+ thingyName)); return; }
             log.write("[DEBUG] git checkout "+ thingyName +" "+ remoteName +"/"+ branchName +"\n");
             var child = child_process.spawn(
@@ -858,9 +863,9 @@ Related:
         if( typeof onDone != "function" ) throw TypeError("onDone");
         setVersion();
         function setVersion(){
-            log.write("[DEBUG] platform - mvn versions:set "+ app.platformSnapVersion +"\n");
+            log.write("[DEBUG] platform - mvn versions:set "+ app.versionPrefix + app.platformSnapVersion +"\n");
             var child = child_process.spawn(
-                "mvn", ["versions:set", "-DgenerateBackupPoms=false", "-DnewVersion="+app.platformSnapVersion],
+                "mvn", ["versions:set", "-DgenerateBackupPoms=false", "-DnewVersion="+ app.versionPrefix + app.platformSnapVersion],
                 { cwd: workdirOfSync(app, "platform"), }
             );
             child.on("error", console.error.bind(console));
@@ -969,7 +974,6 @@ Related:
 
     function resetHardToFirstAvailBranch( app, thingyName, onDone ){
         var iRemoteName = 0;
-        var iBranchName = 0;
         if( typeof onDone !== "function" ) throw Error("onDone");
         detach();
         function detach(){
@@ -989,14 +993,16 @@ Related:
             });
         }
         function tryResetHard(){
-            var remoteName = app.remoteNamesToTry[iRemoteName];
-            var branchName = app.j21BranchesToTry[iBranchName++];
+            getJ21BranchNameByThingy(app, thingyName, TODO_LmkAAORMAABZLwAA);
+        }
+        function TODO_LmkAAORMAABZLwAA( ex, branchName ){
+            if( ex ) throw ex;
             if( branchName === undefined ){
                 iRemoteName += 1;
-                iBranchName = 0;
                 tryResetHard();
                 return;
             }
+            var remoteName = app.remoteNamesToTry[iRemoteName];
             if( remoteName === undefined ){ onDone(Error("no usable remote/branch found")); return; }
             log.write("[DEBUG] "+ thingyName +"$ git reset --hard "+ remoteName +"/"+ branchName +"\n");
             var child = child_process.spawn(
@@ -1145,8 +1151,45 @@ Related:
             isPrintIsaVersion: false,
             isPrintBaselineVersion: false,
             remoteNamesToTry: ["origin"],
-            j21BranchesToTry: ["SDCISA-15636-Migrate-to-Java-21", "java-21",
-                "SDCISA-13957-platform-Java-21", "SDCISA-13957-Java-21-update-spring"],
+            j21BranchesByThingyName: {
+                "platform": "java-21",
+                "allitnil": "SDCISA-15636-Migrate-to-Java-21",
+                "babelfish": "SDCISA-15636-Migrate-to-Java-21",
+                "barman": "SDCISA-13957-platform-Java-21",
+                "benjy": "SDCISA-15636-Migrate-to-Java-21",
+                "bentstick": "SDCISA-15636-Migrate-to-Java-21",
+                "blart": "SDCISA-15636-Migrate-to-Java-21",
+                "captain": "SDCISA-15636-Migrate-to-Java-21",
+                "caveman": "SDCISA-15636-Migrate-to-Java-21",
+                "colin": "SDCISA-15636-Migrate-to-Java-21",
+                "deep": "SDCISA-15636-Migrate-to-Java-21",
+                "drdan": "SDCISA-15636-Migrate-to-Java-21",
+                "guide": "SDCISA-15636-Migrate-to-Java-21",
+                "heimdall": "SDCISA-15636-Migrate-to-Java-21",
+                "hooli": "SDCISA-13957-platform-Java-21",
+                "jeltz": "SDCISA-13957-platform-Java-21",
+                "kwaltz": "SDCISA-15636-Migrate-to-Java-21",
+                "loon": "SDCISA-15636-Migrate-to-Java-21",
+                "magician": "SDCISA-15636-Migrate-to-Java-21",
+                "megacamel": "SDCISA-15636-Migrate-to-Java-21",
+                "minetti": "SDCISA-15636-Migrate-to-Java-21",
+                "mown": "SDCISA-15636-Migrate-to-Java-21",
+                "nowwhat": "SDCISA-13957-platform-Java-21",
+                "pobble": "SDCISA-15636-Migrate-to-Java-21",
+                "poodoo": "SDCISA-15636-Migrate-to-Java-21",
+                "prosser": "SDCISA-15636-Migrate-to-Java-21",
+                "rob": "SDCISA-15636-Migrate-to-Java-21",
+                "slarti": "SDCISA-13957-platform-Java-21",
+                "streetmentioner": "SDCISA-15636-Migrate-to-Java-21",
+                "thor": "SDCISA-15636-Migrate-to-Java-21",
+                "towel": "SDCISA-15636-Migrate-to-Java-21",
+                "trillian": "SDCISA-15636-Migrate-to-Java-21",
+                "vannharl": "SDCISA-15636-Migrate-to-Java-21",
+                "vogon": "SDCISA-15636-Migrate-to-Java-21",
+                "vroom": "SDCISA-15636-Migrate-to-Java-21",
+                "zaphake": "SDCISA-13957-platform-Java-21",
+                "zem": "SDCISA-15636-Migrate-to-Java-21",
+            },
             workdir: "C:/work/tmp/SlimPkg-Repos",
             maxParallel:  1,
             numRunningTasks: 0,
@@ -1154,13 +1197,13 @@ Related:
             issueKey: "SDCISA-15648",
             branchName: null,
             commitMsg: null,
-            platformSnapVersion: "0.0.0-SNAPSHOT",
-            serviceSnapVersion: "0.0.0-SNAPSHOT",
-            parentVersion: null,
+            versionPrefix: "U0RdSVNB", /* const part of generated seq above (MUST have for find version later) */
+            /* generate: {printf '%s-SNAPSHOT\n' "$(dev-urandom -c 42|base64|tr -d '/+='|head -c8)"} */
+            platformSnapVersion: "ol4AAD0s-SNAPSHOT",
+            serviceSnapVersion: "ol4AAD0s-SNAPSHOT",
         };
-        app.branchName = app.issueKey +"-RemoveSlimPackaging-n1";
+        app.branchName = app.issueKey +"-RemoveSlimPackaging-n2";
         app.commitMsg = "["+ app.issueKey +"] Remove slim packaging";
-        app.parentVersion = "0.0.0-"+ app.branchName +"-SNAPSHOT";
         if( parseArgs(process.argv, app) !== 0 ){ process.exit(1); }
         if( app.isHelp ){ printHelp(); return; }
         run(app);
