@@ -7,13 +7,6 @@ Currently working on "SDCISA-15648".
 [j21 migration branches sandro](https://wikit.post.ch/display/ISA/ISA+Java21+Update)
 
 
-
-git d -w $(git mb origin/develop origin/SDCISA-15636-Migrate-to-Java-21) origin/SDCISA-15636-Migrate-to-Java-21
-
-
-git d -w $(git mb origin/develop origin/SDCISA-15636-Migrate-to-Java-21-test) origin/SDCISA-15636-Migrate-to-Java-21-test --name-status
-
-
   DSTDIR=/tmp
   tar czf "${DSTDIR:?}"/andy-noslim-$(date -u +%Y%m%d-%H%M%S).tgz -- conf isa-launch-* isa.sh logs preflux prefluxer-* puppetconfig_version repo
 
@@ -23,8 +16,6 @@ JSSC USERS -> babelfish, benjy, blart, caveman, jeltz, loon, megacamel, vogon
 jssc sollte hier drin sein -> "alice-docker-service-base*.jar"
 
 Evtl für diese services den jssc als "provided" angeben.
-
-TODO awaiting builds again with (hopefully fixed jssc.so):
 
   && PATH_TO_THE_ONLY_REAL_BROWSER="C:/Users/fankhauseand/.opt/FirefoxPortable-105.0.1/FirefoxPortable.exe" \
 

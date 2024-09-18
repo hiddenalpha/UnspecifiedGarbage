@@ -184,7 +184,8 @@ Related:
         var patchAsStr;
         var mangledPlatformVersion, mangledServiceVersion, mangledSlartiVersion;
         var propsToReplace = [ "j21.service.mangledVersion", "j21.platform.version",
-            "j21.captain.mangledVersion", "j21.slarti.mangledVersion", "j21.megacamel.mangledVersion" ];
+            "j21.captain.mangledVersion", "j21.slarti.mangledVersion", "j21.megacamel.mangledVersion",
+            "j21.guide.mangledVersion", "j21.trillian.mangledVersion", ];
         var propValsByKey = {};
         fs.readFile(path, 'utf8', TODO_sBECAHhRAgCcPAIA);
         function TODO_sBECAHhRAgCcPAIA( ex, patchAsStr_ ){
@@ -201,9 +202,9 @@ Related:
             if( !k ){ replaceProperties(); return; }
             if( !new RegExp("\\${"+ k +"}").test(patchAsStr) ){ getNextProperty(); return; }
             var subj = false ? null
-                : (k == "j21.service.mangledVersion") ? thingyName
-                : (k == "j21.megacamel.mangledVersion") ? thingyName
                 : (k == "j21.platform.version") ? "platform"
+                : (k == "j21.guide.mangledVersion") ? "guide"
+                : (k == "j21.megacamel.mangledVersion") ? "megacamel"
                 : null;
             if( !subj ){ subj = /^j21.([^.]+).mangledVersion$/.exec(k)[1]; }
             if( !subj ){ onDone(Error("TODO_NkICAG1HAgCDYgIA "+ k)); return; }
@@ -319,11 +320,14 @@ Related:
             rsp.on("end", TODO_MRYCAOIzAgAKFQIA);
         }
         function TODO_MRYCAOIzAgAKFQIA(){
-            var pat = new RegExp('\n<a href="('+ app.versionPrefix +'[A-Za-z0-9]+-SNAPSHOT)/">[^<]+</a> +([0-9]{2})-([A-Za-z]{3})-([0-9]{4}) ([0-9]{2}):([0-9]{2}) +-', "g");
+            var pat = new RegExp('\n<a href="('+ app.versionPrefix +'.+-SNAPSHOT)/">[^<]+</a> +([0-9]{2})-([A-Za-z]{3})-([0-9]{4}) ([0-9]{2}):([0-9]{2}) +-', "g");
             var latestVersion, latestDate;
             rspBody.replace(pat, function( match, version, day, mthShrt, yr, hrs, mins, off, rspBody, groupNameMap ){
                 /* [FUCK those FUCKING DAMN bullshit formats!!!](https://xkcd.com/1179/) */
-                var mth = (mthShrt == "Jul") ? "07" : null;
+                var mth = false ? null
+                    : (mthShrt == "Jul") ? "07"
+                    : (mthShrt == "Sep") ? "09"
+                    : null;
                 if( !mth ){ throw Error("TODO_1iUCAA1ZAgBALgIA "+ mthShrt); }
                 var builtAt = yr +"-"+ mth +"-"+ day +" "+ hrs +":"+ mins;
                 if( latestVersion == null || builtAt > latestDate ){
@@ -1197,10 +1201,10 @@ Related:
             issueKey: "SDCISA-15648",
             branchName: null,
             commitMsg: null,
-            versionPrefix: "U0RdSVNB", /* const part of generated seq above (MUST have for find version later) */
-            /* generate: {printf '%s-SNAPSHOT\n' "$(dev-urandom -c 42|base64|tr -d '/+='|head -c8)"} */
-            platformSnapVersion: "ol4AAD0s-SNAPSHOT",
-            serviceSnapVersion: "ol4AAD0s-SNAPSHOT",
+            versionPrefix: "0.0.0-U0RdSV", /* const part of generated seq above (MUST have for find version later) */
+            /* generate: {date +%N|md5sum -b -|base64|tr -d '/+='|head -c6 && echo} */
+            platformSnapVersion: "pikAAO-SNAPSHOT",
+            serviceSnapVersion: "pikAAO-SNAPSHOT",
         };
         app.branchName = app.issueKey +"-RemoveSlimPackaging-n2";
         app.commitMsg = "["+ app.issueKey +"] Remove slim packaging";
