@@ -18,7 +18,7 @@ WARN: Do NOT dump windoof ISO to USB! It won't work. See further down.
 
 ## "Burn" to USB from ISO (NOT disc)
 
-  dd bs=4M if=path/to/my.iso of=/dev/sdX status=progress oflag=sync
+  $SUDO dd bs=4M if=path/to/my.iso of=/dev/sdX status=progress oflag=sync
 
 
 ## Get checksum of disc (NOT usb)

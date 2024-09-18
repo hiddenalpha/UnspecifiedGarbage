@@ -33,13 +33,13 @@
                                              'data-nova': [version: '14.183.0.20240731-1209.P.P.9238.0'],
 
 
---- a/Jenkinsfile
-+++ b/Jenkinsfile
-@@ -47,3 +47,3 @@ serviceBuildPipeline([
-             .saveArtifacts()
--            .executeSonar([failOnQualityGateFailure: true])
-+            // TODO:  .executeSonar([failOnQualityGateFailure: true])
- }
+  OBSOLETE?  --- a/Jenkinsfile
+  OBSOLETE?  +++ b/Jenkinsfile
+  OBSOLETE?  @@ -47,3 +47,3 @@ serviceBuildPipeline([
+  OBSOLETE?               .saveArtifacts()
+  OBSOLETE?  -            .executeSonar([failOnQualityGateFailure: true])
+  OBSOLETE?  +            // TODO:  .executeSonar([failOnQualityGateFailure: true])
+  OBSOLETE?   }
 
 
 --- a/pom.xml
@@ -55,25 +55,25 @@
  
 
 
---- a/pom.xml
-+++ a/pom.xml
-@@ -285,6 +285,16 @@
-                 <artifactId>linti</artifactId>
-                 <version>${linti.version}</version>
-             </dependency>
-+            <dependency>
-+                <groupId>org.glassfish</groupId>
-+                <artifactId>jakarta.el</artifactId>
-+                <version>4.0.2</version> <!-- TODO move this version somewhere else -->
-+            </dependency>
-+            <dependency>
-+                <groupId>org.eclipse.jetty.ee10</groupId>
-+                <artifactId>jetty-ee10-webapp</artifactId>
-+                <version>12.0.12</version> <!-- TODO move this version somewhere else -->
-+            </dependency>
-         </dependencies>
-     </dependencyManagement>
-     <properties>
+  OBSOLETE?  --- a/pom.xml
+  OBSOLETE?  +++ a/pom.xml
+  OBSOLETE?  @@ -285,6 +285,16 @@
+  OBSOLETE?                   <artifactId>linti</artifactId>
+  OBSOLETE?                   <version>${linti.version}</version>
+  OBSOLETE?               </dependency>
+  OBSOLETE?  +            <dependency>
+  OBSOLETE?  +                <groupId>org.glassfish</groupId>
+  OBSOLETE?  +                <artifactId>jakarta.el</artifactId>
+  OBSOLETE?  +                <version>4.0.2</version> <!-- TODO move this version somewhere else -->
+  OBSOLETE?  +            </dependency>
+  OBSOLETE?  +            <dependency>
+  OBSOLETE?  +                <groupId>org.eclipse.jetty.ee10</groupId>
+  OBSOLETE?  +                <artifactId>jetty-ee10-webapp</artifactId>
+  OBSOLETE?  +                <version>12.0.12</version> <!-- TODO move this version somewhere else -->
+  OBSOLETE?  +            </dependency>
+  OBSOLETE?           </dependencies>
+  OBSOLETE?       </dependencyManagement>
+  OBSOLETE?       <properties>
 
 
 --- a/pom.xml

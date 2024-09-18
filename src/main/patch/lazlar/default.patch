@@ -39,26 +39,26 @@
   registered service route is of any use for my eddie which runs outside the VM
   and so has no chance to see lazlar via its IP inside the VM.
 
---- a/lazlar-web/src/test/java/ch/post/it/paisa/lazlar/web/LazlarStarter.java
-+++ b/lazlar-web/src/test/java/ch/post/it/paisa/lazlar/web/LazlarStarter.java
-@@ -7,6 +7,18 @@
-     boolean a = false;
-     assert a = true;
-     if (!a) throw new RuntimeException("https://stackoverflow.com/a/68893479/4415884");
--    ServiceStarter.create().start();
-+    String chPostItHost = System.getProperty("ch.post.it.host");
-+    String paisaServiceHost = System.getProperty("paisa.service.host");
-+    new Thread(() -> {
-+      for(int i = 0 ; i < 5000 ; ++i ){
-+        System.setProperty("ch.post.it.host", chPostItHost);
-+        System.setProperty("paisa.service.host", paisaServiceHost);
-+        try{
-+          Thread.sleep(1);
-+        }catch(InterruptedException ex){ throw new UnsupportedOperationException/*TODO*/("not impl yet",ex);}
-+      }
-+    }).start();
-+    Thread.yield();
-+    ServiceStarter.create().withName("lazlar").withPort(7042).start();
-   }
- }
+  UNUSED  --- a/lazlar-web/src/test/java/ch/post/it/paisa/lazlar/web/LazlarStarter.java
+  UNUSED  +++ b/lazlar-web/src/test/java/ch/post/it/paisa/lazlar/web/LazlarStarter.java
+  UNUSED  @@ -7,6 +7,18 @@
+  UNUSED       boolean a = false;
+  UNUSED       assert a = true;
+  UNUSED       if (!a) throw new RuntimeException("https://stackoverflow.com/a/68893479/4415884");
+  UNUSED  -    ServiceStarter.create().start();
+  UNUSED  +    String chPostItHost = System.getProperty("ch.post.it.host");
+  UNUSED  +    String paisaServiceHost = System.getProperty("paisa.service.host");
+  UNUSED  +    new Thread(() -> {
+  UNUSED  +      for(int i = 0 ; i < 5000 ; ++i ){
+  UNUSED  +        System.setProperty("ch.post.it.host", chPostItHost);
+  UNUSED  +        System.setProperty("paisa.service.host", paisaServiceHost);
+  UNUSED  +        try{
+  UNUSED  +          Thread.sleep(1);
+  UNUSED  +        }catch(InterruptedException ex){ throw new UnsupportedOperationException/*TODO*/("not impl yet",ex);}
+  UNUSED  +      }
+  UNUSED  +    }).start();
+  UNUSED  +    Thread.yield();
+  UNUSED  +    ServiceStarter.create().withName("lazlar").withPort(7042).start();
+  UNUSED     }
+  UNUSED   }
 
