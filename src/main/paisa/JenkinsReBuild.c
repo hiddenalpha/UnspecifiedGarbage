@@ -48,6 +48,7 @@ struct App {
     int exitCode;
     int httpRspCode;
     char *serviceName;
+    char *branchName;
     char *cookie;
     char *rspBody;
     int rspBody_cap, rspBody_end;
@@ -79,7 +80,10 @@ static void printHelp( void ){
         "  Options:\n"
         "  \n"
         "      --service <str>\n"
-        "      Name of service to ask for (eg 'slarti').\n"
+        "      Service name in question (eg 'slarti').\n"
+        "  \n"
+        "      --branch <str>\n"
+        "      Branch name in question (eg 'feature-SDCISA-42-foobar').\n"
         "  \n"
         "      --cookie <str>\n"
         "      This tool does not support any auth mechanism. A cookie header can\n"
@@ -102,6 +106,9 @@ nextArg:;
     }else if( !strcmp(arg, "--service") ){
         app->serviceName = argv[++iA];
         if( app->serviceName == NULL ){ LOGERR("EINVAL: %s needs value\n", arg); return-1; }
+    }else if( !strcmp(arg, "--branch") ){
+        app->branchName = argv[++iA];
+        if( app->branchName == NULL ){ LOGERR("EINVAL: %s needs value\n", arg); return-1; }
     }else if( !strcmp(arg, "--cookie") ){
         app->cookie = argv[++iA];
         if( app->cookie == NULL ){ LOGERR("EINVAL: %s needs value\n", arg); return-1; }
@@ -111,6 +118,7 @@ nextArg:;
     goto nextArg;
 verify:
     if( app->serviceName == NULL ){ LOGERR("EINVAL: --service missing\n"); return -1; }
+    if( app->branchName == NULL ){ LOGERR("EINVAL: --branch missing\n"); return -1; }
     return 0;
 }
 
@@ -211,12 +219,14 @@ static void run( void*app_ ){
     };
     assert(5*sizeof(void*) == sizeof httpMentor);
     #define SPACE (url_cap - (it - url))
-    int const url_cap = 127;
+    int const url_cap = 256;
     char url[url_cap];
     char *it = url;
     err = snprintf(it, SPACE, "/job/"); it += err; assert(err == 5);
     err = snprintf(it, SPACE, "%s", app->serviceName); it += err; assert(err == (signed)strlen(app->serviceName));
-    err = snprintf(it, SPACE, "/job/SDCISA-15648-RemoveSlimPackaging-n2/lastBuild/pipeline-graph/tree"); it += err; assert(err == 70);
+    err = snprintf(it, SPACE, "/job/"); it += err; assert(err == 5);
+    err = snprintf(it, SPACE, "%s", app->branchName); it += err; assert(err == (signed)strlen(app->branchName));
+    err = snprintf(it, SPACE, "/lastBuild/pipeline-graph/tree"); it += err; assert(err == 30);
     #undef SPACE
     //LOGDBG("[DEBUG] GET %s\n", url);
     req = (*app->env)->newHttpClientReq(app->env, &httpMentor, app,
