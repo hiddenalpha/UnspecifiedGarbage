@@ -84,7 +84,7 @@ UUID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx  /mnt/nameOfHdd  ext4  noatime  0  2
 
   && $SUDO apt install -y --no-install-recommends xorg openbox mate-terminal lightdm light-locker feh scrot lxpanel qalculate-gtk gmrun gnome-system-monitor \
   && mkdir ~/.config ~/.config/openbox || true \
-  && update-alternatives  \
+  && update-alternatives `# TODO needs args` \
 
 Populate "/etc/environment" as described by "./etc-environment".
 
@@ -96,10 +96,12 @@ Populate "/etc/environment" as described by "./etc-environment".
        vim htop pv openssh-client iptables iptables-persistent xxd zip unzip xz-utils p7zip-full \
        file trash-cli ncat curl \
        `# basic UI (vim-gtk required for system clipboard)` \
-       vim-gtk3 firefox-esr file-roller thunderbird chromium okular \
+       vim-gtk3 firefox-esr pcmanfm file-roller thunderbird chromium okular \
        `# software devel` \
        git sqlite3 manpages-dev gdb qemu-utils qemu-system-x86 qemu-system-arm wireshark samba \
        tigervnc-viewer jq universal-ctags \
+       `# network config` \
+       iwgtk \
        `# server` \
        nginx-light avahi-daemon  \
        `# mDNS client & tools` \

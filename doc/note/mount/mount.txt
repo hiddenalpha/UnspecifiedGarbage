@@ -1,4 +1,21 @@
 
+
+## Mount options
+
+/src  /dst  ext4  options,go=here  0  0
+                  ^^^^^^^^^^^^^^^-- example in "fstab"
+
+mount  -o options,go=here  /src  /dst
+         ^^^^^^^^^^^^^^^----------- example in mount command
+
+  password=            SMB/nfs passwords (plaintext!)
+  uid=1000,gid=1000    What user/grp NTFS files shall have
+  user                 noroot is allowed to mount this fstab entry.
+  vers=3.0             Which SMB version to use
+  nofail               Boot anyway, if fstab entry fails.
+  errors=remount-ro    mount readonly if errors occur.
+
+
 ## tmpfs / ramfs
 
 TODO: it seems as 'size' has no effect, and system may run OOM instead.
