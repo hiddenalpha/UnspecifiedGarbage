@@ -2,13 +2,6 @@
 Qemu
 ================
 
-## TODO move this to the NFS section
-
-Example fstab entries:
-
-//10.0.2.2/sharename  /mnt/cee-misc-lib  nfs  user,noauto,forceuid,uid=1000,vers=3.0  0  0
-
-
 ## Qemu Setup
 
   apt install qemu-system-aarch64 qemu-efi-aarch64
@@ -121,7 +114,7 @@ true \
 (see also "../../../doc/note/rasbpi/rasbpi.txt")
 
 # Example Raspi
-qemu-system-aarch64
+qemu-system-aarch64 \
     -nodefaults -accel tcg,thread=multi `# TODO confirm thread=multi works ` \
     -machine type=raspi3b -cpu cortex-a53 -smp 4 -m 1G \
     -kernel kernel8.img -dtb bcm2710-rpi-3-b.dtb -sd "$(dirname "$(realpath "$0")")/sd.qcow2" \
@@ -137,14 +130,14 @@ qemu-system-aarch64
   && hostpath=/path/to/host/dir \
   && sharename=work \
   && apt install --no-install-recommends -y samba \
-  && printf '[%s]\npath = %s\npublic = no\nwriteable = yes\nguest ok = yes\nforce user = andreas\n' "${sharename:?}" "${hostpath:?}" | $SUDO tee -a /etc/samba/smb.conf >/dev/null \
+  && printf '[%s]\npath = %s\npublic = no\nallow hosts = 127.0.0.1\nwriteable = yes\nguest ok = yes\nforce user = andreas\n' "${sharename:?}" "${hostpath:?}" | $SUDO tee -a /etc/samba/smb.conf >/dev/null \
   && $SUDO /etc/init.d/smbd restart \
   && true
 
 TODO: SMB server windoof
 DoesNotWork: "https://serverfault.com/questions/442664/virtualization-linux-kvm-qemu-host-windows-vm-guest-how-to-access-data-drive#comment479177_442678"
 
-true `# SMB client debian` \
+  && `# SMB client debian` \
   && hostUsername=yourHostUser \
   && smbServer=10.0.2.2 \
   && sharename=work \
@@ -154,24 +147,23 @@ true `# SMB client debian` \
   && true \
   && $SUDO mkdir -p "${mountpoint:?}" \
   && $SUDO apt install --no-install-recommends -y cifs-utils psmisc \
-  && $SUDO mount -t cifs -o username=${hostUsername:?},uid=${guestUid:?},gid=${guestGid:?} "//${smbServer:?}/${sharename:?}" "${mountpoint:?}" \
-  && true
 
 
 ## Example smb config for smb server (TODO verify)
 
 [vm-share]
    path = /path/to/vm-share
+   allow hosts = 127.0.0.1, 169.254.42.42
    browseable = yes
    read only = no
    guest ok = yes
    force user = usernameFromHost
 
 
-### Add those in "/etc/fstab" to setup mount automatically at boot:
-### HINT:  mkdir /home/user/build
-  //10.0.2.2/sharename  /mnt/sharename  cifs  password=,uid=1000,gid=1000,user,vers=3.0  0  0
-  /home/user/build  /mnt/sharename/build  none  bind  0  0
+## Example fstab entries  (HINT: mkdir /mnt/sharename)
+
+//10.0.2.2/sharename  /mnt/sharename  nfs  nofail,user,noauto,forceuid,uid=1000,vers=3.0  0  0
+//10.0.2.2/sharename  /mnt/sharename  cifs  nofail,password=,uid=1000,gid=1000,user,vers=3.0  0  0
 
 List smb shares (eg debugging)
   smbclient -NL //10.0.2.2
@@ -220,11 +212,6 @@ In GUEST to access it do:
   && printf 'user:x:1000:user\n' >> /etc/group \
   && printf 'user:12345\n' | chpasswd \
   && /etc/init.d/sshd restart \
-
-  && `# host auto-mount helper script ` \
-  && mkdir ~/.local ~/.local/bin \
-  && echo H4sIAAUQ5GYAA0WOsQ7CMAxE93yFCUgFiTbQEaliYWArA8wRFJNkaFI1CR2Af8cpSJ1sv/P5PJ+Jm7HCa+YxQI7s2R6dDxePfXWuD7XsYpCaiIyEpMYemY+nYRJVRFJ754Lsht9CNPeKL5bmDnlccaamUdGIjXbAF690Zv/h8AYfIfkhbyBrXbTUBWjMw0PuIOXaa4tVRp7pO3Jm6xSUMNXdCNQfqD8ALsR2U2yKsijF+LLX1x7TPU5aa8OPjqmdMzbwjH0BleXnHxQBAAA= |base64 -d|gzip -d > ~/.local/bin/setup \
-  && printf '\n  TODO: Resolve the todos in %s\n\n' ~/.local/bin/setup \
 
 
 ## Debian PostInstall
