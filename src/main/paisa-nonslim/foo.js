@@ -801,9 +801,7 @@ Related:
             child.on("error", console.error.bind(console));
             child.stderr.on("data", function( buf ){ log.write(buf); });
             child.on("close", function( code, signal ){
-                if( code === 1 && signal === null ){
-                    checkout(); /* try next remote/branch name */
-                }else if( code !== 0 || signal !== null ){
+                if( code !== 0 || signal !== null ){
                     onDone(Error("code "+ code +", signal "+ signal));
                 }else{
                     onDone(null, null);
