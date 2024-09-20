@@ -40,8 +40,8 @@ function loadFilters( that )
 --        { action = "drop", afterDate  = "2024-01-31 23:59:59.999", },
 
 
-        -- { action = "keep", level = "WARN", file = "BlockedThreadChecker",
-        --     msgPattern = " blocked for %d%d%d+", stackPattern = "%.twimba%." },
+        -- { action = "keep",
+        --     msgPattern = "Connection ", stackPattern = "Connection " },
         -- { action = "drop" },
 
         { action = "drop", level = "TRACE" },

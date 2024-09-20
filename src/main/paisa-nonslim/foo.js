@@ -265,6 +265,21 @@ Related:
 
     function getJettyServiceNamesAsArray( app, onDone ){
         setImmediate(onDone, null, [ /*TODO get via args/file */
+
+            /****** TryBuild early, because other depend on them ******/
+            //"platform",
+            //"slarti", "captain", "megacamel", "guide",
+            /****** "regular" builds ******/
+            //"allitnil", "babelfish", "barman", "benjy", "bentstick", "blart", "caveman", "colin",
+            //"deep", "drdan", "heimdall", "hooli", "jeltz", "kwaltz", "loon", "magician",
+            //"minetti", "mown", "nowwhat", "pobble", "poodoo", "prosser", "streetmentioner", "thor",
+            //"towel", "vannharl", "vogon", "vroom", "zaphake", "zem",
+            /****** Depends on 'slarti', 'captain' ******/
+            //"rob",
+            /****** Depends on 'slarti', 'megacamel' ******/
+            //"trillian",
+            /****** Depends on 'slarti', 'guide', 'trillian' ******/
+            //"deep",
         ]);
     }
 
