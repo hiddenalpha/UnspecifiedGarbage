@@ -1,0 +1,23 @@
+
+
+## How to merge two DBs with same schema
+
+BEGIN TRANSACTION;
+ATTACH 'gugus.db' AS other;
+INSERT INTO "Foo" SELECT * FROM "other"."Foo";
+INSERT INTO "Bar" SELECT * FROM "other"."Bar";
+COMMIT;
+DETACH other;
+
+
+ATTACH 'bekb-2023.db' AS other;
+INSERT INTO "Account" SELECT * FROM "other"."Account";
+INSERT INTO "Currency" SELECT * FROM "other"."Currency";
+INSERT INTO "AccountType" SELECT * FROM "other"."AccountType";
+INSERT INTO "Transaction" SELECT * FROM "other"."Transaction";
+
+
+## import CSV
+
+  sqlite3 foo.db -bail -cmd '.mode csv' -cmd '.separator ;' -cmd '.import foo.csv FooTable'
+

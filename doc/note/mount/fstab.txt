@@ -2,6 +2,16 @@
 fstab
 =====
 
+## Prevent boot hang on mount errors
+
+/src  /dst  theType  nofail  0  0
+
+
+## Make a bind mount from fstab
+
+/src  /dst  none  bind  0  0
+
+
 ## Moving firefox cache to RAM
 
 Effect: Faster at runtime, slower at startup.

@@ -1,0 +1,196 @@
+
+*filter
+
+# Loopback
+-A INPUT  -i lo -j ACCEPT
+-A OUTPUT -o lo -j ACCEPT
+
+# Drop corrupt (evil) null packets.
+-A INPUT -p tcp --tcp-flags ALL NONE -j DROP
+
+# Drop corrupt (evil) syn packets.
+-A INPUT -p tcp ! --syn -m state --state NEW -j DROP
+
+# Drop XMAS (corrupt/evil) packets
+-A INPUT -p tcp --tcp-flags ALL ALL -j DROP
+
+# Anti DoS attack
+#-A INPUT -p tcp --dport 1:1024 -m limit --limit 1/seconds --limit-burst 100 -j ACCEPT
+
+# DNS client
+#-A OUTPUT -p udp --dport 53 -m udp -j ACCEPT
+#-A INPUT  -p udp --sport 53 -m state --state ESTABLISHED,RELATED -j ACCEPT
+
+# mDNS (zeroconf, bonjour)
+#-A INPUT  -p udp --sport 5353 --dport 5353 -j ACCEPT
+#-A OUTPUT -p udp --dport 5353 --sport 5353 -j ACCEPT
+
+# DHCP client
+#-A OUTPUT -p udp --dport 67:68 -j ACCEPT
+#-A INPUT  -p udp -m state --state ESTABLISHED,RELATED --sport 67:68 -j ACCEPT
+
+# Ping client
+#-A OUTPUT -p icmp --icmp-type echo-request -j ACCEPT
+#-A INPUT  -p icmp --icmp-type echo-reply   -j ACCEPT
+
+# Ping server
+#-A INPUT  -p icmp --icmp-type echo-request -j ACCEPT
+#-A OUTPUT -p icmp --icmp-type echo-reply   -j ACCEPT
+
+# Traceroute client
+#-A OUTPUT -p icmp --icmp-type 8 -j ACCEPT
+#-A INPUT  -p icmp --icmp-type 11 -j ACCEPT
+#-A OUTPUT -p udp -m udp --match multiport --dports 33434:33523 -j ACCEPT
+#-A INPUT  -p udp -m udp --match multiport --sports 33434:33523 -j ACCEPT
+
+# Traceroute server
+#-A INPUT -p icmp --icmp-type 8 -j ACCEPT
+#-A INPUT -p udp --dport 33434:33523 -j REJECT
+
+# NTP client
+# May the part "-m state --state ESTABLISHED,RELATED" has to be dropped (not tested yet).
+#-A OUTPUT -p udp --dport 123 -j ACCEPT
+#-A INPUT -p udp --sport 123 -m state --state ESTABLISHED,RELATED -j ACCEPT
+
+# NTP Server
+#-A INPUT -p udp --dport 123 -j ACCEPT
+#-A OUTPUT -p udp --sport 123 -j ACCEPT
+
+# SSH client
+#-A OUTPUT -p tcp -m state --state NEW,ESTABLISHED --dport 22 -j ACCEPT
+#-A INPUT -p tcp -m state --state ESTABLISHED --sport 22 -j ACCEPT
+
+# SSH client (for hiddn)
+#-A OUTPUT -p tcp -m state --state NEW,ESTABLISHED --dport 10022 -j ACCEPT
+#-A INPUT -p tcp -m state --state ESTABLISHED --sport 10022 -j ACCEPT
+
+# SSH client (for brgmt)
+#-A OUTPUT -p tcp -m state --state NEW,ESTABLISHED --dport 5566 -j ACCEPT
+#-A INPUT -p tcp -m state --state ESTABLISHED --sport 5566 -j ACCEPT
+
+# SSH server
+#-A INPUT -p tcp -m state --state NEW,ESTABLISHED --dport 22 -j ACCEPT
+#-A OUTPUT -p tcp -m state --state ESTABLISHED --sport 22 -j ACCEPT
+
+# OpenVPN client
+#-A OUTPUT -p udp -m state --state NEW,ESTABLISHED --dport 1194 -j ACCEPT
+#-A INPUT  -p udp -m state --state ESTABLISHED --sport 1194 -j ACCEPT
+
+# OpenVPN server
+#-A INPUT  -p udp -m state --state NEW,ESTABLISHED --dport 1194 -j ACCEPT
+#-A OUTPUT -p udp -m state --state ESTABLISHED --sport 1194 -j ACCEPT
+
+# Web client
+#-A OUTPUT -p tcp -m tcp --dport 80 -j ACCEPT
+#-A OUTPUT -p tcp -m tcp --dport 443 -j ACCEPT
+#-A INPUT -p tcp -m state --state ESTABLISHED,RELATED --sport 80 -j ACCEPT
+#-A INPUT -p tcp -m state --state ESTABLISHED,RELATED --sport 443 -j ACCEPT
+
+# Web server (HTTPS)
+#-A INPUT -p tcp --dport 443 -j ACCEPT
+#-A OUTPUT -p tcp -m tcp --sport 443 -m state --state RELATED,ESTABLISHED -j ACCEPT
+
+# Web server (HTTP)
+#-A INPUT -p tcp -m state --state NEW,ESTABLISHED --dport 80 -j ACCEPT
+#-A OUTPUT -p tcp -m tcp --sport 80 -m state --state RELATED,ESTABLISHED -j ACCEPT
+
+# FTP client (control)
+#-A OUTPUT -p tcp --dport 21 -m state --state NEW,ESTABLISHED -j ACCEPT
+#-A INPUT  -p tcp --sport 21 -m state --state ESTABLISHED -j ACCEPT
+# (Passive mode)
+#-A OUTPUT -p tcp --dport 20 -m state --state ESTABLISHED -j ACCEPT
+#-A INPUT  -p tcp --sport 20 -m state --state ESTABLISHED,RELATED -j ACCEPT
+# (Active mode)
+#-A OUTPUT -p tcp --sport 1024: --dport 1024: -m state --state ESTABLISHED,RELATED,NEW -j ACCEPT
+#-A INPUT  -p tcp --sport 1024: --dport 1024: -m state --state ESTABLISHED -j ACCEPT
+
+# FTP server (control)
+#-A INPUT  -p tcp -m tcp --dport 21 -m conntrack --ctstate ESTABLISHED,NEW -j ACCEPT
+#-A OUTPUT -p tcp -m tcp --dport 21 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
+# (Active mode)
+#-A INPUT  -p tcp -m tcp --dport 20 -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+#-A OUTPUT -p tcp -m tcp --dport 20 -m conntrack --ctstate ESTABLISHED -j ACCEPT
+# (Passive mode)
+#-A INPUT  -p tcp -m tcp --sport 1024: --dport 1024: -m conntrack --ctstate ESTABLISHED -j ACCEPT
+#-A OUTPUT -p tcp -m tcp --sport 1024: --dport 1024: -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+
+# CUPS client (to connect to printers)
+#-A OUTPUT -p udp --dport 161 -j ACCEPT
+#-A INPUT -p udp --sport 161 -j ACCEPT
+#-A OUTPUT -p tcp --dport 631 -j ACCEPT
+#-A INPUT -p tcp --sport 631 -j ACCEPT
+
+# Socket printing client
+#-A OUTPUT -p tcp -m tcp --dport 9100 -j ACCEPT
+#-A INPUT -p tcp -m state --state ESTABLISHED,RELATED --sport 9100 -j ACCEPT
+
+# CUPS server (only required for remote access)
+#-A INPUT -p udp --dport 631 -j ACCEPT
+#-A INPUT -p tcp --dport 631 -j ACCEPT
+#-A OUTPUT -p tcp --sport 631 -j ACCEPT
+#-A OUTPUT -p tcp --sport 631 -j ACCEPT
+
+# POP3 client
+#-A OUTPUT -p tcp --dport 995 -j ACCEPT
+#-A INPUT -p tcp -m state --state ESTABLISHED,RELATED --sport 995 -j ACCEPT
+
+# SMTP client
+#-A OUTPUT -p tcp --dport 465 -j ACCEPT
+#-A INPUT -p tcp -m state --state ESTABLISHED,RELATED --sport 465 -j ACCEPT
+
+# IMAP client
+#-A OUTPUT -p tcp --dport 993 -j ACCEPT
+#-A INPUT -p tcp -m state --state ESTABLISHED,RELATED --sport 993 -j ACCEPT
+
+# Whois client
+#-A OUTPUT -p tcp --dport 43 -j ACCEPT
+#-A INPUT  -p tcp --sport 43 -m state --state ESTABLISHED,RELATED -j ACCEPT
+
+# Git client
+#-A OUTPUT -p tcp -m state --state NEW,ESTABLISHED --dport 9418 -j ACCEPT
+#-A INPUT  -p tcp -m state --state ESTABLISHED --sport 9418 -j ACCEPT
+
+# Git server
+#-A INPUT  -p tcp -m state --state NEW,ESTABLISHED --dport 9418 -j ACCEPT
+#-A OUTPUT -p tcp -m state --state RELATED,ESTABLISHED --sport 9418 -j ACCEPT
+
+# Samba (SMB) Client
+#-A OUTPUT -p tcp -m state --state NEW,ESTABLISHED --dport 139 -j ACCEPT
+#-A OUTPUT -p tcp -m state --state NEW,ESTABLISHED --dport 445 -j ACCEPT
+#-A INPUT  -p tcp -m state --state RELATED,ESTABLISHED --sport 139 -j ACCEPT
+#-A INPUT  -p tcp -m state --state RELATED,ESTABLISHED --sport 445 -j ACCEPT
+
+# Samba (SMB) Server
+#-A INPUT  -p tcp -m state --state NEW,ESTABLISHED --dport 139 -j ACCEPT
+#-A INPUT  -p tcp -m state --state NEW,ESTABLISHED --dport 445 -j ACCEPT
+#-A OUTPUT -p tcp -m state --state RELATED,ESTABLISHED --sport 139 -j ACCEPT
+#-A OUTPUT -p tcp -m state --state RELATED,ESTABLISHED --sport 445 -j ACCEPT
+
+# MsTeams/MsSkype clients (in addition to TCP 80 & 443)
+#-A OUTPUT -p udp --match multiport --dports 3478:3481  -j ACCEPT
+#-A INPUT  -p udp --match multiport --sports 3478:3481  -j ACCEPT
+
+# Some client ports for debugging.
+#-A OUTPUT -p tcp -m tcp --match multiport --dports 1230:1239 -j ACCEPT
+#-A INPUT  -p tcp -m state --state ESTABLISHED,RELATED --match multiport --sports 1230:1239 -j ACCEPT
+#-A OUTPUT -p udp -m udp --match multiport --dports 1230:1239 -j ACCEPT
+#-A INPUT  -p udp -m state --state ESTABLISHED,RELATED --match multiport --sports 1230:1239 -j ACCEPT
+
+# Some server ports for debugging.
+#-A INPUT  -p tcp --match multiport --dports 1230:1239 -j ACCEPT
+#-A OUTPUT -p tcp -m tcp --match multiport --sports 1230:1239 -m state --state RELATED,ESTABLISHED -j ACCEPT
+#-A INPUT  -p udp --match multiport --dports 1230:1239 -j ACCEPT
+#-A OUTPUT -p udp -m udp --match multiport --sports 1230:1239 -m state --state RELATED,ESTABLISHED -j ACCEPT
+
+# Log blocked connection attemps
+#-A INPUT   -j LOG --log-prefix "FwBadInn: " --log-level 6
+-A FORWARD -j LOG --log-prefix "FwBadFwd: " --log-level 6
+-A OUTPUT  -j LOG --log-prefix "FwBadOut: " --log-level 6
+
+# Disallow any non-whitelisted packets (Use either DROP or REJECT. Your choice)
+-A INPUT   -j REJECT
+-A FORWARD -j REJECT
+-A OUTPUT  -j REJECT
+
+COMMIT
+
