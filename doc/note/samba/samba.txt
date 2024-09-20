@@ -12,11 +12,12 @@ Samba (aka SMB, ServerMessageBlock)
   smbclient -NL //10.0.2.2
 
 
-## Mount a share
+## Example fstab entries  (HINT: mkdir /mnt/sharename)
 
 Variant for "/etc/fstab" (make sure mount dir exists):
 
-//10.0.2.2/sharename  /mnt/sharename  cifs  password=,uid=1000,gid=1000,user,vers=3.0  0  0
+//10.0.2.2/sharename  /mnt/sharename  nfs  nofail,user,noauto,forceuid,uid=1000,vers=3.0  0  0
+//10.0.2.2/sharename  /mnt/sharename  cifs  nofail,password=,uid=1000,gid=1000,user,vers=3.0  0  0
 
 
 ## Fix silly resolve issues (smb.conf)

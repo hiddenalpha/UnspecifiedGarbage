@@ -1,0 +1,22 @@
+
+--- a/pom.xml
++++ b/pom.xml
+@@ -7,7 +7,7 @@
+         <groupId>ch.post.it.paisa.service</groupId>
+         <!-- Caution: when changing the parent version number, also change the
+             platform.version below -->
+-        <version>03.06.46.01-PR-388-SNAPSHOT</version>
++        <version>${j21.platform.version}</version>
+     </parent>
+
+
+--- a/pom.xml
++++ b/pom.xml
+@@ -17,7 +17,7 @@
+     <name>thor</name>
+     <properties>
+-        <platform.version>03.06.46.01-PR-388-SNAPSHOT</platform.version>
++        <platform.version>${j21.platform.version}</platform.version>
+         <service.name>thor</service.name>
+         <service.port>9103</service.port>
+

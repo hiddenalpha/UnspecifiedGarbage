@@ -32,8 +32,10 @@
 #define STR_QUOT(s) STR_QUOT_(s)
 #define LOGDBG(...) fprintf(stderr, __VA_ARGS__)
 #define LOGERR(...) fprintf(stderr, __VA_ARGS__)
+#define REGISTER /*no-op*/
 
 #define FLG_isHelp (1<<0)
+#define FLG_printRspBodyAnyway (1<<1)
 
 
 typedef  struct App  App;
@@ -44,7 +46,14 @@ struct App {
     int mAGIC;
     int flg;
     int exitCode;
+    int httpRspCode;
+    char *serviceName;
+    char *branchName;
+    char *cookie;
+    char *rspBody;
+    int rspBody_cap, rspBody_end;
     struct GarbageEnv **env;
+    struct Garbage_TlsClient **tlsClient;
     void *envMem[SIZEOF_struct_GarbageEnv/sizeof(void*)];
 };
 
@@ -68,23 +77,48 @@ static void printHelp( void ){
         "  \n"
         "  Fights annoying just-trigger-another-build workaround.\n"
         "  \n"
+        "  Options:\n"
+        "  \n"
+        "      --service <str>\n"
+        "      Service name in question (eg 'slarti').\n"
+        "  \n"
+        "      --branch <str>\n"
+        "      Branch name in question (eg 'feature-SDCISA-42-foobar').\n"
+        "  \n"
+        "      --cookie <str>\n"
+        "      This tool does not support any auth mechanism. A cookie header can\n"
+        "      be provided here. For example one copied from an established\n"
+        "      browser session or similar. This already works for some auth\n"
+        "      mechanisms.\n"
+        "  \n"
     );
 }
 
 
 static int parseArgs( App*app, char**argv ){
+    assert(app->serviceName == NULL);
     register int iA = 0;
 nextArg:;
     char *arg = argv[++iA];
     if( arg == NULL ){ goto verify; }
     if( !strcmp(arg, "--help") ){
         app->flg |= FLG_isHelp; return 0;
+    }else if( !strcmp(arg, "--service") ){
+        app->serviceName = argv[++iA];
+        if( app->serviceName == NULL ){ LOGERR("EINVAL: %s needs value\n", arg); return-1; }
+    }else if( !strcmp(arg, "--branch") ){
+        app->branchName = argv[++iA];
+        if( app->branchName == NULL ){ LOGERR("EINVAL: %s needs value\n", arg); return-1; }
+    }else if( !strcmp(arg, "--cookie") ){
+        app->cookie = argv[++iA];
+        if( app->cookie == NULL ){ LOGERR("EINVAL: %s needs value\n", arg); return-1; }
     }else{
         LOGERR("EINVAL: %s\n", arg); return-1;
     }
     goto nextArg;
 verify:
-    //if( argc <= 1 ){ LOGERR("EINVAL: Zero-arg-nonsense. Tell me what you want please.\n"); return -1; }
+    if( app->serviceName == NULL ){ LOGERR("EINVAL: --service missing\n"); return -1; }
+    if( app->branchName == NULL ){ LOGERR("EINVAL: --branch missing\n"); return -1; }
     return 0;
 }
 
@@ -105,7 +139,8 @@ static void HttpReq_onRspHdr(
     const struct Garbage_HttpMsg_Hdr*hdrs, int hdrs_cnt,
     struct Garbage_HttpClientReq**req, void*app_
 ){
-    //App*const app = assert_is_App(app_);
+    App*const app = assert_is_App(app_);
+    app->httpRspCode = rspCode;
     if( rspCode != 200 ){
         LOGDBG("%.*s %d %.*s\n", proto_len, proto, rspCode, phrase_len, phrase);
         for( int i = 0 ; i < hdrs_cnt ; ++i ){
@@ -119,20 +154,61 @@ static void HttpReq_onRspHdr(
 static void HttpReq_onRspBody(
     const char*buf, int buf_len, struct Garbage_HttpClientReq**req, void*app_
 ){
-    //App*const app = assert_is_App(app_);
-    // TODO if( httpRspCode != 200 ){
+    App*const app = assert_is_App(app_);
+    if( app->httpRspCode != 200 ){
         LOGDBG("%.*s", buf_len, buf);
-    // TODO }
+        return;
+    }
+    if( app->flg & FLG_printRspBodyAnyway ){
+        LOGDBG("%.*s", buf_len, buf);
+    }
+    if( app->rspBody_cap - app->rspBody_end < buf_len ){
+        app->rspBody_cap += buf_len;
+        void *tmp = realloc(app->rspBody, app->rspBody_cap*sizeof*app->rspBody);
+        if( tmp == NULL ){ assert(!"TODO_0GgAAAF8AACMaAAA ENOMEM"); }
+        app->rspBody = tmp;
+    }
+    memcpy(app->rspBody + app->rspBody_end, buf, buf_len);
+    app->rspBody_end += buf_len;
 }
 
 
 static void HttpReq_onRspDone( struct Garbage_HttpClientReq**req, void*app_ ){
-    LOGDBG("[DEBUG] TODO_FlsAAAwZAADIHgAA %s()\n", __func__);
+    App*const app = assert_is_App(app_);
+    if( app->flg & FLG_printRspBodyAnyway ){
+        LOGDBG("\n");/*fix broken server which deliver no LF at TEXT body end*/
+    }
+    assert(app->rspBody != NULL);
+    int const isFail = strstr(app->rspBody, "\"state\":\"failure\"") != NULL;
+    if( isFail ){
+        LOGDBG("[DEBUG] Build has FAILED\n");
+    }else{
+        LOGDBG("[DEBUG] Build has SUCCEEDED (likely)\n");
+    }
 }
 
 
+static void TlsClientMentor_pushIoTask( void(*task)(void*arg), void*arg, void*app_ ){ assert(!"TODO_4WgAAI8UAACIdQAA"); }
+static void TlsClientMentor_onError( int eno, void*app_ ){ assert(!"TODO_gxsAAMspAABkYgAA"); }
+
+
 static void run( void*app_ ){
+    REGISTER int err;
     App*const app = assert_is_App(app_);
+    static char const*const peerHostname = "jenkinspaisa-temp.tools.pnet.ch";
+    assert(app->tlsClient == NULL);
+    static struct Garbage_TlsClient_Mentor tlsMentor = {
+        .pushIoTask = TlsClientMentor_pushIoTask,
+        .onError = TlsClientMentor_onError,
+    };
+    app->tlsClient = (*app->env)->newTlsClient(app->env,
+        &tlsMentor, app, &(struct Garbage_TlsClient_Opts){
+            .peerHostname = peerHostname,
+            //.mallocator = NULL,
+            //.socketMgr = NULL,
+            //.ioWorker = NULL,
+        }
+    );
     struct Garbage_HttpClientReq **req = NULL;
     static struct Garbage_HttpClientReq_Mentor httpMentor = {
         .pushIoTask = HttpReq_pushIoTask,
@@ -142,16 +218,30 @@ static void run( void*app_ ){
         .onRspDone = HttpReq_onRspDone,
     };
     assert(5*sizeof(void*) == sizeof httpMentor);
+    #define SPACE (url_cap - (it - url))
+    int const url_cap = 256;
+    char url[url_cap];
+    char *it = url;
+    err = snprintf(it, SPACE, "/job/"); it += err; assert(err == 5);
+    err = snprintf(it, SPACE, "%s", app->serviceName); it += err; assert(err == (signed)strlen(app->serviceName));
+    err = snprintf(it, SPACE, "/job/"); it += err; assert(err == 5);
+    err = snprintf(it, SPACE, "%s", app->branchName); it += err; assert(err == (signed)strlen(app->branchName));
+    err = snprintf(it, SPACE, "/lastBuild/pipeline-graph/tree"); it += err; assert(err == 30);
+    #undef SPACE
+    //LOGDBG("[DEBUG] GET %s\n", url);
     req = (*app->env)->newHttpClientReq(app->env, &httpMentor, app,
         &(struct Garbage_HttpClientReq_Opts){
             //.mallocator = NULL,
-            //.socketMgr = NULL,
+            .socketMgr = (*app->tlsClient)->asSocketMgr(app->tlsClient),
             .mthd = "GET",
-            .host = "127.0.0.1",
-            .url = "/guguseli/gagageli",
-            .port = 8081,
-            //.hdrs = struct Garbage_HttpMsg_Hdr*,
-            //.hdrs_cnt = int,
+            .host = peerHostname,
+            .url = url,
+            .port = 443,
+            .hdrs_cnt = (app->cookie == NULL) ? 0 : 1,
+            .hdrs = ((struct Garbage_HttpMsg_Hdr[]){{
+                .key = "Cookie", .key_len = 6,
+                .val = app->cookie, .val_len = (app->cookie == NULL ? 0 : strlen(app->cookie)),
+            }}),
         });
     (*req)->resume(req);
 }
@@ -169,6 +259,7 @@ int main( int argc, char**argv ){
     if( parseArgs(app, argv) ){ goto endFn; }
     if( app->flg & FLG_isHelp ){ printHelp(); goto endFn; }
     app->exitCode = 0;
+    //app->flg |= FLG_printRspBodyAnyway;
     app->env = GarbageEnv_ctor(app->envMem, sizeof app->envMem);
     (*app->env)->enqueBlocking(app->env, run, app);
     (*app->env)->runUntilDone(app->env);

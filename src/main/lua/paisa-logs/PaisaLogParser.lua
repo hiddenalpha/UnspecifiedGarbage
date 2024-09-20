@@ -64,18 +64,26 @@ end
 
 
 function LogParse:tryParseLogs()
+    self.numBrokenLogLines = 0
+    self.thisEntryIsBroken = false
     while true do
         self.line = io.read("l");
-        if self.line==nil then -- EOF
-            self:publishLogEntry();
+        if self.line == nil then -- EOF
+            self:publishLogEntry()
             break;
         end
 
         --io.write( "\nBUF: ", self.line, "\n\n" );
         --io.flush()
 
-        if self.line:match("%d%d%d%d%-%d%d%-%d%d[ T]%d%d:%d%d:%d%d,%d%d%d ") then
+        if self.line:match("^%d%d%d%d%-%d%d%-%d%d[ T]%d%d:%d%d:%d%d,%d%d%d ") then
             -- Looks like the beginning of a new log entry.
+            self.thisEntryIsBroken = false
+            self:initLogEntryFromLine();
+        elseif self.line:match("^%d%d:%d%d:%d%d[,.]%d%d%d %[") then
+            -- FUCK THIS SHIT!!
+            self.thisEntryIsBroken = true
+            self.numBrokenLogLines = self.numBrokenLogLines + 1
             self:initLogEntryFromLine();
         elseif self.line:match("^%s+at [^ ]") then
             -- Looks like a line from exception stack
@@ -93,13 +101,18 @@ function LogParse:tryParseLogs()
             -- Probably msg containing newlines.
             self:appendLogMsg();
         end
-
+        ::nextLine::
+    end
+    if self.numBrokenLogLines ~= 0 then
+        stderr:write("[WARN ] Skiped ".. self.numBrokenLogLines .." entries with broken dates\n")
     end
 end
 
 
 function LogParse:initLogEntryFromLine()
-    self:publishLogEntry();
+    if self.thisEntryIsBroken then return end
+
+    self:publishLogEntry()
     local log = self:getOrNewLogEntry();
 
     -- Try some alternative parsers
@@ -369,7 +382,7 @@ end
 
 function LogParse:publishLogEntry()
     local log = self.log
-    if not log then
+    if not log or self.thisEntryIsBroken then
         return -- nothing to do
     end
     if not log.raw then
