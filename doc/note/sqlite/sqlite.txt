@@ -19,5 +19,9 @@ INSERT INTO "Transaction" SELECT * FROM "other"."Transaction";
 
 ## import CSV
 
+csv Example (no headrow):
+  1;foo
+  2;bar
+
   sqlite3 foo.db -bail -cmd '.mode csv' -cmd '.separator ;' -cmd '.import foo.csv FooTable'
 
