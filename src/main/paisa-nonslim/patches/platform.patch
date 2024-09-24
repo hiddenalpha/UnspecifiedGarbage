@@ -1,88 +1,135 @@
 
   20240812 now based on the java-21 branch, no longer on develop.
 
+
+  Only here because patch file cannot be empty
 --- a/poms/service/paisa-service-superpom/pom.xml
 +++ b/poms/service/paisa-service-superpom/pom.xml
-@@ -895,79 +895,11 @@
-                                 <configuration>
-                                     <properties>
-                                         <!--
-                                             Don't you DARE add slf4j here. If you do, the services in a
-                                             constellation won't start up! So be mindful and DON'T add it.
-                                         -->
-                                         <slimArtifacts>
--                                            aopalliance:aopalliance<!--TODO: never directly used in platform-->
--                                            ch.post.it.paisa.alice:alice-service-config-core
--                                            ch.post.it.paisa.alice:alice-service-domain-core
--                                            ch.post.it.paisa.alice:alice-service-process-core
--                                            ch.post.it.paisa.alice:alice-service-logging-core
--                                            ch.post.it.paisa.alice:alice-service-web-core
--                                            org.aspectj:aspectjweaver<!--Transitively used by spring-aspects-->
--                                            org.aspectj:aspectjrt<!--TODO: never directly used in platform-->
--                                            com.fasterxml:classmate<!--Transitively used by hibernate-validator-->
--                                            ch.post.it.common.core:common-core-metadata
--                                            commons-codec:commons-codec
--                                            commons-collections:commons-collections
--                                            commons-fileupload:commons-fileupload
--                                            commons-io:commons-io
--                                            commons-lang:commons-lang
--                                            commons-logging:commons-logging
--                                            commons-logging:commons-logging-api
--                                            commons-logging:commons-logging-api:99.0-does-not-exist
--                                            io.micrometer:micrometer-observation<!--Transitively used by spring-web & spring-context-->
--                                            io.micrometer:micrometer-commons<!--Transitively used by micrometer-observation-->
--                                            net.sf.ehcache:ehcache-core
--                                            org.hibernate.validator:hibernate-validator
--                                            org.hibernate:hibernate-core-jakarta
--                                            org.apache.httpcomponents:httpclient
--                                            org.apache.httpcomponents:httpcore
--                                            org.apache.httpcomponents:httpmime
--                                            com.fasterxml.jackson.core:jackson-annotations
--                                            com.fasterxml.jackson.core:jackson-core
--                                            com.fasterxml.jackson.core:jackson-databind
--                                            com.fasterxml.jackson.datatype:jackson-datatype-jsr310<!--Transitively used by shedlock-->
--                                            org.glassfish:jakarta.el
--                                            jakarta.annotation:jakarta.annotation-api
--                                            com.sun.activation:jakarta.activation
--                                            javax.xml.bind:jaxb-api
--                                            com.sun.xml.bind:jaxb-core
--                                            com.sun.xml.bind:jaxb-impl
--                                            org.jboss.logging:jboss-logging<!--Transitively used by hibernate-validator-->
--                                            org.slf4j:jcl-over-slf4j<!--TODO: never directly used in platform-->
--                                            joda-time:joda-time
--                                            com.google.code.findbugs:jsr305
-                                             io.github.java-native:jssc
--                                            org.slf4j:jul-to-slf4j<!--TODO: never used in platform-->
--                                            org.apache.logging.log4j:log4j-core
--                                            org.apache.logging.log4j:log4j-api
--                                            ch.post.it.paisa.api:common-logging-api
--                                            ch.post.it.paisa.api:common-server-api
--                                            ch.post.it.paisa.api:system-status-api
--                                            ch.post.it.paisa.api:common-metric-api
--                                            ch.post.it.paisa.api:user-registration-api
--                                            ch.post.it.paisa.api:vehiclelink-power-api
--                                            ch.post.it.paisa.api:shared-navigation-api
--                                            ch.post.it.paisa.api:navigation-location-api
--                                            ch.post.it.paisa.api:maintenance-observation-api
--                                            org.springframework:spring-aop<!--Transitively used by spring-webmvc-->
--                                            org.springframework:spring-aspects
--                                            org.springframework:spring-beans<!--Transitively used by spring-web-->
--                                            org.springframework:spring-context
--                                            org.springframework:spring-context-support
--                                            org.springframework:spring-core
--                                            org.springframework:spring-expression
--                                            org.springframework:spring-test
--                                            org.springframework:spring-web
--                                            org.springframework:spring-webmvc
--                                            jakarta.validation:jakarta.validation-api
--                                            net.javacrumbs.shedlock:shedlock-spring
--                                            net.javacrumbs.shedlock:shedlock-core
--                                            net.bull.javamelody:javamelody-core
--                                            org.jrobin:jrobin
--                                            com.thoughtworks.xstream:xstream
-                                         </slimArtifacts>
-                                     </properties>
-                                     <source>
+@@ -1,7 +1,7 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+ <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+-    <modelVersion>4.0.0</modelVersion>
++    <modelVersion>4.0.0</modelVersion>
+     <parent>
+         <artifactId>paisa-superpom</artifactId>
+         <groupId>ch.post.it.paisa</groupId>
 
+
+--- a/poms/service/paisa-service-superpom/pom.xml
++++ b/poms/service/paisa-service-superpom/pom.xml
+@@ -271,6 +271,54 @@
+                 <groupId>org.jfrog.buildinfo</groupId>
+                 <artifactId>artifactory-maven-plugin</artifactId>
+             </plugin>
++
++            <plugin>
++                <groupId>org.codehaus.gmaven</groupId>
++                <artifactId>groovy-maven-plugin</artifactId>
++                <version>2.1.1</version>
++                <executions>
++                    <execution>
++                        <phase>prepare-package</phase>
++                        <goals>
++                            <goal>execute</goal>
++                        </goals>
++                        <configuration>
++                            <properties>
++                                <!--
++                                    Don't you DARE add slf4j here. If you do, the services in a
++                                    constellation won't start up! So be mindful and DON'T add it.
++                                -->
++                                <slimArtifacts>
++                                    io.github.java-native:jssc
++                                </slimArtifacts>
++                            </properties>
++                            <source>
++                                import java.nio.file.*
++
++                                Path slimLibPath = Paths.get(project.build.directory + "/lib/");
++                                slimLibPath.toFile().mkdirs();
++
++                                def slimArtifacts = properties.slimArtifacts.split("\\s+");
++                                println("Group:Artefacts to be SLIMmed: " + slimArtifacts)
++                                project.artifacts.each { af -&gt;
++                                    def key = af.groupId + ":" + af.artifactId
++                                    printf("SLIMmed? %-70s", key)
++                                    if (slimArtifacts.contains(key)) {
++                                        println(" --&gt; yes (set scope to 'provided' and copy JAR to target/lib/)")
++                                        af.scope = "provided"
++                                        Path copyFrom = af.file.toPath();
++                                        Path copyTo = slimLibPath.resolve(af.file.name);
++                                        //println(copyFrom.toString() + " --&gt; " + copyTo.toString())
++                                        Files.copy(copyFrom, copyTo, StandardCopyOption.REPLACE_EXISTING);
++                                    } else {
++                                        println(" --&gt; no")
++                                    }
++                                }
++                            </source>
++                        </configuration>
++                    </execution>
++                </executions>
++            </plugin>
+         </plugins>
+ 
+         <pluginManagement>
+
+
+--- a/poms/service/paisa-service-superpom/pom.xml
++++ b/poms/service/paisa-service-superpom/pom.xml
+@@ -882,53 +930,6 @@
+             <id>slim</id>
+             <build>
+                 <plugins>
+-                    <plugin>
+-                        <groupId>org.codehaus.gmaven</groupId>
+-                        <artifactId>groovy-maven-plugin</artifactId>
+-                        <version>2.1.1</version>
+-                        <executions>
+-                            <execution>
+-                                <phase>prepare-package</phase>
+-                                <goals>
+-                                    <goal>execute</goal>
+-                                </goals>
+-                                <configuration>
+-                                    <properties>
+-                                        <!--
+-                                            Don't you DARE add slf4j here. If you do, the services in a
+-                                            constellation won't start up! So be mindful and DON'T add it.
+-                                        -->
+-                                        <slimArtifacts>
+-                                            io.github.java-native:jssc
+-                                        </slimArtifacts>
+-                                    </properties>
+-                                    <source>
+-                                        import java.nio.file.*
+-
+-                                        Path slimLibPath = Paths.get(project.build.directory + "/lib/");
+-                                        slimLibPath.toFile().mkdirs();
+-
+-                                        def slimArtifacts = properties.slimArtifacts.split("\\s+");
+-                                        println("Group:Artefacts to be SLIMmed: " + slimArtifacts)
+-                                        project.artifacts.each { af -&gt;
+-                                            def key = af.groupId + ":" + af.artifactId
+-                                            printf("SLIMmed? %-70s", key)
+-                                            if (slimArtifacts.contains(key)) {
+-                                                println(" --&gt; yes (set scope to 'provided' and copy JAR to target/lib/)")
+-                                                af.scope = "provided"
+-                                                Path copyFrom = af.file.toPath();
+-                                                Path copyTo = slimLibPath.resolve(af.file.name);
+-                                                //println(copyFrom.toString() + " --&gt; " + copyTo.toString())
+-                                                Files.copy(copyFrom, copyTo, StandardCopyOption.REPLACE_EXISTING);
+-                                            } else {
+-                                                println(" --&gt; no")
+-                                            }
+-                                        }
+-                                    </source>
+-                                </configuration>
+-                            </execution>
+-                        </executions>
+-                    </plugin>
+                 </plugins>
+             </build>
+         </profile>
 
 

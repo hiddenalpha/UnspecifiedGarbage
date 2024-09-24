@@ -123,8 +123,18 @@ verify:
 }
 
 
-static void HttpReq_pushIoTask( void(*task)(void*arg), void*arg, void*app_ ){
-    App*const app = assert_is_App(app_);
+#define Cls_mAGIC (signed)0x0E2C0000
+#define Cls struct { \
+    int mAGIC; \
+    App *app; \
+    void (*onDone)(char const*restrict,void*); \
+    void *onDoneArg; \
+}
+#define assert_is_Cls(p) assert(p && ((Cls*)p)->mAGIC == Cls_mAGIC)
+
+static void HttpReq_pushIoTask( void(*task)(void*arg), void*arg, void*cls_ ){
+    Cls*const cls = cls_; assert_is_Cls(cls_);
+    App*const app = assert_is_App(cls->app);
     (*app->env)->enqueBlocking(app->env, task, arg);
 }
 
@@ -137,11 +147,17 @@ static void HttpReq_onError( int retval, void*mentorCls ){
 static void HttpReq_onRspHdr(
     const char*proto, int proto_len, int rspCode, const char*phrase, int phrase_len,
     const struct Garbage_HttpMsg_Hdr*hdrs, int hdrs_cnt,
-    struct Garbage_HttpClientReq**req, void*app_
+    struct Garbage_HttpClientReq**req, void*cls_
 ){
-    App*const app = assert_is_App(app_);
+    Cls*const cls = cls_; assert_is_Cls(cls_);
+    App*const app = assert_is_App(cls->app);
     app->httpRspCode = rspCode;
-    if( rspCode != 200 ){
+    if( rspCode == 200 ){
+        /*no debug output needed*/
+    }else if( rspCode == 401 || rspCode == 404 ){
+        /*short output is enough*/
+        LOGDBG("%.*s %d %.*s\n", proto_len, proto, rspCode, phrase_len, phrase);
+    }else{ /*unexpected, Log more*/
         LOGDBG("%.*s %d %.*s\n", proto_len, proto, rspCode, phrase_len, phrase);
         for( int i = 0 ; i < hdrs_cnt ; ++i ){
             LOGDBG("%.*s: %.*s\n", hdrs[i].key_len, hdrs[i].key, hdrs[i].val_len, hdrs[i].val);
@@ -152,10 +168,11 @@ static void HttpReq_onRspHdr(
 
 
 static void HttpReq_onRspBody(
-    const char*buf, int buf_len, struct Garbage_HttpClientReq**req, void*app_
+    const char*buf, int buf_len, struct Garbage_HttpClientReq**req, void*cls_
 ){
-    App*const app = assert_is_App(app_);
-    if( app->httpRspCode != 200 ){
+    Cls*const cls = cls_; assert_is_Cls(cls_);
+    App*const app = assert_is_App(cls->app);
+    if( app->httpRspCode != 200 && app->httpRspCode != 404 ){
         LOGDBG("%.*s", buf_len, buf);
         return;
     }
@@ -173,30 +190,55 @@ static void HttpReq_onRspBody(
 }
 
 
-static void HttpReq_onRspDone( struct Garbage_HttpClientReq**req, void*app_ ){
-    App*const app = assert_is_App(app_);
+static void HttpReq_onRspDone( struct Garbage_HttpClientReq**req, void*cls_ ){
+    Cls*const cls = cls_; assert_is_Cls(cls_);
+    App*const app = assert_is_App(cls->app);
     if( app->flg & FLG_printRspBodyAnyway ){
         LOGDBG("\n");/*fix broken server which deliver no LF at TEXT body end*/
     }
+    if( app->httpRspCode == 404 ){
+        cls->onDone("ENOENT", cls->onDoneArg);
+        return;
+    }
+    if( app->httpRspCode != 200 ){
+        cls->onDone("ERROR", cls->onDoneArg);
+        return;
+    }
     assert(app->rspBody != NULL);
+    int const isRunning = strstr(app->rspBody, "\"state\":\"running\"") != NULL;
     int const isFail = strstr(app->rspBody, "\"state\":\"failure\"") != NULL;
-    if( isFail ){
-        LOGDBG("[DEBUG] Build has FAILED\n");
+    if( isRunning ){
+        cls->onDone("running", cls->onDoneArg);
+    }else if( isFail ){
+        cls->onDone("failure", cls->onDoneArg);
     }else{
-        LOGDBG("[DEBUG] Build has SUCCEEDED (likely)\n");
+        cls->onDone("OK", cls->onDoneArg);
     }
 }
 
 
-static void TlsClientMentor_pushIoTask( void(*task)(void*arg), void*arg, void*app_ ){ assert(!"TODO_4WgAAI8UAACIdQAA"); }
-static void TlsClientMentor_onError( int eno, void*app_ ){ assert(!"TODO_gxsAAMspAABkYgAA"); }
+static void TlsClientMentor_pushIoTask( void(*task)(void*arg), void*arg, void*cls_ ){ assert(!"TODO_4WgAAI8UAACIdQAA"); }
+static void TlsClientMentor_onError( int eno, void*cls_ ){ assert(!"TODO_gxsAAMspAABkYgAA"); }
 
 
-static void run( void*app_ ){
+/*
+ * @param onDone
+ *     Called with one of: "running", "failure", "OK".
+ */
+static void TODO_refactorMeToAProperApi(
+    App*app_, void(*onDone)(char const*restrict state,void*arg), void*arg
+){
     REGISTER int err;
     App*const app = assert_is_App(app_);
     static char const*const peerHostname = "jenkinspaisa-temp.tools.pnet.ch";
     assert(app->tlsClient == NULL);
+    assert(onDone != NULL);
+    Cls *cls = malloc(1*sizeof*cls);
+    assert(cls != NULL);
+    cls->mAGIC = Cls_mAGIC;
+    cls->app = app;
+    cls->onDone = onDone;
+    cls->onDoneArg = arg;
     static struct Garbage_TlsClient_Mentor tlsMentor = {
         .pushIoTask = TlsClientMentor_pushIoTask,
         .onError = TlsClientMentor_onError,
@@ -229,7 +271,7 @@ static void run( void*app_ ){
     err = snprintf(it, SPACE, "/lastBuild/pipeline-graph/tree"); it += err; assert(err == 30);
     #undef SPACE
     //LOGDBG("[DEBUG] GET %s\n", url);
-    req = (*app->env)->newHttpClientReq(app->env, &httpMentor, app,
+    req = (*app->env)->newHttpClientReq(app->env, &httpMentor, cls,
         &(struct Garbage_HttpClientReq_Opts){
             //.mallocator = NULL,
             .socketMgr = (*app->tlsClient)->asSocketMgr(app->tlsClient),
@@ -244,6 +286,22 @@ static void run( void*app_ ){
             }}),
         });
     (*req)->resume(req);
+}
+
+#undef Cls_mAGIC
+#undef Cls
+#undef assert_is_Cls
+
+
+static void onBuildStatusAvailable( char const*buildStatus, void*app_ ){
+    (void)app_; //App*const app = assert_is_App(app_);
+    printf("%s\n", buildStatus);
+}
+
+
+static void run( void*app_ ){
+    App*const app = assert_is_App(app_);
+    TODO_refactorMeToAProperApi(app, onBuildStatusAvailable, app);
 }
 
 
