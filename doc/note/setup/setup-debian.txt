@@ -124,7 +124,7 @@ Populate "/etc/environment" as described by "./etc-environment".
        `# Low level ` \
        lm-sensors fancontrol exfat-fuse exfatprogs \
        `# Others` \
-       systemd-sysv bc rsync qrencode libxml2-utils \
+       systemd-sysv bc rsync qrencode libxml2-utils adb \
        `# Nvidia graphics (open)` \
        mesa-utils clinfo mesa-opencl-icd \
        `# Nvidia graphics (non-free, DoesNotWorkYet)` \
