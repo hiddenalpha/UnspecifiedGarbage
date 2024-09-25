@@ -268,10 +268,10 @@ Related:
 
             /****** TryBuild early, because other depend on them ******/
             //"platform",
-            //"slarti", "captain", "megacamel", "guide",
+            //"captain", "guide", "megacamel", "slarti",
             /****** "regular" builds ******/
             //"allitnil", "babelfish", "barman", "benjy", "bentstick", "blart", "caveman", "colin",
-            //"deep", "drdan", "heimdall", "hooli", "jeltz", "kwaltz", "loon", "magician",
+            //"drdan", "heimdall", "hooli", "jeltz", "kwaltz", "loon", "magician",
             //"minetti", "mown", "nowwhat", "pobble", "poodoo", "prosser", "streetmentioner", "thor",
             //"towel", "vannharl", "vogon", "vroom", "zaphake", "zem",
             /****** Depends on 'slarti', 'captain' ******/
@@ -1216,10 +1216,10 @@ Related:
             commitMsg: null,
             versionPrefix: "0.0.0-U0RdSV", /* const part of generated seq above (MUST have for find version later) */
             /* generate: {date +%N|md5sum -b -|base64|tr -d '/+='|head -c6 && echo} */
-            platformSnapVersion: "pikAAO-SNAPSHOT",
-            serviceSnapVersion: "pikAAO-SNAPSHOT",
+            platformSnapVersion: "OGJjMG-SNAPSHOT",
+            serviceSnapVersion: "OGJjMG-SNAPSHOT",
         };
-        app.branchName = app.issueKey +"-RemoveSlimPackaging-n2";
+        app.branchName = app.issueKey +"-RemoveSlimPackaging-n4";
         app.commitMsg = "["+ app.issueKey +"] Remove slim packaging";
         if( parseArgs(process.argv, app) !== 0 ){ process.exit(1); }
         if( app.isHelp ){ printHelp(); return; }

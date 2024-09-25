@@ -21,8 +21,8 @@ Evtl für diese services den jssc als "provided" angeben.
 
   && "${PATH_TO_THE_ONLY_REAL_BROWSER:?}" \
     `# waiting for jenkins build ` \
-    `# waiting for feedback from rudins ` \
     https://jenkinspaisa-temp.tools.pnet.ch/job/colin/job/SDCISA-15648-RemoveSlimPackaging-n2/ \
+    `# waiting for feedback from rudins ` \
     `# LastSuccessfull build at 20240919 ` \
     https://jenkinspaisa-temp.tools.pnet.ch/job/slarti/job/SDCISA-15648-RemoveSlimPackaging-n2/ \
     https://jenkinspaisa-temp.tools.pnet.ch/job/captain/job/SDCISA-15648-RemoveSlimPackaging-n2/ \
@@ -65,9 +65,9 @@ Evtl für diese services den jssc als "provided" angeben.
     https://jenkinspaisa-temp.tools.pnet.ch/job/platform/job/SDCISA-15648-RemoveSlimPackaging-n2/ \
 
 
-  && for S in rob thor pobble colin nowwhat zem slarti captain megacamel guide allitnil babelfish barman benjy bentstick blart caveman deep drdan hooli jeltz kwaltz loon magician minetti mown poodoo prosser streetmentioner towel vannharl vogon vroom zaphake heimdall platform trillian deep;
+  && for S in allitnil babelfish barman benjy bentstick blart captain caveman colin deep drdan guide heimdall hooli jeltz kwaltz loon magician megacamel minetti mown nowwhat platform pobble poodoo prosser rob slarti streetmentioner thor towel trillian vannharl vogon vroom zaphake zem;
      do \
-         printf '%-20s%s\n' "$S" "$(/c/work/tmp/bin/JenkinsReBuild.exe --cookie "${COOKIE?}" --branch SDCISA-15648-RemoveSlimPackaging-n2 --service "$S" 2>&1)"; \
+         printf '%-17s%s\n' "$S" "$(/c/work/tmp/bin/JenkinsReBuild.exe --cookie "${COOKIE?}" --branch "${BRANCH:?}" --service "$S" 2>&1)"; \
      done \
 
 

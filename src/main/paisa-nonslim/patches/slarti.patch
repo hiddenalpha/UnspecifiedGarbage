@@ -14,64 +14,38 @@
 @@ -51,7 +51,7 @@
              vehicleSel: [
                  services: [
-                     eagle:    [version: '02.01.26.01-PR-379-SNAPSHOT'],
--                    platform: [version: '03.06.40.01-PR-388-SNAPSHOT'],
+                     eagle:    [version: '02.01.27.01-PR-379-SNAPSHOT'],
+-                    platform: [version: '03.06.46.01-PR-388-SNAPSHOT'],
 +                    platform: [version: '${j21.platform.version}'],
                      storage:  [version: '00.24.00.00'],
                      slarti:   [version: '%currentBranch%'],
-                     nowwhat:  [version: '04.02.17.01-PR-123-SNAPSHOT'],
+                     nowwhat:  [version: '04.02.19.01-PR-123-SNAPSHOT'],
 @@ -62,7 +62,7 @@
              vehicleCucumber_1: [
                  services: [
-                     eagle:    [version: '02.01.26.01-PR-379-SNAPSHOT'],
--                    platform: [version: '03.06.40.01-PR-388-SNAPSHOT'],
+                     eagle:    [version: '02.01.27.01-PR-379-SNAPSHOT'],
+-                    platform: [version: '03.06.46.01-PR-388-SNAPSHOT'],
 +                    platform: [version: '${j21.platform.version}'],
                      storage:  [version: '00.24.00.00'],
                      slarti:   [version: '%currentBranch%'],
-                     nowwhat:  [version: '04.02.17.01-PR-123-SNAPSHOT'],
+                     nowwhat:  [version: '04.02.19.01-PR-123-SNAPSHOT'],
 @@ -73,7 +73,7 @@
              vehicleCucumber_take_out_service: [
                  services: [
-                     eagle:    [version: '02.01.26.01-PR-379-SNAPSHOT'],
--                    platform: [version: '03.06.40.01-PR-388-SNAPSHOT'],
+                     eagle:    [version: '02.01.27.01-PR-379-SNAPSHOT'],
+-                    platform: [version: '03.06.46.01-PR-388-SNAPSHOT'],
 +                    platform: [version: '${j21.platform.version}'],
                      storage:  [version: '00.24.00.00'],
                      slarti:   [version: '%currentBranch%'],
-                     nowwhat:  [version: '04.02.17.01-PR-123-SNAPSHOT'],
+                     nowwhat:  [version: '04.02.19.01-PR-123-SNAPSHOT'],
 @@ -84,7 +84,7 @@
              st_rest: [
                  services: [
-                     eagle:    [version: '02.01.26.01-PR-379-SNAPSHOT'],
--                    platform: [version: '03.06.40.01-PR-388-SNAPSHOT'],
+                     eagle:    [version: '02.01.27.01-PR-379-SNAPSHOT'],
+-                    platform: [version: '03.06.46.01-PR-388-SNAPSHOT'],
 +                    platform: [version: '${j21.platform.version}'],
                      storage:  [version: '00.24.00.00'],
                      slarti:   [version: '%currentBranch%'],
-                     nowwhat:  [version: '04.02.17.01-PR-123-SNAPSHOT'],
-
-
---- a/pom.xml
-+++ b/pom.xml
-@@ -314,6 +314,21 @@
-                 <artifactId>moment-timezone</artifactId>
-                 <version>${webjars.moment-timezone.version}</version>
-             </dependency>
-+            <dependency>
-+                <groupId>jakarta.servlet</groupId>
-+                <artifactId>jakarta.servlet-api</artifactId>
-+                <version>6.1.0</version> <!-- TODO move this version somewhere else -->
-+            </dependency>
-+            <dependency>
-+                <groupId>org.eclipse.jetty.ee10</groupId>
-+                <artifactId>jetty-ee10-webapp</artifactId>
-+                <version>12.0.12</version> <!-- TODO move this version somewhere else -->
-+            </dependency>
-+            <dependency>
-+                <groupId>org.awaitility</groupId>
-+                <artifactId>awaitility</artifactId>
-+                <version>4.2.2</version> <!-- TODO move this version somewhere else -->
-+            </dependency>
-         </dependencies>
-     </dependencyManagement>
-     <build>
+                     nowwhat:  [version: '04.02.19.01-PR-123-SNAPSHOT'],
 
 

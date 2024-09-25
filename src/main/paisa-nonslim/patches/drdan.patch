@@ -3,21 +3,22 @@
 
 --- a/Jenkinsfile
 +++ b/Jenkinsfile
-@@ -10,13 +10,13 @@
+@@ -10,6 +10,6 @@
      jslPipeline
          .checkout()
          .setBranchVersion()
--        .buildMaven()
-+        .buildMaven()
+-        .buildMaven([spotless: false])
++        .buildMaven([spotless: false])
          .withInstances([
              instances: [
+@@ -16,7 +16,7 @@
                  testInstance: [
                      services: [
-                         eagle:    [version: '02.01.26.01-PR-379-SNAPSHOT'],
--                        platform: [version: '03.06.40.01-PR-388-SNAPSHOT'],
+                         eagle:    [version: '02.01.27.01-PR-379-SNAPSHOT'],
+-                        platform: [version: '03.06.46.01-PR-388-SNAPSHOT'],
 +                        platform: [version: '0.0.0-SDCISA-15648-ed1d4665-SNAPSHOT'],
                          storage:  [version: '00.24.00.00'],
                          drdan:    [version: '%currentBranch%'],
-                         guide:    [version: '02.14.13.01-PR-122-SNAPSHOT'],
+                         guide:    [version: '02.14.14.01-PR-122-SNAPSHOT'],
 
 

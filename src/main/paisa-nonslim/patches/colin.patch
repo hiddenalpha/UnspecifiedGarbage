@@ -1,0 +1,13 @@
+
+--- a/Jenkinsfile
++++ b/Jenkinsfile
+@@ -37,7 +37,7 @@ serviceBuildPipeline([
+                                             guide:    [version: '02.14.14.01-PR-122-SNAPSHOT'],
+                                             vogon:    [version: '03.03.11.01-PR-72-SNAPSHOT'],
+                                             zem:      [version: '04.00.15.01-PR-87-SNAPSHOT'],
+-                                            slarti:   [version: '03.15.18.01-PR-1019-SNAPSHOT']
++                                            slarti:   [version: '${j21.slarti.mangledVersion}']
+                                     ],
+                                     houstonInstance: 'backendInstance'
+                             ]
+

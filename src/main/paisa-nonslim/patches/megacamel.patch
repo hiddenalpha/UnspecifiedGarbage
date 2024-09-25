@@ -8,8 +8,8 @@
      jslPipeline
              .checkout()
              .setBranchVersion()
--            .buildMaven()
-+            .buildMaven()
+-            .buildMaven([spotless: false])
++            .buildMaven([spotless: false])
              .buildDocker()
              .finalizeAndUpdateVersion()
              .saveArtifacts()

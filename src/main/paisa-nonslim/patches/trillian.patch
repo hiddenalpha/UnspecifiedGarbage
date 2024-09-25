@@ -18,14 +18,12 @@
 @@ -20,7 +20,7 @@
              backend: [
                  services: [
-                     houston:  [version: '02.01.68.01-PR-519-SNAPSHOT'],
--                    platform: [version: '03.06.40.01-PR-388-SNAPSHOT'],
+                     houston:  [version: '02.01.77.01-PR-519-SNAPSHOT'],
+-                    platform: [version: '03.06.46.01-PR-388-SNAPSHOT'],
 +                    platform: [version: '${j21.platform.version}'],
                      storage:  [version: '00.24.00.00'],
--                    astra:    [version: '04.00.11.01-PR-168-SNAPSHOT']
-+                    astra:    [version: '04.00.13.00']
+                     astra:    [version: '04.00.15.01-PR-168-SNAPSHOT']
                  ]
-             ],
 
 
 --- a/Jenkinsfile
@@ -33,12 +31,12 @@
 @@ -28,12 +28,12 @@
              vehicle1: [
                  services: [
-                     eagle:     [version: '02.01.26.01-PR-379-SNAPSHOT'],
--                    platform:  [version: '03.06.40.01-PR-388-SNAPSHOT'],
+                     eagle:     [version: '02.01.27.01-PR-379-SNAPSHOT'],
+-                    platform:  [version: '03.06.46.01-PR-388-SNAPSHOT'],
 +                    platform:  [version: '${j21.platform.version}'],
                      storage:   [version: '00.24.00.00'],
                      trillian:  [version: '%currentBranch%'],
--                    slarti:    [version: '03.15.12.01-PR-1019-SNAPSHOT'],
+-                    slarti:    [version: '03.15.18.01-PR-1019-SNAPSHOT'],
 +                    slarti:    [version: '${j21.slarti.mangledVersion}'],
                      zaphake:   [version: '03.00.22.01-PR-60-SNAPSHOT'],
 -                    megacamel: [version: '03.00.15.01-PR-46-SNAPSHOT']
@@ -53,12 +51,12 @@
 @@ -40,12 +40,12 @@
              vehicle2: [
                  services: [
-                     eagle:     [version: '02.01.26.01-PR-379-SNAPSHOT'],
--                    platform:  [version: '03.06.40.01-PR-388-SNAPSHOT'],
+                     eagle:     [version: '02.01.27.01-PR-379-SNAPSHOT'],
+-                    platform:  [version: '03.06.46.01-PR-388-SNAPSHOT'],
 +                    platform:  [version: '${j21.platform.version}'],
                      storage:   [version: '00.24.00.00'],
                      trillian:  [version: '%currentBranch%'],
--                    slarti:    [version: '03.15.12.01-PR-1019-SNAPSHOT'],
+-                    slarti:    [version: '03.15.18.01-PR-1019-SNAPSHOT'],
 +                    slarti:    [version: '${j21.slarti.mangledVersion}'],
                      zaphake:   [version: '03.00.22.01-PR-60-SNAPSHOT'],
 -                    megacamel: [version: '03.00.15.01-PR-46-SNAPSHOT']
@@ -73,12 +71,12 @@
 @@ -52,12 +52,12 @@
              vehicle3: [
                  services: [
-                     eagle:     [version: '02.01.26.01-PR-379-SNAPSHOT'],
--                    platform:  [version: '03.06.40.01-PR-388-SNAPSHOT'],
+                     eagle:     [version: '02.01.27.01-PR-379-SNAPSHOT'],
+-                    platform:  [version: '03.06.46.01-PR-388-SNAPSHOT'],
 +                    platform:  [version: '${j21.platform.version}'],
                      storage:   [version: '00.24.00.00'],
                      trillian:  [version: '%currentBranch%'],
--                    slarti:    [version: '03.15.12.01-PR-1019-SNAPSHOT'],
+-                    slarti:    [version: '03.15.18.01-PR-1019-SNAPSHOT'],
 +                    slarti:    [version: '${j21.slarti.mangledVersion}'],
                      zaphake:   [version: '03.00.22.01-PR-60-SNAPSHOT'],
 -                    megacamel: [version: '03.00.15.01-PR-46-SNAPSHOT']
