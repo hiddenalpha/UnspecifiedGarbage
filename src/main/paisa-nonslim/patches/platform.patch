@@ -16,120 +16,48 @@
          <groupId>ch.post.it.paisa</groupId>
 
 
---- a/poms/service/paisa-service-superpom/pom.xml
-+++ b/poms/service/paisa-service-superpom/pom.xml
-@@ -271,6 +271,54 @@
-                 <groupId>org.jfrog.buildinfo</groupId>
-                 <artifactId>artifactory-maven-plugin</artifactId>
-             </plugin>
-+
-+            <plugin>
-+                <groupId>org.codehaus.gmaven</groupId>
-+                <artifactId>groovy-maven-plugin</artifactId>
-+                <version>2.1.1</version>
-+                <executions>
-+                    <execution>
-+                        <phase>prepare-package</phase>
-+                        <goals>
-+                            <goal>execute</goal>
-+                        </goals>
-+                        <configuration>
-+                            <properties>
-+                                <!--
-+                                    Don't you DARE add slf4j here. If you do, the services in a
-+                                    constellation won't start up! So be mindful and DON'T add it.
-+                                -->
-+                                <slimArtifacts>
-+                                    io.github.java-native:jssc
-+                                </slimArtifacts>
-+                            </properties>
-+                            <source>
-+                                import java.nio.file.*
-+
-+                                Path slimLibPath = Paths.get(project.build.directory + "/lib/");
-+                                slimLibPath.toFile().mkdirs();
-+
-+                                def slimArtifacts = properties.slimArtifacts.split("\\s+");
-+                                println("Group:Artefacts to be SLIMmed: " + slimArtifacts)
-+                                project.artifacts.each { af -&gt;
-+                                    def key = af.groupId + ":" + af.artifactId
-+                                    printf("SLIMmed? %-70s", key)
-+                                    if (slimArtifacts.contains(key)) {
-+                                        println(" --&gt; yes (set scope to 'provided' and copy JAR to target/lib/)")
-+                                        af.scope = "provided"
-+                                        Path copyFrom = af.file.toPath();
-+                                        Path copyTo = slimLibPath.resolve(af.file.name);
-+                                        //println(copyFrom.toString() + " --&gt; " + copyTo.toString())
-+                                        Files.copy(copyFrom, copyTo, StandardCopyOption.REPLACE_EXISTING);
-+                                    } else {
-+                                        println(" --&gt; no")
-+                                    }
-+                                }
-+                            </source>
-+                        </configuration>
-+                    </execution>
-+                </executions>
-+            </plugin>
-         </plugins>
+  Mit mario debugging herausgefunden
+  (index 5f8d03973..16e9554eb 100644)
+
+
+--- a/alice/alice-docker/alice-docker-service-base/Dockerfile
++++ b/alice/alice-docker/alice-docker-service-base/Dockerfile
+@@ -17,7 +17,7 @@ COPY install/jetty/             ${JETTY_HOME}/
+ # copy slimmed libraries, generated in alice-docker-service-base pom
+ COPY target/jetty/              ${JETTY_HOME}/
  
-         <pluginManagement>
+-RUN chmod 755 /usr/lib64/libmscan_api.so /usr/lib64/libmdis_api.so
++RUN chmod 755 /usr/lib/libmscan_api.so /usr/lib/libmdis_api.so
+ RUN sed -i -e "s|platform_version|${PROJECT_VERSION}|g"  ${JETTY_HOME}/modules/AllowNullPathInfo.mod
+ WORKDIR ${JETTY_HOME}
+ 
+@@ -30,8 +30,13 @@ RUN apt-get update                                          && \
+     apt-get clean all                                       && \
+     # TODO: may be unused
+     chmod +x ./bin/jetty.sh                                 && \
+-    chmod +x ./bin/start-jetty.sh                                 && \
++    chmod +x ./bin/start-jetty.sh                           && \
+-    chmod u+s /usr/bin/tcpdump
++    chmod u+s /usr/bin/tcpdump                              && \
++    # needed for tty devices (add to base-jetty)            && \
++    groupmod -g 18 dialout                                  && \
++    groupmod -g 63 audio                                    && \
++    # TODO remove as soon as it is fixed in base-jetty      && \
++    usermod -a -G 5,7,18,63,jetty,2001,2002 jetty
+ 
+ # switch back to non-root
+ USER jetty
 
 
---- a/poms/service/paisa-service-superpom/pom.xml
-+++ b/poms/service/paisa-service-superpom/pom.xml
-@@ -882,53 +930,6 @@
-             <id>slim</id>
-             <build>
-                 <plugins>
--                    <plugin>
--                        <groupId>org.codehaus.gmaven</groupId>
--                        <artifactId>groovy-maven-plugin</artifactId>
--                        <version>2.1.1</version>
--                        <executions>
--                            <execution>
--                                <phase>prepare-package</phase>
--                                <goals>
--                                    <goal>execute</goal>
--                                </goals>
--                                <configuration>
--                                    <properties>
--                                        <!--
--                                            Don't you DARE add slf4j here. If you do, the services in a
--                                            constellation won't start up! So be mindful and DON'T add it.
--                                        -->
--                                        <slimArtifacts>
--                                            io.github.java-native:jssc
--                                        </slimArtifacts>
--                                    </properties>
--                                    <source>
--                                        import java.nio.file.*
--
--                                        Path slimLibPath = Paths.get(project.build.directory + "/lib/");
--                                        slimLibPath.toFile().mkdirs();
--
--                                        def slimArtifacts = properties.slimArtifacts.split("\\s+");
--                                        println("Group:Artefacts to be SLIMmed: " + slimArtifacts)
--                                        project.artifacts.each { af -&gt;
--                                            def key = af.groupId + ":" + af.artifactId
--                                            printf("SLIMmed? %-70s", key)
--                                            if (slimArtifacts.contains(key)) {
--                                                println(" --&gt; yes (set scope to 'provided' and copy JAR to target/lib/)")
--                                                af.scope = "provided"
--                                                Path copyFrom = af.file.toPath();
--                                                Path copyTo = slimLibPath.resolve(af.file.name);
--                                                //println(copyFrom.toString() + " --&gt; " + copyTo.toString())
--                                                Files.copy(copyFrom, copyTo, StandardCopyOption.REPLACE_EXISTING);
--                                            } else {
--                                                println(" --&gt; no")
--                                            }
--                                        }
--                                    </source>
--                                </configuration>
--                            </execution>
--                        </executions>
--                    </plugin>
-                 </plugins>
-             </build>
-         </profile>
+diff --git a/alice/alice-docker/alice-docker-service-base/install/men_device_driver/usr/lib64/libmdis_api.so b/alice/alice-docker/alice-docker-service-base/install/men_device_driver/usr/lib/libmdis_api.so
+similarity index 100%
+rename from alice/alice-docker/alice-docker-service-base/install/men_device_driver/usr/lib64/libmdis_api.so
+rename to alice/alice-docker/alice-docker-service-base/install/men_device_driver/usr/lib/libmdis_api.so
+
+
+diff --git a/alice/alice-docker/alice-docker-service-base/install/men_device_driver/usr/lib64/libmscan_api.so b/alice/alice-docker/alice-docker-service-base/install/men_device_driver/usr/lib/libmscan_api.so
+similarity index 100%
+rename from alice/alice-docker/alice-docker-service-base/install/men_device_driver/usr/lib64/libmscan_api.so
+rename to alice/alice-docker/alice-docker-service-base/install/men_device_driver/usr/lib/libmscan_api.so
 
 
