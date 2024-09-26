@@ -25,3 +25,18 @@ csv Example (no headrow):
 
   sqlite3 foo.db -bail -cmd '.mode csv' -cmd '.separator ;' -cmd '.import foo.csv FooTable'
 
+
+## Drop Column
+
+  ALTER TABLE table DROP COLUMN column;
+
+
+## Add Column
+
+  ALTER TABLE table ADD COLUMN column NOT NULL DEFAULT 'gugus';
+
+
+## Refs
+
+[drop column TODO vote](https://stackoverflow.com/a/66399224/4415884)
+

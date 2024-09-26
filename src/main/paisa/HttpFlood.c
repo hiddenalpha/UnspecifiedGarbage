@@ -1,4 +1,6 @@
 /*
+ 
+  TODO migrate to configure/Makefile
 
   && CC=gcc \
   && LD=gcc \

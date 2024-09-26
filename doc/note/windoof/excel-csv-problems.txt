@@ -1,0 +1,14 @@
+
+## Generate a CSV so excel won't corrupt data on opening
+
+Make a formula of each cell. So Wrap value in double quotes and
+prepend by equal sign. This way, it will be TEXT for excel.
+
+Another option is to prepend a tab for each value.
+
+
+## Refs
+
+[excel csv gen (TODO vote)](https://superuser.com/a/527894/1123359)
+
+
