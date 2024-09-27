@@ -1,0 +1,48 @@
+
+  [SDCISA-15648] Just look what happens when we remove this
+
+  No idea why this lib got loaded. Comments do NOT tell anything useful. Also
+  the relevant jira issue (ISAVF-2413) is of no use, as it is no longer available.
+
+
+--- a/allitnil-domain/src/main/java/ch/post/it/paisa/allitnil/domain/printer/extendo/ExtendoNativeDriverLinux.java
++++ b/allitnil-domain/src/main/java/ch/post/it/paisa/allitnil/domain/printer/extendo/ExtendoNativeDriverLinux.java
+@@ -18,7 +18,6 @@ public class ExtendoNativeDriverLinux extends ExtendoNativeDriverAdapter {
+ 
+   private static final Logger LOGGER = LoggerFactory.getLogger(ExtendoNativeDriverLinux.class);
+ 
+-  public static final String LIB_PATH_LIBRT = "/native-64/librt.so.1";
+   public static final String LIB_PATH_LIBEXOTB = "/native-64/libExoTb.so.1.0";
+   public static final String LIB_PATH_LIBEXOAPI = "/native-64/libExoApi.so.1.0";
+ 
+@@ -27,15 +26,6 @@ public class ExtendoNativeDriverLinux extends ExtendoNativeDriverAdapter {
+   private String printerPath;
+   private int printerHandle = 0;
+ 
+-  /**
+-   * Library dependency deklarieren. Veranlasst das laden von libRt unter Linux.
+-   *
+-   * @see <a
+-   *     href="http://refspecs.linuxbase.org/LSB_3.1.0/LSB-Core-generic/LSB-Core-generic/librt.html">libRt
+-   *     - POSIX.1b Realtime Extensions library</a>
+-   */
+-  private interface LibRt extends Library {}
+-
+   /**
+    * Library dependency deklarieren. Veranlasst das laden von libRt unter Linux.
+    *
+@@ -47,7 +37,6 @@ public class ExtendoNativeDriverLinux extends ExtendoNativeDriverAdapter {
+ 
+   static {
+     try {
+-      Native.load(LIB_PATH_LIBRT, LibRt.class);
+       Native.load(LIB_PATH_LIBEXOTB, LibExoTb.class);
+       driver = Native.load(LIB_PATH_LIBEXOAPI, ExtendoNativeLibraryLinux.class);
+     } catch (Exception e) {
+
+
+  TODO rm allitnil-domain/src/main/resources/native-32/librt.so.1
+
+  TODO rm allitnil-domain/src/main/resources/native-64/librt.so.1
+
+

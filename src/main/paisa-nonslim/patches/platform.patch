@@ -17,8 +17,6 @@
 
 
   Mit mario debugging herausgefunden
-  (index 5f8d03973..16e9554eb 100644)
-
 
 --- a/alice/alice-docker/alice-docker-service-base/Dockerfile
 +++ b/alice/alice-docker/alice-docker-service-base/Dockerfile
@@ -31,18 +29,23 @@
  RUN sed -i -e "s|platform_version|${PROJECT_VERSION}|g"  ${JETTY_HOME}/modules/AllowNullPathInfo.mod
  WORKDIR ${JETTY_HOME}
  
-@@ -30,8 +30,13 @@ RUN apt-get update                                          && \
+@@ -26,12 +26,18 @@
+         pulseaudio pulseaudio-utils                         \
+         libncurses5                                         \
+         i2c-tools sudo vim gzip procps psmisc tar socat     \
++        libusb-1.0-0 `# used by allitnil/caveman`           \
+         tcpdump lsof telnet net-tools                       && \
      apt-get clean all                                       && \
      # TODO: may be unused
      chmod +x ./bin/jetty.sh                                 && \
 -    chmod +x ./bin/start-jetty.sh                                 && \
-+    chmod +x ./bin/start-jetty.sh                           && \
 -    chmod u+s /usr/bin/tcpdump
++    chmod +x ./bin/start-jetty.sh                           && \
 +    chmod u+s /usr/bin/tcpdump                              && \
-+    # needed for tty devices (add to base-jetty)            && \
++    # needed for tty devices (add to base-jetty)
 +    groupmod -g 18 dialout                                  && \
 +    groupmod -g 63 audio                                    && \
-+    # TODO remove as soon as it is fixed in base-jetty      && \
++    # remove as soon as it is fixed in base-jetty
 +    usermod -a -G 5,7,18,63,jetty,2001,2002 jetty
  
  # switch back to non-root
