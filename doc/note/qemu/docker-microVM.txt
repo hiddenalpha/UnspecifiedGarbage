@@ -113,6 +113,7 @@ qemu-system-x86_64 \
 KERNEL="${WORKDIR:?}/linux-*/arch/x86_64/boot/bzImage"
 HOST_SHARE_DIR="/path/to/host/share"
 QEMU_IMAGE="dockerimage.qcow2"
+# mount share from guest:  mount -t 9p myMountTag /mnt/share -otrans=virtio,version=9p2000.L,msize=52428800
 qemu-system-x86_64 \
     -M microvm,x-option-roms=off,isa-serial=off,rtc=off -no-acpi -no-reboot \
     -accel kvm -cpu host -nodefaults -no-user-config -nographic \
@@ -126,7 +127,7 @@ qemu-system-x86_64 \
     -netdev user,id=mynet0,hostfwd=tcp:127.0.0.1:8080-10.0.2.15:80 \
     -device virtio-net-device,netdev=mynet0 \
     -fsdev local,path=${HOST_SHARE_DIR:?},security_model=none,id=www,readonly=on \
-    -device virtio-9p-device,fsdev=www,mount_tag=www \
+    -device virtio-9p-device,fsdev=www,mount_tag=myMountTag \
     -device virtio-rng-device
     ;
 
