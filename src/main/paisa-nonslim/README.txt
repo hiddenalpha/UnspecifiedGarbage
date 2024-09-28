@@ -71,31 +71,6 @@ Evtl für diese services den jssc als "provided" angeben.
      done \
 
 
-## TaskQueue
-
-- await feedback for "pobble" from sandro due to "flanian artifact missing"
-- await feedback for "thor" from sandro (20240919)
-- await feedback for "rob" from sandro (20240919)
-
-
-## Installation
-
-{
-  "timestamp": "2024-08-06T16:54:42.042+02:00",
-  "hostname": "eddie00849",
-  "instanceName": "default",
-  "eaglePort": 7012,
-  "activations": {
-    "SDCISA-15648-1722955735781-legacy": "2024-07-01T00:04:00.000Z",
-    "SDCISA-15648-1722955733398-noslim": "2024-07-01T00:03:00.000Z",
-    "bundle-sw_4011-data_3997": "2024-07-29T11:49:53.152Z",
-    "bundle-sw_4012-data_3997": "2024-07-25T02:00:00.000Z",
-    "bundle-sw_4012-data_4005": "2024-07-16T23:00:00.000Z"
-  }
-}
-
-
-
 ## Measurements
 
   && while true; do ssh donner -oRemoteCommand='true \
@@ -107,6 +82,13 @@ Evtl für diese services den jssc als "provided" angeben.
          && sleep $((5 - $(date +%%s) %% 5)) || break \
        ;done' | tee -a donner-perf/donner-perf-$(date -u +%Y%m%d-%H%M%SZ).log \
      && sleep 5 || break; done \
+
+  && THELOG="donner-perf-20240927-131453Z.log" \
+  && cat "${THELOG:?}" \
+      | sed -E 's_^([0-9]+) +([0-9:]+) .+age: ([0-9.]+), ([0-9.]+), ([0-9.]+) +( Mem: .*).*$_\1;\2;\3;\4;\5\6_' \
+      | sed -E 's_^(.+) Mem: +([0-9]+) +([0-9]+) +([0-9]+) +([0-9]+) +([0-9]+) +([0-9]+).*$_\1;\2;\3;\4;\5;\6_' \
+      > "${THELOG:?}.csv" \
+
 
 Boot ab KassenTaster, login mit RFID, vorgeschlagene Fahrt anmelden, warten.
 
@@ -128,8 +110,10 @@ When+0200;version;LoginScreen[sec];FahrtGewaehlt[sec];
 2024-08-09T__:__;noslim;___;___;
 
 
+## Performance smoketest from remote at 27sep2024
 
-
+1313Z umschalten auf "new" (aka NoSlim) dann reboot mit messung.
+1338Z umschalten auf "alt" (aka "bundle-sw_4098-data_4110") dann reboot mit messung.
 
 
 
