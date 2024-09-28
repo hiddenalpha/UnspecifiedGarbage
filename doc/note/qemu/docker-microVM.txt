@@ -1,15 +1,13 @@
 
-#
-# Use qemu to host dockerimages.
-#
-# TODO: Write helpers to pull/convert docker image to qcow2
-# TODO: Impl host shared dirs. Should be possible using 9pfs (see link).
-#
-# for "virt-make-fs" install "guestfs-tools".
-#
-# Some Links:
-# - [Execute Docker Containers as QEMU MicroVMs](https://mergeboard.com/blog/2-qemu-microvm-docker/)
-#
+Use qemu to host dockerimages.
+==============================
+
+TODO: Write helpers to pull/convert docker image to qcow2
+TODO: Impl host shared dirs. Should be possible using 9pfs (see link).
+
+For "virt-make-fs" install "guestfs-tools".
+
+WARN: This is work-in-progress. It is NOT really usable yet.
 
 true \
   && LINUX_URL=https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.7.4.tar.xz \
@@ -75,18 +73,16 @@ true \
   && `# TODO fix zombie processes (aka add waitpid() SIGCHILD handling to init)` \
   && mkdir "${WORKDIR:?}/myinit" \
   && cd "${WORKDIR:?}/myinit" \
-  && base64 -d <<EOF | gunzip > "./myinit.c" &&
-H4sIAIsP+GYAA41Uy27bMBC88ysWKmrIgVvZh6BAHRcoCgM9pG4P6SkNAoZa2UQkUuXDiFv437Ok
-LEV+JDAP0nC0uzNckmLvpBKlzxGu0BilP66+sBfKulweU6V82Oe8kkQfxG1sVmmv3DFtHX+DZWLF
-DVwIrayDHAvuS3ePai2NVhUqd3sHM/jPgEby6+vN91nmrclKLXiZPUj1uTe13bwDDRUfASajWGjx
-+/p6xLZTxtZa5hB934sVisc0fm/MNMas9kbgaI9z3CzRjY5iC1kirc1h5TY15Xhl5VJhDqVWy0am
-KPnS9jOjg4ucO86Gu3VaZ7xwEDoEUhWafAZaFpAGLt3JwyB8HMJsBh8mMBhA3NEwnS9+zhc3bbkw
-aiNJO02+GeROkpn39g91A5pSw2kXGESqx1yaTmX86fJyCFcw7teLNUlPm15NykLhtNlAwakTedKr
-GwY+SZdOeuSWNU/Wt/gjtOk1i9FeCEjbfWltHva+120I3T1aQms/6p1wvOd2y8gl+YOKS5UGQLJi
-tNt3wuvbu7Z4/zglSiukRSRZbbQIYPceE2zVTifkuM5qZwMm2KDzsqq/Hn2cdui8RLuqAnZVXZyn
-Rg0Pb3qdn5AVNhNLo30dmA61uc0NQLfS1ileYZpUUhi9Ds6s/Ie6eGGGbTw+oSgpNNx0WkWU6mC8
-7ad+LTun7UGYU5GDc2DQeaNgMg3b/wwcaf4fPAUAAA==
-EOF
+  && base64 -d <<EOF_jXxQDgrLcOFqcSrh | gunzip > "./myinit.c" &&
+H4sIABBA+GYAA41UTY/TMBC951eMgqiSqGzawwqJbpEQFIG0tBzKCRDKOk5ibWIHj1PRRf3vjJ2PZtsK1Yf4+WXmzfOn90JIVjY
+phzuutVQ3xVvvSKFJxTlViofnXCMF0Sdxe4wr1UhzTqNJ/sN6FggGrEg0RExJNKAavZI7oZX8/hOW8NcDav7Xd9tPy7hBHZeKJW
+X8IOSb0RCH8QBayn0s9KdOaP3t/n7qHRZD6Z0SKTjzv1jB2WPgwpwh5ydCzabjcYpmehqT4XZf8ymUSubQSBS55KQqzccyxzba1
+Wmjid/UBr2wmxwa3TAD1hAImamFY0UWOCqwBWFif4SwXMKrOUwm4DbQDlfrzWq9hbCVsq3WQpos8N9rTjMkQy/xB00fSCdcDFFW
+vnpMhW71Z69vb0O4g9lYyalRJaVHapTCmVF6D1kiSp76I1Hb+B9hgvmIPHjHb+/ti13wi96cL/s3cAvvzPXL2y8odCt4Zrg36+Q
+v+Hvm7eAdPI/sQJUIGYBFic67zY4iwrtee3w+fKkkJ8t+XGvFLOj6GcG+2OWElO9ism0xwRZdl1X9bnjjhgO6LhGLymJT1dl11e
+h62p666xPiDGOWa9XUlhnQOBe5KRQamVQ88CvBtNpZYyieuMqOTNiFx9F282EDnyFvOCKYQiBgwcsSkGlRG9rJmk4hkaridtswi
+r12hzkrqYS9+DR553AE7UsQCynMjSPcazB6cbrq/TFakdjJKdLcNFrCfGEPzz+XOnXTUQUAAA==
+EOF_jXxQDgrLcOFqcSrh
 true \
   && CFLAGS="-Wall -Werror -pedantic -static" `# TODO maybe add "-Os -s"` \
   && gcc -o myinit myinit.c ${CFLAGS?}\
@@ -94,25 +90,47 @@ true \
   && echo _script_is_DONE_kx1n2kgNWRdpBYTP_ \
 
 
+## Example docker image transformation
+
+  && rm -rf "${WORKDIR:?}/dockerbuild" \
+  && mkdir "${WORKDIR:?}/dockerbuild" \
+  && cd "${WORKDIR:?}/dockerbuild" \
+  && cp "${WORKDIR:?}/myinit/myinit" init \
+  && base64 -d <<EOF_BSgBW2SBUEB7zcJv | gzip -d > "Dockerfile" &&
+H4sIANRD+GYAA21R226CQBR89ytO0sQXgwp4ow9NEMSqWMAbhfTBBVZZxQXZ9Ub68VUTU5v0PE1mziRn5hgTawx0Tej5VaxKYrV
+emsw/gOcHDF8lgHIZUMbhkEWI/2EIZRwlCQgXICwUojjMhDAhmHJYvsDM0i3I8S49YuAxYcuHFYdxCu8NNlDHkV7pe6p6cS3m5N
+q4OzEUuTASp+WjTU2dT+ph3nNbmtY4Y1fSlNF8a0p6Td53T3xtU3kXfB6doSwhJnZ9b4gJ0Uwf9WbG0JWs9YDGA8VFrJ+eOr6xM
+ubGgm3OPV/zx87Q5KmceefCVhqrU0WebgqdheYFL+xINoP+NvBEEWUdBavtjjPjulW3TbMYRHyUHY9Jvu/NptfDVfUe6j7fECCG
+Ww0QoiteFyS7oTeosYDQGqGEV1n86CCMd2kE7WbzfznfgbB6kp5bDxOM6IO4PamkWbYH97VfR+kHD2L339UBAAA=
+EOF_BSgBW2SBUEB7zcJv
+true \
+  && DOCKER_BUILDKIT=1 $SUDO docker build -f ./Dockerfile --output "type=tar,dest=dockerimage.tar" . \
+  && virt-make-fs --format=qcow2 --size=+200M dockerimage.tar dockerimage-large.qcow2 \
+  && qemu-img convert dockerimage-large.qcow2 -O qcow2 dockerimage.qcow2 \
+  && rm dockerimage-large.qcow2 \
 
 
+## Collect created resources
 
-## Test launch pure kernel (kernel panic expected)
+Likely to be run on qemu HOST, to get needed resources out of VM to host
+to start VMs from it later.
 
-qemu-system-x86_64 \
-    -M microvm,x-option-roms=off,isa-serial=off,rtc=off -no-acpi -cpu host \
-    -accel kvm -nodefaults -no-user-config -nographic -no-reboot \
-    -device virtio-serial-device \
-    -chardev stdio,id=virtiocon0 -device virtconsole,chardev=virtiocon0 \
-    -kernel kernel/bzImage -append "console=hvc0 acpi=off reboot=t panic=-1" \
-    ;
+  && WORKDIRHOST="path/to/where/you/want/the/files" \
+  && WORKDIRGUEST="/home/user/work" \
+  && SSH=ssh \
+  && cd "${WORKDIRHOST:?}" \
+  && ${SSH:?} -oRemoteCommand='tar --owner=0 --group=0 -ch -C "'"${WORKDIRGUEST:?}"'/myinit" myinit -C "'"${WORKDIRGUEST:?}"'/linux-6.7.4/arch/x86_64/boot" bzImage -C "'"${WORKDIRGUEST:?}"'/dockerbuild" dockerimage.qcow2' \
+         | tar -C "${WORKDIRHOST:?}" -x \
+  && mv myinit init \
+  && mv bzImage kernel \
+  && mv dockerimage.qcow2 hda.qcow2 \
 
 
 ## Test launch full VM
 
-KERNEL="${WORKDIR:?}/linux-*/arch/x86_64/boot/bzImage"
+KERNEL=kernel
 HOST_SHARE_DIR="/path/to/host/share"
-QEMU_IMAGE="dockerimage.qcow2"
+QEMU_IMAGE="hda.qcow2"
 # mount share from guest:  mount -t 9p myMountTag /mnt/share -otrans=virtio,version=9p2000.L,msize=52428800
 qemu-system-x86_64 \
     -M microvm,x-option-roms=off,isa-serial=off,rtc=off -no-acpi -no-reboot \
@@ -124,31 +142,17 @@ qemu-system-x86_64 \
     -append "console=hvc0 root=/dev/vda rw acpi=off reboot=t panic=-1 quiet" \
     -drive id=root,file=${QEMU_IMAGE:?},format=qcow2,if=none \
     -device virtio-blk-device,drive=root \
-    -netdev user,id=mynet0,hostfwd=tcp:127.0.0.1:8080-10.0.2.15:80 \
+    -netdev user,id=mynet0 \
     -device virtio-net-device,netdev=mynet0 \
     -fsdev local,path=${HOST_SHARE_DIR:?},security_model=none,id=www,readonly=on \
     -device virtio-9p-device,fsdev=www,mount_tag=myMountTag \
-    -device virtio-rng-device
+    -device virtio-rng-device \
     ;
 
 
-## Example docker image transformation
+## Refs
 
-  && rm -rf "${WORKDIR:?}/dockerbuild" \
-  && mkdir "${WORKDIR:?}/dockerbuild" \
-  && cd "${WORKDIR:?}/dockerbuild" \
-  && cp "${WORKDIR:?}/myinit/myinit" init \
-  && base64 -d <<EOF | gzip -d > "Dockerfile" &&
-H4sIAMsc+GYAA3ML8vdVyEvPzKuwMtQzMtQz4AoK9VNILChRKC1ISSxJhXMz84pLEnNyFHQrFTKL
-k3VTMpILdJNzMlPzSsBKinIVdNMU9IuTMvP0M/MyS7ic/QMiFUAsZEEAfPYPR24AAAA=
-EOF
-true \
-  && DOCKER_BUILDKIT=1 docker build -f ./Dockerfile --output "type=tar,dest=dockerimage.tar" . \
-  && virt-make-fs --format=qcow2 --size=+200M dockerimage.tar dockerimage-large.qcow2 \
-  && qemu-img convert dockerimage-large.qcow2 -O qcow2 dockerimage.qcow2 \
-  && rm dockerimage-large.qcow2 \
-
-
+- [Execute Docker Containers as QEMU MicroVMs](https://mergeboard.com/blog/2-qemu-microvm-docker/)
 
 
 
