@@ -2,7 +2,13 @@
 #
 # Use qemu to host dockerimages.
 #
-# [Execute Docker Containers as QEMU MicroVMs](https://mergeboard.com/blog/2-qemu-microvm-docker/)
+# TODO: Write helpers to pull/convert docker image to qcow2
+# TODO: Impl host shared dirs. Should be possible using 9pfs (see link).
+#
+# for "virt-make-fs" install "guestfs-tools".
+#
+# Some Links:
+# - [Execute Docker Containers as QEMU MicroVMs](https://mergeboard.com/blog/2-qemu-microvm-docker/)
 #
 
 true \
@@ -65,22 +71,83 @@ EOF
 true \
   && make olddefconfig \
   && make -j$(nproc) \
-  && base64 -d <<EOF | gunzip > "${CACHEDIR:?}/gagainit.c" &&
-H4sIACTh02UAA41UTYvbMBC9+1cIlwY7JKtsYSlsNoVSAj1s0x62pzQsijxORCzJq4+wacl/35Ed
-u85HS3ywnp5n5j2NJNP+3Bq+SNbOlfaeUglmBUvNTHbDtaTLQq/oh+ELSD+Ughu9lcNM8w0YmvZp
-9E4oXvgMyAMYo/TN+lOHsi4T51QhlsecVwLpk7idpVJ75c5p69h/2IivmSF9rpV1JIOc+cI9g9oK
-o5UE5eYLMiF/IoJP/OPz09cJ9dbQQnNW0KVQ952pbectqKnqFWA8qArNfj4+DqL9OIq2WmSk8v3M
-18A3SfW9NlMbs9obDoMjzjFsuRucxeaiAFybA+l2JeZ4ZcVKQUYKrVa1TF6wle1mVg76GXMsSg/r
-tM547kjoEBEq1+gz0CInSeCSgzzphY8pmUzI8Jb0eqTa0TCdzr5PZ09NufCURqB2En8xwJxAM+/t
-L+wGqUul4zYwiMhNJkyrMvp4d5eSBzLq1qtqop42nZqYBdxpsyM5w05kcadueOBVuOS2Q+6j+h11
-LX4LbfqXxcpeCEiafWlsnva+020Sunu2hMZ+pXfB8ZHbfYQu0R+RTKgkAJTlg8O+I97OF03x7nGK
-lVaAi4hpaTQP4DCOEDZqlxMy2NLS2YAR1ui6LPniwVfTFl2XaNcyYCfL/Do1bHgYcbg+geaW8pXR
-vgxMi5rc+gaAW2vrFJOQxIe/GMZY8Rt0/pdJm3h4BV5gaLjpuIpKqoXVbb/0azk4bQ7CFIucnAMD
-zhtFbse4/W9r76rneAUAAA==
+  && `# Create our own pseudo 'init' system` \
+  && `# TODO fix zombie processes (aka add waitpid() SIGCHILD handling to init)` \
+  && mkdir "${WORKDIR:?}/myinit" \
+  && cd "${WORKDIR:?}/myinit" \
+  && base64 -d <<EOF | gunzip > "./myinit.c" &&
+H4sIAIsP+GYAA41Uy27bMBC88ysWKmrIgVvZh6BAHRcoCgM9pG4P6SkNAoZa2UQkUuXDiFv437Ok
+LEV+JDAP0nC0uzNckmLvpBKlzxGu0BilP66+sBfKulweU6V82Oe8kkQfxG1sVmmv3DFtHX+DZWLF
+DVwIrayDHAvuS3ePai2NVhUqd3sHM/jPgEby6+vN91nmrclKLXiZPUj1uTe13bwDDRUfASajWGjx
++/p6xLZTxtZa5hB934sVisc0fm/MNMas9kbgaI9z3CzRjY5iC1kirc1h5TY15Xhl5VJhDqVWy0am
+KPnS9jOjg4ucO86Gu3VaZ7xwEDoEUhWafAZaFpAGLt3JwyB8HMJsBh8mMBhA3NEwnS9+zhc3bbkw
+aiNJO02+GeROkpn39g91A5pSw2kXGESqx1yaTmX86fJyCFcw7teLNUlPm15NykLhtNlAwakTedKr
+GwY+SZdOeuSWNU/Wt/gjtOk1i9FeCEjbfWltHva+120I3T1aQms/6p1wvOd2y8gl+YOKS5UGQLJi
+tNt3wuvbu7Z4/zglSiukRSRZbbQIYPceE2zVTifkuM5qZwMm2KDzsqq/Hn2cdui8RLuqAnZVXZyn
+Rg0Pb3qdn5AVNhNLo30dmA61uc0NQLfS1ileYZpUUhi9Ds6s/Ie6eGGGbTw+oSgpNNx0WkWU6mC8
+7ad+LTun7UGYU5GDc2DQeaNgMg3b/wwcaf4fPAUAAA==
 EOF
 true \
-  && gcc -Wall -static -o "${CACHEDIR:?}/gagainit" "${CACHEDIR:?}/gagainit.c" \
+  && CFLAGS="-Wall -Werror -pedantic -static" `# TODO maybe add "-Os -s"` \
+  && gcc -o myinit myinit.c ${CFLAGS?}\
   && echo "[ERROR] TODO Need more steps here" && false \
-  && true
+  && echo _script_is_DONE_kx1n2kgNWRdpBYTP_ \
+
+
+
+
+
+## Test launch pure kernel (kernel panic expected)
+
+qemu-system-x86_64 \
+    -M microvm,x-option-roms=off,isa-serial=off,rtc=off -no-acpi -cpu host \
+    -accel kvm -nodefaults -no-user-config -nographic -no-reboot \
+    -device virtio-serial-device \
+    -chardev stdio,id=virtiocon0 -device virtconsole,chardev=virtiocon0 \
+    -kernel kernel/bzImage -append "console=hvc0 acpi=off reboot=t panic=-1" \
+    ;
+
+
+## Test launch full VM
+
+KERNEL="${WORKDIR:?}/linux-*/arch/x86_64/boot/bzImage"
+HOST_SHARE_DIR="/path/to/host/share"
+QEMU_IMAGE="dockerimage.qcow2"
+qemu-system-x86_64 \
+    -M microvm,x-option-roms=off,isa-serial=off,rtc=off -no-acpi -no-reboot \
+    -accel kvm -cpu host -nodefaults -no-user-config -nographic \
+    -m 1G -smp $(nproc) \
+    -device virtio-serial-device \
+    -chardev stdio,id=virtiocon0 -device virtconsole,chardev=virtiocon0 \
+    -kernel "${KERNEL:?}" \
+    -append "console=hvc0 root=/dev/vda rw acpi=off reboot=t panic=-1 quiet" \
+    -drive id=root,file=${QEMU_IMAGE:?},format=qcow2,if=none \
+    -device virtio-blk-device,drive=root \
+    -netdev user,id=mynet0,hostfwd=tcp:127.0.0.1:8080-10.0.2.15:80 \
+    -device virtio-net-device,netdev=mynet0 \
+    -fsdev local,path=${HOST_SHARE_DIR:?},security_model=none,id=www,readonly=on \
+    -device virtio-9p-device,fsdev=www,mount_tag=www \
+    -device virtio-rng-device
+    ;
+
+
+## Example docker image transformation
+
+  && rm -rf "${WORKDIR:?}/dockerbuild" \
+  && mkdir "${WORKDIR:?}/dockerbuild" \
+  && cd "${WORKDIR:?}/dockerbuild" \
+  && cp "${WORKDIR:?}/myinit/myinit" init \
+  && base64 -d <<EOF | gzip -d > "Dockerfile" &&
+H4sIAMsc+GYAA3ML8vdVyEvPzKuwMtQzMtQz4AoK9VNILChRKC1ISSxJhXMz84pLEnNyFHQrFTKL
+k3VTMpILdJNzMlPzSsBKinIVdNMU9IuTMvP0M/MyS7ic/QMiFUAsZEEAfPYPR24AAAA=
+EOF
+true \
+  && DOCKER_BUILDKIT=1 docker build -f ./Dockerfile --output "type=tar,dest=dockerimage.tar" . \
+  && virt-make-fs --format=qcow2 --size=+200M dockerimage.tar dockerimage-large.qcow2 \
+  && qemu-img convert dockerimage-large.qcow2 -O qcow2 dockerimage.qcow2 \
+  && rm dockerimage-large.qcow2 \
+
+
+
 
 
