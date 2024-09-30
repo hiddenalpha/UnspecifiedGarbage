@@ -1,0 +1,158 @@
+
+Use qemu to host dockerimages.
+==============================
+
+TODO: Write helpers to pull/convert docker image to qcow2
+TODO: Impl host shared dirs. Should be possible using 9pfs (see link).
+
+For "virt-make-fs" install "guestfs-tools".
+
+WARN: This is work-in-progress. It is NOT really usable yet.
+
+true \
+  && LINUX_URL=https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.7.4.tar.xz \
+  && SUDO=sudo \
+  && CACHEDIR=/var/tmp \
+  && WORKDIR=/home/$USER/work \
+  && LINUX_TXZ=$(basename "${LINUX_URL:?}") \
+  && $SUDO apt install -y --no-install-recommends curl make gcc bc flex bison libc-dev libelf-dev libssl-dev \
+  && cd "${CACHEDIR:?}" \
+  && curl -L "${LINUX_URL:?}" -O \
+  && mkdir -p "${WORKDIR:?}" \
+  && cd "${WORKDIR:?}" \
+  && tar xf "${CACHEDIR:?}/${LINUX_TXZ:?}" \
+  && cd linux* \
+  && base64 -d <<EOF | gunzip > .config &&
+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
+xqZFdHAYI2VciPZ/TosyDcUdAAA=
+EOF
+true \
+  && make olddefconfig \
+  && make -j$(nproc) \
+  && `# Create our own pseudo 'init' system` \
+  && `# TODO fix zombie processes (aka add waitpid() SIGCHILD handling to init)` \
+  && mkdir "${WORKDIR:?}/myinit" \
+  && cd "${WORKDIR:?}/myinit" \
+  && base64 -d <<EOF_jXxQDgrLcOFqcSrh | gunzip > "./myinit.c" &&
+H4sIABBA+GYAA41UTY/TMBC951eMgqiSqGzawwqJbpEQFIG0tBzKCRDKOk5ibWIHj1PRRf3vjJ2PZtsK1Yf4+WXmzfOn90JIVjY
+phzuutVQ3xVvvSKFJxTlViofnXCMF0Sdxe4wr1UhzTqNJ/sN6FggGrEg0RExJNKAavZI7oZX8/hOW8NcDav7Xd9tPy7hBHZeKJW
+X8IOSb0RCH8QBayn0s9KdOaP3t/n7qHRZD6Z0SKTjzv1jB2WPgwpwh5ydCzabjcYpmehqT4XZf8ymUSubQSBS55KQqzccyxzba1
+Wmjid/UBr2wmxwa3TAD1hAImamFY0UWOCqwBWFif4SwXMKrOUwm4DbQDlfrzWq9hbCVsq3WQpos8N9rTjMkQy/xB00fSCdcDFFW
+vnpMhW71Z69vb0O4g9lYyalRJaVHapTCmVF6D1kiSp76I1Hb+B9hgvmIPHjHb+/ti13wi96cL/s3cAvvzPXL2y8odCt4Zrg36+Q
+v+Hvm7eAdPI/sQJUIGYBFic67zY4iwrtee3w+fKkkJ8t+XGvFLOj6GcG+2OWElO9ism0xwRZdl1X9bnjjhgO6LhGLymJT1dl11e
+h62p666xPiDGOWa9XUlhnQOBe5KRQamVQ88CvBtNpZYyieuMqOTNiFx9F282EDnyFvOCKYQiBgwcsSkGlRG9rJmk4hkaridtswi
+r12hzkrqYS9+DR553AE7UsQCynMjSPcazB6cbrq/TFakdjJKdLcNFrCfGEPzz+XOnXTUQUAAA==
+EOF_jXxQDgrLcOFqcSrh
+true \
+  && CFLAGS="-Wall -Werror -pedantic -static" `# TODO maybe add "-Os -s"` \
+  && gcc -o myinit myinit.c ${CFLAGS?}\
+  && echo "[ERROR] TODO Need more steps here" && false \
+  && echo _script_is_DONE_kx1n2kgNWRdpBYTP_ \
+
+
+## Example docker image transformation
+
+  && rm -rf "${WORKDIR:?}/dockerbuild" \
+  && mkdir "${WORKDIR:?}/dockerbuild" \
+  && cd "${WORKDIR:?}/dockerbuild" \
+  && cp "${WORKDIR:?}/myinit/myinit" init \
+  && base64 -d <<EOF_BSgBW2SBUEB7zcJv | gzip -d > "Dockerfile" &&
+H4sIANRD+GYAA21R226CQBR89ytO0sQXgwp4ow9NEMSqWMAbhfTBBVZZxQXZ9Ub68VUTU5v0PE1mziRn5hgTawx0Tej5VaxKYrV
+emsw/gOcHDF8lgHIZUMbhkEWI/2EIZRwlCQgXICwUojjMhDAhmHJYvsDM0i3I8S49YuAxYcuHFYdxCu8NNlDHkV7pe6p6cS3m5N
+q4OzEUuTASp+WjTU2dT+ph3nNbmtY4Y1fSlNF8a0p6Td53T3xtU3kXfB6doSwhJnZ9b4gJ0Uwf9WbG0JWs9YDGA8VFrJ+eOr6xM
+ubGgm3OPV/zx87Q5KmceefCVhqrU0WebgqdheYFL+xINoP+NvBEEWUdBavtjjPjulW3TbMYRHyUHY9Jvu/NptfDVfUe6j7fECCG
+Ww0QoiteFyS7oTeosYDQGqGEV1n86CCMd2kE7WbzfznfgbB6kp5bDxOM6IO4PamkWbYH97VfR+kHD2L339UBAAA=
+EOF_BSgBW2SBUEB7zcJv
+true \
+  && DOCKER_BUILDKIT=1 $SUDO docker build -f ./Dockerfile --output "type=tar,dest=dockerimage.tar" . \
+  && virt-make-fs --format=qcow2 --size=+200M dockerimage.tar dockerimage-large.qcow2 \
+  && qemu-img convert dockerimage-large.qcow2 -O qcow2 dockerimage.qcow2 \
+  && rm dockerimage-large.qcow2 \
+
+
+## Collect created resources
+
+Likely to be run on qemu HOST, to get needed resources out of VM to host
+to start VMs from it later.
+
+  && WORKDIRHOST="path/to/where/you/want/the/files" \
+  && WORKDIRGUEST="/home/user/work" \
+  && SSH=ssh \
+  && cd "${WORKDIRHOST:?}" \
+  && ${SSH:?} -oRemoteCommand='tar --owner=0 --group=0 -ch -C "'"${WORKDIRGUEST:?}"'/myinit" myinit -C "'"${WORKDIRGUEST:?}"'/linux-6.7.4/arch/x86_64/boot" bzImage -C "'"${WORKDIRGUEST:?}"'/dockerbuild" dockerimage.qcow2' \
+         | tar -C "${WORKDIRHOST:?}" -x \
+  && mv myinit init \
+  && mv bzImage kernel \
+  && mv dockerimage.qcow2 hda.qcow2 \
+
+
+## Test launch full VM
+
+KERNEL=kernel
+HOST_SHARE_DIR="/path/to/host/share"
+QEMU_IMAGE="hda.qcow2"
+# mount share from guest:  mount -t 9p myMountTag /mnt/share -otrans=virtio,version=9p2000.L,msize=52428800
+qemu-system-x86_64 \
+    -M microvm,x-option-roms=off,isa-serial=off,rtc=off -no-acpi -no-reboot \
+    -accel kvm -cpu host -nodefaults -no-user-config -nographic \
+    -m 1G -smp $(nproc) \
+    -device virtio-serial-device \
+    -chardev stdio,id=virtiocon0 -device virtconsole,chardev=virtiocon0 \
+    -kernel "${KERNEL:?}" \
+    -append "console=hvc0 root=/dev/vda rw acpi=off reboot=t panic=-1 quiet" \
+    -drive id=root,file=${QEMU_IMAGE:?},format=qcow2,if=none \
+    -device virtio-blk-device,drive=root \
+    -netdev user,id=mynet0 \
+    -device virtio-net-device,netdev=mynet0 \
+    -fsdev local,path=${HOST_SHARE_DIR:?},security_model=none,id=www,readonly=on \
+    -device virtio-9p-device,fsdev=www,mount_tag=myMountTag \
+    -device virtio-rng-device \
+    ;
+
+
+## Refs
+
+- [Execute Docker Containers as QEMU MicroVMs](https://mergeboard.com/blog/2-qemu-microvm-docker/)
+
+
+

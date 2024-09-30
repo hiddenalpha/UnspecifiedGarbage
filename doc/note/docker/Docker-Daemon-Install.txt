@@ -1,26 +1,23 @@
 
-How to install a docker daemon eg in a VM or so
-===============================================
+How to install docker daemon on debian
+======================================
 
-Setup a VM (eg debian bullseye)
+Set proxy settings in environ if needed.
 
-Add auth proxy in "/etc/environment"
 
-Make sure "apt update" works.
+  && SUDO=sudo \
+  && $SUDO apt install -y --no-install-recommends ca-certificates curl gnupg lsb-release \
+  && `# TODO what is this step for? ` \
+  && `# sudo install -m 0755 -d /etc/apt/keyrings ` \
+  && $SUDO curl -fsSL -o /etc/apt/keyrings/docker.asc 'https://download.docker.com/linux/debian/gpg' \
+  && $SUDO chmod a+r /etc/apt/keyrings/docker.asc
+  && printf %s\\n \
+      "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc]" \
+      "https://download.docker.com/linux/debian $(. /etc/os-release && echo "$VERSION_CODENAME") stable" \
+      | $SUDO tee /etc/apt/sources.list.d/docker.list > /dev/null \
+  && $SUDO apt update \
+  && $SUDO apt install -y --no-install-recommends docker-ce docker-ce-cli containerd.io \
 
-Install docker as described on "https://docs.docker.com/engine/install/debian/"
-
-  sudo apt update
-  sudo apt-get install -y --no-install-recommends ca-certificates curl gnupg lsb-release
-
-  # I had to download that gpg on my host and then pasting it into the vm
-  # to use it there
-  curl -sSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
-
-  echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-
-  sudo apt update
-  sudo apt install -y --no-install-recommends docker-ce docker-ce-cli containerd.io
 
 Edit "/lib/systemd/system/docker.service" and add environ config in "service"
 section (HINT: "/etc/environment" does not work)
@@ -50,4 +47,7 @@ HINT: Maybe 'insecure' not needed, ToBeTested.
 
 
 
+## Links
+
+[Install Docker Engine on Debian](https://docs.docker.com/engine/install/debian/)
 

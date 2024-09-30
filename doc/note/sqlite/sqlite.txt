@@ -26,6 +26,13 @@ csv Example (no headrow):
   sqlite3 foo.db -bail -cmd '.mode csv' -cmd '.separator ;' -cmd '.import foo.csv FooTable'
 
 
+## Insert conditional
+
+INSERT INTO table(id, text) 
+SELECT 5, 'text to insert' 
+WHERE NOT EXISTS (SELECT 1 FROM table WHERE id = 5)
+
+
 ## Drop Column
 
   ALTER TABLE table DROP COLUMN column;
@@ -39,4 +46,5 @@ csv Example (no headrow):
 ## Refs
 
 [drop column TODO vote](https://stackoverflow.com/a/66399224/4415884)
+[insert if not exists](https://stackoverflow.com/a/19337206/4415884)
 
