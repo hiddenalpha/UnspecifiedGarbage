@@ -310,6 +310,27 @@ Related:
     }
 
 
+    function gitBranchesHaveDiverged( app, workdir, branch1, branch2, onDone ){
+        TODO_vT8AAAAwAACWAAAA();
+        function TODO_vT8AAAAwAACWAAAA(){
+            var child = child_process.spawn(
+                "git", [],
+                { cwd:workdir }
+            );
+            child.on("error", console.error.bind(console));
+            child.stderr.on("data", logAsString);
+            child.on("close", function( code, signal ){
+                if( code !== 0 || signal !== null ){
+                    endFn(Error("code="+ code +", signal="+ signal +""));
+                    return;
+                }
+                awsolijhfaosldkj;
+            });
+        }
+        function endFn( err, retval ){ onDone(err, retval); }
+    }
+
+
     function getVersionPipelineMangledByThingyName( app, thingyName, onDone ){
         var rspBody = "";
         var path, host = "artifactory.pnet.ch", port = 443, method = "GET";
