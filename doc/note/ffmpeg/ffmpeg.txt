@@ -79,10 +79,10 @@ HINT: Use same filter for palette as for conversion.
   INPUTV=input.mp4
 
 Create custom palette:
-  ffmpeg -ss 4 -t 33 -i "$INPUTV" -vf "$FILTERV,palettegen=stats_mode=diff" palette.png
+  -i "${INPUTV:?}" -vf "${FILTERV:?},palettegen=stats_mode=diff" palette.png
 
 Use this palette:
-  ffmpeg -ss 4 -t 33 -i "$INPUTV" -i palette.png -filter_complex "[0:v]$FILTERV[vid];[vid][1:v]paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle" output.gif
+  -i "$INPUTV" -i palette.png -filter_complex "[0:v]${FILTERV:?}[vid];[vid][1:v]paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle" dst.gif
 
 Working example from web (but not optimized):
   ffmpeg -ss 0 -t 2.5 -i INPUT.mp4 -filter_complex "[0:v] fps=12,scale=-1:600,split [a][b];[a] palettegen=stats_mode=diff [p];[b][p] paletteuse=new=1" OUTPUT.gif
@@ -93,4 +93,17 @@ Working example from web (but not optimized):
   -start_number 5619 -framerate 24 -i "input/IMG_%d.JPG" \
     -vf "scale=4096:-1,crop=4096:2160:0:0" \
     out.mkv
+
+
+## Create GIF by image series
+
+  && TMPVID="tmp.mkv" \
+  && PALETTE_PNG="palette.png" \
+  && FPS="5" \
+  && FILTERV="fps=${FPS:?}" \
+  && ffmpeg -start_number 0 -framerate "${FPS:?}" -i "src%d.png" "${TMPVID:?}" \
+  && ffmpeg -i "${TMPVID:?}" -vf "${FILTERV:?},palettegen=stats_mode=diff" "${PALETTE_PNG:?}" \
+  && ffmpeg -i "${TMPVID:?}" -i "${PALETTE_PNG:?}" -filter_complex "[0:v]${FILTERV:?}[vid];[vid][1:v]paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle" dst.gif \
+  && rm "${TMPVID:?}" "${PALETTE_PNG:?}" \
+
 

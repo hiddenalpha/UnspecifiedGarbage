@@ -73,26 +73,37 @@ Evtl für diese services den jssc als "provided" angeben.
 
 ## Measurements
 
+  && `# Monitor donneri ` \
   && while true; do ssh donner -oRemoteCommand='true \
-       && while true; do true \
-         && printf '\''%%s  %%s  %%s\n'\'' \
-           "$(date +%%s)" \
-           "$(uptime)" \
-           "$(free | grep Mem)" \
-         && sleep $((5 - $(date +%%s) %% 5)) || break \
-       ;done' | tee -a donner-perf/donner-perf-$(date -u +%Y%m%d-%H%M%SZ).log \
-     && sleep 5 || break; done \
+  &&     while true; do true \
+  &&         printf '\''%%s  %%s  %%s\n'\'' \
+                 "$(date +%%s)" \
+                 "$(uptime)" \
+                 "$(free | grep Mem)" \
+  &&          sleep $((5 - $(date +%%s) %% 5)) || break \
+         ;done' | tee -a donner-perf/donner-perf-$(date -u +%Y%m%d-%H%M%SZ).log \
+  &&     sleep 5 || break \
+     ;done \
 
-  && THELOG="donner-perf-20240930-112559Z.log" \
-  && cat "${THELOG:?}" \
-      | sed -E 's_^([0-9]+) +([0-9:]+) .+age: ([0-9.]+), ([0-9.]+), ([0-9.]+) +( Mem: .*).*$_\1;\2;\3;\4;\5\6_' \
-      | sed -E 's_^(.+) Mem: +([0-9]+) +([0-9]+) +([0-9]+) +([0-9]+) +([0-9]+) +([0-9]+).*$_\1;\2;\3;\4;\5;\6_' \
-      > "${THELOG:?}.csv" \
+  && `# Gen csv from log ` \
+  && for SRC in donner-perf-2024*Z.log ;do true \
+  &&     DST="${SRC%.*}.csv" \
+  &&     echo "[INFO ] Creating '${DST:?}' by '${SRC:?}'" \
+  &&     cat "${SRC:?}" \
+           | sed -E 's_^([0-9]+) +([0-9:]+) .+age: ([0-9.]+), ([0-9.]+), ([0-9.]+) +( Mem: .*).*$_\1;\2;\3;\4;\5\6_' \
+           | sed -E 's_^(.+) Mem: +([0-9]+) +([0-9]+) +([0-9]+) +([0-9]+) +([0-9]+) +([0-9]+)$_\1;\2;\3;\4;\5;\6;\7_' \
+           > "${DST:?}" \
+     ;done \
 
-  && for E in donner-perf-2024*Z.log.csv ;do true \
-     && echo "__ ${E:?} __" \
-     && csv-to-bmp --xcol 1 --ycol 3 --outsz 4096x2160 --srccsv "${E:?}" --dstbmp "${E%.*}.bmp" \
-     ;done
+  && `# Gif from graph pics ` \
+  && TMPVID="tmp.mkv" \
+  && PALETTE_PNG="palette.png" \
+  && FPS="1" \
+  && FILTERV="fps=${FPS:?}" \
+  && ffmpeg -framerate "${FPS:?}" -i "src%d.png" "${TMPVID:?}" \
+  && ffmpeg -i "${TMPVID:?}" -vf "${FILTERV:?},palettegen=stats_mode=diff" "${PALETTE_PNG:?}" \
+  && ffmpeg -i "${TMPVID:?}" -i "${PALETTE_PNG:?}" -filter_complex "[0:v]${FILTERV:?}[vid];[vid][1:v]paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle" dst.gif \
+  && rm "${TMPVID:?}" "${PALETTE_PNG:?}" \
 
 
 Boot ab KassenTaster, login mit RFID, vorgeschlagene Fahrt anmelden, warten.
@@ -119,8 +130,7 @@ When[CEST];version;LoginScreen[sec];FahrtGewaehlt[sec];
 2024-09-30 14:38;legacy;180;206;Logout spääät.
 2024-09-30 15:10;legacy;187;218;
 2024-09-30 16:31;noslim;247;278;
-2024-09-30 __:__;__;__;__;
-2024-09-30 __:__;__;__;__;
+2024-__-__ __:__;__;__;__;
 
 
 

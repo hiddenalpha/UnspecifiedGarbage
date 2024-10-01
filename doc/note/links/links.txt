@@ -623,4 +623,6 @@ Links (Aka argument amplifiers)
 ## Proxy environ names
 - (https://about.gitlab.com/blog/2021/01/27/we-need-to-talk-no-proxy/)
 
+## Unix CPU Load Average / Linux System Load Average
+- [Linux Load Averages](https://www.brendangregg.com/blog/2017-08-08/linux-load-averages.html)
 
