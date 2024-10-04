@@ -352,6 +352,7 @@ Links (Aka argument amplifiers)
 - [Some good examples](https://gitit.post.ch/projects/ISA/repos/vending-transaction-api/browse/src/rest/openapi/api.yaml?at=refs%2Ftags%2Fvending-transaction-api-01.00.00.00#79-80,96-98,112-113,130-131,162-164,197-199,230-232,250-252,270-272,287-288)
 - [Why is it so hard to write useful descriptions](https://gitit.post.ch/projects/ISA/repos/vending-payment-api/pull-requests/5/overview?commentId=106020)
 - [Why all that clutter?](https://gitit.post.ch/projects/ISA/repos/deployment-pipeline-api/pull-requests/22/overview?commentId=278860)
+- [Remove noisy clutter please](https://gitit.post.ch/projects/ISA/repos/maintenance-issue-api/pull-requests/10/overview?commentId=422458)
 - [The Golden Rules of Code Documentation](https://blog.jooq.org/the-golden-rules-of-code-documentation/)
 
 ## JenkinsfileRelease Api pipeline broken latest version
