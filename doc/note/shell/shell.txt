@@ -1,0 +1,12 @@
+
+POSIX shell
+================
+
+This is for POSIX shells. For specific shells see "../bash/" or "../dash/".
+
+
+## Set pipefail only if it is supported
+
+if (set -o pipefail 2>/dev/null) ;then set -o pipefail ;fi
+
+
