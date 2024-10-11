@@ -1,0 +1,19 @@
+
+
+## Promising defaults
+
+CFLAGS= --std=c89 -Wall -Wextra -Werror -O0 -g -ffunction-sections -fdata-sections
+LDFLAGS= -Wl,--fatal-warnings,--gc-sections,--as-needed
+
+
+## Link TRULY static
+
+CFLAGS=
+LDFLAGS= -static -static-libgcc
+
+
+## Optimize for size
+
+CFLAGS= -Os
+LDFLAGS= -s
+
