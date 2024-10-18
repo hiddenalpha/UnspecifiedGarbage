@@ -5,8 +5,11 @@ Mopidy
 ## Setup
 
   && SUDO=sudo \
-  && wget -q -O - https://apt.mopidy.com/mopidy.gpg | $SUDO apt-key add - \
-  && $SUDO wget -q -O /etc/apt/sources.list.d/mopidy.list https://apt.mopidy.com/buster.list \
+  && DISTRO=bookworm \
+  && $SUDO apt install --no-install-recommends -y curl gnupg \
+  && curl -sSLo- https://apt.mopidy.com/mopidy.gpg | $SUDO tee /etc/apt/keyrings/mopidy-archive-keyring.gpg >/dev/null \
+  && cat /etc/apt/keyrings/mopidy-archive-keyring.gpg | $SUDO apt-key add - \
+  && $SUDO curl -sSLo /etc/apt/sources.list.d/mopidy.list "https://apt.mopidy.com/${DISTRO:?}.list" \
   && $SUDO apt update \
   && $SUDO apt install --no-install-recommends -y mopidy python3-pip \
   && $SUDO python3 -m pip install --break-system-packages Mopidy-Iris Mopidy-Local Mopidy-TuneIn \
@@ -20,6 +23,7 @@ Mopidy
   data_dir = /var/lib/mopidy
   [http]
   hostname = 0.0.0.0
+  allowed_origins = 127.0.0.1,example.com
   [audio]
   # List soundcards:  aplay -l
   output = alsasink device=hw:1,0
@@ -27,9 +31,51 @@ Mopidy
   media_dir = /path/to/Music
 
 
+## Additional packages
+
+  libasound2 - Main alsa files.
+  alsa-utils - cli utils for alsa (eg aplay, alsamixer, ...)
+  gstreamer1.0-alsa - Adapter needed to be able to stream audio to alsa?
+  gstreamer1.0-plugins-bad - Eg for AAC codec.
+
+
 ## Scan new files
 
   sudo -u mopidy mopidy --config /etc/mopidy/mopidy.conf local scan
+
+
+## Via nginx
+
+  http {
+      upstream mopidy {
+          server 127.0.0.1:6680;
+      }
+      server {
+          location /music/ {
+              return  307  /iris/;
+          }
+          location /mopidy/ {
+              proxy_pass http://mopidy;
+              proxy_http_version 1.1;
+              proxy_redirect  off;
+              proxy_set_header  Host  $host;
+              proxy_set_header  X-Real-IP  $remote_addr;
+              proxy_set_header  X-Forwarded-For  $proxy_add_x_forwarded_for;
+              proxy_set_header  Upgrade  $http_upgrade;
+              proxy_set_header  Connection  "upgrade";
+          }
+          location /iris/ {
+              proxy_pass http://mopidy;
+              proxy_http_version 1.1;
+              proxy_redirect  off;
+              proxy_set_header  Host  $host;
+              proxy_set_header  X-Real-IP  $remote_addr;
+              proxy_set_header  X-Forwarded-For  $proxy_add_x_forwarded_for;
+              proxy_set_header  Upgrade  $http_upgrade;
+              proxy_set_header  Connection  "upgrade";
+          }
+      }
+  }
 
 
 ## Refs
