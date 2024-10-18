@@ -17,6 +17,11 @@ INSERT INTO "AccountType" SELECT * FROM "other"."AccountType";
 INSERT INTO "Transaction" SELECT * FROM "other"."Transaction";
 
 
+## Dump DB as SQL
+
+  echo | sqlite3 "${DB:?}" -bail -cmd ".once ${OUT:?}" -cmd '.dump'
+
+
 ## import CSV
 
 csv Example (no headrow):
