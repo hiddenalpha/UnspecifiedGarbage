@@ -7,14 +7,11 @@ Install system STRICTLY WITHOUT internet connection.
 Stop annoying windoof auto updates. Make sure to use windoof newlines (CRLF) in
 the reg file:
 
-
 Windows Registry Editor Version 5.00
 [HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU]
 "NoAutoUpdate"=dword:00000001
 
 curl -sSD- http://10.0.2.9:80/stop-annoying-updates.reg -O
-
-After running "reg" file, we can reboot windoof with internet connection.
 
 Download/Install:
 - "https://learn.microsoft.com/en-us/sysinternals/downloads/sdelete"
@@ -26,13 +23,18 @@ Manually trigger updates, reboot, updates, reboot, (likely some more turns ...)
 
 Configure Performance options. Disable all but screen fonts.
 
+Disable auto-defragmentation, as this renders all kind of snapshotting
+effort useless -> Win -> "Defrag.." -> Disable scheduler.
+
 Make sure no more updates are running. Then, I guess best is to reboot without
 internet access once more to cleanup the disk. Delete unused files like
-trashcan or downloaded installers:
+trashcan or downloaded installers.
 
-  SDelete.exe -nobanner -z C:
+- Use "Disc Clean".
+- Defrag disk.
+- sdelete64.exe -nobanner -z C:
 
-Shutdown win guest, then compact disc.
+Shutdown win guest, then compact disc (HINT this removes BaseImg):
 
   qemu-img convert -O qcow2 input.qcow output.qcow2
 

@@ -28,16 +28,47 @@ Qemu
   qemu-img create -f qcow2 -b old.qcow2 new.qcow2
   qemu-img rebase -b base.qcow2 new.qcow2
 
+## Create common base for two diverged VMs.
+  (TODO: test and vote "https://unix.stackexchange.com/a/657073/292722")
+  (I have some doubt that this is wrong. See other self-made alternative below)
+  VM1=one.qcow2
+  VM2=two.qcow2
+  NEWBASE=newbase.qcow2
+  mv ${VM1:?} ${NEWBASE:?}
+  qemu-img rebase -b ${NEWBASE:?} ${VM2:?}
+  qemu-img create -b ${NEWBASE:?} ${VM1:?}
+  qemu-img rebase -b ${NEWBASE:?} ${VM2:?}
+
+## Create common base for two diverged VMs.
+  (TODO: Verify)
+  && VM1=one.qcow2 \
+  && VM2=two.qcow2 \
+  && BASE=base.qcow2 \
+  && TMP1=tmp1.qcow2 \
+  && qemu-img convert -O qcow2 "${VM1:?}" "${TMP1:?}" \
+  && qemu-img rebase -b "${TMP1:?}" "${VM2:?}" \
+  && mv "${TMP1:?}" "${BASE:?}" \
+  && qemu-img rebase -u -b "${BASE:?}" "${VM2:?}" \
+  && qemu-img create -f qcow2 -b "${BASE:?}" "${VM1:?}" \
+
 ## Shrink/compact img
+
+HINT: In case of based images, need rebase afterwards because convert
+      makes them standalone.
 
 Normal systems:
   qemu-img convert -O qcow2 input.qcow2 output.qcow2
+  qemu-img rebase -b base.qcow2 output.qcow2
 
 Windoof:
+  Win -> "Disk Cleanup" -> "Clean System (Admin)" -> "More" -> "Prog+Features" -> uninst bloat.
+  Win -> "Disk Cleanup" -> "Clean System (Admin)" -> Tick many -> Hit "OK".
+  Defrag (maybe onboard tools are enough?)
   sdelete -z C:
   qemu-img convert -O qcow2 input.qcow output.qcow2
+  qemu-img rebase -b base.qcow2 output.qcow2
 
-## Shrink snapshot layer
+## Shrink snapshot layer (TODO what is this for?)
 
   qemu-img convert -O qcow2 snapLayer.qcow2 tmpFullClone.qcow2
   qemu-img create -f qcow2 -b tmpFullClone.qcow2 diff.qcow2
@@ -109,7 +140,7 @@ true \
   && true
 
 
-## amd64
+## arm
 
 (see also "../../../doc/note/rasbpi/rasbpi.txt")
 
@@ -248,4 +279,5 @@ TODO: move this to a better place. Eg: debian/setup.txt or whatever.
 - [qemu raspberry pi TODO](https://blog.agchapman.com/using-qemu-to-emulate-a-raspberry-pi/)
 - [connect VM networks](https://qemu.weilnetz.de/doc/6.0/system/invocation.html#sec-005finvocation)
 - [inspect qcow2 mount host browse](https://www.jamescoyle.net/how-to/1818-access-a-qcow2-virtual-disk-image-from-the-host)
+- [Create common base from multiple VMs](https://unix.stackexchange.com/a/657073/292722)
 
