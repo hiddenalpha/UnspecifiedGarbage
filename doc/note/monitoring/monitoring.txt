@@ -1,13 +1,12 @@
 
 ## QuickNDirty Overview (linux only)
 
-  && while true ;do echo \
-      && printf 'Load  ' && cat /proc/loadavg \
-      && echo ' CPU:' && cat /proc/pressure/cpu \
-      && echo ' MEM:' && cat /proc/pressure/memory \
-      && echo ' IO: ' && cat /proc/pressure/io \
-      && echo ' DISC:' && df -h | grep -E '^/' \
-      && sleep 2 \
-     ;done \
+  watch 'true \
+      && printf "loadavg: " && cat /proc/loadavg \
+      && echo " --cpu----" && cat /proc/pressure/cpu \
+      && echo " --mem----" && cat /proc/pressure/memory \
+      && echo " --io----" && cat /proc/pressure/io \
+      && echo " --disc----" && df -h | grep -E "^/" \
+      && true'
 
 
