@@ -1,0 +1,62 @@
+
+Build GLFW
+================
+
+TODO: windoof build not impl yet.
+
+  && SUDO=sudo \
+  && WORKDIR=~/work \
+  && GLFW_GIT_TAG=3.4 \
+  && ISWINDOOF=0 \
+  && $SUDO apt install --no-install-recommends -y \
+         libwayland-dev libxkbcommon-dev xorg-dev git make cmake gcc libc6-dev \
+  && `# Grrml...  $SUDO apt install --fix-broken --no-install-recommends -y ` \
+  && `# Grrml...  $SUDO apt install --no-install-recommends -y ca-certificates ` \
+  && mkdir -p "${WORKDIR:?}/glfw" \
+  && cd "${WORKDIR:?}/glfw" \
+  && git clone --depth=8 --branch="${GLFW_GIT_TAG:?}" https://github.com/glfw/glfw.git . \
+  && rm -rf build \
+  && if test -n "${CC}" ;then echo "environ.CC is already set" && false ;fi \
+  && if test -n "${ISWINDOOF}" -a "${ISWINDOOF}" != 0 ;then true \
+      && echo "[WARN ] windoof build not verified yet" && sleep 5 \
+      && CC=x86_64-w64-mingw32-gcc \
+      && cmake \
+           -D GLFW_BUILD_EXAMPLES=0 \
+           -D GLFW_BUILD_TESTS=0 \
+           -D GLFW_BUILD_DOCS=1 `# TODO make sure Doxygen can be found by make` \
+           -D USE_MSVC_RUNTIME_LIBRARY_DLL=0 \
+           `# TODO -D CMAKE_TOOLCHAIN_FILE=CMake/x86_64-w64-mingw32.cmake` \
+           CC="${CC:?}" \
+           ../glfw \
+    ;else true \
+      && CC=gcc \
+      && cmake \
+           -D GLFW_BUILD_EXAMPLES=0 \
+           -D GLFW_BUILD_TESTS=0 \
+           -D GLFW_BUILD_DOCS=1 `# TODO make sure Doxygen can be found by make` \
+           -D USE_MSVC_RUNTIME_LIBRARY_DLL=0 \
+           -D GLFW_BUILD_X11=1 \
+           -D GLFW_BUILD_WAYLAND=0 `# TODO enable ` \
+           `# TODO -D CMAKE_TOOLCHAIN_FILE=CMake/x86_64-w64-mingw32.cmake` \
+           CC="${CC:?}" \
+           ../glfw \
+    ;fi \
+  && make clean CC="${CC:?}" \
+  && make -j$(nproc) CC="${CC:?}" \
+  && `# TODO mingw32-make -j$(nproc) ` \
+  && mkdir  build  build/include  build/lib \
+  && cp -art build/include/. include/* \
+  && cp -t build/lib/.  src/libglfw3.a \
+  && VERSION="$(git describe)" \
+  && ARCH=$(${CC:?} -v 2>&1 | egrep '^Target: ' | sed -E 's,^Target: +(.*)$$,\1,') \
+  && (true \
+      && echo "version=${VERSION:?}+${ARCH:?}" \
+      && echo "built=$(date -uIs)" \
+      && git log -n1 | sed -E 's_^_; _g' \
+     ) > build/METADATA.INI \
+  && (cd build && find $(ls -A) -type f -not -name MD5SUM -exec md5sum -b {} + > MD5SUM) \
+  && mkdir dist \
+  && (cd build && tar --owner=0 --group=0 -czf ../dist/glfw-"${VERSION:?}+${ARCH}".tgz $(ls -A)) \
+
+
+- [Compiling GLFW](https://www.glfw.org/docs/latest/compile.html)
