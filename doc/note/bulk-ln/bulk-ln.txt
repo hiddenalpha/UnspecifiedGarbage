@@ -1,0 +1,14 @@
+
+## Fast replicate repo to a shadodw instance
+
+WARN: There's a bug, so 2nd path MUST be longer than 1st to circumvent problems
+      (workaround: "../repo/../repo").
+
+  && ABS_PATH_TO_SRC_INSTANCE= \
+  && ABS_PATH_TO_DST_INSTANCE= \
+  && BULK_LN= \
+  && (cd "${ABS_PATH_TO_SRC_INSTANCE:?}" && find "repo" -type f) \
+         | sed -E 's_^(.*)$_'"${ABS_PATH_TO_SRC_INSTANCE}"'/\1\trepo/../repo/../repo/../repo/../\1_' \
+         | (cd "${ABS_PATH_TO_DST_INSTANCE:?}" && ${BULK_LN:?} --stdin --dry-run) \
+         | head && echo TODO_pDUAAHoVAACmLQAA remove dry-run and this line && false \
+

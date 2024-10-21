@@ -135,3 +135,77 @@ When[CEST];version;LoginScreen[sec];FahrtGewaehlt[sec];
 
 
 
+
+## Constellation ReOrganization
+
+TODO: Lieber IBIS entwrter? oder rob für verkauf?
+
+#### Base
+- redis
+- eagle
+
+#### StinkyImportantForLogin (eddie)
+- slarti
+
+#### StinkyImportantForAFZ (eddie)
+- vannharl  (Doorsensors, HW)
+- kwaltz  (DoorSignal data processing, NO privilege required?)
+
+#### ___ (eddie)
+- drdan  (Locationing. trip suggestions?, HW -> wheeltick)
+- loon  (GPS data io, HW)
+- streetmentioner  (neededBy: deep, zaphod, thor)
+- zaphod  (Fahrplan, Anmeldung Fahrt)
+
+#### ___ (eddie)
+- rob  (ticketverkauf)
+- mown  (ticketverkauf)
+- pobble  (twint, verkauf)
+- captain  (nova config, OependsOn: nova)
+
+#### ___ (eddie)
+- nova
+
+#### ___ (eddie, zusammen mit nova)
+- hafas4nova (stammdaten)
+- hafas-proxy
+
+#### ___ (eddie)
+- babelfish  (IBIS Adapter)
+- heimdall  (IBIS-IP Adapter)
+- poodoo  (CANBus, HW, door, wheeltick)
+
+#### ___ (eddie)
+- guide  (Location. Gates)
+
+#### ___ (eddie)
+- barman  (FIS-GUI)
+- blart  (serial)
+- prosser  (IO-Signal processing, HW???)
+
+#### GiveAShit (eddie)
+- colin  (LSA)
+- vogon  (LSA)
+- benjy  (Puppentheater)
+- bentstick  (Virtual Passenger Counter, TESTING)
+- deep  (FBA, Data collecting)
+- jeltz  (audio)
+- megacamel (HW)
+- trillian  (telefonie)
+- magician  (screenshot)
+- thor
+- minetti
+- zem
+- towel
+- nowwhat
+- zaphake
+- hooli  (FIS TFT)
+
+
+
+
+
+
+
+
+
