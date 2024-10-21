@@ -10,8 +10,8 @@ TODO: windoof build not impl yet.
   && ISWINDOOF=0 \
   && $SUDO apt install --no-install-recommends -y \
          libwayland-dev libxkbcommon-dev xorg-dev git make cmake gcc libc6-dev \
-  && `# Grrml...  $SUDO apt install --fix-broken --no-install-recommends -y ` \
-  && `# Grrml...  $SUDO apt install --no-install-recommends -y ca-certificates ` \
+  && `# Grr...  $SUDO apt install --fix-broken --no-install-recommends -y ` \
+  && `# Grr...  $SUDO apt install --no-install-recommends -y ca-certificates ` \
   && mkdir -p "${WORKDIR:?}/glfw" \
   && cd "${WORKDIR:?}/glfw" \
   && git clone --depth=8 --branch="${GLFW_GIT_TAG:?}" https://github.com/glfw/glfw.git . \
@@ -57,6 +57,13 @@ TODO: windoof build not impl yet.
   && (cd build && find $(ls -A) -type f -not -name MD5SUM -exec md5sum -b {} + > MD5SUM) \
   && mkdir dist \
   && (cd build && tar --owner=0 --group=0 -czf ../dist/glfw-"${VERSION:?}+${ARCH}".tgz $(ls -A)) \
+
+
+## Usage example of result
+
+  && `# Install OpenGL headers` \
+  && $SUDO apt install --no-install-recommends -y libglu1-mesa-dev \
+  && LDFLAGS= -lglfw3 -lGL -lpthread -lm -ldl \
 
 
 - [Compiling GLFW](https://www.glfw.org/docs/latest/compile.html)
