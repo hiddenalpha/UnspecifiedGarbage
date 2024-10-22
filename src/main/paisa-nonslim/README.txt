@@ -136,6 +136,17 @@ When[CEST];version;LoginScreen[sec];FahrtGewaehlt[sec];
 
 
 
+## Jetty tuning
+
+Zu Prüfen:
+
+-Djetty.quickstart.mode=GENERATE
+"start.ini"  --module=quickstart
+autoPreconfigure=true
+
+-Xverify:none
+
+
 ## Constellation ReOrganization
 
 TODO: Lieber IBIS entwrter? oder rob für verkauf?

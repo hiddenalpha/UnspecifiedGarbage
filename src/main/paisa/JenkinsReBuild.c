@@ -140,6 +140,7 @@ static void HttpReq_pushIoTask( void(*task)(void*arg), void*arg, void*cls_ ){
 
 
 static void HttpReq_onError( int retval, void*mentorCls ){
+    (void)retval; (void)mentorCls;
     LOGDBG("[DEBUG] %s(eno=%d)\n", __func__, retval);
 }
 
