@@ -363,6 +363,7 @@ Related:
                 var mth = false ? null
                     : (mthShrt == "Jul") ? "07"
                     : (mthShrt == "Sep") ? "09"
+                    : (mthShrt == "Oct") ? "10"
                     : null;
                 if( !mth ){ throw Error("TODO_1iUCAA1ZAgBALgIA "+ mthShrt); }
                 var builtAt = yr +"-"+ mth +"-"+ day +" "+ hrs +":"+ mins;
