@@ -11,7 +11,23 @@ Windows Registry Editor Version 5.00
 [HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU]
 "NoAutoUpdate"=dword:00000001
 
-curl -sSD- http://10.0.2.9:80/stop-annoying-updates.reg -O
+Disable disk wasting RecoveryPartition service.
+
+Cmd (Admin):  reagentc /disable
+Cmd (Admin):  reagentc /info
+Cmd (Admin):  diskpart
+diskpart>  list disk
+diskpart>  select disk NR
+diskpart>  list partition
+diskpart>  select partition NR
+diskpart>  delete partition override
+diskpart>  list volume
+diskpart>  select volume
+diskpart>  shrink desired=___   (num MB to remove from selected volume)
+diskpart>  extend size=___   (num MB to add to selected volume)
+diskpart>  exit
+
+[Disable Recovery](https://superuser.com/a/1824309/1123359)
 
 Download/Install:
 - "https://learn.microsoft.com/en-us/sysinternals/downloads/sdelete"

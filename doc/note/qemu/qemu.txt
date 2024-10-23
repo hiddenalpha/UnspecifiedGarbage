@@ -6,74 +6,7 @@ Qemu
 
   apt install qemu-system-aarch64 qemu-efi-aarch64
 
-
-## Manage Images
-
-### Create new image
-  qemu-img create -f qcow2 disk.qcow2 16G
-
-### Create new overlay image
-  qemu-img create -o backing_file=base.qcow2,backing_fmt=qcow2 -f qcow2 disk.qcow2
-
-### Convert qcow2 to raw
-  qemu-img convert -f qcow2 -O raw foo.qcow2 foo.img
-
-### Convert raw to qcow2
-  qemu-img convert -f raw -O qcow2 foo.img foo.qcow2
-
-### Create Standalone image based on snapshot image
-  qemu-img convert -O qcow2 derived.qcow2 standalone.qcow2
-
-## Convert to based from standalone
-  qemu-img create -f qcow2 -b old.qcow2 new.qcow2
-  qemu-img rebase -b base.qcow2 new.qcow2
-
-## Create common base for two diverged VMs.
-  (TODO: test and vote "https://unix.stackexchange.com/a/657073/292722")
-  (I have some doubt that this is wrong. See other self-made alternative below)
-  VM1=one.qcow2
-  VM2=two.qcow2
-  NEWBASE=newbase.qcow2
-  mv ${VM1:?} ${NEWBASE:?}
-  qemu-img rebase -b ${NEWBASE:?} ${VM2:?}
-  qemu-img create -b ${NEWBASE:?} ${VM1:?}
-  qemu-img rebase -b ${NEWBASE:?} ${VM2:?}
-
-## Create common base for two diverged VMs.
-  (TODO: Verify)
-  && VM1=one.qcow2 \
-  && VM2=two.qcow2 \
-  && BASE=base.qcow2 \
-  && TMP1=tmp1.qcow2 \
-  && qemu-img convert -O qcow2 "${VM1:?}" "${TMP1:?}" \
-  && qemu-img rebase -b "${TMP1:?}" "${VM2:?}" \
-  && mv "${TMP1:?}" "${BASE:?}" \
-  && qemu-img rebase -u -b "${BASE:?}" "${VM2:?}" \
-  && qemu-img create -f qcow2 -b "${BASE:?}" "${VM1:?}" \
-
-## Shrink/compact img
-
-HINT: In case of based images, need rebase afterwards because convert
-      makes them standalone.
-
-Normal systems:
-  qemu-img convert -O qcow2 input.qcow2 output.qcow2
-  qemu-img rebase -b base.qcow2 output.qcow2
-
-Windoof:
-  Win -> "Disk Cleanup" -> "Clean System (Admin)" -> "More" -> "Prog+Features" -> uninst bloat.
-  Win -> "Disk Cleanup" -> "Clean System (Admin)" -> Tick many -> Hit "OK".
-  Defrag (maybe onboard tools are enough?)
-  sdelete -z C:
-  qemu-img convert -O qcow2 input.qcow output.qcow2
-  qemu-img rebase -b base.qcow2 output.qcow2
-
-## Shrink snapshot layer (TODO what is this for?)
-
-  qemu-img convert -O qcow2 snapLayer.qcow2 tmpFullClone.qcow2
-  qemu-img create -f qcow2 -b tmpFullClone.qcow2 diff.qcow2
-  qemu-img rebase -b base.qcow2 tmpDiff.qcow2
-  mv tmpDiff.qcow2 snapLayer.qcow2
+  ^^-- TODO: add package here which contains qemu-img command.
 
 
 ## Example Params (Usage: CopyPaste, then delege what is not needed)
@@ -117,17 +50,6 @@ qemu-system-x86_64 \
 
 [src udev rules](https://mirrors.edge.kernel.org/pub/linux/utils/kernel/hotplug/udev/udev.html)
 [TODO mcast broken](https://serverfault.com/q/1002977/673216)
-
-
-## Inspect qcow2 by host mounting it
-
-  $SUDO modprobe nbd
-  $SUDO qemu-nbd -c /dev/nbd__ /path/to/my.qcow2
-  echo 'p' | $SUDO fdisk /dev/nbd__
-  $SUDO mount -o ro /dev/nbd__p__ /mnt/q
-  $SUDO umount /mnt/q  `# cleanup`
-  $SUDO qemu-nbd -d /dev/nbd__  `# cleanup`
-  $SUDO rmmod nbd  `# cleanup`
 
 
 ### Example manual adapter setup (inside VM) for socket mcast network:
