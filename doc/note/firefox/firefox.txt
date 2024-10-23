@@ -3,6 +3,11 @@ Firefox
 ================
 
 
+## Launch isolated instance with plugins disabled
+
+  firefox -no-remote -safe-mode -P gagaProfile
+
+
 ## Install plugin quickNdirty until restart
 
 - Visit "about:debugging"
