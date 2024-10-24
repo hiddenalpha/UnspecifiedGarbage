@@ -130,8 +130,23 @@ When[CEST];version;LoginScreen[sec];FahrtGewaehlt[sec];
 2024-09-30 14:38;legacy;180;206;Logout spääät.
 2024-09-30 15:10;legacy;187;218;
 2024-09-30 16:31;noslim;247;278;
+
+2024-10-24 15:12;constl2;130;__;Ungültig, weil falsches inst dir genützt
+2024-10-24 16:41;constl;__;__;Abbruch, wegen Tel vom Mech
+2024-10-24 16:47;constl;122;__;"Karte unbekannt"
+2024-__-__ __:__;__;__;__;
 2024-__-__ __:__;__;__;__;
 
+
+
+
+## Constl commands
+
+ && NOW="$(date -u +%Y%m%d-%H%M%S)" \
+ && find conf/nova logs redis eagle-storage-file/eagle/deployment/upgrade/v1/installation/installstatus -type f -delete \
+ && tar -c conf eagle-storage-file/eagle/deployment/upgrade/v1/installation logs preflux/isaVersion prefluxer-*.sh redis/storage isa-launch-*.txt repo \
+    | gzip > instance-Constl-${NOW:?}.tgz \
+ && md5sum -b instance-Constl-${NOW:?}.tgz >> instance-Constl-${NOW:?}.md5
 
 
 
@@ -140,7 +155,9 @@ When[CEST];version;LoginScreen[sec];FahrtGewaehlt[sec];
 
 Zu Prüfen:
 
--Djetty.quickstart.mode=GENERATE
+  java --add-modules=quickstart
+  javav -Djetty.quickstart.mode=GENERATE
+  javav -Djetty.quickstart.mode=QUICKSTART
 "start.ini"  --module=quickstart
 autoPreconfigure=true
 
