@@ -134,7 +134,10 @@ When[CEST];version;LoginScreen[sec];FahrtGewaehlt[sec];
 2024-10-24 15:12;constl2;130;__;Ungültig, weil falsches inst dir genützt
 2024-10-24 16:41;constl;__;__;Abbruch, wegen Tel vom Mech
 2024-10-24 16:47;constl;122;__;"Karte unbekannt"
-2024-__-__ __:__;__;__;__;
+
+2024-10-28 14:22;constl3;189;304;"zuerst Karte unbekannt, dann gings."
+2024-10-28 14:40;constl3;184;268;"huiii :)"
+2024-10-28 15:04;constl3;180;261;
 2024-__-__ __:__;__;__;__;
 
 
