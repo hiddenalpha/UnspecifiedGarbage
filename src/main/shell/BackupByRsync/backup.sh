@@ -114,15 +114,13 @@ run () {
         --exclude="/vm-qemu" \
         --exclude="/vm-share" \
         --exclude="/vmshare" \
-        --exclude="cee-misc-lib/external" \
-        --exclude="cee-misc-lib/tmp" \
         "${DIR_FROM:?}" \
         "${BACKUP_PATH:?}/${DST_PREFIX}" \
         ;
-    (cd "${DIR_TO:?}" &&
+    {cd "${DIR_TO:?}" &&
         rm -f latest &&
         ln --symbolic "${NOW_SHORT:?}" latest
-    )
+    }
 }
 
 

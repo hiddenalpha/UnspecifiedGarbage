@@ -27,6 +27,10 @@ diskpart>  shrink desired=___   (num MB to remove from selected volume)
 diskpart>  extend size=___   (num MB to add to selected volume)
 diskpart>  exit
 
+Disable Hibernate.
+
+Cmd (Admin):  powercfg /h off
+
 [Disable Recovery](https://superuser.com/a/1824309/1123359)
 
 Download/Install:
