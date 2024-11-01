@@ -118,7 +118,8 @@ Links (Aka argument amplifiers)
 ## requirements, experts, business:
 - "https://www.youtube.com/watch?v=BKorP55Aqvg"
 
-## technical dept (technische schulden)
+## technical debt (technische schulden)
+- [give a shit on cleanup, preflux](https://gitit.post.ch/projects/ISA/repos/preflux/pull-requests/831/overview?commentId=429219)
 - "https://www.youtube.com/watch?v=mSuUPsbqmQ8"
 
 ## Why Cant Programmers Program?
