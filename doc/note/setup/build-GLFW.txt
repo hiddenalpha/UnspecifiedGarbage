@@ -8,8 +8,13 @@ TODO: windoof build not impl yet.
   && WORKDIR=~/work \
   && GLFW_GIT_TAG=3.4 \
   && ISWINDOOF=0 \
-  && $SUDO apt install --no-install-recommends -y \
-         libwayland-dev libxkbcommon-dev xorg-dev git make cmake gcc libc6-dev \
+  && if test -n "${ISWINDOOF}" -a "${ISWINDOOF}" != 0 ;then true \
+      && $SUDO apk add \
+             git make cmake libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev \
+    ;else true \
+      && $SUDO apt install --no-install-recommends -y \
+             git gcc make cmake libwayland-dev libxkbcommon-dev xorg-dev libc6-dev \
+    ;fi \
   && `# Grr...  $SUDO apt install --fix-broken --no-install-recommends -y ` \
   && `# Grr...  $SUDO apt install --no-install-recommends -y ca-certificates ` \
   && mkdir -p "${WORKDIR:?}/glfw" \
@@ -18,15 +23,13 @@ TODO: windoof build not impl yet.
   && rm -rf build \
   && if test -n "${CC}" ;then echo "environ.CC is already set" && false ;fi \
   && if test -n "${ISWINDOOF}" -a "${ISWINDOOF}" != 0 ;then true \
-      && echo "[WARN ] windoof build not verified yet" && sleep 5 \
       && CC=x86_64-w64-mingw32-gcc \
       && cmake \
            -D GLFW_BUILD_EXAMPLES=0 \
            -D GLFW_BUILD_TESTS=0 \
            -D GLFW_BUILD_DOCS=1 `# TODO make sure Doxygen can be found by make` \
            -D USE_MSVC_RUNTIME_LIBRARY_DLL=0 \
-           `# TODO -D CMAKE_TOOLCHAIN_FILE=CMake/x86_64-w64-mingw32.cmake` \
-           CC="${CC:?}" \
+           -D CMAKE_TOOLCHAIN_FILE=CMake/x86_64-w64-mingw32.cmake \
            ../glfw \
     ;else true \
       && CC=gcc \
@@ -37,13 +40,11 @@ TODO: windoof build not impl yet.
            -D USE_MSVC_RUNTIME_LIBRARY_DLL=0 \
            -D GLFW_BUILD_X11=1 \
            -D GLFW_BUILD_WAYLAND=0 `# TODO enable ` \
-           `# TODO -D CMAKE_TOOLCHAIN_FILE=CMake/x86_64-w64-mingw32.cmake` \
            CC="${CC:?}" \
            ../glfw \
     ;fi \
   && make clean CC="${CC:?}" \
   && make -j$(nproc) CC="${CC:?}" \
-  && `# TODO mingw32-make -j$(nproc) ` \
   && mkdir  build  build/include  build/lib \
   && cp -art build/include/. include/* \
   && cp -t build/lib/.  src/libglfw3.a \
