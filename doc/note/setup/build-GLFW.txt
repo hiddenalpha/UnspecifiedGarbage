@@ -2,8 +2,6 @@
 Build GLFW
 ================
 
-TODO: windoof build not impl yet.
-
   && SUDO=sudo \
   && WORKDIR=~/work \
   && GLFW_GIT_TAG=3.4 \
@@ -28,7 +26,8 @@ TODO: windoof build not impl yet.
            -D GLFW_BUILD_EXAMPLES=0 \
            -D GLFW_BUILD_TESTS=0 \
            -D GLFW_BUILD_DOCS=1 `# TODO make sure Doxygen can be found by make` \
-           -D USE_MSVC_RUNTIME_LIBRARY_DLL=0 \
+           -D GLFW_BUILD_WIN32=1 \
+           -D USE_MSVC_RUNTIME_LIBRARY_DLL=1 `# TODO could we disable this? ` \
            -D CMAKE_TOOLCHAIN_FILE=CMake/x86_64-w64-mingw32.cmake \
            ../glfw \
     ;else true \
@@ -67,4 +66,23 @@ TODO: windoof build not impl yet.
   && LDFLAGS= -lglfw3 -lGL -lpthread -lm -ldl \
 
 
+## How to fix OpenGL inside windoof VMs
+
+VMs usually are not made for hardware acceleration in mind. But for
+testing of some simpler OpenGL apps, it is still desirable to have a
+working OpenGL API available. Be aware that this is a SOFTWARE
+implementation. So it won't make anything "faster".
+
+Download
+
+https://github.com/pal1000/mesa-dist-win/releases
+
+. unpack files (inside desired VM). Run "systemwidedeploy.cmd" and make
+your choice. For me the 1st option (OpenGL core) works perfectly fine.
+
+
+## Refs
+
 - [Compiling GLFW](https://www.glfw.org/docs/latest/compile.html)
+- [OpenGL inside VM](https://thomas.inf3.ch/2019-06-12-opengl-kvm-mesa3d/index.html)
+
