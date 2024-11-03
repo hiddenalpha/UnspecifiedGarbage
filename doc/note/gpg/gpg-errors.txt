@@ -1,0 +1,24 @@
+
+
+
+## eMsg: Inappropriate ioctl for device
+
+Pinentry assumes stdin is a TTY. If it is not (eg when pipng data in) it
+will fail with this error. Make sure key is loaded in agent, then it
+works. Or alternatively do NOT use stdin to pass in the file, but pass
+as path via arg instead.
+
+- [BugReport](https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=847380)
+
+
+
+
+## Receiver Key Expired
+
+1st prio -> REQUEST A VALID KEY FROM THE RECEIVER!
+
+Workaround for stubborn receivers:
+  gpg --faked-system-time 20241231T000000
+
+
+
