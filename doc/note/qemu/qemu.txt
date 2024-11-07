@@ -26,6 +26,8 @@ qemu-system-x86_64 \
     -netdev user,id=n0,ipv6=off,hostfwd=tcp:127.0.0.1:${SSH_PORT:?}-:22 -device e1000,netdev=n0 \
     `# socket mcast shared network adapter` \
     -netdev socket,id=n1,mcast=230.0.0.1:1234 -device e1000,netdev=n1 \
+    `# smb shared dir (requires smb to be installed on host)` \
+    -netdev user,id=n0,smb=/host/path/to/share -device e1000,netdev=n1 \
     `# USB pass-through by port or device. Use 'lsusb -t' or 'lsusb' to find IDs` \
     `# qemu needs permission: 'chmod o+w /dev/bus/usb/002/035'` \
     `# Or via "/etc/udev/rules.d/foo.rule": SUBSYSTEM=="usb", ATTR{idVendor}=="HEX1", ATTR{idProduct}=="HEX2", ATTR{serial}=="1234", MODE="0666"` \
