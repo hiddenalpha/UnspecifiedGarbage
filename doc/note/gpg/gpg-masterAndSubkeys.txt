@@ -1,0 +1,96 @@
+
+Manage GnuPG Master And Subkeys
+===============================
+
+
+## Prepare for a master key creation
+
+- Choose a storage medium which will keep the master key and will be
+  kept VERY SAVE somewhere (also think for some redundancy). WARN: If
+  you choose a medium which probably could fail, you will be screwed up
+  in a later point in time!
+- Choose how (or where?) to keep master passphrase.
+
+
+## Initialize a new master key
+
+  export GNUPGHOME=/mnt/your/master/.gnupg
+  gpg --full-gen-key
+
+
+## Add additional identities (as needed)
+
+  export GNUPGHOME=/mnt/your/master/.gnupg
+  gpg --edit-key foo@example.com
+  gpg> adduid
+  gpg> save
+
+
+## Create keys for some daily-use devices
+
+  export GNUPGHOME=/mnt/your/master/.gnupg
+  gpg --edit-key foo@example.com
+  # Add an encryption and a sign key
+  gpg> addkey    (then choose "encryp only")
+  gpg> addkey    (then choose "sign only")
+
+
+## Export subkeys for use on a daily-use device
+
+  # From now work with a temporary copy.
+  mkdir /mnt/your/tmp/.gnupg
+  (cd /mnt/your/master/.gnupg && tar c $(ls -A)) | (cd /mnt/your/tmp/.gnupg && tar x)
+  export GNUPGHOME=/mnt/your/tmp/.gnupg
+  # Print list of what we have
+  gpg --edit-key foo@example.com quit
+  # I suggest to use a different passphrase than the master key has.
+  # (HINT: just ignore error about missing private key. it works anyway)
+  gpg --edit-key foo@example.com passwd quit
+  # Choose one encrypt and one sign key and replace F00 and BA5
+  # below with them.
+  gpg --export-secret-subkeys F00! BA5! > keys-for-device
+
+
+## Import prepared subkeys on daily-use device
+
+  gpg --import keys-for-device
+  gpg --edit-key foo@example.com
+  gpg> trust
+  gpg> save
+
+
+## Sign a foreign key to express to the world that we trust it
+
+  gpg --sign-key foreignUser@example.com
+
+
+## Expand detached subkey expiry
+
+PS: Why is this so fu***** damn complicated! Anyone still wondering why this
+    system is not used by most humans?!? Please STOP producing so uselessly
+    complicated software!
+
+  cd "${WORKDIR:?}"
+  mkdir master
+  (cd "${OFFHOME:?}/.gnupg" && tar c $(ls -A)) | (cd master && tar x)
+  export GNUPGHOME="${WORKDIR:?}/master"
+  gpg --list-secret-keys --with-keygrip --keyid-format=long --with-fingerprint --with-subkey-fingerprint --list-options show-unusable-subkeys
+  gpg --edit-key SEC_KEY
+    expire
+    save
+  gpg --edit-key SSB_KEY
+    key 1
+    key 2
+    expire
+    save
+  NOW=$(date -u +%Y%m%d-%H%MZ)
+  gpg --export-secret-subkeys F00! BA5! > subkey-${NOW:?}.sec.gpg
+  gpg --export F00! BA5! > subkey-${NOW:?}.pub.gpg
+  gpg --list-packets subkey-${NOW:?}.sec.gpg
+  gpg --list-packets subkey-${NOW:?}.pub.gpg
+  tar --owner=0 --group=0 -c subkey-${NOW:?}.*.gpg | (cd "${OFFHOME:?}" && sudo tar x)
+  md5sum -b subkey-${NOW:?}.*.gpg | sudo tee -a "${OFFHOME:?}/MD5SUM"
+  echo "After import, you'd likely want to change phrase away from master"
+  gpg --edit-key foo@example.com passwd quit
+
+

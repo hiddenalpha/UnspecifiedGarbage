@@ -32,9 +32,11 @@ Configure
 Setup
 
   && `# 20240715: Removed: gcc-mingw-w64-x86-64-win32 gcc libc6-dev` \
-  && $SUDO apt install -y --no-install-recommends net-tools vim curl nfs-common htop ncat \
+  && $SUDO apt install -y --no-install-recommends net-tools vim curl nfs-common htop ncat git \
+          tmux \
           kubernetes-client awscli \
           openjdk-17-jre-headless maven redis-server \
+          podman \
   && $SUDO /etc/init.d/redis-server stop \
   && $SUDO systemctl disable redis-server \
   && printf '# TODO Put your redis config here\n' | $SUDO tee /etc/redis/redis.conf >/dev/null \

@@ -10,13 +10,14 @@ MustHave in: .
   && PR_REMOTE=upstream \
   && PR_BRANCH= \
   && LOCL_BRANCH="$(git branch --show-current)" \
+  && GIT_PUSH_ARGS= \
 
   && if test -n "$(git status --porcelain)" ;then echo "ERROR: Git worktree not clean"; false ;fi \
   && git checkout --detach \
   && mvn spotless:apply \
   && git add -- . \
   && git commit -m "${GIT_COMMIT_MSG:?}" \
-  && git push "${PR_REMOTE:?}" HEAD:"${PR_BRANCH:?}" \
+  && git push ${GIT_PUSH_ARGS?} "${PR_REMOTE:?}" HEAD:"${PR_BRANCH:?}" \
   && if test -n "${LOCL_BRANCH?}" ;then true \
       && git checkout "${LOCL_BRANCH:?}" \
     ;else true \

@@ -1,0 +1,14 @@
+
+Tmux - Terminal Multilexer
+==========================
+
+
+TODO: Try if this fixes my ctrl-space-not-working-in-copy-mode issue:
+
+"~/.tmux.conf"
++-----------------------------------------------------------------------
+| setw -g mode-keys vi
+| bind-key -T copy-mode-vi y send-keys -X copy-selection
++-----------------------------------------------------------------------
+
+

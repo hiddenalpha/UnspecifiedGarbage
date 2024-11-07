@@ -50,8 +50,9 @@ Browse dead container:
   //TODO:  docker exec --entrypoint /bin/bash CONTAINER args for bash
   //WRONG: docker run --entrypoint /bin/bash CONTAINER args for bash
 
-Export image:
+Export/import/share image:
   docker save PATH/NAME:VERSION > IMAGE.tar
+  podman load < IMAGE.tar
 
 Side-Mount tcpdump into container where it does not exist
   docker run --rm -ti --network container:"${CNTNR_TO_DUMP:?}" -v "/tmp/foo:/work" "${IMG_WITH_TCPDUMP_EG_BASEIMG:?}" bash

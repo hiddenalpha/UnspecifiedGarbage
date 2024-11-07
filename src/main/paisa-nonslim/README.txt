@@ -138,18 +138,63 @@ When[CEST];version;LoginScreen[sec];FahrtGewaehlt[sec];
 2024-10-28 14:22;constl3;189;304;"zuerst Karte unbekannt, dann gings."
 2024-10-28 14:40;constl3;184;268;"huiii :)"
 2024-10-28 15:04;constl3;180;261;
+
+2024-11-07 11:07;constl4;194;254;mit zaphod wait hack
+2024-11-07 11:14;constl4;193;253;mit zaphod wait hack
+2024-11-07 11:22;constl4;193;268;mit zaphod wait hack
 2024-__-__ __:__;__;__;__;
 
 
 
 
-## Constl commands
-
+ && `# Bkup j21 instance as tar ` \
  && NOW="$(date -u +%Y%m%d-%H%M%S)" \
  && find conf/nova logs redis eagle-storage-file/eagle/deployment/upgrade/v1/installation/installstatus -type f -delete \
  && tar -c conf eagle-storage-file/eagle/deployment/upgrade/v1/installation logs preflux/isaVersion prefluxer-*.sh redis/storage isa-launch-*.txt repo \
     | gzip > instance-Constl-${NOW:?}.tgz \
  && md5sum -b instance-Constl-${NOW:?}.tgz >> instance-Constl-${NOW:?}.md5
+ && echo E $? \
+
+
+ && `# Restore j21 instance from tar ` \
+ && BKUPTAR= \
+ && PREFLUXER="prefluxer-SDCISA-17701-202241022-1459-j21-ConstlReorg3.sh" \
+ && tar -f "${BKUPTAR:?}" -x -- $(tar -f "${BKUPTAR:?}" -t|sed -E 's_^([^/]+)/.*$_\1_'|grep -v repo|uniq) \
+ && tar -f "${BKUPTAR:?}" --skip-old-files -x -- repo \
+ && for E in stop rm create ;do "./${PREFLUXER:?}" $E ;done \
+ && echo E $? \
+
+
+ && `# Copy zaphod/start.sh out to host tmp file ` \
+ && sudo podman run -ti --rm docker.tools.post.ch/paisa/zaphod:00.02.46.16 /bin/bash -c 'cat start.sh' > "/tmp/zaphodeli/start.sh" \
+ && echo E $? \
+
+
+
+
+sudo podman run \
+    -t -i \
+    --env PAISA_SERVER_HOST=eagle \
+    --env PAISA_SERVER_PORT=7012 \
+    --env PAISA_SERVICE_PORT=8080 \
+    --env PAISA_VERSION=SDCISA-17701-202241022-1459-j21-ConstlReorg3 \
+    --env "PAISA_VERSION_NAME=SDCISA-17701 202241022-1459 ConstlReorg3 WithZaphod NoBlart" \
+    --dns-search h7af525df02c80a12acc4b355427ba657c300f863 \
+    --dns-search isa.localdomain \
+    --dns-search pnet.ch \
+    --name gaga \
+    --group-add 990 \
+    --net isa-docker \
+    --volume /opt/hafas/prod/fpd \
+    --volume /var/opt/hafas/run \
+    --volume /data/instances/default/logs/zaphod:/usr/local/jetty/logs:z \
+    --volume /data/instances/default/artifacts-SDCISA-17701-202241022-1459-j21-ConstlReorg3/init:/init:ro \
+    --volume /data/instances/default/artifacts-SDCISA-17701-202241022-1459-j21-ConstlReorg3/data-fpd-36.24.28.02:/masterdata:ro \
+    --volume /data/instances/default/puppetconfig_version:/mnt/data/puppetconfig_version:ro \
+    docker.tools.post.ch/paisa/zaphod:00.02.46.16 \
+    /bin/bash \
+
+
 
 
 
@@ -165,75 +210,6 @@ Zu Prüfen:
 autoPreconfigure=true
 
 -Xverify:none
-
-
-## Constellation ReOrganization
-
-TODO: Lieber IBIS entwrter? oder rob für verkauf?
-
-#### Base
-- redis
-- eagle
-
-#### StinkyImportantForLogin (eddie)
-- slarti
-
-#### StinkyImportantForAFZ (eddie)
-- vannharl  (Doorsensors, HW)
-- kwaltz  (DoorSignal data processing, NO privilege required?)
-
-#### ___ (eddie)
-- drdan  (Locationing. trip suggestions?, HW -> wheeltick)
-- loon  (GPS data io, HW)
-- streetmentioner  (neededBy: deep, zaphod, thor)
-- zaphod  (Fahrplan, Anmeldung Fahrt)
-
-#### ___ (eddie)
-- rob  (ticketverkauf)
-- mown  (ticketverkauf)
-- pobble  (twint, verkauf)
-- captain  (nova config, OependsOn: nova)
-
-#### ___ (eddie)
-- nova
-
-#### ___ (eddie, zusammen mit nova)
-- hafas4nova (stammdaten)
-- hafas-proxy
-
-#### ___ (eddie)
-- babelfish  (IBIS Adapter)
-- heimdall  (IBIS-IP Adapter)
-- poodoo  (CANBus, HW, door, wheeltick)
-
-#### ___ (eddie)
-- guide  (Location. Gates)
-
-#### ___ (eddie)
-- barman  (FIS-GUI)
-- blart  (serial)
-- prosser  (IO-Signal processing, HW???)
-
-#### GiveAShit (eddie)
-- colin  (LSA)
-- vogon  (LSA)
-- benjy  (Puppentheater)
-- bentstick  (Virtual Passenger Counter, TESTING)
-- deep  (FBA, Data collecting)
-- jeltz  (audio)
-- megacamel (HW)
-- trillian  (telefonie)
-- magician  (screenshot)
-- thor
-- minetti
-- zem
-- towel
-- nowwhat
-- zaphake
-- hooli  (FIS TFT)
-
-
-
 
 
 
