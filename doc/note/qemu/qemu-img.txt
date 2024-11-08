@@ -40,6 +40,7 @@ HINT: In case of based images, need rebase afterwards because convert
       makes them standalone.
 
 Normal systems:
+  dd if=/dev/zero of=/tmp/deleteme
   qemu-img convert -O qcow2 input.qcow2 output.qcow2
   qemu-img rebase -b base.qcow2 output.qcow2
 

@@ -36,7 +36,10 @@ qemu-system-x86_64 \
     `# Choose ONE of those outputs (or none for defaut)` \
     -monitor stdio -serial stdio `# coose ONE` \
     -display none \
-    -nographic -serial mon:stdio `# HINT remove other monitor arg` \
+    `# Access via serial console (try 2) ` \
+    -display none -serial stdio -monitor telnet:127.0.0.1:${TELNET_PORT:?} \
+    -append 'console=ttyS0' -kernel bzImage \
+    `#  ` \
     -device VGA \
     -display sdl,grab-mod=rctrl \
     -display gtk,show-menubar=on \
