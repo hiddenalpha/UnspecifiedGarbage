@@ -1,0 +1,29 @@
+
+VMized Redis Server
+===================
+
+
+
+## Step 1
+
+Install a bse system. While creating this script, I used
+"devuan_daedalus_5.0.1_amd64_netinstall.iso" (md5:0c41745574898e210d80a4ada330bbd8).
+
+
+
+## Step 2
+
+  && INSTALL_REDIS_CLIENT=0 \
+  && SUDO=sudo \
+  \
+  && $SUDO apt install --no-install-recommends -y redis-server \
+        $(test "${INSTALL_REDIS_CLIENT:?}" -ne 0 && echo redis-client || true) \
+  && printf 'DONE :)\n' \
+
+
+
+## Step 3
+
+Fine-tune config in "/etc/redis/redis.conf". Example see "../redis/redis.txt".
+
+

@@ -30,9 +30,24 @@ KEYS redisques:queues:vehicleoperation-events-for-vehicle-*
 redis-cli --scan --pattern schedulers:* | xargs redis-cli del
 
 
-## Quick-n-dirty config
+## Quick-n-dirty example config
 
-dir /var/tmp/redis
+bind 127.0.0.1
+port 6379
+dir /var/lib/redis
+protected-mode yes
+loglevel notice
+logfile /var/log/redis/redis-server.log
 save ""
+dbfilename "dump.rdb"
 appendonly no
+appendfilename "appendonly.aof"
+appenddirname "appendonlydir"
+
+
+
+## Setup Redis
+
+See "../setup/setup-redis.txt".
+
 
