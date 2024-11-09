@@ -2,20 +2,19 @@
 Use qemu to host dockerimages.
 ==============================
 
+TODO: How can one interact with the running container? (eg get a shell? connect to port?)
 TODO: Write helpers to pull/convert docker image to qcow2
 TODO: Impl host shared dirs. Should be possible using 9pfs (see link).
 
-For "virt-make-fs" install "guestfs-tools".
-
 WARN: This is work-in-progress. It is NOT really usable yet.
 
-true \
   && LINUX_URL=https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.7.4.tar.xz \
   && SUDO=sudo \
   && CACHEDIR=/var/tmp \
   && WORKDIR=/home/$USER/work \
   && LINUX_TXZ=$(basename "${LINUX_URL:?}") \
-  && $SUDO apt install -y --no-install-recommends curl make gcc bc flex bison libc-dev libelf-dev libssl-dev \
+  && $SUDO apt install -y --no-install-recommends curl make gcc bc flex bison libc-dev libelf-dev \
+        libssl-dev \
   && cd "${CACHEDIR:?}" \
   && curl -L "${LINUX_URL:?}" -O \
   && mkdir -p "${WORKDIR:?}" \
@@ -74,56 +73,75 @@ true \
   && mkdir "${WORKDIR:?}/myinit" \
   && cd "${WORKDIR:?}/myinit" \
   && base64 -d <<EOF_jXxQDgrLcOFqcSrh | gunzip > "./myinit.c" &&
-H4sIABBA+GYAA41UTY/TMBC951eMgqiSqGzawwqJbpEQFIG0tBzKCRDKOk5ibWIHj1PRRf3vjJ2PZtsK1Yf4+WXmzfOn90JIVjY
-phzuutVQ3xVvvSKFJxTlViofnXCMF0Sdxe4wr1UhzTqNJ/sN6FggGrEg0RExJNKAavZI7oZX8/hOW8NcDav7Xd9tPy7hBHZeKJW
-X8IOSb0RCH8QBayn0s9KdOaP3t/n7qHRZD6Z0SKTjzv1jB2WPgwpwh5ydCzabjcYpmehqT4XZf8ymUSubQSBS55KQqzccyxzba1
-Wmjid/UBr2wmxwa3TAD1hAImamFY0UWOCqwBWFif4SwXMKrOUwm4DbQDlfrzWq9hbCVsq3WQpos8N9rTjMkQy/xB00fSCdcDFFW
-vnpMhW71Z69vb0O4g9lYyalRJaVHapTCmVF6D1kiSp76I1Hb+B9hgvmIPHjHb+/ti13wi96cL/s3cAvvzPXL2y8odCt4Zrg36+Q
-v+Hvm7eAdPI/sQJUIGYBFic67zY4iwrtee3w+fKkkJ8t+XGvFLOj6GcG+2OWElO9ism0xwRZdl1X9bnjjhgO6LhGLymJT1dl11e
-h62p666xPiDGOWa9XUlhnQOBe5KRQamVQ88CvBtNpZYyieuMqOTNiFx9F282EDnyFvOCKYQiBgwcsSkGlRG9rJmk4hkaridtswi
-r12hzkrqYS9+DR553AE7UsQCynMjSPcazB6cbrq/TFakdjJKdLcNFrCfGEPzz+XOnXTUQUAAA==
+H4sIAK3ALmcAA41UXW/TMBR9z6+4KmJKq7BkExMbXZAQFA2prDyUJ0Aoc5zEWmIHXydaQf3vXDtN
+lrUTqh+S4+Prc8/1l+e9EJKVTcrhmmst1WnxbkShScUhVYq7p1wjBdF7cRsMK9VIc0ijSf7DehYI
+BqxINMyYkmhANXohW6GV/P4TYvjrAbXJ1/frmzhsUIelYkkZ3gn5dtTFoT+AjnIfCyeBE7r9tlwG
+3nY+pG6VSMGZ/8UKzu59F+YMOT8z1CwY91M0wX5MhutNzQMolcyhkShyyUlVmk9ljl20y9NFE7+q
+DXrTXXFodMMMWEMgZKbmjhWZ7yjfJoQTOzCFOIZXZ3ByAm4DbXdxu1rcrmHaSdlWayFN5k8+aE4V
+kqGX+IPKB9KZzocoK1/dp0J3+tGbi4spXEM0VnJqlEnpkRpN4cwovYEsESVPJyNR2/iDMP7ZiNx6
+j9/e2xe74M96c77sqO8W3pnrl7dfUNit4IHh3qyTf8bfE29bb+t5ZAeqREgfLEp0vtvs2Yxw22uP
+z8dEKsnJ8iSstWIW7P4RwT7Z8xNS3oZk22KCHTpuVvW74Y3rDui4iVhUFpuqzo7LRtfT/ul3/IQw
+w5DlWjW1ZQY0nhvOYL36uAIly00nRDsNSUtblNyVHGbhYYpq4/ZxneQukbvUtDU8lLmQD2FhqtIO
+XPW5jE4kxvR0GKGClmsUSsZX9XkURafLoELxh8cX56/PLy+jqPeF3BQKjUwqTgkF06q1C2ZjVfbI
+TIcyXBWfIW84IphCIGDByxKQaVEbOmE13Q4iVcXtccJdYfyBs5JS2AeJqnAFjaB9oUIhhTl1hHul
+Ri/hLnt/vBcktne6NTeNlnA2t4fa+wdr/jSb6wUAAA==
 EOF_jXxQDgrLcOFqcSrh
 true \
   && CFLAGS="-Wall -Werror -pedantic -static" `# TODO maybe add "-Os -s"` \
   && gcc -o myinit myinit.c ${CFLAGS?}\
-  && echo "[ERROR] TODO Need more steps here" && false \
+  && echo "[ERROR] TODO_vyvAiHPF6XIcJJdM Need more steps here" && false \
   && echo _script_is_DONE_kx1n2kgNWRdpBYTP_ \
+
 
 
 ## Example docker image transformation
 
+NOTE: If "virt-make-fs" missing or fails, install "guestfs-tools  udev".
+NOTE: SystemDevil-Free systems maybe need pkg
+      "debian-podman-config-override" for podman to work properly.
+NOTE: On build problems use: "export LIBGUESTFS_DEBUG=1 LIBGUESTFS_TRACE=1".
+NOTE: Symptom: "invalid file system type on '/sys/fs/cgroup'"
+      Fix: "sudo mount -t cgroup2 none /sys/fs/cgroup".
+
+  && DOCKER="sudo podman" \
   && rm -rf "${WORKDIR:?}/dockerbuild" \
   && mkdir "${WORKDIR:?}/dockerbuild" \
   && cd "${WORKDIR:?}/dockerbuild" \
   && cp "${WORKDIR:?}/myinit/myinit" init \
   && base64 -d <<EOF_BSgBW2SBUEB7zcJv | gzip -d > "Dockerfile" &&
-H4sIANRD+GYAA21R226CQBR89ytO0sQXgwp4ow9NEMSqWMAbhfTBBVZZxQXZ9Ub68VUTU5v0PE1mziRn5hgTawx0Tej5VaxKYrV
-emsw/gOcHDF8lgHIZUMbhkEWI/2EIZRwlCQgXICwUojjMhDAhmHJYvsDM0i3I8S49YuAxYcuHFYdxCu8NNlDHkV7pe6p6cS3m5N
-q4OzEUuTASp+WjTU2dT+ph3nNbmtY4Y1fSlNF8a0p6Td53T3xtU3kXfB6doSwhJnZ9b4gJ0Uwf9WbG0JWs9YDGA8VFrJ+eOr6xM
-ubGgm3OPV/zx87Q5KmceefCVhqrU0WebgqdheYFL+xINoP+NvBEEWUdBavtjjPjulW3TbMYRHyUHY9Jvu/NptfDVfUe6j7fECCG
-Ww0QoiteFyS7oTeosYDQGqGEV1n86CCMd2kE7WbzfznfgbB6kp5bDxOM6IO4PamkWbYH97VfR+kHD2L339UBAAA=
+H4sIALbJLmcAA21RUY+aQBh891ds0uTuodEFEal9aLKigB4eqEdxTR8OWZBVdhdYONDcj+/VxPSa
+dF6+ZOabh5mxNt4KEBGfk2pABeRHyrvv6mCoDpTeJngGddUk4FcPgIcHEBU1aAoS1f8wlMs6ynPQ
+vwAq4z7J4qIf5zThNXj9Al68mQeqhIm3BNQZla93axJnAjw6I7lA7mzpshghPVyvAjhbTbdzAr8+
+rXVnkdsHYaKGbmemUv5E4XKKtQSPas1O3Wt7uBia7XYLXUlkQ7SGGXqJoZcYVlkc4/3IH4YzNwym
+T/NYMNyeL23uURJ2Idw3gaVhXy2lJXiEynAsOs7XTK3P1uZk4hZuptt0qtgWTE/SdzF+YTaGBg+r
+8c5Yna6MPYt033SLxa6bQGFV22vx5qvUyCt1B80GBZHmxDibDBFx9dCijggglWRie/mOUuop6TfH
+s+ZDituqM13n7M8nyzxbKdZHjCtqCZuYa4bWCD3eKrvh/RDJZDwCffJ+vNLi44IfAMoD5ZByWg9k
+dq83zpggwND1/8sVA/30k/R50DhPIn4n/uzfMz0fg9vbX0fvN+lZ6jE6AgAA
 EOF_BSgBW2SBUEB7zcJv
 true \
-  && DOCKER_BUILDKIT=1 $SUDO docker build -f ./Dockerfile --output "type=tar,dest=dockerimage.tar" . \
+  && DOCKER_BUILDKIT=1 $DOCKER build  -f ./Dockerfile --output "type=tar,dest=dockerimage.tar" . \
   && virt-make-fs --format=qcow2 --size=+200M dockerimage.tar dockerimage-large.qcow2 \
   && qemu-img convert dockerimage-large.qcow2 -O qcow2 dockerimage.qcow2 \
   && rm dockerimage-large.qcow2 \
 
 
+
 ## Collect created resources
 
-Likely to be run on qemu HOST, to get needed resources out of VM to host
+LIKELY TO BE RUN FROM QEMU HOST, to get needed resources out of VM to host
 to start VMs from it later.
 
   && WORKDIRHOST="path/to/where/you/want/the/files" \
+  && GUEST_HOST= \
   && WORKDIRGUEST="/home/user/work" \
   && SSH=ssh \
   && cd "${WORKDIRHOST:?}" \
-  && ${SSH:?} -oRemoteCommand='tar --owner=0 --group=0 -ch -C "'"${WORKDIRGUEST:?}"'/myinit" myinit -C "'"${WORKDIRGUEST:?}"'/linux-6.7.4/arch/x86_64/boot" bzImage -C "'"${WORKDIRGUEST:?}"'/dockerbuild" dockerimage.qcow2' \
+  && ${SSH:?} "${GUEST_HOST:?}" -oRemoteCommand='tar --owner=0 --group=0 -ch -C "'"${WORKDIRGUEST:?}"'/myinit" myinit -C "'"${WORKDIRGUEST:?}"'/linux-6.7.4/arch/x86_64/boot" bzImage -C "'"${WORKDIRGUEST:?}"'/dockerbuild" dockerimage.qcow2' \
          | tar -C "${WORKDIRHOST:?}" -x \
   && mv myinit init \
   && mv bzImage kernel \
   && mv dockerimage.qcow2 hda.qcow2 \
+
 
 
 ## Test launch full VM
@@ -135,15 +153,15 @@ QEMU_IMAGE="hda.qcow2"
 qemu-system-x86_64 \
     -M microvm,x-option-roms=off,isa-serial=off,rtc=off -no-acpi -no-reboot \
     -accel kvm -cpu host -nodefaults -no-user-config -nographic \
-    -m 1G -smp $(nproc) \
+    -m 1G -smp $((($(nproc)+1)/2)) \
     -device virtio-serial-device \
     -chardev stdio,id=virtiocon0 -device virtconsole,chardev=virtiocon0 \
     -kernel "${KERNEL:?}" \
     -append "console=hvc0 root=/dev/vda rw acpi=off reboot=t panic=-1 quiet" \
     -drive id=root,file=${QEMU_IMAGE:?},format=qcow2,if=none \
     -device virtio-blk-device,drive=root \
-    -netdev user,id=mynet0 \
-    -device virtio-net-device,netdev=mynet0 \
+    -netdev user,id=n0,hostfwd=tcp:127.0.0.1:${HTTP_PORT:?}-:80 \
+    -device virtio-net-device,netdev=n0 \
     -fsdev local,path=${HOST_SHARE_DIR:?},security_model=none,id=www,readonly=on \
     -device virtio-9p-device,fsdev=www,mount_tag=myMountTag \
     -device virtio-rng-device \
