@@ -58,6 +58,12 @@ Side-Mount tcpdump into container where it does not exist
   docker run --rm -ti --network container:"${CNTNR_TO_DUMP:?}" -v "/tmp/foo:/work" "${IMG_WITH_TCPDUMP_EG_BASEIMG:?}" bash
 
 
+## Import system from custom directory structure (NOT TESTED)
+
+  tar cf my.tar bin etc home lib* media mnt opt root sbin srv usr var
+  docker import my.tar localhost/example:0.0.0
+
+
 ## Inspect failing docker-build
 
 See "https://stackoverflow.com/a/26222636/4415884"

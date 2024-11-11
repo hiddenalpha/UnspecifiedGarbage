@@ -2,7 +2,7 @@
 Redis Servers for PaISA
 =======================
 
-Install a bse system. While creating this script, I used
+Install a base system. While creating this script, I used
 "devuan_daedalus_5.0.1_amd64_netinstall.iso" (md5:0c41745574898e210d80a4ada330bbd8).
 
 Then configure and run:
@@ -108,6 +108,7 @@ true \
   && $SUDO update-rc.d redis-eagle defaults \
   && $SUDO /etc/init.d/redis-houston start \
   && $SUDO /etc/init.d/redis-eagle start \
+  && apt clean \
   && printf 'DONE :)\n' \
 
 
