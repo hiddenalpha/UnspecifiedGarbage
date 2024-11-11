@@ -1,4 +1,33 @@
 
+
+## Grab moving display names
+
+DISPL=$(xrandr | grep ' connected' | grep 'HDMI-' | cut -d' ' -f1)
+
+
+## LG 4k screen
+# LG4K_DPI := 2560 / (700 / 25.4)
+xrandr \
+    --output ${LG4K:?} \
+        --primary \
+        --mode 2560x1440 \
+        --rate 60.00 \
+        --dpi 93 \
+        --pos 1200x320
+
+
+## Post HD screen
+# POST_DPI := 1920 / (518 / 25.4)
+xrandr \
+    --output ${POST:?} \
+        --primary \
+        --mode 1920x1200 \
+        --rate 59.95 \
+        --dpi 94 \
+        --pos 0x0 \
+        --rotate left \
+
+
 ## Tuxbook reset to solo screen
 
 xrandr --dpi 142 --fb 1920x1080 \
@@ -7,7 +36,7 @@ xrandr --dpi 142 --fb 1920x1080 \
         --mode 1920x1080 --rate 60.01 \
         --pos 0x0 \
         --scale 1x1 \
-	--primary \
+    --primary \
 
 
 ## Tuxbook home 4k 40" dual-mon setup
