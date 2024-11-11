@@ -1,0 +1,26 @@
+
+System V init
+=============
+
+Create/update scripts in "/etc/init.d/".
+
+
+
+## Enable / Disable service
+
+  update-rc.d YOURSVC defaults
+  update-rc.d YOURSVC remove
+
+
+
+## Start / stop service
+
+  /etc/init.d/YOURSVC start
+  /etc/init.d/YOURSVC stop
+
+
+
+## Refs
+
+- [man update-rc.d](https://manpages.debian.org/bullseye/init-system-helpers/update-rc.d.8)
+

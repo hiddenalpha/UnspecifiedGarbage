@@ -1,0 +1,110 @@
+
+Redis Servers for PaISA
+=======================
+
+Install a bse system. While creating this script, I used
+"devuan_daedalus_5.0.1_amd64_netinstall.iso" (md5:0c41745574898e210d80a4ada330bbd8).
+
+Then configure and run:
+
+
+
+  && http_proxy= \
+  && https_proxy="${http_proxy?}" \
+  && no_proxy= \
+  && REDIS_HOUSTON_PW= \
+  && REDIS_EAGLE_PW="${REDIS_HOUSTON_PW?}" \
+  && WITH_REDIS_CLIENT=0 \
+  && SUDO=sudo \
+  \
+  && if test -n "${http_proxy:?}" ;then true \
+      && printf %s\\n \
+          'Acquire::http::proxy "'"${http_proxy:?}"'";' \
+          'Acquire::https::proxy "'"${https_proxy:?}"'";' \
+          | $SUDO tee /etc/apt/apt.conf.d/80proxy >/dev/null \
+      && printf %s\\n \
+          "http_proxy=${http_proxy:?}" \
+          "https_proxy=${https_proxy:?}" \
+          "HTTP_PROXY=${http_proxy:?}" \
+          "HTTPS_PROXY=${http_proxy:?}" \
+          "no_proxy=${no_proxy:?}" \
+          "NO_PROXY=${no_proxy:?}" \
+          | $SUDO tee /etc/environment >/dev/null \
+    ;fi \
+  && $SUDO apt update \
+  && $SUDO apt install --no-install-recommends -y redis-server \
+        $(test "${WITH_REDIS_CLIENT:?}" -ne 0 && echo redis-tools || true) \
+  && $SUDO /etc/init.d/redis-server \
+  && $SUDO update-rc.d redis-server remove \
+  && $SUDO rm /etc/init.d/redis-server \
+  && <<EOF base64 -d|gzip -d|$SUDO tee /etc/redis/redis-houston.conf >/dev/null &&
+H4sIADNFMmcAA31TTW/bMAy961cQ6VlpnC5BdxywAe1lLdYNOxayRMdC9TVJduYU/e+jlDTtmq02
+YJh8pMj3SJ0BO4OISieeMI4YQXrX6Q0IJUJGBZ2PcCuu7z7BlR9S9m5OCazVTsFiXl8WfMywvrj8
+yEL0GSWlcesVgvMsy8BbIR+M38CqaVjWFv2QYVGRB8QgjB4RLpgSaL3TO4QJEwtaddognMfBndf+
+9l/eH7qgAEaHGhzRUKGsJRZ7nzSKeE7GPxPJT7WyaEXCBM2aCbMVE9Hv/ZYT6EvbCTMnMpJnnc2h
+o6PJM9pgREaYPVbHEzwanTI6LpSKZO2lrCI8zRiVDXwbdcbEvePtJokROcZI0paTo2qltyFiStq7
+o6tH+ZAGW23VFmJOWAQ12DAnvMRwhYanyUle4FQ6Vzoe+Ov2wP/AnIkQ0CnvzFTP3JvHc2cv8Fz4
+bnbA6by3MLme0a4UB5pBnBJK5jx/5S9kI1bipTMxZIJ99+zjAaNEl8UGoVmcwlY7nso+NGvbsmT8
+lqZTJsTLP8mbe+Eok54jasVvTnygWV6yshTdRDs2pSAkCT5SsQSzWZ1uidRk0y+5oyb1Vs2SCZlp
+HSP2IvXabapQ0mgK4bS2Yci8HbqOihttdSZa0QoDi/K+F5cMjRyWK2IC6w/l8254GNo0tHCxpMjL
+fXS/qyK90kc7GdEWAQ3fz6FuDv4adKRrlRJ8+/L5+u7+6ubH3febr/e3P5kZBC838FBmVaQrTKsa
+Ox3KFv8lxwk4CjMgUWDV+l/aCXhM2z1r/zatTOwEPKb9AQJ0y+ynBAAA
+EOF
+true \
+  && <<EOF base64 -d|gzip -d|$SUDO tee /etc/redis/redis-eagle.conf >/dev/null &&
+H4sIAEdFMmcAA31TwW7bMAy96yuI9Kw0TpesOxZYMBTYoVgPOxa0RCdCZUmTZGdJ0X8fpaRp12y1
+AcPkI0W+R+oCxAVE0ibJRHGkCMq7zqwBNYZMGjof4Q5v729ghWtLUw4XrXEaZtP6iuBjhuXV5y8i
+RJ9JcZLsvSZwXmQVZIvq0fo1LJpGZNOTHzLMKvJIFNCakeBKaKTeO7Mn2FESwejOWILLOLjL2t3h
+K6n2wLDgIy2NZLlMNoqKfUgZMV6y8Y809nKdjC0mStAsBdot7pj4xm8lg760nChLJqJkNtkeuzmZ
+MlMfLGaCyVN1PMOTNSmTk6h1ZOsgYhXgeSJS9kFuo8mUpHeyXSccSVKMLGo5OepW+T5ESsl4d3Jt
+SD2moa+2bgsthz2BHvowZbzESE1Wpp1TssCpdK5NPLI37ZF95S0wBHLaO7urJx7M06mTV3iKvpsc
+cT7tPcyuF7QrpYH1j7tESjgv3/gL1UiVdukLh8yw7158MlBU5DKuCZrZOdwbJ1PZhGbZtyJZv+XZ
+lPnI8s/i5g06zuTnhPb4WzIfaObXoixEt+Pt2qWAiuUeuViCyaTOtkQatvmX3dGwdotmLlBlXsRI
+G0wb49ZVKGUNh0he2DBk2Q5dx8Wt6U1mWrFHC7PyfhSXLA8c5gtmAstP5fNheBjaNLRwNefI60P0
+Zl9FeqOPcSpSXwS08jCHujf0azCRL1RK8GP19fb+YXXz7fvq4e6nsAPKcvOORRZFuMKzarE3oWzw
+X2KcgSPagZiAqNb/0s7AU9r+Rfn3aWVeZ+Ap7Q9846+KnQQAAA==
+EOF
+true \
+  && <<EOF_uQAAAOgdAABpQAAA base64 -d|gzip -d|$SUDO tee /etc/init.d/redis-houston >/dev/null &&
+H4sIAAAAAAAAA5VTXW/aMBR9jn/FbYimdZIb6NZVomISHbSNVCgC+jRNKCROsRrizHa6VoX/vmsn
+ZKRim/aS2L5f55x7b+sI/CXPfLUirVYLLofXwRiCcTDHz9UdacFEiiceM9V1HMliruhKFEqLDE1T
+9qPg+EhnOpS663jqRaXiATzJ1kKzRaKaTiL/g88Mc6Z1GsdLRRSmb0wmuGEZsCQsUr2LOoWP8AnO
+GgYb04YOfC4zSU0HTEWS55qLrNskBBSx4h0Gl5AICZMwmPXhpmbbiKxCFZNPTP4jEmUdjgd7ohIy
+6c9ven6hpG8J+Qpb0N2722v5WFt+++CBDPrD0d24t7v7+3gq46I/vZ71fKaj0uo36J5EIkvIuD8a
+9pp9HQxnX988ken9eBBMe74sqkr+zjQJBlfB7bDnlS5vauQ8JkQzpYE+g1fCgs0G2DPX0CaEJ/AN
+qAQLMi775nsGFHwnesUy4pwcMJKEE4KGlC/9VC19nnFNkyKLTHMUIYphQVald733PAZaHLtw1AO3
+7dapcQ4XScjTQrLFWj2AO0LUsGSANCFUIIXQJy5xLNqOLRqFimHGjgvYAwBlZu8YPaKVAJqBa4eR
+ZzjfRsYuYPT6MeY4IjlUEhFHiyJagVdJRxwM/pmBVa5rvzvXhs9axHB+dlanIU6pHlb17m+DUTA3
+zJySmlOkfI2o0VoZjexaFow4hoeJteAp9imncYjbiBtA7Rv+cWeNhlQ8ZiJGarRYh+oR2u1zPGNX
+E56yGh0+RasCRd6nQCl7ZlHddEp3RzuWNU6rnGu7aqVOFatfTW9Y7FrEzsWF1VvkTblFnjfk/gsz
+keNPMi1fzJYyXBR/PpyO/M4hvgc47vP5f/xyDTTZa6hKGctxqgwxZCaZBb1BZBFDlKkIY2Tqvba3
+lnV9RKddDF50odCrPCxEssiliOysvVaFtngsIZuTgbndhX/YKeneq/CBdctFM7t0EldL+FqCMgA2
+hxBuyspbF768O60XxeRnKowIqfb8F5G7/VplBgAA
+EOF_uQAAAOgdAABpQAAA
+true \
+  && <<EOF_FgsAAD8WAACUVQAA base64 -d|gzip -d|$SUDO tee /etc/init.d/redis-eagle >/dev/null &&
+H4sIAAAAAAAAA5VTbW/TMBD+HP+KI40QIHlpgTGpqEgdLRBpLVPbfUKoypLLai2Ng+3ApnX/nbOT
+hgYVBF+Ss+/Fz/PcXe8JhNeiCPWG9Xo9OJ9+jOYQzaMVfT58Zj24VPK7SFEPPU9hKjTH+CZHcizw
+WyXoii9NrMzQC/S9zuUNBAq30uA6090gWf4hZrmRVd6W8YJcJnH+m8smdzwTzOIqN/usl/AKXsNp
+x+Fy+jCAN3UlZfgEdaJEaYQshod0gBNSOsHkHDKp4DKOlmOYNkw7Wf+cRmpO55MDLRm7HK8+jcJK
+q9AxCTUpPzw4u2N92Xp+xZDBJuPp7PN8tD+HNRiN6juqxrkeLz4uRyGapPaGB4BPEllkbD6eTUeH
+zZxMl+87F2xxNZ9Ei1GoquaNsHZcRpMP0cV0FNQBndqlSBkzqA3wOwhqMLDbAd4JA33GRAZfgCtw
+0NK6TWFgwcBXZjZYMO/kiJNlgjFy5OI6zPV1KApheFYVie2HZkwjPYhNeT94JlLg1XMfnozA7/tt
+aRq7dRaLvFK43uob8GcVIb1GIIoQa1BSmhOfeQ7twD2axBqp4sAHUh5A21F7ThHJRgIvwHezJwoa
+ZyvgECh7e5sKBbyERiDmGVklGwga4ZhHyT8KcLoN3Xcf2onZyhTOTk/bMsyr1aNXg6uLaBatLDOv
+puZVudgSavI2Tiu7URUyz/KwuQ4817QUPI1p+Qrg3N3Rn1bUasjlbSFTosarbaxvod8/I5u6mgka
+9T06uko2FYl8SIFzvMOkbTrne9MNY4vTKee7rjqpc43tre0Npr5D7L196/SWZVduWZYduf/CTJb0
+U2jUvd1MpPUIV9PFLBwc43uE4yGf/8evtsCzg4bqHLGkqbLEiJlCB3pHyBIklLmMU2IaPPQfHevW
+pKB9Dh1MpSmqNtYyW5dKJm7WHpqHHsmsIVvLwnzcp7/YK+lf6fgGh/Wi2V06SZslfKhBWQC7Ywh3
+9cuPPrx7+rJdFFsfdZww1uz5T5ei0QZSBgAA
+EOF_FgsAAD8WAACUVQAA
+true \
+  && sed -i -E 's,REDIS_HOUSTON_PW,'"${REDIS_HOUSTON_PW?}"',g' /etc/redis/redis-houston.conf \
+  && sed -i -E 's,REDIS_EAGLE_PW,'"${REDIS_EAGLE_PW?}"',g' /etc/redis/redis-eagle.conf \
+  && $SUDO update-rc.d redis-houston defaults \
+  && $SUDO update-rc.d redis-eagle defaults \
+  && $SUDO /etc/init.d/redis-houston start \
+  && $SUDO /etc/init.d/redis-eagle start \
+  && printf 'DONE :)\n' \
+
+
