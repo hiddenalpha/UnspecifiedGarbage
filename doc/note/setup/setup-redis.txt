@@ -17,7 +17,7 @@ Install a bse system. While creating this script, I used
   && SUDO=sudo \
   \
   && $SUDO apt install --no-install-recommends -y redis-server \
-        $(test "${INSTALL_REDIS_CLIENT:?}" -ne 0 && echo redis-client || true) \
+        $(test "${INSTALL_REDIS_CLIENT:?}" -ne 0 && echo redis-tools || true) \
   && printf 'DONE :)\n' \
 
 
