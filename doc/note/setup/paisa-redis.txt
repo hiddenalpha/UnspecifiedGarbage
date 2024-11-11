@@ -34,7 +34,7 @@ Then configure and run:
   && $SUDO apt update \
   && $SUDO apt install --no-install-recommends -y redis-server \
         $(test "${WITH_REDIS_CLIENT:?}" -ne 0 && echo redis-tools || true) \
-  && $SUDO /etc/init.d/redis-server \
+  && $SUDO /etc/init.d/redis-server stop \
   && $SUDO update-rc.d redis-server remove \
   && $SUDO rm /etc/init.d/redis-server \
   && <<EOF base64 -d|gzip -d|$SUDO tee /etc/redis/redis-houston.conf >/dev/null &&
@@ -99,8 +99,11 @@ pKB9Dh1MpSmqNtYyW5dKJm7WHpqHHsmsIVvLwnzcp7/YK+lf6fgGh/Wi2V06SZslfKhBWQC7Ywh3
 9cuPPrx7+rJdFFsfdZww1uz5T5ei0QZSBgAA
 EOF_FgsAAD8WAACUVQAA
 true \
-  && sed -i -E 's,REDIS_HOUSTON_PW,'"${REDIS_HOUSTON_PW?}"',g' /etc/redis/redis-houston.conf \
-  && sed -i -E 's,REDIS_EAGLE_PW,'"${REDIS_EAGLE_PW?}"',g' /etc/redis/redis-eagle.conf \
+  && $SUDO chmod 755 /etc/init.d/redis-houston /etc/init.d/redis-eagle \
+  && $SUDO mkdir /var/lib/redis/houston /var/lib/redis/eagle \
+  && $SUDO chown redis:redis /var/lib/redis/houston /var/lib/redis/eagle \
+  && $SUDO sed -i -E 's,REDIS_HOUSTON_PW,'"${REDIS_HOUSTON_PW?}"',g' /etc/redis/redis-houston.conf \
+  && $SUDO sed -i -E 's,REDIS_EAGLE_PW,'"${REDIS_EAGLE_PW?}"',g' /etc/redis/redis-eagle.conf \
   && $SUDO update-rc.d redis-houston defaults \
   && $SUDO update-rc.d redis-eagle defaults \
   && $SUDO /etc/init.d/redis-houston start \
