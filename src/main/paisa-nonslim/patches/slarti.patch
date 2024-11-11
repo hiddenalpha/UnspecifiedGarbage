@@ -6,7 +6,7 @@
      jslPipeline
          .checkout()
          .setBranchVersion()
--        .buildMaven([slim: true, spotless: true])
+-        .buildMaven([spotless: true])
 +        .buildMaven([spotless: true])
          .runKarma()
          .withInstances([instances: [

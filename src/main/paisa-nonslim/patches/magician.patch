@@ -11,8 +11,8 @@
          .withInstances([instances: [
              vehicleInstance: [
                  services: [
-                     eagle:    [version: '02.01.26.01-PR-379-SNAPSHOT'],
--                    platform: [version: '03.06.40.01-PR-388-SNAPSHOT'],
+                     eagle:    [version: '02.01.27.01-PR-379-SNAPSHOT'],
+-                    platform: [version: '03.06.46.01-PR-388-SNAPSHOT'],
 +                    platform: [version: '${j21.platform.version}'],
                      storage:  [version: '00.24.00.00'],
                      magician: [version: '%currentBranch%']
@@ -21,11 +21,12 @@
 
 --- a/pom.xml
 +++ b/pom.xml
-@@ -44,2 +44,3 @@
+@@ -43,3 +43,4 @@
          <jakarta.ws.rs-api.version>3.1.0</jakarta.ws.rs-api.version>
+         <dbus.java.version>5.1.0</dbus.java.version>
 +        <common-fileupload.version>1.5</common-fileupload.version>
      </properties>
-@@ -94,3 +95,9 @@
+@@ -88,3 +89,9 @@
              </dependency>
  
 +            <dependency>
@@ -39,7 +40,7 @@
 
 --- a/magician-process/pom.xml
 +++ b/magician-process/pom.xml
-@@ -49,2 +49,6 @@
+@@ -44,2 +44,6 @@
          </dependency>
 +        <dependency>
 +            <groupId>commons-fileupload</groupId>

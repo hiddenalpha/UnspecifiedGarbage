@@ -332,6 +332,11 @@ Related:
 
 
     function getVersionPipelineMangledByThingyName( app, thingyName, onDone ){
+        //if(thingyName=="captain"){onDone(null, "IDontCareCaptainVersion");return;}
+        //if(thingyName=="guide"){onDone(null, "IDontCareGuideVersion");return;}
+        //if(thingyName=="slarti"){onDone(null, "IDontCareSlartiVersion");return;}
+        //if(thingyName=="megacamel"){onDone(null, "IDontCareMegacamelVersion");return;}
+        //if(thingyName=="trillian"){onDone(null, "IDontCareTrillianVersion");return;}
         var rspBody = "";
         var path, host = "artifactory.pnet.ch", port = 443, method = "GET";
         collectVersionFromArtifactory();
@@ -364,6 +369,7 @@ Related:
                     : (mthShrt == "Jul") ? "07"
                     : (mthShrt == "Sep") ? "09"
                     : (mthShrt == "Oct") ? "10"
+                    : (mthShrt == "Nov") ? "11"
                     : null;
                 if( !mth ){ throw Error("TODO_1iUCAA1ZAgBALgIA "+ mthShrt); }
                 var builtAt = yr +"-"+ mth +"-"+ day +" "+ hrs +":"+ mins;
@@ -1233,15 +1239,20 @@ Related:
             maxParallel:  1,
             numRunningTasks: 0,
             services: null,
-            issueKey: "SDCISA-15648",
+            issueKey: "SDCISA-17914", //"SDCISA-15648",
             branchName: null,
             commitMsg: null,
-            versionPrefix: "0.0.0-U0RdSV", /* const part of generated seq above (MUST have for find version later) */
+            /* meins */
+            //versionPrefix: "0.0.0-U0RdSV", /* const part of generated seq above (MUST have for find version later) */
             /* generate: {date +%N|md5sum -b -|base64|tr -d '/+='|head -c6 && echo} */
-            platformSnapVersion: "OGJjMG-SNAPSHOT",
-            serviceSnapVersion: "OGJjMG-SNAPSHOT",
+            //platformSnapVersion: "OGJjMG-SNAPSHOT",
+            //serviceSnapVersion: "OGJjMG-SNAPSHOT",
+            /* für mario */
+            versionPrefix: "0.0.0-jGoAAE",
+            platformSnapVersion: "MTYzOW-SNAPSHOT",
+            serviceSnapVersion: "MTYzOW-SNAPSHOT",
         };
-        app.branchName = app.issueKey +"-RemoveSlimPackaging-n4";
+        app.branchName = app.issueKey +"-RemoveSlimPackaging-n5";
         app.commitMsg = "["+ app.issueKey +"] Remove slim packaging";
         if( parseArgs(process.argv, app) !== 0 ){ process.exit(1); }
         if( app.isHelp ){ printHelp(); return; }

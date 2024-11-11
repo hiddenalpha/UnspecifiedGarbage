@@ -2,12 +2,12 @@
 
 --- a/Jenkinsfile
 +++ a/Jenkinsfile
-@@ -13,7 +13,7 @@
+@@ -13,9 +13,7 @@
      jslPipeline
              .checkout()
              .setBranchVersion()
--            .buildMaven([spotless: false])
-+            .buildMaven([spotless: false])
+-            .buildMaven()
++            .buildMaven()
              .runKarma()
              .withInstances([
                      instances: [

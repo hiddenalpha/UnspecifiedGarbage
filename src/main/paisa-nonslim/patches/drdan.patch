@@ -7,8 +7,8 @@
      jslPipeline
          .checkout()
          .setBranchVersion()
--        .buildMaven([spotless: false])
-+        .buildMaven([spotless: false])
+-        .buildMaven()
++        .buildMaven()
          .withInstances([
              instances: [
 @@ -16,7 +16,7 @@
