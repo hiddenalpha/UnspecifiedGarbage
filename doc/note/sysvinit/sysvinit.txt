@@ -15,8 +15,8 @@ Create/update scripts in "/etc/init.d/".
 
 ## Start / stop service
 
-  /etc/init.d/YOURSVC start
-  /etc/init.d/YOURSVC stop
+  service YOURSVC start
+  service YOURSVC stop
 
 
 

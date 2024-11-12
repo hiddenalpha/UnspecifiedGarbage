@@ -5,9 +5,8 @@ Redis Servers for PaISA
 Install a base system. While creating this script, I used
 "devuan_daedalus_5.0.1_amd64_netinstall.iso" (md5:0c41745574898e210d80a4ada330bbd8).
 
-Then configure and run:
 
-
+## Install at target machine
 
   && http_proxy= \
   && https_proxy="${http_proxy?}" \
@@ -17,6 +16,7 @@ Then configure and run:
   && WITH_REDIS_CLIENT=0 \
   && SUDO=sudo \
   \
+  && if test "$(whoami)" != "user" ;then echo "ERROR: Unexpected user: $(whoami)"; false ;fi true \
   && if test -n "${http_proxy:?}" ;then true \
       && printf %s\\n \
           'Acquire::http::proxy "'"${http_proxy:?}"'";' \
@@ -32,41 +32,61 @@ Then configure and run:
           | $SUDO tee /etc/environment >/dev/null \
     ;fi \
   && $SUDO apt update \
-  && $SUDO apt install --no-install-recommends -y redis-server \
+  && $SUDO RUNLEVEL=1 apt install --no-install-recommends -y redis-server \
         $(test "${WITH_REDIS_CLIENT:?}" -ne 0 && echo redis-tools || true) \
-  && $SUDO /etc/init.d/redis-server stop \
+  && `# Add some swap (bcause 2 redis potentially need a LOT of memory) ` \
+  && SWAP_MIB=$((12*1024)) \
+  && $SUDO dd if=/dev/zero of=/swapfile1 bs=$((1024*1024)) count="${SWAP_MIB:?}" \
+  && $SUDO chmod 0600 /swapfile1 \
+  && $SUDO mkswap /swapfile1 \
+  && printf '/swapfile1  none  swap  sw,pri=10  0  0\n' | $SUDO tee > /dev/null -a /etc/fstab \
+  && `# Disable the default redis-server ` \
+  && $SUDO service redis-server stop \
   && $SUDO update-rc.d redis-server remove \
   && $SUDO rm /etc/init.d/redis-server \
+  && `# Create config files ` \
   && <<EOF base64 -d|gzip -d|$SUDO tee /etc/redis/redis-houston.conf >/dev/null &&
-H4sIADNFMmcAA31TTW/bMAy961cQ6VlpnC5BdxywAe1lLdYNOxayRMdC9TVJduYU/e+jlDTtmq02
-YJh8pMj3SJ0BO4OISieeMI4YQXrX6Q0IJUJGBZ2PcCuu7z7BlR9S9m5OCazVTsFiXl8WfMywvrj8
-yEL0GSWlcesVgvMsy8BbIR+M38CqaVjWFv2QYVGRB8QgjB4RLpgSaL3TO4QJEwtaddognMfBndf+
-9l/eH7qgAEaHGhzRUKGsJRZ7nzSKeE7GPxPJT7WyaEXCBM2aCbMVE9Hv/ZYT6EvbCTMnMpJnnc2h
-o6PJM9pgREaYPVbHEzwanTI6LpSKZO2lrCI8zRiVDXwbdcbEvePtJokROcZI0paTo2qltyFiStq7
-o6tH+ZAGW23VFmJOWAQ12DAnvMRwhYanyUle4FQ6Vzoe+Ov2wP/AnIkQ0CnvzFTP3JvHc2cv8Fz4
-bnbA6by3MLme0a4UB5pBnBJK5jx/5S9kI1bipTMxZIJ99+zjAaNEl8UGoVmcwlY7nso+NGvbsmT8
-lqZTJsTLP8mbe+Eok54jasVvTnygWV6yshTdRDs2pSAkCT5SsQSzWZ1uidRk0y+5oyb1Vs2SCZlp
-HSP2IvXabapQ0mgK4bS2Yci8HbqOihttdSZa0QoDi/K+F5cMjRyWK2IC6w/l8254GNo0tHCxpMjL
-fXS/qyK90kc7GdEWAQ3fz6FuDv4adKRrlRJ8+/L5+u7+6ubH3febr/e3P5kZBC838FBmVaQrTKsa
-Ox3KFv8lxwk4CjMgUWDV+l/aCXhM2z1r/zatTOwEPKb9AQJ0y+ynBAAA
+H4sIAGgxM2cAA31Ty27bMBC88ysI50zbcmojPRZogeTSBE2LHosVubKI8FWSsisH+fcuKcdNYjQW
+YGh29jm7uuDsgkdUOomEcYeRS+86veWgIGRUvPOR38HN/Sd+7YeUvZtTAGu1U3w5rw8LPma+ubz6
+yEL0GSWFCesVcudZlkG0IB+M3/J107CsLfoh82VlHhADGL1DwgrQeqcPyEdMLGjVaYN8EQe3qP0t
++qn+hMQRzcmRUXKDOzRUMGuJBU/BO4gLAscErwPJTjUztJAw8WbDwOxhJBl6vxdE+tJ+wixoKCmy
+zubY2QmKjDYYyMhnj9XwxB+NThmdAKUioUnSKsbTjFHZIPZRZ0zCO9FuE+xQYIwkcckcVSu9DRFT
+0t6dTD3KhzTYilVbBnNgkavBhjnxxUcoNCKNTopCp9K50vE4v25fC8ggBHTKOzPWnBM85Z39o+fg
+u9mRp3xvaTI9s10pzmkHcUwomfPihb0MG7EOXjqDIRPtu2ebCBglugxb5M3ynLbaiVTuotnYliXj
+97SdsiFR3kne3IOjSPqdWAt/BM3Dm9UVK0fRjXRrYwogSfAdFUt8NqvbLZ6aML2SOWpSb92sGMhM
+Zxmxh9Rrt61CSaPJRdD5hiGLdug6Km601ZnGihYMX5bnPb9kaOV8taZJ+OZD+XvXPQxtGlp+uSLP
+q8m7P1SRXuijnYxoi4BGTHuol4O/Bx3p80qJf/vy+eb+1/Xtj/vvt19/3f1kZgBRvsRjmXWRrkxa
+1TjoUK74lRxn5A7MgDQCq+h/YWfkKezwrP3bsLKxM/IU9hcdhnrkrwQAAA==
 EOF
 true \
   && <<EOF base64 -d|gzip -d|$SUDO tee /etc/redis/redis-eagle.conf >/dev/null &&
-H4sIAEdFMmcAA31TwW7bMAy96yuI9Kw0TpesOxZYMBTYoVgPOxa0RCdCZUmTZGdJ0X8fpaRp12y1
-AcPkI0W+R+oCxAVE0ibJRHGkCMq7zqwBNYZMGjof4Q5v729ghWtLUw4XrXEaZtP6iuBjhuXV5y8i
-RJ9JcZLsvSZwXmQVZIvq0fo1LJpGZNOTHzLMKvJIFNCakeBKaKTeO7Mn2FESwejOWILLOLjL2t3h
-K6n2wLDgIy2NZLlMNoqKfUgZMV6y8Y809nKdjC0mStAsBdot7pj4xm8lg760nChLJqJkNtkeuzmZ
-MlMfLGaCyVN1PMOTNSmTk6h1ZOsgYhXgeSJS9kFuo8mUpHeyXSccSVKMLGo5OepW+T5ESsl4d3Jt
-SD2moa+2bgsthz2BHvowZbzESE1Wpp1TssCpdK5NPLI37ZF95S0wBHLaO7urJx7M06mTV3iKvpsc
-cT7tPcyuF7QrpYH1j7tESjgv3/gL1UiVdukLh8yw7158MlBU5DKuCZrZOdwbJ1PZhGbZtyJZv+XZ
-lPnI8s/i5g06zuTnhPb4WzIfaObXoixEt+Pt2qWAiuUeuViCyaTOtkQatvmX3dGwdotmLlBlXsRI
-G0wb49ZVKGUNh0he2DBk2Q5dx8Wt6U1mWrFHC7PyfhSXLA8c5gtmAstP5fNheBjaNLRwNefI60P0
-Zl9FeqOPcSpSXwS08jCHujf0azCRL1RK8GP19fb+YXXz7fvq4e6nsAPKcvOORRZFuMKzarE3oWzw
-X2KcgSPagZiAqNb/0s7AU9r+Rfn3aWVeZ+Ap7Q9846+KnQQAAA==
+H4sIAEozM2cAA31TTW/bMAy961cI6VlJnC5ZdyywYCiwQ7EedixoiU6E6GuS7Mwp+t9HKWmWNVht
+wBD5+KH3SN9wdsMjKp1Ewjhg5NK7Tm84KAgZFe985I/w8HTP17AxOKVw1mqn+HxaXxZ8zHx1+/kL
+C9FnlJQkrFfInWdZBtGC3Bm/4cumYVlb9H3m84rsEAMYPSDZCtB6pw/IR0wsaNVpg3wWezert5th
+6X48i3qeUhCjwgYHNNQsa4nFPiYOEGdknJIv08hL3TK0kDDxZsXA7GEk+lu/FwT6cvGEWRAdKbLO
+5nSnsyky2mAgI5+8VMcrfzE6ZXQClIpkHaWsMrxOWMo+iH3UGZPwTrSbBAMKjJGkLZWjaqW3IWJK
+2ruza4tyl3pbbdUWWg4sctXbMCW8xAiFRqTRSVHgVG6udDyx1+2ldAxCQKe8M2OteDTPVSd/4Sn4
+bnLCqdp7mFxvaFdac9I/jgklc15c+AvViJV2uRf0mWDfvflEwCjRZdggb+bXsNVOpLIPzcq2LBm/
+p9mU+YhyJnHzFhxl0nNGLfwWxIc3iztWFqIbacfGFECS3AM1S3wyqbMtkZpsOpI7atJu2SwYyEzr
+GHELaavdpgoljaYQQWsb+izavuuoudFWZ6IVLRg+L+9HccnQwPliSUz46lP5fBge+jb1Lb9dUOTd
+MXp7qCJd6KOdjGiLgEYc51D3Bn/1OtJvlRL/sf768PS8vv/2ff38+JOZHkT5/05NlkW4wrNqcdCh
+bPA/YlyBA5geiQCr1v/SrsBz2uFN+fdpZV5X4DntDwrUzz+jBAAA
 EOF
 true \
+  && `# Configure logging ` \
+  && <<EOF base64 -d|gzip -d|$SUDO tee /etc/logrotate.d/redis-houston >/dev/null &&
+H4sIAMo2M2cAA0WMSwqAMBBD956ia0G78ULFjrX0M6UzKkW8u4IyZhHIS4jeTdURna5gPb0+rLgR
+Y+7Hp1Bnpz4dACE2ickT+ewwCKnIhkFNAmZMpQKRgIzsF0iF/xsL0TQZXt0NK02chpIAAAA=
+EOF
+true \
+  && <<EOF base64 -d|gzip -d|$SUDO tee /etc/logrotate.d/redis-eagle >/dev/null &&
+H4sIAOo2M2cAA0XMwQqAIBAE0Ltf4TkoL/2Q5CSSuuJKIdG/FxTbHgbmMazZbTWRvKlwgd8cYX3E
+MD2sT6W/O4AtdqkpMIfsaROp1GyDngUWSqWCWSBTCytSaf8bh2i7DC91A0WammaQAAAA
+EOF
+true \
+  && `# Register as new services ` \
   && <<EOF_uQAAAOgdAABpQAAA base64 -d|gzip -d|$SUDO tee /etc/init.d/redis-houston >/dev/null &&
-H4sIAAAAAAAAA5VTXW/aMBR9jn/FbYimdZIb6NZVomISHbSNVCgC+jRNKCROsRrizHa6VoX/vmsn
+H4sIAJgxM2cAA5VTXW/aMBR9jn/FbYimdZIb6NZVomISHbSNVCgC+jRNKCROsRrizHa6VoX/vmsn
 ZKRim/aS2L5f55x7b+sI/CXPfLUirVYLLofXwRiCcTDHz9UdacFEiiceM9V1HMliruhKFEqLDE1T
 9qPg+EhnOpS663jqRaXiATzJ1kKzRaKaTiL/g88Mc6Z1GsdLRRSmb0wmuGEZsCQsUr2LOoWP8AnO
 GgYb04YOfC4zSU0HTEWS55qLrNskBBSx4h0Gl5AICZMwmPXhpmbbiKxCFZNPTP4jEmUdjgd7ohIy
@@ -99,16 +119,43 @@ pKB9Dh1MpSmqNtYyW5dKJm7WHpqHHsmsIVvLwnzcp7/YK+lf6fgGh/Wi2V06SZslfKhBWQC7Ywh3
 9cuPPrx7+rJdFFsfdZww1uz5T5ei0QZSBgAA
 EOF_FgsAAD8WAACUVQAA
 true \
+  && `# Tune file permissions, inject some variables into config files ` \
   && $SUDO chmod 755 /etc/init.d/redis-houston /etc/init.d/redis-eagle \
   && $SUDO mkdir /var/lib/redis/houston /var/lib/redis/eagle \
   && $SUDO chown redis:redis /var/lib/redis/houston /var/lib/redis/eagle \
   && $SUDO sed -i -E 's,REDIS_HOUSTON_PW,'"${REDIS_HOUSTON_PW?}"',g' /etc/redis/redis-houston.conf \
   && $SUDO sed -i -E 's,REDIS_EAGLE_PW,'"${REDIS_EAGLE_PW?}"',g' /etc/redis/redis-eagle.conf \
+  && `# Enable the two new redis servers ` \
   && $SUDO update-rc.d redis-houston defaults \
   && $SUDO update-rc.d redis-eagle defaults \
-  && $SUDO /etc/init.d/redis-houston start \
-  && $SUDO /etc/init.d/redis-eagle start \
-  && apt clean \
+  && `# Add 'user' to 'adm' group to allow access to logs ` \
+  && $SUDO sed -i -E 's/^(adm:x:[^:]*:.+)$/\1'",$USER"'/' /etc/group \
+  && $SUDO sed -i -E 's,^(adm:x:[^:]*:)$,\1'"$USER"',' /etc/group \
+  && `# Cleanup for smaller VM images ` \
+  && $SUDO apt clean \
   && printf 'DONE :)\n' \
+
+
+
+## PostInstall at VM host
+
+  && VM= \
+  && NOW=$(date -u +%Y%m%d-%H%M%S) \
+  && DSTTAR="qemu-paisa-redis-${NOW:?}.tar" \
+  && DSTTXZ="${DSTTAR%.*}.txz" \
+  && DSTMD5="${DSTTAR%.*}.md5" \
+  && HDA=hda.qcow2 \
+  && TMP1=sparsed.qcow2 \
+  && TMP2=snap.qcow2 \
+  && ssh "${VM:?}" 'sudo rm /tmp/* /root/.bash_history .bash_history' \
+  && ssh "${VM:?}" 'sudo poweroff && while true;do sleep 1;done' \
+  && sleep 10 \
+  && qemu-img convert -O qcow2 -S 1M "${HDA:?}" "${TMP1:?}" \
+  && mv "${HDA:?}" "${TMP2:?}" \
+  && mv "${TMP1:?}" "${HDA:?}" \
+  && tar --owner=0 --group=0 -cf "${DSTTAR:?}" README "${HDA:?}" MD5SUM \
+  && md5sum -b "${DSTTAR:?}" >> "${DSTMD5:?}" \
+  && < "${DSTTAR:?}" xz -vv --lzma2=preset=9,nice=273,dict=1G > "${DSTTXZ:?}" \
+  && md5sum -b "${DSTTXZ:?}" >> "${DSTMD5:?}" \
 
 

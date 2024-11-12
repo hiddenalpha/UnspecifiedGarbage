@@ -40,9 +40,10 @@ HINT: In case of based images, need rebase afterwards because convert
       makes them standalone.
 
 Normal systems:
+  `# TODO try "fstrim -av" instead zero fill. `
   dd if=/dev/zero of=/tmp/deleteme
-  qemu-img convert -O qcow2 input.qcow2 output.qcow2
-  qemu-img rebase -b base.qcow2 output.qcow2
+  qemu-img convert -O qcow2 -S 1M input.qcow2 output.qcow2
+  qemu-img rebase -F qcow2 -b base.qcow2 output.qcow2
 
 Windoof:
   Win -> "Disk Cleanup" -> "Clean System (Admin)" -> "More" -> "Prog+Features" -> uninst bloat.

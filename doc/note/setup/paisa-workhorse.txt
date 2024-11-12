@@ -48,20 +48,17 @@ Setup
             'Acquire::https::proxy "'"${https_proxy:?}"'";' \
          | $SUDO tee >/dev/null -a /etc/apt/apt.conf.d/80proxy \
     ;fi \
+  && `# Add some swap ` \
+  && SWAP_MIB=$((12*1024)) \
+  && $SUDO dd if=/dev/zero of=/swapfile1 bs=$((1024*1024)) count="${SWAP_MIB:?}" \
+  && $SUDO chmod 0600 /swapfile1 \
+  && $SUDO mkswap /swapfile1 \
+  && printf '/swapfile1  none  swap  sw,pri=10  0  0\n' | $SUDO tee > /dev/null -a /etc/fstab \
+  && `# Install packages ` \
   && $SUDO apt update \
-  && $SUDO apt install -y --no-install-recommends net-tools vim curl nfs-common htop ncat git \
-          ca-certificates \
-          tmux \
-          kubernetes-client awscli \
-          openjdk-17-jre-headless maven redis-server \
-          podman \
-  && $SUDO /etc/init.d/redis-server stop \
-  && if test "${ISCRAPINIT:?}" = 1 ;then \
-      && $SUDO systemctl disable redis-server \
-    ;else \
-      && $SUDO update-rc.d redis-server remove \
-    ;fi \
-  && printf '# TODO Put your redis config here\n' | $SUDO tee /etc/redis/redis.conf >/dev/null \
+  && $SUDO RUNLEVEL=1 apt install -y --no-install-recommends \
+         net-tools vim curl nfs-common htop ncat git ca-certificates tmux \
+         kubernetes-client awscli openjdk-17-jre-headless maven podman \
   && (cd "${CACHEDIR?}" && curl -Lo "getaddrinfo-${GETADDRINFO_VERSION?}+x86_64-linux-gnu.tgz" "https://github.com/hiddenalpha/getaddrinfo-cli/releases/download/v${GETADDRINFO_VERSION?}/getaddrinfo-${GETADDRINFO_VERSION?}+x86_64-linux-gnu.tgz") \
   && (cd "${CACHEDIR?}" && curl -o saml2aws_${SAML_VERSION?}_linux_amd64.tgz "https://artifactory.tools.post.ch/artifactory/generic-github-remote/Versent/saml2aws/releases/download/v${SAML_VERSION?}/saml2aws_${SAML_VERSION?}_linux_amd64.tar.gz") \
   && (cd "${CACHEDIR?}" && curl -Lo "argocd-${ARGOCD_VERSION?}+linux-amd64" "https://github.com/argoproj/argo-cd/releases/download/v${ARGOCD_VERSION?}/argocd-linux-amd64") \
@@ -83,15 +80,12 @@ Setup
   && (printf '10.0.2.2:/c  /mnt/cdrive  nfs  noauto,vers=3,user  0  0\n') | $SUDO tee -a /etc/fstab >/dev/null \
   && saml2aws configure --skip-prompt -p "${SAML_PROFILE?}" --role="${ROLE?}" --region "${REGION?}" --url https://adfs.post.ch --username "${USERNAME?}" --idp-provider="${IDPPROVIDER?}" --mfa="${MFA?}" \
   && printf 'MAVEN_OPTS="--add-opens jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED --add-opens jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED --add-opens jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED --add-opens jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED --add-opens jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.lang.reflect=ALL-UNNAMED --add-opens java.base/java.text=ALL-UNNAMED --add-opens java.desktop/java.awt.font=ALL-UNNAMED"' | $SUDO tee >/dev/null -a /etc/environment \
+  && printf '\n  TODO aws access -> https://wikit.post.ch/x/wzi_UQ \n\n' \
   && printf '\n  DONE_aWIAAN1YAAAiEQAA\n\n' \
 
-Authorize (needs attention)
-
-  && saml2aws login \
-  && aws --profile "${AWS_PROFILE?}" --region "${REGION?}" eks update-kubeconfig --name "${CLUSTER?}" \
-  && kubectl config set-context --current --namespace="${NAMESPACE?}" \
 
 
-[Maybe saml2aws becomes obsolete](https://wikit.post.ch/display/CDAF/How+to%3A+Setup-Guide+saml2aws?focusedCommentId=1741722098&src=mail&src.mail.product=confluence-server&src.mail.timestamp=1721914205401&src.mail.notification=com.atlassian.confluence.plugins.confluence-notifications-batch-plugin%3Abatching-notification&src.mail.recipient=8a81e4a6427b972601427b98b9262c20&src.mail.action=view#comment-1741722098)
+- [Yep, saml is dead](https://wikit.post.ch/x/0Fu4Vg)
+- [Maybe saml2aws becomes obsolete](https://wikit.post.ch/display/CDAF/How+to%3A+Setup-Guide+saml2aws?focusedCommentId=1741722098&src=mail&src.mail.product=confluence-server&src.mail.timestamp=1721914205401&src.mail.notification=com.atlassian.confluence.plugins.confluence-notifications-batch-plugin%3Abatching-notification&src.mail.recipient=8a81e4a6427b972601427b98b9262c20&src.mail.action=view#comment-1741722098)
 
 

@@ -7,15 +7,15 @@ Swap File
 
   && SUDO=sudo \
   && PATH_TO_SWAPFILE= \
-  && PRIO=-1 \
+  && PRI=-1 \
   && SZ_MIB=$((16*1024)) \
   && $SUDO dd if=/dev/zero of="${PATH_TO_SWAPFILE:?}" bs=$((1024*1024)) count="${SZ_MIB:?}" \
   && $SUDO chmod 0600 "${PATH_TO_SWAPFILE:?}" \
   && $SUDO mkswap "${PATH_TO_SWAPFILE:?}" \
   && `# enable on-demand, non permanent. Revert with swapoff ` \
-  && $SUDO swapon --priority "${PRIO:?}" "${PATH_TO_SWAPFILE:?}" \
+  && $SUDO swapon --priority "${PRI:?}" "${PATH_TO_SWAPFILE:?}" \
   && `# Enable permanent ` \
-  && printf "${PATH_TO_SWAPFILE:?}"'  none  swap  sw,prio=-1  0  0\n' | $SUDO tee > /dev/null -a /etc/fstab \
+  && printf "${PATH_TO_SWAPFILE:?}"'  none  swap  sw,pri='"${PRI:?}"'  0  0\n' | $SUDO tee > /dev/null -a /etc/fstab \
 
 
 
