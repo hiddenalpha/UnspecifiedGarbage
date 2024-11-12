@@ -3,6 +3,15 @@
 
 --- a/Jenkinsfile
 +++ b/Jenkinsfile
+@@ -10,7 +10,7 @@
+     jslPipeline
+         .checkout()
+         .setBranchVersion()
+-        .buildMaven([spotless: true])
++        .buildMaven([spotless: true])
+         .withEC2Instances([
+             instances: [
+                 testInstance: [
 @@ -17,3 +17,3 @@ serviceBuildPipeline([
                          eagle:    [version: '02.01.27.01-PR-379-SNAPSHOT'],
 -                        platform: [version: '03.06.46.01-PR-388-SNAPSHOT'],
