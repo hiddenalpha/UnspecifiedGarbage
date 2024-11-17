@@ -1,0 +1,5 @@
+
+## Thumbnails not working
+
+See "../imagemagic/imagemagic.txt" about how to setup a thumbnailer.
+

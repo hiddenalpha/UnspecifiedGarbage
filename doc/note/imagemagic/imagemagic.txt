@@ -1,0 +1,33 @@
+
+
+## Attach thumb to PNG
+
+  convert "${THE_PNG:?}" -resize 256x256 "${THUMB_PNG:?}"
+  exiftool -ThumbnailImage="${THUMB_PNG:?}" -overwrite_original "${THE_PNG:?}"
+  `# Verify (optional) `
+  exiftool "${THE_PNG:?}" | grep --color 'ThumbnailImage'
+
+
+## Create gnome thumb cache entry manually
+
+  && THE_PNG= \
+  && HASH="$(printf "$(realpath "${THE_PNG:?}")" | md5sum -b | cut -d' ' -f1)" \
+  && THUMB_PNG=~/.cache/thumbnails/normal/${HASH:?}.png \
+  && mkdir -p ~/.cache/thumbnails/normal \
+  && convert "${THE_PNG:?}" -resize 48x48 "${THUMB_PNG:?}" \
+
+
+## Install imagemagic as thumbnailer
+
+  && THUMBDIR= `# OneOf: "~/.local/share/thumbnailers", "/usr/share/thumbnailers" ` \
+  && THUMBDESCR="${THUMBDIR:?}/imagemagick-thumbnailer.thumbnailer" \
+  && mkdir -p "${THUMBDIR:?}" \
+  && <<EOF base64 -d|gzip -d|tee "${THUMBDESCR:?}" >/dev/null &&
+H4sIALz4OWcAA4sOySjNTcpLzMxJLVJwzSspqozlCqksSLVFEudyrUhNtk3OzytLLSpRUC1V0C1K
+Lc6sSlUwsagwsVBQzefyzcxNBevKzE1MT9UvyEu3hrCyClIRTBgrPTMNyirJTIMxk3ILoKwK3aLE
+cjgbZBYXAM7Z3yamAAAA
+EOF
+true \
+  && true \
+
+

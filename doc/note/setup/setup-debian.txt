@@ -128,7 +128,7 @@ Populate "/etc/environment" as described by "./etc-environment".
        `# AMD graphics ` \
        mesa-utils libva2 mesa-va-drivers libvdpau-va-gl1 \
        `# Nvidia graphics (open)` \
-       clinfo mesa-opencl-icd nvidia-driver \
+       clinfo mesa-opencl-icd nvidia-driver nvidia-smi \
        nvidia-vdpau-driver `# HwAccel Video Decoding ` \
        `# Nvidia graphics (non-free, DoesNotWorkYet)` \
        nvidia-detect nvidia-tesla-470-driver linux-headers-amd64 \
