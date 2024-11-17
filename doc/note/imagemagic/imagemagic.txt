@@ -2,7 +2,7 @@
 
 ## Attach thumb to PNG
 
-  convert "${THE_PNG:?}" -resize 256x256 "${THUMB_PNG:?}"
+  convert "${THE_PNG:?}" -resize 48x48 "${THUMB_PNG:?}"
   exiftool -ThumbnailImage="${THUMB_PNG:?}" -overwrite_original "${THE_PNG:?}"
   `# Verify (optional) `
   exiftool "${THE_PNG:?}" | grep --color 'ThumbnailImage'
@@ -23,11 +23,30 @@
   && THUMBDESCR="${THUMBDIR:?}/imagemagick-thumbnailer.thumbnailer" \
   && mkdir -p "${THUMBDIR:?}" \
   && <<EOF base64 -d|gzip -d|tee "${THUMBDESCR:?}" >/dev/null &&
-H4sIALz4OWcAA4sOySjNTcpLzMxJLVJwzSspqozlCqksSLVFEudyrUhNtk3OzytLLSpRUC1V0C1K
-Lc6sSlUwsagwsVBQzefyzcxNBevKzE1MT9UvyEu3hrCyClIRTBgrPTMNyirJTIMxk3ILoKwK3aLE
-cjgbZBYXAM7Z3yamAAAA
+H4sIAOoUOmcAA1XNSwuCQBSG4f38ioPhcgrChRQujYRq5S5ajHLGRpoL41jar0/NS+0eXjjfuab3
+WmaKiQdaiJWz7Y2krcHop5O4wTzKtXqideDXQC1W4o0QhE0Qgq/JCo7JJd1BXSF4vLsBSqWQSF03
+BYfkFHvgNHChEPre5zU5dxp+CckK3BhV7L8qDS6cVAg+ygk+MZNmVEMte81etnK7neufmdJqKOQD
+qHjk/AQBAAA=
 EOF
 true \
   && true \
+
+
+Also use it for CR2 canon raw files:
+
+  && IMAC_DELEGATES_XML="/etc/ImageMagick-6/delegates.xml" \
+  && $SUDO apt install --no-install-recommends -y dcraw \
+  && $SUDO cp "${IMAC_DELEGATES_XML:?}" "${IMAC_DELEGATES_XML}.bk$(date +%s)" \
+  && <<EOF base64 -d|gzip -d| (cd /etc/ImageMagick-6 && $SUDO patch) &&
+H4sIABsTOmcAA9VTwVbrIBBd61fM6TkxizhpSV9DreadfoDu/ABTICnHJEQgffXvxdKmT5uqWzfA
+DHDn3suAiMBFJcrcChNv6+oimSR/kBAkFMhsMaULQuN0SmezGzonEE3IZHIZRdF3t2Y0nqdkniYJ
+ne5vLZeAKb2mEO3G5fISAO4OOA6QKS6y0dra1ix8NAKm6jpveDa6eumUvWWdrvwK0AA+A94DKvCp
+oIt5bvfbfvJgwYOPRuO/wzW5YielKrnSQhWFZOJQEdci55UwrjIy1WyEtmgVtLxwJDrLpYYnNzR5
+LQ6UpJ+fPsWQXJU9yaDz8y2MV7IZ15v+cOygP+gJ1PdKtr9PCg5KacpzbdAVOv+Hq9yydS/IyEo0
+9l2OFg4GJc/yyiiXcHrQvrYia5tyH3LR2nVGUh+2nc36FnKHPvKUR57Rj3lK1Ti3YTdw5tgCMggD
+GcLOrfC9UFuHX7yjPaKFnoHLHdQ+mk35+R2O/2DvbAhn0TfyxFOXa03/t4zlzpgsCNxCaH0KPuDO
+cKltcfp8zhbfc0oPovW1YqfzTEf9tzfQUW/N1oXk2QQAAA==
+EOF
+true \
 
 

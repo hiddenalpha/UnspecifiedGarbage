@@ -120,7 +120,7 @@ Populate "/etc/environment" as described by "./etc-environment".
        `# Cups Printing` \
        cups avahi-daemon \
        `# Graphics processing` \
-       imagemagick \
+       imagemagick dcraw \
        `# Low level ` \
        lm-sensors fancontrol exfat-fuse exfatprogs \
        `# Others` \
