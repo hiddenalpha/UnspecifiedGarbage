@@ -1,0 +1,6 @@
+
+  && SUDO=sudo \
+  && $SUDO apt install --no-install-recommends \
+         make  gcc-mingw-w64-x86-64-posix  \
+  && printf '\n  DONE\n\n' \
+

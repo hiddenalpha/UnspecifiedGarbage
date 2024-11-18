@@ -16,6 +16,17 @@ curl -u USER:PASS https://gitit.post.ch/rest/api/1.0/projects/WORK/repos/my-repo
 curl -sSD- https://gitit.post.ch/2.0/repositories/ISA?fields=values.links
 
 
+
+## Link to PR patch
+
+PRs:
+  "https://example.com/rest/api/1.0/projects/TODO/repos/TODO/pull-requests/TODO.patch"
+
+Any hashes or branches:
+  "https://___/rest/api/1.0/projects/___/repos/___/patch?until=___&since=___"
+
+
+
 ## Image size in comment
 
 Source: "https://stackoverflow.com/a/67069086/4415884"
@@ -25,4 +36,9 @@ Source: "https://stackoverflow.com/a/67069086/4415884"
 ![alt text for the image](image-file.png){height=100}
 ![alt text for the image](image-file.png){width=200px}
 
+
+
+## Refs 
+
+- [Link to patch](https://stackoverflow.com/a/66673095/4415884)
 
