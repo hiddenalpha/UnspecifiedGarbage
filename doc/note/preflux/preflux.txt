@@ -1,0 +1,42 @@
+
+
+
+
+## Bkup/Restore instance
+
+
+  && `# Bkup instance ` \
+  && NOW="$(date -u +%Y%m%d-%H%M%S)" \
+  && BKUP_TGZ="instance-skel-${NOW:?}.tgz" \
+  && echo "tar c..." \
+  && ( true \
+      && find conf -not -wholename 'conf/nova*' -print0 \
+      && find conf/nova logs redis eagle-storage-file -type d -print0 \
+      && find eagle-storage-file/eagle/deployment/upgrade/v1/installation -print0 \
+      && find preflux/isaVersion  prefluxer-*.sh -print0 \
+      && find isa-launch-*.txt -print0 \
+      && find repo -print0 \
+     ) | tar c --no-recursion --null --files-from - \
+       | gzip > "${BKUP_TGZ:?}" \
+  && echo "md5sum..." \
+  && md5sum -b "${BKUP_TGZ:?}" >> "${BKUP_TGZ%%.*}.md5" \
+  && echo E $? \
+
+
+  && `# Restore j21 instance from tar ` \
+  && BKUP_TGZ= \
+  && tar -f "${BKUP_TGZ:?}" -x -- $(tar -f "${BKUP_TGZ:?}" -t|sed -E 's_^([^/]+)/.*$_\1_'|grep -v repo|uniq) \
+  && tar -f "${BKUP_TGZ:?}" --skip-old-files -x -- repo \
+  && echo "prefluxer create..." \
+  && for P in $(tar -f "${BKUP_TGZ}" -t|grep -E '^prefluxer-.+.sh') ;do true \
+      && for A in stop rm create ;do true \
+          && echo "./${P:?}" $A \
+          && "./${P:?}" $A \
+        ;done \
+    ;done \
+  && echo E $? \
+
+
+
+
+

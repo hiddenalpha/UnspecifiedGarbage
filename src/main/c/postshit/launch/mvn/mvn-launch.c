@@ -96,9 +96,17 @@ static int appendFromEnvironIfNotEmpty( char*cmdline, int*cmdline_len, int cmdli
         err = -ENOBUFS; goto endFn;
     }
     if( err > 0 ){
-        err = appendArg(cmdline, &cmdline_len, cmdline_cap, envval, err);
+        //LOGDBG("appendFromEnv(\"%s\", \"%s\") e=%d\n", envKey, envval, err);
+        int const envval_len = err;
+        /* Example input:
+         *   MAVEN_OPTS=--add-opens java.base/java.lang=ALL-UNNAMED
+         * Expected result:
+         *   arg[i+0] := --add-opens
+         *   arg[i+1] := java.base/java.lang=ALL-UNNAMED  */
+        err = appendRaw(cmdline, &cmdline_len, cmdline_cap, " ", 1);
         if( err < 0 ){ LOGDBG("[TRACE]   at %s:%d\n", __FILE__, __LINE__); goto endFn; }
-        cmdline_len += err;
+        err = appendRaw(cmdline, &cmdline_len, cmdline_cap, envval, envval_len);
+        if( err < 0 ){ LOGDBG("[TRACE]   at %s:%d\n", __FILE__, __LINE__); goto endFn; }
     }
     err = 0;
 endFn:
