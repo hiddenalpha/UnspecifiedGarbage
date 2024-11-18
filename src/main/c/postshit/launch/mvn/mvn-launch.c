@@ -63,7 +63,7 @@ endFn:
 static int appendArg( char*cmdline, int*cmdline_len, int cmdline_cap, const char*newArg, int newArg_len ){
     #define cmdline_len (*cmdline_len)
     register int err;
-    if( cmdline_cap < cmdline_len + newArg_len + sizeof" \"\"" ){
+    if( cmdline_cap < cmdline_len + newArg_len + (int)(sizeof" \"\"") ){
         LOGERR("ENOBUFS: Cmdline too long. %s:%d\n", strrchr(__FILE__,'/')+1, __LINE__);
         err = -ENOBUFS; goto endFn;
     }
@@ -139,6 +139,25 @@ int main( int argc, char**argv ){
     int cmdline_len = 0;
 
     err = 0
+        || appendRaw(cmdline, &cmdline_len, cmdline_cap, "C:/work/opt/java-open-jdk-21.0.5_11/bin/java.exe", 48) < 0
+        || appendFromEnvironIfNotEmpty(cmdline, &cmdline_len, cmdline_cap, "JVM_CONFIG_MAVEN_PROPS") < 0
+        || appendFromEnvironIfNotEmpty(cmdline, &cmdline_len, cmdline_cap, "MAVEN_OPTS") < 0
+        || appendFromEnvironIfNotEmpty(cmdline, &cmdline_len, cmdline_cap, "MAVEN_DEBUG_OPTS") < 0
+        || appendRaw(cmdline, &cmdline_len, cmdline_cap, " -classpath", 11) < 0
+        || appendRaw(cmdline, &cmdline_len, cmdline_cap, " C:/Users/", 10) < 0
+        || appendRaw(cmdline, &cmdline_len, cmdline_cap, username, username_len) < 0
+        || appendRaw(cmdline, &cmdline_len, cmdline_cap, "/.opt/maven/boot/plexus-classworlds-2.5.2.jar", 45) < 0
+        || appendRaw(cmdline, &cmdline_len, cmdline_cap, " -Dclassworlds.conf=C:/Users/", 29) < 0
+        || appendRaw(cmdline, &cmdline_len, cmdline_cap, username, username_len) < 0
+        || appendRaw(cmdline, &cmdline_len, cmdline_cap, "/.opt/maven/bin/m2.conf", 23) < 0
+        || appendRaw(cmdline, &cmdline_len, cmdline_cap, " -Dmaven.home=C:/Users/", 23) < 0
+        || appendRaw(cmdline, &cmdline_len, cmdline_cap, username, username_len) < 0
+        || appendRaw(cmdline, &cmdline_len, cmdline_cap, "/.opt/maven", 11) < 0
+        ;
+    if( err ){ LOGDBG("[TRACE]   at %s:%d\n", __FILE__, __LINE__); goto endFn; }
+
+#if 0 /* obsolete since 20241114 for java-11 */
+    err = 0
         || appendRaw(cmdline, &cmdline_len, cmdline_cap, "C:/work/opt/java-open-jdk-11.0.11-9-x64/bin/java.exe", 52) < 0
         || appendFromEnvironIfNotEmpty(cmdline, &cmdline_len, cmdline_cap, "JVM_CONFIG_MAVEN_PROPS") < 0
         || appendFromEnvironIfNotEmpty(cmdline, &cmdline_len, cmdline_cap, "MAVEN_OPTS") < 0
@@ -155,6 +174,7 @@ int main( int argc, char**argv ){
         || appendRaw(cmdline, &cmdline_len, cmdline_cap, "/.opt/maven", 11) < 0
         ;
     if( err ){ LOGDBG("[TRACE]   at %s:%d\n", __FILE__, __LINE__); goto endFn; }
+#endif
 
     char workDir[0x7FFF];
     const int workDir_cap = sizeof workDir;

@@ -232,6 +232,7 @@ Links (Aka argument amplifiers)
 - [java streams are ugly](https://gitit.post.ch/projects/ISA/repos/nsync/pull-requests/55/overview?commentId=328210)
 
 ## Backward compatibility, Breaking Changes
+- [SprintFeedback says STOP IT](https://jira.post.ch/projects/SDCISA?selectedItem=com.arijea.plugins.easy-agile-user-story-maps&rapidView=9825#/retros/board/9825/sprint/48137)
 - [preflux 2024 storage/redis aws isaVersion](https://gitit.post.ch/projects/ISA/repos/preflux/pull-requests/780/overview?commentId=396322)
 - "https://www.redstar.be/backward-compatibility-in-software-development-what-and-why/"
 - [UserInformation SAP 2023](https://gitit.post.ch/projects/ISA/repos/user-information-api/pull-requests/20/overview?commentId=270157)

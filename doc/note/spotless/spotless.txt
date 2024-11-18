@@ -6,7 +6,7 @@ NonSense in: preflux.
 MustHave in: .
 
 
-  && GIT_COMMIT_MSG="[TODO_ReplaceMe] Auto-destroy code-format" \
+  && GIT_COMMIT_MSG="TODO_ReplaceMe: Auto-destroy code-format" \
   && PR_REMOTE=upstream \
   && PR_BRANCH= \
   && LOCL_BRANCH="$(git branch --show-current)" \
