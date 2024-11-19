@@ -25,47 +25,31 @@ POST_TUXSIX=$(xrandr | grep ' connected' | grep 'DP-' | cut -d' ' -f1)
 
 ## Setup PostLeftPortraitPlusLg4kRight
 
-xrandr --delmonitor left --delmonitor main > /dev/null
-xrandr --output "${POST:?}" --mode 1920x1200 --rate 59.95 --pos 0x0 --rotate left
-xrandr --output "${LG4K:?}" --mode 2560x1440 --rate 59.95 --pos 1200x350 --rotate normal
 while true ;do # WHY THE FUCK IS THIS DAMN 'panning' STAYING THERE FUCKING FOREVER?!?
     xrandr --output "${POST:?}" --panning 0x0
-    actual="$(xrandr | grep "${POST:?}")"
-    if echo "${actual:?}" | grep panning ;then true ;else break ;fi
-    echo FUCK panning on "${POST:?}"
-    sleep .1
+    if echo "$(xrandr | grep "${POST:?}")" | grep -q panning ;then true ;else break ;fi
+    echo FUCK panning on "${POST:?}" && sleep .1
 done
 while true ;do # WHY THE FUCK IS THIS DAMN 'panning' STAYING THERE FUCKING FOREVER?!?
     xrandr --output "${POST:?}" --panning 0x0
-    actual="$(xrandr | grep "${LG4K:?}")"
-    if echo "${actual:?}" | grep panning ;then true ;else break ;fi
-    echo FUCK panning on "${LG4K:?}"
-    sleep .1
-done
-xrandr --fb "$((1200+2560))x1920"
-while true ;do
-    xrandr --delmonitor left
-    xrandr --setmonitor left "1200/324x1920/518+0+0" "${POST:?}" > /dev/null
-    actual="$(xrandr | grep "${POST:?}")"
-    isOk=true
-    # HINT: Give a shit on reported mm. dpi is ok. X just reports wrong values. GRRRRRR...
-    if echo ${actual:?} | grep '1920' ;then true ;else isOk=false ;fi
-    if echo ${actual:?} | grep '0+0' ;then true ;else isOk=false ;fi
-    if $isOk ;then break ;fi
-    echo FuckThisShit: $actual
-    sleep .1
+    if echo "$(xrandr | grep "${LG4K:?}")" | grep -q panning ;then true ;else break ;fi
+    echo FUCK panning on "${LG4K:?}" ; sleep .1
 done
 while true ;do
-    xrandr --delmonitor main
-    xrandr --setmonitor main "1440/394x2560/700+1200+350" "${LG4K:?}" > /dev/null
-    actual="$(xrandr | grep "${LG4K:?}")"
-    isOk=true
-    # HINT: Give a shit on reported mm. dpi is ok. X just reports wrong values. GRRRRRR...
-    if echo ${actual:?} | grep '2560' ;then true ;else isOk=false ;fi
-    if echo ${actual:?} | grep '1200+350' ;then true ;else isOk=false ;fi
+    xrandr --output "${POST:?}" --mode 1920x1200 --rate 59.95 --pos 0x0 --dpi 93 --rotate left
+    isOk=true ; actual="$(xrandr | grep "${POST:?}")"
+    if echo ${actual:?} | grep -q '1920' ;then true ;else isOk=false ;fi
+    if echo ${actual:?} | grep -q '0+0' ;then true ;else isOk=false ;fi
     if $isOk ;then break ;fi
-    echo FuckThisShit: $actual
-    sleep .1
+    echo FuckThisShit: $actual ; sleep .1
+done
+while true ;do
+    xrandr --output "${LG4K:?}" --mode 2560x1440 --rate 59.95 --pos 1200x350 --dpi 93 --rotate normal
+    isOk=true ; actual="$(xrandr | grep "${LG4K:?}")"
+    if echo ${actual:?} | grep -q '2560' ;then true ;else isOk=false ;fi
+    if echo ${actual:?} | grep -q '1200+350' ;then true ;else isOk=false ;fi
+    if $isOk ;then break ;fi
+    echo FuckThisShit: $actual ; sleep .1
 done
 
 
