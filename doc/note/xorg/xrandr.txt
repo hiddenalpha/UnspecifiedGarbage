@@ -3,9 +3,14 @@
 ## WARN Quirks Ahead!
 
 ChatGPT recommends this command order to prevent conflicts while
-applying.
+applying. WARN: Use my order below instead.
 
   mode, rate, dpi, scale, rotate, pos, panning, primary.
+
+BULLSHIT AI! As soon I start to change the order myself, the situation
+seems to improve (especially: sleep-before-panning).
+
+  primary, mode, rate, dpi, scale, rotate, pos, SLEEP, panning.
 
 Do NOT combine commands in one invocation! It will just randomly end up
 in trouble and just ignore some of the settings. DON'T DO IT!
@@ -17,6 +22,16 @@ in trouble and just ignore some of the settings. DON'T DO IT!
 LG4K_TUXSIX=$(xrandr | grep ' connected' | grep 'HDMI-' | cut -d' ' -f1)
 POST_TUXSIX=$(xrandr | grep ' connected' | grep 'DP-' | cut -d' ' -f1)
 
+
+## Setup PostLeftPortraitPlusLg4kRight
+
+xrandr --fb "$((1080+2560))x1920" \
+    --delmonitor post --delmonitor lg4k \
+    --setmonitor post "1080/324x1920/520+0+0" "${POST:?}" \
+    --setmonitor lg4k "2560/700x1440/393+1080+350" "${LG4K:?}" \
+    --output "${POST:?}" --rotate left --panning 0x0 \
+    ;
+xrandr --delmonitor post --delmonitor lg4k
 
 ## LG 4k @ tux-six
 # LG4K_DPI := 2560 / (700 / 25.4)
