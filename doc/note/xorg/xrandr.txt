@@ -1,57 +1,70 @@
 
 
-## Grab moving display names
+## WARN Quirks Ahead!
 
-DISPL=$(xrandr | grep ' connected' | grep 'HDMI-' | cut -d' ' -f1)
+ChatGPT recommends this command order to prevent conflicts while
+applying.
+
+  mode, rate, dpi, scale, rotate, pos, panning, primary.
+
+Do NOT combine commands in one invocation! It will just randomly end up
+in trouble and just ignore some of the settings. DON'T DO IT!
 
 
-## LG 4k screen
+
+## Grab moving names
+
+LG4K_TUXSIX=$(xrandr | grep ' connected' | grep 'HDMI-' | cut -d' ' -f1)
+POST_TUXSIX=$(xrandr | grep ' connected' | grep 'DP-' | cut -d' ' -f1)
+
+
+## LG 4k @ tux-six
 # LG4K_DPI := 2560 / (700 / 25.4)
-xrandr \
-    --output ${LG4K:?} \
-        --primary \
-        --mode 2560x1440 \
-        --rate 60.00 \
-        --dpi 93 \
-        --pos 1200x320
+true \
+  && xrandr --output "{LG4K_TUXSIX:?}" --mode 2560x1440 \
+  && xrandr --output "{LG4K_TUXSIX:?}" --rate 60.00 \
+  && xrandr --output "{LG4K_TUXSIX:?}" --dpi 93 \
+  && xrandr --output "{LG4K_TUXSIX:?}" --pos 1200x3 \
+  && xrandr --output "{LG4K_TUXSIX:?}" --primary \
 
 
-## Post HD screen
+## Post HD @ tux-six
 # POST_DPI := 1920 / (518 / 25.4)
-xrandr \
-    --output ${POST:?} \
-        --primary \
-        --mode 1920x1200 \
-        --rate 59.95 \
-        --dpi 94 \
-        --pos 0x0 \
-        --rotate left \
+true \
+  && xrandr --output "${POST_TUXSIX:?}" --mode 1920x1200 \
+  && xrandr --output "${POST_TUXSIX:?}" --rate 59.95 \
+  && xrandr --output "${POST_TUXSIX:?}" --dpi 94 \
+  && xrandr --output "${POST_TUXSIX:?}" --rotate left \
+  && xrandr --output "${POST_TUXSIX:?}" --pos 0x0 \
+  && xrandr --output "${POST_TUXSIX:?}" --primary \
 
 
-## Tuxbook reset to solo screen
 
-xrandr --dpi 142 --fb 1920x1080 \
-    --output HDMI-1 --off \
-    --output eDP-1 \
-        --mode 1920x1080 --rate 60.01 \
-        --pos 0x0 \
-        --scale 1x1 \
-    --primary \
+## Tuxbook reset to solo
+true \
+  && xrandr --output HDMI-1 --off \
+  && xrandr --output eDP-1 --mode 1920x1080 \
+  && xrandr --output eDP-1 --rate 60.01 \
+  && xrandr --output eDP-1 --dpi __ \
+  && xrandr --output eDP-1 --scale 1x1 \
+  && xrandr --output eDP-1 --primary \
 
 
 ## Tuxbook home 4k 40" dual-mon setup
 
 # TODO could fb be smaller?
-xrandr --dpi 157 --fb 9600x3600 \
-    --output HDMI-1 \
-        --mode 3840x2160 --rate 25 \
-        --pos 0x0 \
-        --scale 0.5x0.5 \
-        --primary \
-    --output eDP-1 \
-        --mode 1920x1080 --rate 60.01 \
-        --pos 1920x540 \
-        --scale 0.5x0.5 \
+true \
+  && xrandr --output HDMI-1 --mode 3840x2160 \
+  && xrandr --output HDMI-1 --rate 25 \
+  && xrandr --output HDMI-1 --dpi 139 \
+  && xrandr --output HDMI-1 --pos 0x0 \
+  && xrandr --output HDMI-1 --scale 0.5x0.5 \
+  && xrandr --output HDMI-1 --primary \
+  && xrandr --output eDP-1 --mode 1920x1080 \
+  && xrandr --output eDP-1 --rate 60.01 \
+  && xrandr --output eDP-1 --dpi __ \
+  && xrandr --output eDP-1 --pos 1920x540 \
+  && xrandr --output eDP-1 --scale 0.5x0.5 \
 
 
 ## Try fix annoying app scaling issues
