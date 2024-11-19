@@ -243,6 +243,10 @@ Links (Aka argument amplifiers)
 - [Keep APIs scope narrow as possible](https://gitit.post.ch/projects/ISA/repos/timetable-reservation-api/pull-requests/12/overview?commentId=327819)
 - [remove but still in use](https://gitit.post.ch/projects/ISA/repos/vending-transaction-api/pull-requests/20/overview?commentId=385689)
 
+## Breaking Chages. "Warning, I told you!"
+- [API enum case](https://gitit.post.ch/projects/ISA/repos/trin/pull-requests/204/overview?commentId=440735)
+
+
 ## Performance DOES matter
 - [aws database HMS 2024](https://jira.post.ch/browse/SDCISA-16381)
 - [Performance gefühlt viel zu langsam in Wikkit bei Linienaufruf und Export erstellen](https://jira.post.ch/browse/SDCISA-16103)

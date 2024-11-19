@@ -1,0 +1,37 @@
+
+How to housekeep windoof disk space
+===================================
+
+Automatic:
+
+  && M2_REPO="${HOME:?}/.m2/repository" \
+  && find "${M2_REPO:?}" -type f -wholename '*SNAPSHOT*' -exec rm {} + | wc -l \
+  && printf "^^^- Num SNAPSHOT files deleted from \"${M2_REPO}\"\n" \
+  && find "${M2_REPO:?}" -type f -mtime +365 -exec rm -v {} + | wc -l \
+  && printf "^^^- Num Old files deleted from \"${M2_REPO}\"\n" \
+  && find "${M2_REPO:?}" -type d -empty -exec rmdir -v {} + | wc -l \
+  && printf "^^^- Num Empty dirs deleted from \"${M2_REPO}\"\n" \
+  && find "${HOME:?}/AppData/LocalLow/Temp" -type f -mtime +28 -exec rm -v {} + | wc -l \
+  && printf "^^^- Num Files deleted from \"${HOME:?}/AppData/LocalLow/Temp\"\n" \
+  && find "${HOME:?}/Downloads" -type f \( -mtime +365 -or -size +256M \) -exec rm -v {} + | wc -l \
+  && printf "^^^- Num Files deleted from \"${HOME:?}/Downloads\"\n" \
+  && find "${HOME:?}/AppData/Roaming/npm-cache" -type f -mtime +365 -exec rm -v {} + | wc -l \
+  && printf "^^^- Num Files deleted from \"${HOME:?}/AppData/Roaming/npm-cache\"\n" \
+
+Manual:
+
+  && printf "\n" \
+  && cd "${HOME:?}"/AppData/Local/JetBrains && du -hs $(ls -A) \
+  && printf "^^^- Have a Look: Maybe some of those are obsolete.\n\n" \
+  && cd "${HOME:?}"/repo && du -hs $(ls -A) \
+  && cd "${HOME:?}"/projects && du -hs $(ls -A) \
+
+TODO: Those have potential:
+
+"${HOME:?}/AppData/Local/Microsoft/Edge/User Data/Default/Cache"
+"${HOME:?}/AppData/Local/Microsoft/Edge/User Data/Default/Code Cache"
+"${HOME:?}/AppData/Local/Microsoft/Edge/User Data/Default/Service Worker/CacheStorage"
+"${HOME:?}/AppData/Local/Microsoft/Edge/User Data/Default/Service Worker/Database"
+"${HOME:?}/AppData/Local/Microsoft/Edge/User Data/Default/Service Worker/ScriptCache"
+
+
