@@ -125,16 +125,12 @@ Populate "/etc/environment" as described by "./etc-environment".
        lm-sensors fancontrol exfat-fuse exfatprogs \
        `# Others` \
        systemd-sysv bc rsync qrencode libxml2-utils adb \
-       `# AMD graphics ` \
-       mesa-utils libva2 mesa-va-drivers libvdpau-va-gl1 \
-       `# Nvidia graphics (open)` \
-       clinfo mesa-opencl-icd nvidia-driver nvidia-smi \
-       nvidia-vdpau-driver `# HwAccel Video Decoding ` \
-       `# Nvidia graphics (non-free, DoesNotWorkYet)` \
-       nvidia-detect nvidia-tesla-470-driver linux-headers-amd64 \
-       linux-headers-$(uname -r) `# needed by nvidia-xx-driver` \
-       `# "GeForce GTX 670" too old. Maybe one of those works: ` \
-       `#   xserver-xorg-video-nouveau libgl1-mesa-dri ` \
+       `# GPU ` \
+       `# TODO: uninstall all other xserver-xorg-video-* pkgs ` \
+       xserver-xorg-video-fbdev xserver-xorg-video-nouveau xserver-xorg-video-vesa \
+       glx-alternative-mesa libgl1-mesa-glx libgl1-mesa-dri mesa-utils \
+       libva2 mesa-va-drivers libvdpau-va-gl1 clinfo mesa-opencl-icd \
+       `# WARN: do NOT use nvidia. See "../nvidia/FUCKTHISSHIT.txt" ` \
 
 
 ## Cups Printing

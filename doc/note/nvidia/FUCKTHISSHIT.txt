@@ -1,0 +1,22 @@
+
+WARN: DO NOT INSTALL THIS NVIDIA BULLSHIT! IT JUST BREAKS ALL KINDS OF
+STUFF EVERYWHERE! LIKE XRANDR SETTINGS THAT GET IGNORED FOR NO REASON OR
+SIMILAR.
+
+  && SUDO=sudo \
+  && `# Use those instead: ` \
+  && $SUDO apt install --no-install-recommends -y \
+         xserver-xorg-video-fbdev xserver-xorg-video-nouveau xserver-xorg-video-vesa \
+         glx-alternative-mesa libgl1-mesa-glx libgl1-mesa-dri \
+  && `# Get rid of all this broken bullshit ` \
+  && $SUDO apt purge \
+         glx-alternative-nvidia libegl-nvidia-tesla-470-0 libgl1-nvidia-tesla-470-glvnd-glx \
+         libglx-nvidia-tesla-470-0 libnvidia-egl-wayland1 libnvidia-tesla-470-eglcore \
+         libnvidia-tesla-470-glcore libnvidia-tesla-470-glvkspirv libnvidia-tesla-470-ml1 \
+         nvidia-egl-common nvidia-kernel-common nvidia-modprobe nvidia-tesla-470-alternative \
+         nvidia-tesla-470-driver-bin nvidia-tesla-470-driver-libs nvidia-tesla-470-driver \
+         nvidia-tesla-470-egl-icd nvidia-tesla-470-kernel-dkms nvidia-tesla-470-kernel-support \
+         nvidia-tesla-470-vdpau-driver xserver-xorg-video-all xserver-xorg-video-amdgpu \
+         xserver-xorg-video-ati xserver-xorg-video-nvidia-tesla-470 xserver-xorg-video-radeon \
+         xserver-xorg-video-vmware liblcms2-dev libxatracker2 lsb-release nvidia-support \
+
