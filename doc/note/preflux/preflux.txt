@@ -25,9 +25,11 @@
 
   && `# Restore j21 instance from tar ` \
   && BKUP_TGZ= \
+  && echo "tar x -- non-repo-files" \
   && tar -f "${BKUP_TGZ:?}" -x -- $(tar -f "${BKUP_TGZ:?}" -t|sed -E 's_^([^/]+)/.*$_\1_'|grep -v repo|uniq) \
+  && echo "tar -f \"${BKUP_TGZ:?}\" --skip-old-files -x -- repo" \
   && tar -f "${BKUP_TGZ:?}" --skip-old-files -x -- repo \
-  && echo "prefluxer create..." \
+  && echo "prefluxer create ..." \
   && for P in $(tar -f "${BKUP_TGZ}" -t|grep -E '^prefluxer-.+.sh') ;do true \
       && for A in stop rm create ;do true \
           && echo "./${P:?}" $A \

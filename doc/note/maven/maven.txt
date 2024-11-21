@@ -41,9 +41,26 @@ true \
 mvn verify -U -DSelBaseUrl=http://localhost:7012/apigateway/services/foo/index.html -Dskip.tests=false -Dserver.host=localhost -Dserver.port=7012 -Ptestsuite
 
 
-## Fill local cache with artifacts (TODO verify)
+## Fill local cache with artifacts
 
   mvn dependency:go-offline
+
+  && WORKDIR="/tmp/path/to/empty/dir" \
+  && mkdir -p "${WORKDIR:?}/clones" \
+  && for E in \
+         TODO list all services and APIs here \
+    ;do true \
+      && printf '\n%s\n' "$E" \
+      && sleep 1 \
+      && mkdir "${WORKDIR:?}/${E:?}" \
+      && cd "${WORKDIR:?}/${E:?}" \
+      && git init \
+      && git remote add upstream "https://gitit.post.ch/scm/isa/${E:?}.git" \
+      && git fetch --depth=1 upstream develop \
+      && git checkout --detach upstream/develop \
+      && mvn dependency:go-offline \
+    ;done \
+
 
 [See also](https://maven.apache.org/plugins/maven-dependency-plugin/go-offline-mojo.html)
 
