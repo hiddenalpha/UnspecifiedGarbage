@@ -142,6 +142,8 @@ When[CEST];version;LoginScreen[sec];FahrtGewaehlt[sec];
 2024-11-07 11:07;constl4;194;254;mit zaphod wait hack
 2024-11-07 11:14;constl4;193;253;mit zaphod wait hack
 2024-11-07 11:22;constl4;193;268;mit zaphod wait hack
+
+2024-11-21 __:__;constr;__;__;"With docker resource constraints in place"
 2024-__-__ __:__;__;__;__;
 
 

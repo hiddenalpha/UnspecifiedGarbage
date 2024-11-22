@@ -8,15 +8,19 @@ Create/update scripts in "/etc/init.d/".
 
 ## Enable / Disable service
 
-  update-rc.d YOURSVC defaults
-  update-rc.d YOURSVC remove
+  $SUDO update-rc.d YOURSVC defaults
+  $SUDO update-rc.d YOURSVC remove
 
+
+## Register a new service without enablig it
+
+  $SUDO update-rc.d YOURSVC remove
 
 
 ## Start / stop service
 
-  service YOURSVC start
-  service YOURSVC stop
+  $SUDO service YOURSVC start
+  $SUDO service YOURSVC stop
 
 
 

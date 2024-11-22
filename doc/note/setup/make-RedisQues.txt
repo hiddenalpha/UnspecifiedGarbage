@@ -4,6 +4,7 @@ Step-by-step shell snippets how to build RedisQues
 
   && WORKDIR="/${HOME:?}/work" \
   && SUDO=sudo \
+  && $SUDO apt update \
   && $SUDO apt install --no-install-recommends -y git maven redis \
   && printf '%s\n' \
        'bind 127.0.0.1 -::1' \

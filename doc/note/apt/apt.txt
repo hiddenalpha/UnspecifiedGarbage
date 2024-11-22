@@ -13,3 +13,14 @@ WARN: I saw cases where above still misses to print relevant packages. Then I
   sudo apt purge --dry-run ${PKG_NAME:?}
 
 
+
+
+## Use proxy
+
+"/etc/apt/apt.conf.d/80proxy"
++-----------------------------------------------------------------------
+| Acquire::http::proxy "http://10.0.2.2:3128/";
+| Acquire::https::proxy "http://10.0.2.2:3128/";
++-----------------------------------------------------------------------
+
+
