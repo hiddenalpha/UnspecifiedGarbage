@@ -2,7 +2,9 @@
 Provisioning for "paisa-workhorse"
 ==================================
 
-Intended to be used with debian.
+Intended to be used with "http://devuan.org/".
+
+TODO: Remove "saml2aws" because DEPRECATED (https://wikit.post.ch/x/0Fu4Vg).
 
 Configure
 

@@ -1,6 +1,9 @@
 
 Why admin privileges are necessary.
 
+Cited from "https://wikit.post.ch/x/1iV5Qw":
+> For installing aws cli developer tool, local admin access is needed
+
 - npcap / wireshark.
 - Read Firewall logs (dropped packets).
 - Qemu (custom built!!) with hardware acceleration.

@@ -1,0 +1,20 @@
+
+Ansible
+================
+
+
+
+Example "my-inventory.ini":
++---------------------------------------
+| [all]
+| one.example.com
+| two.example.com
++---------------------------------------
+
+
+
+  && `# Run shell command on remotes ` \
+  && ansible -i my-inventory.ini -a "cat /etc/os-release" \
+
+
+

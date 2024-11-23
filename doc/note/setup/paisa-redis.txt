@@ -5,15 +5,24 @@ Redis Servers for PaISA
 Install a base system. While creating this script, I used
 "devuan_daedalus_5.0.1_amd64_netinstall.iso" (md5:0c41745574898e210d80a4ada330bbd8).
 
+I did move eagle redis to another port, because some other broken projects
+clutter the default redis during their tests. So I added another (volatile)
+redis on the default port, just for those broken projects to protect my eagle
+redis.
+
 
 ## Install at target machine
 
   && http_proxy= \
   && https_proxy="${http_proxy?}" \
   && no_proxy= \
+  && REDIS_HOUSTON_PORT=6389 \
+  && REDIS_EAGLE_PORT=6399 \
+  && REDIS_VOLATILE_PORT=6379 \
   && REDIS_HOUSTON_PW= \
-  && WITH_REDIS_CLIENT=0 \
+  && INSTALL_REDIS_CLIENT=0 `# choose 0 or 1 (aka disabled/enabled)` \
   && SUDO=sudo \
+  && GUEST_HOSTNAME= \
   \
   && if test "$(whoami)" != "user" ;then echo "ERROR: Unexpected user: $(whoami)"; false ;fi true \
   && if test -n "${http_proxy:?}" ;then true \
@@ -32,7 +41,7 @@ Install a base system. While creating this script, I used
     ;fi \
   && $SUDO apt update \
   && $SUDO RUNLEVEL=1 apt install --no-install-recommends -y redis-server \
-        $(test "${WITH_REDIS_CLIENT:?}" -ne 0 && echo redis-tools || true) \
+        $(test "${INSTALL_REDIS_CLIENT:?}" -ne 0 && echo redis-tools || true) \
   && `# Add some swap (bcause 2 redis potentially need a LOT of memory) ` \
   && SWAP_MIB=$((12*1024)) \
   && $SUDO dd if=/dev/zero of=/swapfile1 bs=$((1024*1024)) count="${SWAP_MIB:?}" \
@@ -43,8 +52,8 @@ Install a base system. While creating this script, I used
   && $SUDO service redis-server stop \
   && $SUDO update-rc.d redis-server remove \
   && $SUDO rm /etc/init.d/redis-server \
-  && `# Create config files ` \
-  && <<EOF base64 -d|gzip -d|$SUDO tee /etc/redis/redis-houston.conf >/dev/null &&
+  && `# Create redis-houston.conf ` \
+  && <<EOF base64 -d|gzip -d |
 H4sIANI0O2cAA31UTW/bMAy961cI7llJnDZBdxywAe1lLdYNOxayRMdC9TVJdpYU/e8j7TRrGqw2
 YPjx8UN8pH3B2QVPoE0WGdIAiavgW7PhUstYQPM2JH4vbx8+85vQ5xL8DANYY7zmi9l4sxhS4evL
 608splBAYZhwQQP3gRUVRSPVkw0bvqprVoyD0Be+GJkngCitGQCxluCCN3vgO8gsGt0aC3yeej8f
@@ -58,21 +67,40 @@ l+h5PXl3+1GmNwoZrxI4ktCKaQbj9sDv3iT8xHLm379+uX14vLn7+fDj7tvj/S9meynoazyUWZF0
 1Omoxt5E2uQTOc7IQdoesAU2ov+FnZHHsP2r9u/DaGJn5DEsd33RYetpqbLZ4OB45cOW/lQKqvd0
 geRO+L9r5Go58gQAAA==
 EOF
-true \
-  && <<EOF base64 -d|gzip -d|$SUDO tee /etc/redis/redis-eagle.conf >/dev/null &&
-H4sIANN+PGcAA31TTW8aMRC9+1dY5GxgSaDpMVJRFamHqDn0GM3as2DFX7W9UIjy3zuzEEKDml1p
-5Zk3H35vZq+kuJIZjS2qYN5gljqGzq4kGEgVjexilg9w/3gnl7ByOKZw0dpg5HQ8vCLFXOXi+stX
-kXKsqClJ+WhQhiiqTqoF/eziSs6bRlTrMfZVTgfkGTGBsxsk2wD6GOwe5Q6LSNZ01qGc5D5MhttN
-kLsfzmo4jylIUGGHG3TUrFqNbB8SN5AnZByTz9PIS90qtFCwyGYhwG1hR/TXcasIjHzxglURHa2q
-re54p5OpKvrkoKIcvQyOV/nibKkYFBiTyTpIOcjwOhKlxqS22VYsKgbVrgpsUGHOJC1XZlOORiKb
-VkefMpZiYxggdq1RP5feD7ZpmV4Aj9L0Po0J5xhl0KmyC1oxXJiBsfmogm3PJRSQEgYTg9sNFQ/m
-qeroHR5D7EZHnKp9hMn1hnbcmpuGqM48TDbjQJxB6CvBsXvzqYRZY6iwQtlML2Fvgyq8Ec10duNb
-UVzc0nx4RorPJHBdQyCYnhPq4Y8iLrKZ3Qpeim5He7YrCTRJvqF2haXm+XKkJZuO5M6WdJs3MwG6
-0kpmXENZ27AaRNLOUoii1U19VW3fddTcWW8rEcsenJzy+1lccTzl2XzhW7m44c+n4alvS9/K6xlF
-3h6i1/tBpjOFbNAZPUvo1GEGfNmrjL97m+nfKkX+XH67f3xa3n3/sXx6+CVcD4p/wmOXOSvHRAcx
-9jbxGv+jxgW4AdcjMRCD9b+0C/CUtn+T/mMaD+wCPKX9BbWG9v+oBAAA
+    sed -E 's,REDIS_HOUSTON_PW,'"${REDIS_HOUSTON_PW?}"',g' \
+  | sed -E 's,REDIS_HOUSTON_PORT,'"${REDIS_HOUSTON_PORT?}"',g' \
+  | $SUDO tee /etc/redis/redis-houston.conf >/dev/null \
+  && `# Create redis-eagle.conf ` \
+  && <<EOF base64 -d|gzip -d |
+H4sIACNnQGcAA31T224aMRB991dY5NnA0hDlNVJRFalSo6RSH6PZ9SxY+FbbC4Uo/94ZQygJalgJ
++cyZi+fM+EqKK5lQm6wypg0m2QXfm6UEDbGgln1I8gHun+7kApYWx+QuWuO1nI7rJ2JIRT4uvt4/
+PS/uvn1fPD/8ePwpYgoFO0qgXNAofRCli6qFbm3DUs6bRhTjMAxFTiuzRoxgzQYJa0AXvNmj3GEW
+0ejeWJSTNPhJvekE+SaHs6rnMTkJSmxxg5aKFdMh40PgBtKEwDH4PIysVK1ACxmzbG4E2C3sSIpV
+2CoiA188Y1HUTqeKKfZ4pxNUBV20UFCOXqrhVb5Ykwt6BVonQgdZqwyvI5FLiGqbTMGsglftMsMG
+FaZEMnNmhnI0Ekm3XXAxYc4m+EqxaYXdOg+uYt1yex4cSj24OCaefZRGq/LOd4rpzB1ok44qmPZc
+QgExotfB213NeICnrKN/9BhCPzrylO0jTaY3tufSXNQHdWbhZhPWxpmEoRAd+jebipg69AWWKJvp
+Je2MV5k3opnOrl0rsg1bmg/PSPGZBC4r8ETT78Q6+KOoF9nMbgUvRb+jPdvlCB1JvqFymaXm+bKn
+IUxHMidDus2bmYCu0EomXEFeGb+sInXWkIui1Y1DUe3Q91TcGmcKNZYcWDnl7zO/bHnKs/mNa+XN
+Nf996h6HNg+t/DIjz9uD92pfZTpTyPguoWMJrTrMoO4M/h5MoqeV8/s3+kvYARS/wWOROQvHfVYt
+9ibyFr8T44LcgB2QGhAV/S/sgjyF7d+U/xjG87ogT2F/AZLYX9KzBAAA
 EOF
-true \
+    sed -E 's,REDIS_EAGLE_PW,'"${REDIS_EAGLE_PW?}"',g' \
+  | sed -E 's,REDIS_EAGLE_PORT,'"${REDIS_EAGLE_PORT?}"',g' \
+  | $SUDO tee /etc/redis/redis-eagle.conf >/dev/null &&
+  && `# Create redis-volatile.conf ` \
+  && <<EOF base64 -d|gzip -d |
+H4sIAKNpQGcAA31STWvjMBC961cM6Vn52k3otbA5BAotbdlrGVtjR1SWhDR2Nin97zty0sA2bG0w
+ejNvZt48+QbUDSQyNutMaaAEdfCNbQENRiYDTUjwiNvnO9hg62gqdFVZb2A+HV8VQ2J42vzaPr/+
+fri/e9neb14fH55eVEyBqZYeuguGwAfFddQV1m8utLBaLBTbjkLPMB8zb0QRnR1IsEHqgrdHggNl
+Fa1prCOYpd7PRrGzIThkiZ2g/oRToSpp72ggJyPZ1lTwqXzANBNwbvGlUhIylrHCTBkWa4Vujwex
+ZRf2WpKhbJCJtexVa7bszuIuUDN1UboRTN7HwAe8O5uZvEZjkqCTxaMfHxOVOUS9T5Yp6+B11WYc
+SFNKYnnpbGw6a7bVWTOVO1CFB5OJwhjJm+DdYdTmwl50Fq26nGUQ79DDYi7PJdvhH+1IostbVfxp
+DmL8IUesZfRAnnPpXPYsTCtYjhJOVlxZLZYKa5Y7SrTDvLO+HZXWzgpFy13GnnXVN40Md7azLMJS
+hw7m5f2Ol11ZarladxWsf5bPt/TYV7mv4MdSmLcn9u4oqyrXoy7/1Zm3KrsXqeM6RxvLhfyzz1Vy
+QNeTaFAj+l/ZVfJSdvw072tZsfwqeSn7C1KYy3yKAwAA
+EOF
+    sed -E 's,REDIS_VOLATILE_PORT,'"${REDIS_VOLATILE_PORT?}"',g' \
+  | $SUDO tee /etc/redis/redis-volatile.conf >/dev/null \
   && `# Configure logging ` \
   && <<EOF base64 -d|gzip -d|$SUDO tee /etc/logrotate.d/redis-houston >/dev/null &&
 H4sIAMo2M2cAA0WMSwqAMBBD956ia0G78ULFjrX0M6UzKkW8u4IyZhHIS4jeTdURna5gPb0+rLgR
@@ -84,7 +112,12 @@ H4sIAOo2M2cAA0XMwQqAIBAE0Ltf4TkoL/2Q5CSSuuJKIdG/FxTbHgbmMazZbTWRvKlwgd8cYX3E
 MD2sT6W/O4AtdqkpMIfsaROp1GyDngUWSqWCWSBTCytSaf8bh2i7DC91A0WammaQAAAA
 EOF
 true \
-  && `# Register as new services ` \
+  && <<EOF base64 -d|gzip -d|$SUDO tee /etc/logrotate.d/redis-volatile >/dev/null &&
+H4sIAHVoQGcAA0WMwQqAMAxD737FzoLu4g8NraPYrWMtyhD/XUGpOQTyEuL3UD1x9BUWlNeHnSko
+EvTj07izc58OgI2axYQimCNvRiprUHCTgZlTqSBiILPiCqnof7MAhWbDq7sBATST2ZMAAAA=
+EOF
+true \
+  && `# Register redis-houston service ` \
   && <<EOF_uQAAAOgdAABpQAAA base64 -d|gzip -d|$SUDO tee /etc/init.d/redis-houston >/dev/null &&
 H4sIAJgxM2cAA5VTXW/aMBR9jn/FbYimdZIb6NZVomISHbSNVCgC+jRNKCROsRrizHa6VoX/vmsn
 ZKRim/aS2L5f55x7b+sI/CXPfLUirVYLLofXwRiCcTDHz9UdacFEiiceM9V1HMliruhKFEqLDE1T
@@ -102,7 +135,8 @@ lnV9RKddDF50odCrPCxEssiliOysvVaFtngsIZuTgbndhX/YKeneq/CBdctFM7t0EldL+FqCMgA2
 hxBuyspbF768O60XxeRnKowIqfb8F5G7/VplBgAA
 EOF_uQAAAOgdAABpQAAA
 true \
-  && <<EOF_FgsAAD8WAACUVQAA base64 -d|gzip -d|$SUDO tee /etc/init.d/redis-eagle >/dev/null &&
+  && `# Register redis-eagle service ` \
+  && <<EOF base64 -d|gzip -d|$SUDO tee /etc/init.d/redis-eagle >/dev/null &&
 H4sIAAAAAAAAA5VTbW/TMBD+HP+KI40QIHlpgTGpqEgdLRBpLVPbfUKoypLLai2Ng+3ApnX/nbOT
 hgYVBF+Ss+/Fz/PcXe8JhNeiCPWG9Xo9OJ9+jOYQzaMVfT58Zj24VPK7SFEPPU9hKjTH+CZHcizw
 WyXoii9NrMzQC/S9zuUNBAq30uA6090gWf4hZrmRVd6W8YJcJnH+m8smdzwTzOIqN/usl/AKXsNp
@@ -117,17 +151,35 @@ puZVudgSavI2Tiu7URUyz/KwuQ4817QUPI1p+Qrg3N3Rn1bUasjlbSFTosarbaxvod8/I5u6mgka
 U2jUvd1MpPUIV9PFLBwc43uE4yGf/8evtsCzg4bqHLGkqbLEiJlCB3pHyBIklLmMU2IaPPQfHevW
 pKB9Dh1MpSmqNtYyW5dKJm7WHpqHHsmsIVvLwnzcp7/YK+lf6fgGh/Wi2V06SZslfKhBWQC7Ywh3
 9cuPPrx7+rJdFFsfdZww1uz5T5ei0QZSBgAA
-EOF_FgsAAD8WAACUVQAA
+EOF
 true \
-  && `# Tune file permissions, inject some variables into config files ` \
-  && $SUDO chmod 755 /etc/init.d/redis-houston /etc/init.d/redis-eagle \
-  && $SUDO mkdir /var/lib/redis/houston /var/lib/redis/eagle \
-  && $SUDO chown redis:redis /var/lib/redis/houston /var/lib/redis/eagle \
-  && $SUDO sed -i -E 's,REDIS_HOUSTON_PW,'"${REDIS_HOUSTON_PW?}"',g' /etc/redis/redis-houston.conf \
-  && $SUDO sed -i -E 's,REDIS_EAGLE_PW,'"${REDIS_EAGLE_PW?}"',g' /etc/redis/redis-eagle.conf \
-  && `# Enable the two new redis servers ` \
+  && `# Register redis-volatile service ` \
+  && <<EOF base64 -d|gzip -d|$SUDO tee /etc/init.d/redis-volatile >/dev/null &&
+H4sIAHlpQGcAA5VUXW/TMBR9jn/FJY0mQHLTDQZSpyJttEAlWqZue0KoypKb1lpqB9vZh9b9d66d
+NLRlIPHS2PfznHN923kB8bWQsVmyTqcDZ6PP4ymMp+NL+vn0jXXgXKtbkaHpB4HGTBh+q4rEigLJ
+N8OflSArv7CJtv0gMg+mUAuINK6UxXludoNU+ZeYi6WqirZMEBUqTYo9l0ve8QwxT6rCbrKO4A28
+heMdh8/pwSG8qytpy4doUi1KK5Ts/8lox7vnBk5cyADDM7gTlnBZKFEbYSzKFLvwMZFwjbBMZPYA
+udKwSCwWiBIOINcCZWZASIsLnbgGYNFY0/W6j6bDLdUZOz+9/DKIK6NjTzg2NKP+1t1fa2Pr+R1D
+BzY8HU2+TQebe1xzMahvUTfO+ens88UgRpvW3niXbzdVMmfT08losKfTcHTxcd/GZlfT4Xg2iHXV
+NItb3/l4+Gn8dTSI6pj9PqXIGHNiAL+HqMYG6zXgvbDQY0zk8B24Bo80q4cbRw4Y/GB2iZIF3Wec
+LBeMkaMQ13FhrmMhheV5JVMnvmHMIDXEpnwYvRQZ8OpVCC8GEPbCtjQ91nmeiKLSOF+ZBYSTipDS
+nIkoJAa0UrYbssCjPfRN08QgVTwMadwMwLgH+ooi0qUCLiH0L1ZIWgKnZB8oe3WTCQ28hEYjFlhV
+pUuIGu1YQMl3Erx0ff+7Cd2JWakM3h8ft2VYUKtHXaOrr+PJ+NIxC2pqQVWIFaEmb+N0sltdIQsc
+D5frwXNDq8SzhFZWAufeRl9abKchVzdSZUSNV6vE3ECv957ONNXcbc0GHZnSZUUib1PgHO8xbYfO
++ebo32aL0ysX+ql6qQuDrdXNBrPQIw5OTrzeqtyVW5Xljtz/YKZK+mi02q8w0rbEl6PZJD58ju8z
+HLf5/D9+vQKebw3U0N9HSa/KESNmGj3oNSFLkVAWKsmIafTYe/Ks2yMFbXLoYitDUfVhrvJ5qVXq
+39pj0+iJjjVkd3IwnzbprzdKhlcmWWC/XjS3S92sWcLHGpQDsH4O4bru/BTCh4OjdlFcfTRJyliz
+578Apl7ctYsGAAA=
+EOF
+true \
+  && `# Tune file permissions, etc ` \
+  && $SUDO chmod 755 /etc/init.d/redis-houston /etc/init.d/redis-eagle /etc/init.d/redis-volatile \
+  && $SUDO mkdir /var/lib/redis/houston /var/lib/redis/eagle /var/lib/redis/volatile \
+  && $SUDO chown redis:redis /var/lib/redis/houston /var/lib/redis/eagle /var/lib/redis/volatile \
+  && `# Start chosen redis-servers at boot (defaults=enable, remove=disable) ` \
   && $SUDO update-rc.d redis-houston defaults \
-  && $SUDO update-rc.d redis-eagle defaults \
+  && $SUDO update-rc.d redis-eagle remove \
+  && $SUDO update-rc.d redis-volatile remove \
   && `# Add 'user' to 'adm' group to allow access to logs ` \
   && $SUDO sed -i -E 's/^(adm:x:[^:]*:.+)$/\1'",$USER"'/' /etc/group \
   && $SUDO sed -i -E 's,^(adm:x:[^:]*:)$,\1'"$USER"',' /etc/group \

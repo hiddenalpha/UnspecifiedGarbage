@@ -19,3 +19,13 @@ WARN: I saw cases where above still misses to print relevant packages. Then I
   apt -o Acquire::ForceIPv4=true ...
 
 
+
+## Use proxy permanently
+
+"/etc/apt/apt.conf.d/80proxy"
++-----------------------------------------------------------------------
+| Acquire::http::proxy "http://10.0.2.2:3128/";
+| Acquire::https::proxy "http://10.0.2.2:3128/";
++-----------------------------------------------------------------------
+
+
