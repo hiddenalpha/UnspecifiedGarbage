@@ -13,3 +13,9 @@ WARN: I saw cases where above still misses to print relevant packages. Then I
   sudo apt purge --dry-run ${PKG_NAME:?}
 
 
+
+## DNS timeout errors
+
+  apt -o Acquire::ForceIPv4=true ...
+
+
