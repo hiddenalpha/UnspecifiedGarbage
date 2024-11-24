@@ -117,10 +117,10 @@ run () {
         "${DIR_FROM:?}" \
         "${BACKUP_PATH:?}/${DST_PREFIX}" \
         ;
-    {cd "${DIR_TO:?}" &&
+    (cd "${DIR_TO:?}" &&
         rm -f latest &&
         ln --symbolic "${NOW_SHORT:?}" latest
-    }
+    )
 }
 
 
