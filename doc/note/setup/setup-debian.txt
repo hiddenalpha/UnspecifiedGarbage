@@ -80,6 +80,11 @@ UUID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx  /mnt/nameOfHdd  ext4  noatime  0  2
     LANGUAGE="en_US:en"
 
 
+## Prefer IPv4 over IPv6
+
+  && $SUDO sed -i -E 's,^#?(precedence +::ffff:0:0/96 +)[0-9]+$,\1100,' /etc/gai.conf \
+
+
 ## Install Desktop Env
 
   && $SUDO apt install -y --no-install-recommends xorg openbox mate-terminal lightdm light-locker feh scrot lxpanel qalculate-gtk gmrun gnome-system-monitor \
@@ -123,6 +128,8 @@ Populate "/etc/environment" as described by "./etc-environment".
        imagemagick dcraw \
        `# Low level ` \
        lm-sensors fancontrol exfat-fuse exfatprogs \
+       `# dig, nslookup, nsupdate commands ` \
+       bind9-dnsutils \
        `# Others` \
        systemd-sysv bc rsync qrencode libxml2-utils adb \
        `# GPU ` \

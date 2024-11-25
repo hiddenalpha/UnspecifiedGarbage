@@ -14,8 +14,13 @@ WARN: I saw cases where above still misses to print relevant packages. Then I
 
 
 
+## DNS timeout errors
 
-## Use proxy
+  apt -o Acquire::ForceIPv4=true ...
+
+
+
+## Use proxy permanently
 
 "/etc/apt/apt.conf.d/80proxy"
 +-----------------------------------------------------------------------
