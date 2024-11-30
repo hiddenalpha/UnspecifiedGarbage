@@ -4,6 +4,7 @@
 #
 # [src](https://wiki.qemu.org/Hosts/W32)
 #
+# [user network udp broken](https://serverfault.com/a/1002999/673216)
 #
 # WARN: This does NOT work
 #

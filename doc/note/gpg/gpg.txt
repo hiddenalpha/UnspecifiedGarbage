@@ -6,6 +6,11 @@ WARN: You MUST only use those instructions if you know exactly what
 you're doing! If you don't, you MUST NOT use those instructions!
 
 
+## Export public key
+
+  gpg --output public.pgp --armor --export username@email
+
+
 ## Sign a foreign key to express to the world that we trust it
 
   gpgwin --sign-key foreignUser@example.com
