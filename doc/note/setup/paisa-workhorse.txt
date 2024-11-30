@@ -82,9 +82,18 @@ Setup
   && (printf '10.0.2.2:/c  /mnt/cdrive  nfs  noauto,vers=3,user  0  0\n') | $SUDO tee -a /etc/fstab >/dev/null \
   && saml2aws configure --skip-prompt -p "${SAML_PROFILE?}" --role="${ROLE?}" --region "${REGION?}" --url https://adfs.post.ch --username "${USERNAME?}" --idp-provider="${IDPPROVIDER?}" --mfa="${MFA?}" \
   && printf 'MAVEN_OPTS="--add-opens jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED --add-opens jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED --add-opens jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED --add-opens jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED --add-opens jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.lang.reflect=ALL-UNNAMED --add-opens java.base/java.text=ALL-UNNAMED --add-opens java.desktop/java.awt.font=ALL-UNNAMED"' | $SUDO tee >/dev/null -a /etc/environment \
+  && `# kubectl (https://wikit.post.ch/x/w52aS#ISAK8sSetup-K8s/ArgoCDconfiguration) ` \
+  && mkdir "/home/${USER:?}/.aws" \
+  && `# Minimal pseudo README with in VM ` \
+  && __ \
+  && __ \
+  && __ \
   && printf '\n  TODO aws access -> https://wikit.post.ch/x/wzi_UQ \n\n' \
-  && printf '\n  DONE_aWIAAN1YAAAiEQAA\n\n' \
+  && printf '\n  DONE_vxYAAOBjAAD3HAAA\n\n' \
 
+
+
+cubectl
 
 
 - [Yep, saml is dead](https://wikit.post.ch/x/0Fu4Vg)
