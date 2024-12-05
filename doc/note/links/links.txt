@@ -186,9 +186,10 @@ Links (Aka argument amplifiers)
 - "https://stackoverflow.com/questions/52857145/what-is-mean-by-abstractions-should-not-depend-on-details-details-should-depen"
 - "https://softwareengineering.stackexchange.com/questions/401769/depend-on-abstractions-not-on-concretions-what-is-the-exact-meaning-of-this-t"
 - "https://sonar.tools.pnet.ch/coding_rules?open=squid%3AS1319&rule_key=squid%3AS1319"
-- "https://wikit.post.ch/display/ISA/Code+Formatting?focusedCommentId=791239536#comment-791239536"
+- [git CRLF checkout](https://wikit.post.ch/display/ISA/Code+Formatting?focusedCommentId=791239536#comment-791239536)
 
 ## Sonar is stupid
+- [Eeks Brainoverload](https://gitit.post.ch/projects/ISA/repos/lazlar/pull-requests/27/overview?commentId=445146)
 - [sonar obviously wrong](https://gitit.post.ch/projects/ISA/repos/preflux/pull-requests/862/overview?commentId=442422)
 - [Sorry sonar, you're wrong](https://gitit.post.ch/projects/ISA/repos/houston/pull-requests/461/overview?commentId=281647)
 - "https://gitit.post.ch/projects/ZEWAS/repos/zewas/browse/zewas-process/src/main/java/ch/post/it/zewas/process/reportgenerator/sql/SqlReportGenerator.java?at=refs%2Ftags%2Fzewas-17.10.00.17#385"

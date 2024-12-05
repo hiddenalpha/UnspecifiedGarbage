@@ -19,10 +19,10 @@ curl -sSD- https://gitit.post.ch/2.0/repositories/ISA?fields=values.links
 
 ## Link to PR patch
 
-PRs:
-  "https://example.com/rest/api/1.0/projects/TODO/repos/TODO/pull-requests/TODO.patch"
+PRs (WARN this shows all commits individually):
+  "https://___/rest/api/1.0/projects/___/repos/___/pull-requests/___.patch"
 
-Any hashes or branches:
+Any hashes or branches (WARN also shows ALL commits):
   "https://___/rest/api/1.0/projects/___/repos/___/patch?until=___&since=___"
 
 
