@@ -12,7 +12,7 @@
 -- Config begins here -------------------------------------------------------]]
 
 local host = "devuan5" -- "devuan5", "debian9"
-local target = "posix" -- "posix", "windoof"
+local target = "windoof" -- "posix", "windoof"
 local version_cJSON = "1.7.15"
 local version_expat = "2.4.2"
 local version_lua = "5.4.3"
@@ -581,12 +581,13 @@ function writeModulesMake( dst )
             = mod.name, mod.version
         assert(name and version)
         local srcTar = name ..'-'.. version ..'.t__'
-        local dstTar = name ..'-'.. version ..'+$(/usr/bin/*gcc -dumpmachine).tgz'
+        local dstTar = name ..'-'.. version ..'+${TRIPLET:?}.tgz'
         local dstMd5 = name ..'-'.. version ..'.md5'
-        local isWindoof
-        if     target == "posix"   then isWindoof = false
-        elseif target == "windoof" then isWindoof = true
-        else   error("ENOTSUP: ".. target) end
+        if target == "posix" then
+            dst:write(' && TRIPLET="$(gcc -dumpmachine)" \\\n')
+        elseif target == "windoof" then
+            dst:write(' && TRIPLET="$(/usr/bin/*-gcc -dumpmachine)" \\\n')
+        else error("ENOTSUP: ".. target) end
         dst:write(""
             ..' && if test -e "'.. envCACHEDIR ..'/dst/'.. dstTar ..'" ;then true \\\n'
             ..'     && echo "OK: EEXISTS: '.. envCACHEDIR ..'/dst/'.. dstTar ..'" \\\n'
