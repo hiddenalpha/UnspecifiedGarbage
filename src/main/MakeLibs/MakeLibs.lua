@@ -7,38 +7,39 @@
   Source:
   https://git.hiddenalpha.ch/UnspecifiedGarbage.git/tree/src/main/MakeLibs/
 
-  TODO: Test if (especially wdoof) builds are usable at all.
-
 -- Config begins here -------------------------------------------------------]]
 
 local host = "devuan5" -- "devuan5", "debian9"
 local target = "windoof" -- "posix", "windoof"
-local version_cJSON = "1.7.15"
-local version_expat = "2.4.2"
-local version_lua = "5.4.3"
-local version_mbedtls = "3.6.2"
-local version_mbedtls_framework = "a2c76945ca090f9dd099001d7c5158557f5a2036"
-local version_nuklear = "4.12.2"
-local version_GLFW = "3.4"
-local version_sqlite = "3.33.0"
-local version_zlib = "1.2.11"
-local ndebug_cJSON = true
-local ndebug_expat = true
-local ndebug_lua = true
-local ndebug_mbedtls = true
-local ndebug_GLFW = true
-local ndebug_sqlite = true
-local ndebug_zlib = true
 local envWORKDIR = "/home/${USER:?}/work"
 local envCACHEDIR = "/var/tmp"
 local envMAKE_JOBS = 8
+local envSUDO = "sudo"
+
+local version_cJSON   = "1.7.15"
+local version_expat   = "2.4.2"
+local version_lua     = "5.4.3"
+local version_mbedtls = "3.6.2"
+local version_mbedtls_framework = "a2c76945ca090f9dd099001d7c5158557f5a2036"
+local version_nuklear = "4.12.2"
+local version_GLFW    = "3.4"
+local version_sqlite  = "3.33.0"
+local version_zlib    = "1.2.11"
+
+local ndebug_cJSON   = 1
+local ndebug_expat   = 1
+local ndebug_lua     = 1
+local ndebug_mbedtls = 1
+local ndebug_GLFW    = 1
+local ndebug_sqlite  = 1
+local ndebug_zlib    = 1
 
 -- end Config -----------------------------------------------------------------
 
 local TODO_EgXYTUrb6fVdv5wr, b64e, collectPkgsToAddOverall, defineExpat, defineLua, defineMbedtls,
     defineNuklear, defineGLFW, defineWhatToBuild, defineCJSON, defineZlib, main, newModule,
     newModuleDloads, newModuleEnviron, writeModulesMake, writeModulesPrepare, writeSystemSetupToDst
-local envSUDO, envHOST
+local envHOST, envHOST_
 local cmdPkgInit, cmdPkgClean, cmdPkgAdd
 local modulesToMake, pkgsToAddMerged, pkgsToAddGlobally
 
@@ -68,13 +69,7 @@ function defineCJSON()
         url = "https://github.com/DaveGamble/cJSON/archive/refs/tags/v".. version_cJSON ..".tar.gz",
         dstFile = envCACHEDIR ..'/src/cJSON-'.. version_cJSON ..'.t__',
     }
-    cjson.makeShell = 'true \\\n'
-    if target == "posix" then
-        cjson.makeShell = cjson.makeShell .. ' && HOST_= \\\n'
-    elseif target == "windoof" then
-        cjson.makeShell = cjson.makeShell .. ' && HOST_=x86_64-w64-mingw32- \\\n'
-    else error("ENOTSUP: "..target) end
-    cjson.makeShell = cjson.makeShell .. [===[ \
+    cjson.makeShell = cjson.makeShell .. [===[ true \
       && tar --strip-components 1 -xf "${SRCTAR:?}" \
       && mkdir build build/obj build/lib build/include \
       && CFLAGS="-Wall -pedantic -fPIC" \
@@ -120,7 +115,6 @@ function defineExpat()
         ]===]
     elseif target == "windoof" then
         expat.makeShell = expat.makeShell .. [===[ \
-          && HOST=x86_64-w64-mingw32 \
           && ./configure --prefix=${PWD:?}/build --host=${HOST:?} CFLAGS="-Wall -pedantic --std=c99 -O2" \
         ]===]
     else error("ENOTSUP: "..target) end
@@ -160,7 +154,7 @@ function defineLua()
         -- windoof is too "doooof" again ...
         lua.makeShell = lua.makeShell .. ' && export CFLAGS="-Wall -Wextra" \\\n'
     else error("ENOTSUP: "..target) end
-    if not lua.ndebug then  lua.makeShell = lua.makeShell ..''
+    if lua.ndebug == 0 then  lua.makeShell = lua.makeShell ..''
         ..' && export CFLAGS="$CFLAGS -ggdb -DLUAI_ASSERT -DLUA_USE_APICHECK" \\\n'
     end
     if target == "posix" then lua.makeShell = lua.makeShell .. [===[ \
@@ -170,12 +164,11 @@ function defineLua()
         && cp -t build/bin/. src/lua src/luac \
     ]===]
     elseif target == "windoof" then lua.makeShell = lua.makeShell .. [===[ \
-        && HOST_=x86_64-w64-mingw32- \
-        && sed -i -E 's,(RANLIB=)(strip ),\1'"${HOST_?}"'\2,' src/Makefile \
+        && sed -i -E 's,(RANLIB=)(strip ),\1'"${HOST_:?}"'\2,' src/Makefile \
         && make -e -j${MAKE_JOBS:?} PLAT=mingw \
-            "CC=${HOST_?}gcc -std=gnu99" \
-            "AR=${HOST_?}ar rcu" \
-            "RANLIB=${HOST_?}ranlib" \
+            "CC=${HOST_:?}gcc -std=gnu99" \
+            "AR=${HOST_:?}ar rcu" \
+            "RANLIB=${HOST_:?}ranlib" \
         && cp -t build/. README \
         && cp -t build/bin/. src/lua.exe src/luac.exe \
         ]===]
@@ -226,7 +219,6 @@ function defineMbedtls()
         -- no bullshit needed
     elseif target == "windoof" then
         mbedtls.makeShell = mbedtls.makeShell .. [===[ \
-          && HOST=x86_64-w64-mingw32 \
           && export WINDOWS_BUILD=1 \
           && export CC=${HOST:?}-gcc \
           && export LD=${HOST:?}-ld \
@@ -254,7 +246,7 @@ function defineNuklear()
     local nk = newModule()
     nk.name = "nuklear"
     nk.version = version_nuklear
-    nk.ndebug = true -- has no effect
+    nk.ndebug = 1 -- has no effect
     nk.dloads:add{
         url = "https://github.com/Immediate-Mode-UI/Nuklear/archive/refs/tags/".. version_nuklear ..".tar.gz",
         dstFile = envCACHEDIR ..'/src/'.. nk.name ..'-'.. nk.version ..'.t__',
@@ -300,7 +292,6 @@ function defineGLFW()
                -D GLFW_BUILD_X11=1 \
                -D GLFW_BUILD_WAYLAND=0 `# TODO enable ` \
                . \
-          && HOST_= \
         ]===]
     elseif target == "windoof" then
         glfw.makeShell = glfw.makeShell .. [===[ \
@@ -312,7 +303,6 @@ function defineGLFW()
                -D USE_MSVC_RUNTIME_LIBRARY_DLL=1 \
                -D CMAKE_TOOLCHAIN_FILE=CMake/x86_64-w64-mingw32.cmake \
                . \
-          && HOST_=x86_64-w64-mingw32- \
         ]===]
     else error("ENOTSUP: "..target) end
     glfw.makeShell = glfw.makeShell .. [===[ \
@@ -336,7 +326,7 @@ function defineSqlite()
     sqlite.version = version_sqlite
     sqlite.ndebug = ndebug_sqlite
     sqlite.pkgsToAdd = { "tcl" }
-    sqlite.environ:add("SUDO", "sudo")
+    sqlite.environ:add("SUDO", envSUDO)
     sqlite.dloads:add{
         url = "https://github.com/sqlite/sqlite/archive/refs/tags/version-".. sqlite.version ..".tar.gz",
         dstFile = envCACHEDIR ..'/src/'.. sqlite.name ..'-'.. sqlite.version ..'.t__',
@@ -352,7 +342,6 @@ function defineSqlite()
         ]===]
     elseif target == "windoof" then
         sqlite.makeShell = sqlite.makeShell .. [===[ \
-          && HOST=x86_64-w64-mingw32 \
           && `# WTF?!? What fu**ing bullshit is this?!? Why do people produce so ugly shit? ` \
           && $SUDO apt install -y --no-install-recommends gcc libc6-dev \
           && ./configure --prefix=${PWD:?}/build --host=${HOST:?} \
@@ -405,12 +394,11 @@ function defineZlib()
         ]===]
     elseif target == "windoof" then
         zlib.makeShell = zlib.makeShell ..[===[ \
-          && export HOST=x86_64-w64-mingw32 \
-          && export CC=${HOST:?}-gcc AR=${HOST:?}-ar STRIP=${HOST:?}-strip \
+          && export CC=${HOST_:?}gcc AR=${HOST_:?}ar STRIP=${HOST_:?}strip \
           && export DESTDIR=./build BINARY_PATH=/bin INCLUDE_PATH=/include LIBRARY_PATH=/lib \
           && sed -i "s;^PREFIX =.\*\$;;" win32/Makefile.gcc \
-          && make -e -j${MAKE_JOBS:?} -fwin32/Makefile.gcc PREFIX=${HOST}- \
-          && make -e -fwin32/Makefile.gcc install PREFIX=${HOST}- \
+          && make -e -j${MAKE_JOBS:?} -fwin32/Makefile.gcc PREFIX=${HOST_:?} \
+          && make -e -fwin32/Makefile.gcc install PREFIX=${HOST_:?} \
           && unset DESTDIR BINARY_PATH INCLUDE_PATH LIBRARY_PATH \
         ]===]
     else error(target) end
@@ -480,7 +468,9 @@ function newModule()
     return setmetatable({
         verifyAndFreeze = function( t )
             for k, _ in pairs(fields) do
-                assert(rawget(t, k), k)
+                local v = rawget(t, k)
+                assert(v, k)
+                if k == "ndebug" then assert(v == 0 or v == 1) end
                 fields[k] = RO
             end
         end
@@ -543,9 +533,13 @@ function writeSystemSetupToDst( dst )
         assert(type(pkgName) == "string")  assert(v == true, v)
         dst:write(" ".. pkgName)
     end
-    dst:write(" \\\n"
-        ..' && export MAKE_JOBS='.. envMAKE_JOBS ..' \\\n'
-        .."")
+    dst:write(" \\\n")
+    if target == "posix" then
+        dst:write(' && export TRIPLET="$(gcc -dumpmachine)" \\\n')
+    elseif target == "windoof" then
+        dst:write(' && export TRIPLET="$(/usr/bin/*-gcc -dumpmachine)" \\\n')
+    else error("ENOTSUP: ".. target) end
+    dst:write(' && export MAKE_JOBS='.. envMAKE_JOBS ..' \\\n')
 end
 
 
@@ -581,13 +575,9 @@ function writeModulesMake( dst )
             = mod.name, mod.version
         assert(name and version)
         local srcTar = name ..'-'.. version ..'.t__'
-        local dstTar = name ..'-'.. version ..'+${TRIPLET:?}.tgz'
         local dstMd5 = name ..'-'.. version ..'.md5'
-        if target == "posix" then
-            dst:write(' && TRIPLET="$(gcc -dumpmachine)" \\\n')
-        elseif target == "windoof" then
-            dst:write(' && TRIPLET="$(/usr/bin/*-gcc -dumpmachine)" \\\n')
-        else error("ENOTSUP: ".. target) end
+        local dstTar = name ..'-'.. version ..'+${TRIPLET:?}'
+        dstTar = dstTar .. (mod.ndebug ~= 0 and''or'-G') ..'.tgz'
         dst:write(""
             ..' && if test -e "'.. envCACHEDIR ..'/dst/'.. dstTar ..'" ;then true \\\n'
             ..'     && echo "OK: EEXISTS: '.. envCACHEDIR ..'/dst/'.. dstTar ..'" \\\n'
@@ -595,12 +585,10 @@ function writeModulesMake( dst )
             ..'     && export VERSION="'.. version ..'" \\\n'
             ..'     && export SRCTAR="'.. envCACHEDIR ..'/src/'.. srcTar ..'" \\\n'
             ..'     && export DSTTAR="'.. envCACHEDIR ..'/dst/'.. dstTar ..'" \\\n'
-            ..'     && rm -rf "'.. envWORKDIR ..'/make/'.. mod.name ..'" \\\n'
-            ..'     && (cd "'.. envWORKDIR ..'" && mkdir -p make) \\\n'
-            ..'     && (cd "'.. envWORKDIR ..'/make" && mkdir -p "'.. mod.name ..'") \\\n'
-            ..'     && cd "'.. envWORKDIR ..'/make/'.. mod.name ..'" \\\n'
+            ..((mod.ndebug ~= 0)and'     && export NDEBUG=1 \\\n'or'')
             .."")
-        if mod.ndebug then dst:write('     && export NDEBUG=1 \\\n') end
+        dst:write('     && export "HOST='..  envHOST  ..'" \\\n')
+        dst:write('     && export "HOST_='.. envHOST_ ..'" \\\n')
         for env, _ in pairs(mod.environ) do
             assert(type(env) == "table")
             assert(type(env.k) == "string", env.k)
@@ -608,6 +596,10 @@ function writeModulesMake( dst )
             dst:write('     && export "'.. env.k ..'='.. env.v ..'" \\\n')
         end
         dst:write(""
+            ..'     && rm -rf "'.. envWORKDIR ..'/make/'.. mod.name ..'" \\\n'
+            ..'     && (cd "'.. envWORKDIR ..'" && mkdir -p make) \\\n'
+            ..'     && (cd "'.. envWORKDIR ..'/make" && mkdir -p "'.. mod.name ..'") \\\n'
+            ..'     && cd "'.. envWORKDIR ..'/make/'.. mod.name ..'" \\\n'
             ..'     && printf "\\n  MAKE '.. mod.name ..' ...\\n" \\\n'
             ..'     && (echo "set -e" && echo '.. b64e(mod.makeShell) ..'|base64 -d)|sh - \\\n'
             ..'     && DSTMD5="'.. envCACHEDIR ..'/md5/'.. dstMd5 ..'" \\\n'
@@ -640,15 +632,14 @@ end
 function TODO_EgXYTUrb6fVdv5wr()
     if host == "devuan5" and target == "posix" then
         pkgsToAddGlobally = { "ca-certificates", "curl", "tar", "gzip", "make", "gcc", "libc6-dev", }
-        envSUDO = "sudo"
         cmdPkgInit  = "$SUDO apt update"
         cmdPkgClean = "$SUDO apt clean"
         cmdPkgAdd   = "$SUDO apt install -y --no-install-recommends"
     elseif host == "devuan5" and target == "windoof" then
         pkgsToAddGlobally = { "ca-certificates", "curl", "tar", "gzip", "make",
             "gcc-mingw-w64-x86-64-posix", }
-        envSUDO = "sudo"
         envHOST = "x86_64-w64-mingw32"
+        envHOST_ = envHOST .."-"
         cmdPkgInit  = "$SUDO apt update"
         cmdPkgClean = "$SUDO apt clean"
         cmdPkgAdd   = "$SUDO apt install -y --no-install-recommends"
@@ -667,6 +658,7 @@ function main()
     writeSystemSetupToDst(dst)
     writeModulesPrepare(dst)
     writeModulesMake(dst)
+    dst:write("\n")
 end
 
 
