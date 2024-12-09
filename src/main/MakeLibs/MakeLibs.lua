@@ -8,7 +8,6 @@
   https://git.hiddenalpha.ch/UnspecifiedGarbage.git/tree/src/main/MakeLibs/
 
   TODO: Test if (especially wdoof) builds are usable at all.
-  TODO: Add GLFW.
 
 -- Config begins here -------------------------------------------------------]]
 
@@ -73,14 +72,14 @@ function defineCJSON()
     if target == "posix" then
         cjson.makeShell = cjson.makeShell .. ' && HOST_= \\\n'
     elseif target == "windoof" then
-        cjson.makeShell = cjson.makeShell .. ' && HOST_=x86_64-w64-mingw32 \\\n'
+        cjson.makeShell = cjson.makeShell .. ' && HOST_=x86_64-w64-mingw32- \\\n'
     else error("ENOTSUP: "..target) end
     cjson.makeShell = cjson.makeShell .. [===[ \
       && tar --strip-components 1 -xf "${SRCTAR:?}" \
       && mkdir build build/obj build/lib build/include \
       && CFLAGS="-Wall -pedantic -fPIC" \
-      && ${HOST_}cc $CFLAGS -c -o build/obj/cJSON.o cJSON.c \
-      && ${HOST_}cc $CFLAGS -shared -o build/lib/libcJSON.so.${VERSION:?} build/obj/cJSON.o \
+      && ${HOST_}gcc $CFLAGS -c -o build/obj/cJSON.o cJSON.c \
+      && ${HOST_}gcc $CFLAGS -shared -o build/lib/libcJSON.so.${VERSION:?} build/obj/cJSON.o \
       && unset CFLAGS \
       && (cd build/lib \
          && MIN=${VERSION%.*} && MAJ=${MIN%.*} \
@@ -171,11 +170,12 @@ function defineLua()
         && cp -t build/bin/. src/lua src/luac \
     ]===]
     elseif target == "windoof" then lua.makeShell = lua.makeShell .. [===[ \
-        && sed -i -E 's,(RANLIB=)(strip ),\1'"${HOST:?}-"'\2,' src/Makefile \
+        && HOST_=x86_64-w64-mingw32- \
+        && sed -i -E 's,(RANLIB=)(strip ),\1'"${HOST_?}"'\2,' src/Makefile \
         && make -e -j${MAKE_JOBS:?} PLAT=mingw \
-            "CC=${HOST:?}-gcc -std=gnu99" \
-            "AR=${HOST:?}-ar rcu" \
-            "RANLIB=${HOST}-ranlib" \
+            "CC=${HOST_?}gcc -std=gnu99" \
+            "AR=${HOST_?}ar rcu" \
+            "RANLIB=${HOST_?}ranlib" \
         && cp -t build/. README \
         && cp -t build/bin/. src/lua.exe src/luac.exe \
         ]===]
@@ -281,7 +281,11 @@ function defineGLFW()
         url = "https://github.com/glfw/glfw/archive/refs/tags/".. glfw.version ..".tar.gz",
         dstFile = envCACHEDIR ..'/src/'.. glfw.name ..'-'.. glfw.version ..'.t__',
     }
-    glfw.pkgsToAdd = { "cmake", "libxrandr-dev", "libxinerama-dev", "libxcursor-dev", "libxi-dev", }
+    if target == "posix" then
+        glfw.pkgsToAdd = { "cmake", "libwayland-dev", "libxkbcommon-dev", "xorg-dev", "libc6-dev", }
+    elseif target == "windoof" then
+        glfw.pkgsToAdd = { "cmake", "libxrandr-dev", "libxinerama-dev", "libxcursor-dev", "libxi-dev", }
+    else error("ENOTSUP: "..target) end
     glfw.makeShell = [===[ true \
       && tar --strip-components 1 -xf "${SRCTAR:?}" \
       && rm -rf build \
@@ -296,7 +300,7 @@ function defineGLFW()
                -D GLFW_BUILD_X11=1 \
                -D GLFW_BUILD_WAYLAND=0 `# TODO enable ` \
                . \
-          && CC=gcc \
+          && HOST_= \
         ]===]
     elseif target == "windoof" then
         glfw.makeShell = glfw.makeShell .. [===[ \
@@ -308,12 +312,12 @@ function defineGLFW()
                -D USE_MSVC_RUNTIME_LIBRARY_DLL=1 \
                -D CMAKE_TOOLCHAIN_FILE=CMake/x86_64-w64-mingw32.cmake \
                . \
-          && CC=${HOST_?}gcc \
+          && HOST_=x86_64-w64-mingw32- \
         ]===]
     else error("ENOTSUP: "..target) end
     glfw.makeShell = glfw.makeShell .. [===[ \
-      && make clean CC="${CC:?}" \
-      && make -j"${MAKE_JOBS:?}" CC="${CC:?}" \
+      && make clean CC="${HOST_:?}gcc" \
+      && make -j"${MAKE_JOBS:?}" CC="${HOST_:?}gcc" \
       && mkdir  build  build/include  build/lib \
       && cp -art build/include/. include/* \
       && cp -t build/lib/.  src/libglfw3.a \
@@ -332,6 +336,7 @@ function defineSqlite()
     sqlite.version = version_sqlite
     sqlite.ndebug = ndebug_sqlite
     sqlite.pkgsToAdd = { "tcl" }
+    sqlite.environ:add("SUDO", "sudo")
     sqlite.dloads:add{
         url = "https://github.com/sqlite/sqlite/archive/refs/tags/version-".. sqlite.version ..".tar.gz",
         dstFile = envCACHEDIR ..'/src/'.. sqlite.name ..'-'.. sqlite.version ..'.t__',
@@ -347,12 +352,16 @@ function defineSqlite()
         ]===]
     elseif target == "windoof" then
         sqlite.makeShell = sqlite.makeShell .. [===[ \
+          && HOST=x86_64-w64-mingw32 \
+          && `# WTF?!? What fu**ing bullshit is this?!? Why do people produce so ugly shit? ` \
+          && $SUDO apt install -y --no-install-recommends gcc libc6-dev \
           && ./configure --prefix=${PWD:?}/build --host=${HOST:?} \
-               CC=${CC:?} BEXE=.exe config_TARGET_EXEEXT=.exe \
+               CC=${HOST:?}-gcc BEXE=.exe config_TARGET_EXEEXT=.exe \
           && rm -f mksourceid && ln -s mksourceid.exe mksourceid \
           && make -e clean \
           && make -e -j${MAKE_JOBS:?} BCC=gcc\
           && make -e install \
+          && $SUDO apt purge -y gcc libc6-dev `# Cleanup again that Fu**ing shit! ` \
           && (cd build && rm -rf lemon* mksourceid lib/pkgconfig lib/*.la) \
         ]===]
     else error("ENOTSUP: "..target) end
@@ -598,6 +607,7 @@ function writeModulesMake( dst )
             dst:write('     && export "'.. env.k ..'='.. env.v ..'" \\\n')
         end
         dst:write(""
+            ..'     && printf "\\n  MAKE '.. mod.name ..' ...\\n" \\\n'
             ..'     && (echo "set -e" && echo '.. b64e(mod.makeShell) ..'|base64 -d)|sh - \\\n'
             ..'     && DSTMD5="'.. envCACHEDIR ..'/md5/'.. dstMd5 ..'" \\\n'
             ..'     && (cd "$(dirname "${DSTTAR:?}")" && md5sum -b "$(basename "${DSTTAR:?}")" >> "${DSTMD5:?}") \\\n'
