@@ -61,7 +61,6 @@ TODO: Add GLFW.
 ## Make
 
   && ${PKGINIT:?} && ${PKGADD:?} ${PKGS_TO_ADD} \
-  && mkdir -p "${WORKDIR}" \
   \
   && (true shell for zlib \
   && ZLIB_URL="https://downloads.sourceforge.net/project/libpng/zlib/${ZLIB_VERSION:?}/zlib-${ZLIB_VERSION:?}.tar.gz" \
@@ -110,7 +109,9 @@ TODO: Add GLFW.
      && echo "Download \"${CJSON_URL:?}\"" \
      && curl -sSLo "${CJSON_SRCTGZ:?}" "${CJSON_URL:?}" \
      );fi \
-  && if test ! -e "${CJSON_BINTGZ:?}"; then (true \
+  && if test -e "${CJSON_BINTGZ:?}"; then true \
+     && printf "\nEEXISTS: ${CJSON_BINTGZ:?}  -> Skip build\n\n" \
+    ;else true \
      && printf '\n  Build cJSON\n\n' \
      && cd "${WORKDIR:?}" \
      && tar xzf "${CJSON_SRCTGZ:?}" \
@@ -136,7 +137,7 @@ TODO: Add GLFW.
             && md5sum -b "$(basename "${CJSON_BINTGZ:?}")" >> "${CJSON_MD5SUM:?}") \
         ) \
      && cd .. && rm -rf "cJSON-${CJSON_VERSION:?}" \
-     );fi \
+    ;fi \
   && printf '\n  DONE (cJSON)\n\n' \
   && true EndOf cJSON shell) \
   \
