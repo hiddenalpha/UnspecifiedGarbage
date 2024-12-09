@@ -2,6 +2,8 @@
 Build All Libs
 ==============
 
+Obsolete. See "src/main/MakeLibs/" instead.
+
 I'm ways too dumb to "just build a lib. It's easy...". Shut up! Look how long
 this file is! Then you know how "easy" it is!
 
