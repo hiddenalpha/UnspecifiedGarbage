@@ -9,26 +9,29 @@ Source:
 https://git.hiddenalpha.ch/UnspecifiedGarbage.git/tree/doc/note/setup/build-all-libs.txt
 
 
-TODO: mbedtls windoof
+TODO: Test, if mbedtls build is usable on NIX.
+TODO: Test, if mbedtls build is usable on WDOOF.
 
 
-### Debian
+### Debian 9
 
   && PKGS_TO_ADD="ca-certificates curl make gcc libc6-dev" \
   && SUDO=sudo \
   && PKGINIT="$SUDO apt update" \
   && PKGADD="$SUDO apt install -y --no-install-recommends" \
   && PKGCLEAN="$SUDO apt clean" \
+  && WINDOOF=false \
   && HOST= \
 
 
-### Alpine mingw cross (UNTESTED!)
+## Devuan 5 (x86_64-w64-mingw32)
 
-  && PKGS_TO_ADD="curl mingw-w64-gcc tar" \
-  && SUDO="/home/$USER/.local/bin/sudo" \
-  && PKGINIT=true \
-  && PKGADD="$SUDO apk add" \
-  && PKGCLEAN="$SUDO apk clean" \
+  && PKGS_TO_ADD="ca-certificates curl make gcc-mingw-w64-x86-64-posix" \
+  && SUDO=sudo \
+  && PKGINIT="$SUDO apt update" \
+  && PKGADD="$SUDO apt install -y --no-install-recommends" \
+  && PKGCLEAN="$SUDO apt clean" \
+  && WINDOOF=true \
   && HOST=x86_64-w64-mingw32 \
 
 
@@ -37,12 +40,16 @@ TODO: mbedtls windoof
   && WORKDIR="/home/${USER:?}/work" \
   && CACHEDIR="/var/tmp" \
   \
+  && ZLIB_VERSION="1.2.11" \
   && CJSON_VERSION="1.7.15" \
-  && MBEDTLS_VERSION="3.6.2" \
+  && LUA_VERSION="5.4.3" \
   && MBEDTLS_FRAMEWORK_GITSHA1="a2c76945ca090f9dd099001d7c5158557f5a2036" \
+  && MBEDTLS_VERSION="3.6.2" \
+  && SQLITE_VERSION="3.33.0" \
+  && EXPAT_VERSION="2.4.2" \
   \
-  && CJSON_NDEBUG=0 \
-  && MBEDTLS_NDEBUG=0 \
+  && CJSON_NDEBUG=1 \
+  && MBEDTLS_NDEBUG=1 \
   \
   && MAKE_JOBS=$(nproc) \
 
@@ -50,6 +57,44 @@ TODO: mbedtls windoof
 ## Make
 
   && ${PKGINIT:?} && ${PKGADD:?} ${PKGS_TO_ADD} \
+  && mkdir -p "${WORKDIR}" \
+  \
+  && (true shell for zlib \
+  && ZLIB_URL="https://downloads.sourceforge.net/project/libpng/zlib/${ZLIB_VERSION:?}/zlib-${ZLIB_VERSION:?}.tar.gz" \
+  && ZLIB_SRCTAR="${CACHEDIR:?}/zlib-${ZLIB_VERSION:?}.tgz" \
+  && ZLIB_DSTTAR="${CACHEDIR:?}/zlib-${ZLIB_VERSION:?}-bin.tgz" \
+  && ZLIB_MD5SUM="${CACHEDIR:?}/zlib-${ZLIB_VERSION:?}.md5" \
+  && mkdir "${WORKDIR:?}/zlib" \
+  && cd "${WORKDIR:?}/zlib" \
+  && if test -e "${ZLIB_SRCTAR:?}" ;then true \
+      && echo "EEXISTS: ${ZLIB_SRCTAR:?}" \
+    ;else true \
+      && echo "Dload: ${ZLIB_URL:?}" \
+      && curl -Lo "${ZLIB_SRCTAR:?}" "${ZLIB_URL:?}" \
+    ;fi \
+  && if test -e "${ZLIB_DSTTAR:?}" ;then true \
+      && echo "EEXISTS: ${ZLIB_DSTTAR:?}" \
+    ;else true \
+      && tar --strip-components 1 -xf "${ZLIB_SRCTAR:?}" \
+      && mkdir build \
+      && if ${WINDOOF:?} ;then true \
+          && export DESTDIR=./build BINARY_PATH=/bin INCLUDE_PATH=/include LIBRARY_PATH=/lib \
+          && sed -i "s;^PREFIX =.\*\$;;" win32/Makefile.gcc \
+          && make -e -j${MAKE_JOBS:?} -fwin32/Makefile.gcc PREFIX=${HOST}- \
+          && make -e -fwin32/Makefile.gcc install PREFIX=${HOST}- \
+          && unset DESTDIR BINARY_PATH INCLUDE_PATH LIBRARY_PATH \
+        ;else true \
+          && ./configure --prefix="$(pwd)/build/" \
+          && make -j${MAKE_JOBS:?} && make install \
+        ;fi \
+      && cp README build/. \
+      && (cd build && rm -rf lib/pkgconfig) \
+      && (cd build && find -type f -not -name MD5SUM -exec md5sum -b {} + > MD5SUM) \
+      && (cd build && tar --owner=0 --group=0 -czf "${ZLIB_DSTTAR:?}" README* include lib share MD5SUM) \
+      && (cd "$(dirname "${ZLIB_DSTTAR:?}")" && md5sum -b "${ZLIB_DSTTAR:?}" >> "${ZLIB_MD5SUM:?}") \
+      && rm -rf $(ls -A) \
+    ;fi \
+  && true EndOf zlib shell) \
   \
   && (true shell for cJSON \
   && CJSON_URL="https://github.com/DaveGamble/cJSON/archive/refs/tags/v${CJSON_VERSION:?}.tar.gz" \
@@ -63,12 +108,13 @@ TODO: mbedtls windoof
      );fi \
   && if test ! -e "${CJSON_BINTGZ:?}"; then (true \
      && printf '\n  Build cJSON\n\n' \
+     && cd "${WORKDIR:?}" \
      && tar xzf "${CJSON_SRCTGZ:?}" \
      && cd "cJSON-${CJSON_VERSION:?}" \
      && mkdir build build/obj build/lib build/include \
      && CFLAGS="-Wall -pedantic -fPIC" \
-     && ${HOST_}cc $CFLAGS -c -o build/obj/cJSON.o cJSON.c \
-     && ${HOST_}cc $CFLAGS -shared -o build/lib/libcJSON.so.${CJSON_VERSION:?} build/obj/cJSON.o \
+     && ${HOST_}gcc $CFLAGS -c -o build/obj/cJSON.o cJSON.c \
+     && ${HOST_}gcc $CFLAGS -shared -o build/lib/libcJSON.so.${CJSON_VERSION:?} build/obj/cJSON.o \
      && unset CFLAGS \
      && (cd build/lib \
         && MIN=${CJSON_VERSION%.*} && MAJ=${MIN%.*} \
@@ -124,7 +170,13 @@ TODO: mbedtls windoof
           && printf '#%s MBEDTLS_DEBUG_C\n' \
                 "$(test "${MBEDTLS_NDEBUG:?}" -ne 0 && echo "undef" || echo "define")" \
          ) >> "include/mbedtls/mbedtls_config.h" \
-      && make -j${MAKE_JOBS:?} lib $(test "${MBEDTLS_NDEBUG:?}" -ne 0 || echo "DEBUG=1") \
+      && if ${WINDOOF:?} ;then true \
+          && export WINDOWS_BUILD=1 \
+          && export CC=${HOST:?}-gcc \
+          && export LD=${HOST:?}-ld \
+          && export AR=${HOST:?}-ar \
+        ;fi \
+      && make -e -j${MAKE_JOBS:?} lib $(test "${MBEDTLS_NDEBUG:?}" -ne 0 || echo "DEBUG=1") \
       && mkdir build build/include build/lib \
       && cp -rt build/include/. include/psa include/mbedtls \
       && cp -rt build/lib/.  library/libmbedcrypto.a  library/libmbedtls.a  library/libmbedx509.a \
