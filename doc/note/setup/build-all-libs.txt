@@ -1,0 +1,146 @@
+
+Build All Libs
+==============
+
+I'm ways too dumb to "just build a lib. It's easy...". Shut up! Look how long
+this file is! Then you know how "easy" it is!
+
+Source:
+https://git.hiddenalpha.ch/UnspecifiedGarbage.git/tree/doc/note/setup/build-all-libs.txt
+
+
+TODO: mbedtls windoof
+
+
+### Debian
+
+  && PKGS_TO_ADD="ca-certificates curl make gcc libc6-dev" \
+  && SUDO=sudo \
+  && PKGINIT="$SUDO apt update" \
+  && PKGADD="$SUDO apt install -y --no-install-recommends" \
+  && PKGCLEAN="$SUDO apt clean" \
+  && HOST= \
+
+
+### Alpine mingw cross (UNTESTED!)
+
+  && PKGS_TO_ADD="curl mingw-w64-gcc tar" \
+  && SUDO="/home/$USER/.local/bin/sudo" \
+  && PKGINIT=true \
+  && PKGADD="$SUDO apk add" \
+  && PKGCLEAN="$SUDO apk clean" \
+  && HOST=x86_64-w64-mingw32 \
+
+
+## BuildAllLibs Config
+
+  && WORKDIR="/home/${USER:?}/work" \
+  && CACHEDIR="/var/tmp" \
+  \
+  && CJSON_VERSION="1.7.15" \
+  && MBEDTLS_VERSION="3.6.2" \
+  && MBEDTLS_FRAMEWORK_GITSHA1="a2c76945ca090f9dd099001d7c5158557f5a2036" \
+  \
+  && CJSON_NDEBUG=0 \
+  && MBEDTLS_NDEBUG=0 \
+  \
+  && MAKE_JOBS=$(nproc) \
+
+
+## Make
+
+  && ${PKGINIT:?} && ${PKGADD:?} ${PKGS_TO_ADD} \
+  \
+  && (true shell for cJSON \
+  && CJSON_URL="https://github.com/DaveGamble/cJSON/archive/refs/tags/v${CJSON_VERSION:?}.tar.gz" \
+  && CJSON_SRCTGZ="${CACHEDIR:?}/cJSON-${CJSON_VERSION:?}.tgz" \
+  && CJSON_BINTGZ="${CACHEDIR:?}/cJSON-${CJSON_VERSION:?}-bin.tgz" \
+  && CJSON_MD5SUM="${CACHEDIR:?}/cJSON-${CJSON_VERSION:?}.md5" \
+  && if test -n "$HOST"; then HOST_="${HOST:?}-" ;fi \
+  && if test ! -e "${CJSON_SRCTGZ:?}"; then (true \
+     && echo "Download \"${CJSON_URL:?}\"" \
+     && curl -sSLo "${CJSON_SRCTGZ:?}" "${CJSON_URL:?}" \
+     );fi \
+  && if test ! -e "${CJSON_BINTGZ:?}"; then (true \
+     && printf '\n  Build cJSON\n\n' \
+     && tar xzf "${CJSON_SRCTGZ:?}" \
+     && cd "cJSON-${CJSON_VERSION:?}" \
+     && mkdir build build/obj build/lib build/include \
+     && CFLAGS="-Wall -pedantic -fPIC" \
+     && ${HOST_}cc $CFLAGS -c -o build/obj/cJSON.o cJSON.c \
+     && ${HOST_}cc $CFLAGS -shared -o build/lib/libcJSON.so.${CJSON_VERSION:?} build/obj/cJSON.o \
+     && unset CFLAGS \
+     && (cd build/lib \
+        && MIN=${CJSON_VERSION%.*} && MAJ=${MIN%.*} \
+        && ln -s libcJSON.so.${CJSON_VERSION:?} libcJSON.so.${MIN:?} \
+        && ln -s libcJSON.so.${MIN:?} libcJSON.so.${MAJ} \
+        ) \
+     && ${HOST_}ar rcs build/lib/libcJSON.a build/obj/cJSON.o \
+     && cp -t build/. LICENSE README.md \
+     && cp -t build/include/. cJSON.h \
+     && rm build/obj -rf \
+     && (cd build \
+        && find -type f -not -name MD5SUM -exec md5sum -b {} + > MD5SUM \
+        && tar --owner=0 --group=0 -czf "${CJSON_BINTGZ:?}" * \
+        && (cd "$(dirname "${CJSON_BINTGZ:?}")" \
+            && md5sum -b "$(basename "${CJSON_BINTGZ:?}")" >> "${CJSON_MD5SUM:?}") \
+        ) \
+     && cd .. && rm -rf "cJSON-${CJSON_VERSION:?}" \
+     );fi \
+  && printf '\n  DONE (cJSON)\n\n' \
+  && true EndOf cJSON shell) \
+  \
+  && (true shell for mbedtls \
+  && MBEDTLS_URL="https://github.com/Mbed-TLS/mbedtls/archive/refs/tags/mbedtls-${MBEDTLS_VERSION:?}.tar.gz" \
+  && MBEDTLS_SRCTGZ="${CACHEDIR:?}/mbedtls-${MBEDTLS_VERSION:?}.tgz" \
+  && MBEDTLS_BINTGZ="${CACHEDIR:?}/mbedtls-${MBEDTLS_VERSION:?}-bin.tgz" \
+  && MBEDTLS_MD5SUM="${CACHEDIR:?}/mbedtls-${MBEDTLS_VERSION:?}.md5" \
+  && MBEDTLS_FRAMEWORK_URL="https://github.com/Mbed-TLS/mbedtls-framework/archive/${MBEDTLS_FRAMEWORK_GITSHA1:?}.tar.gz" \
+  && MBEDTLS_FRAMEWORK_SRCTGZ="${CACHEDIR:?}/mbedtls-framework-g${MBEDTLS_FRAMEWORK_GITSHA1:0:7}.tgz" \
+  && mkdir "${WORKDIR:?}/mbedtls" \
+  && cd "${WORKDIR:?}/mbedtls" \
+  && if test -e "${MBEDTLS_SRCTGZ:?}" ;then true \
+      && echo "EEXISTS: ${MBEDTLS_SRCTGZ:?}" \
+    ;else true \
+      && echo "HTTP GET ${MBEDTLS_URL:?}" \
+      && curl -Lo "${MBEDTLS_SRCTGZ:?}" "${MBEDTLS_URL:?}" \
+    ;fi \
+  && if test -e "${MBEDTLS_FRAMEWORK_SRCTGZ:?}" ;then true \
+      && echo "EEXISTS: ${MBEDTLS_FRAMEWORK_SRCTGZ:?}" \
+    ;else true \
+      && echo "HTTP GET ${MBEDTLS_FRAMEWORK_URL:?}" \
+      && curl -Lo "${MBEDTLS_FRAMEWORK_SRCTGZ:?}" "${MBEDTLS_FRAMEWORK_URL:?}" \
+    ;fi \
+  && if test -e "${MBEDTLS_BINTGZ:?}" ;then true \
+      && printf '\nEEXISTS: Skip mbedtls build\n\n' \
+      && sleep 3 \
+    ;else true \
+      && tar --strip-components=1 -xf "${MBEDTLS_SRCTGZ:?}" \
+      && (cd framework && tar --strip-components=1 -xf "${MBEDTLS_FRAMEWORK_SRCTGZ:?}") \
+      && (true \
+          && `#TODO Mallocator  echo "#define MBEDTLS_PLATFORM_MEMORY" ` \
+          && `#TODO Mallocator  echo "#undef  MBEDTLS_PLATFORM_FREE_MACRO" ` \
+          && `#TODO Mallocator  echo "#undef  MBEDTLS_PLATFORM_CALLOC_MACRO" ` \
+          && printf '#%s MBEDTLS_DEBUG_C\n' \
+                "$(test "${MBEDTLS_NDEBUG:?}" -ne 0 && echo "undef" || echo "define")" \
+         ) >> "include/mbedtls/mbedtls_config.h" \
+      && make -j${MAKE_JOBS:?} lib $(test "${MBEDTLS_NDEBUG:?}" -ne 0 || echo "DEBUG=1") \
+      && mkdir build build/include build/lib \
+      && cp -rt build/include/. include/psa include/mbedtls \
+      && cp -rt build/lib/.  library/libmbedcrypto.a  library/libmbedtls.a  library/libmbedx509.a \
+      && (true \
+          && echo "version=${MBEDTLS_VERSION:?}" \
+          && echo "mbedtlsFrameworkGitsha1=${MBEDTLS_FRAMEWORK_GITSHA1:?}" \
+         ) > build/METADATA.INI \
+      && (cd build && find -type f -exec md5sum -b {} + > MD5SUM) \
+      && (cd build && tar --owner=0 --group=0 -czf "${MBEDTLS_BINTGZ:?}" METADATA.INI include lib MD5SUM) \
+      && (cd "$(dirname "${MBEDTLS_BINTGZ:?}")" && md5sum -b "$(basename "${MBEDTLS_BINTGZ:?}")" >> "${MBEDTLS_MD5SUM:?}") \
+    ;fi \
+  && true EndOf mbedtls shell) \
+
+
+
+
+
+
+
