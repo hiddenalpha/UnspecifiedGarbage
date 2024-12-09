@@ -8,25 +8,27 @@
   https://git.hiddenalpha.ch/UnspecifiedGarbage.git/tree/src/main/MakeLibs/
 
   TODO: Test if (especially wdoof) builds are usable at all.
-  TODO: Add expat.
-  TODO: Add sqlite.
-  TODO: Add lua.
-  TODO: Add nuklear.
   TODO: Add GLFW.
 
 -- Config begins here -------------------------------------------------------]]
 
-local host = "devuan5" -- one of ["devuan5", "debian9"]
-local target = "windoof" -- one of ["posix", "windoof"]
+local host = "devuan5" -- "devuan5", "debian9"
+local target = "posix" -- "posix", "windoof"
 local version_cJSON = "1.7.15"
 local version_expat = "2.4.2"
 local version_lua = "5.4.3"
 local version_mbedtls = "3.6.2"
 local version_mbedtls_framework = "a2c76945ca090f9dd099001d7c5158557f5a2036"
+local version_nuklear = "4.12.2"
+local version_GLFW = "3.4"
 local version_sqlite = "3.33.0"
 local version_zlib = "1.2.11"
 local ndebug_cJSON = true
+local ndebug_expat = true
+local ndebug_lua = true
 local ndebug_mbedtls = true
+local ndebug_GLFW = true
+local ndebug_sqlite = true
 local ndebug_zlib = true
 local envWORKDIR = "/home/${USER:?}/work"
 local envCACHEDIR = "/var/tmp"
@@ -34,8 +36,9 @@ local envMAKE_JOBS = 8
 
 -- end Config -----------------------------------------------------------------
 
-local main, b64e, TODO_EgXYTUrb6fVdv5wr, defineWhatToBuild, defineZlib, collectPkgsToAddOverall,
-    writeSystemSetupToDst, writeModulesPrepare, writeModulesMake, newModule
+local TODO_EgXYTUrb6fVdv5wr, b64e, collectPkgsToAddOverall, defineExpat, defineLua, defineMbedtls,
+    defineNuklear, defineGLFW, defineWhatToBuild, defineCJSON, defineZlib, main, newModule,
+    newModuleDloads, newModuleEnviron, writeModulesMake, writeModulesPrepare, writeSystemSetupToDst
 local envSUDO, envHOST
 local cmdPkgInit, cmdPkgClean, cmdPkgAdd
 local modulesToMake, pkgsToAddMerged, pkgsToAddGlobally
@@ -44,8 +47,151 @@ local modulesToMake, pkgsToAddMerged, pkgsToAddGlobally
 function defineWhatToBuild()
     local m
     modulesToMake = {}
-    m = defineZlib()    m:verifyAndFreeze() table.insert(modulesToMake, m)
-    m = defineMbedtls() m:verifyAndFreeze() table.insert(modulesToMake, m)
+    local add = function(m) m:verifyAndFreeze() table.insert(modulesToMake, m) end
+    if version_cJSON   then add(defineCJSON  ()) end
+    if version_expat   then add(defineExpat  ()) end
+    if version_lua     then add(defineLua    ()) end
+    if version_mbedtls then add(defineMbedtls()) end
+    if version_nuklear then add(defineNuklear()) end
+    if version_GLFW    then add(defineGLFW   ()) end
+    if version_sqlite  then add(defineSqlite ()) end
+    if version_zlib    then add(defineZlib   ()) end
+end
+
+
+function defineCJSON()
+    local cjson = newModule()
+    cjson.name = "cJSON"
+    cjson.version = version_cJSON
+    cjson.ndebug = ndebug_cJSON
+    cjson.pkgsToAdd = {}
+    cjson.dloads:add{
+        url = "https://github.com/DaveGamble/cJSON/archive/refs/tags/v".. version_cJSON ..".tar.gz",
+        dstFile = envCACHEDIR ..'/src/cJSON-'.. version_cJSON ..'.t__',
+    }
+    cjson.makeShell = 'true \\\n'
+    if target == "posix" then
+        cjson.makeShell = cjson.makeShell .. ' && HOST_= \\\n'
+    elseif target == "windoof" then
+        cjson.makeShell = cjson.makeShell .. ' && HOST_=x86_64-w64-mingw32 \\\n'
+    else error("ENOTSUP: "..target) end
+    cjson.makeShell = cjson.makeShell .. [===[ \
+      && tar --strip-components 1 -xf "${SRCTAR:?}" \
+      && mkdir build build/obj build/lib build/include \
+      && CFLAGS="-Wall -pedantic -fPIC" \
+      && ${HOST_}cc $CFLAGS -c -o build/obj/cJSON.o cJSON.c \
+      && ${HOST_}cc $CFLAGS -shared -o build/lib/libcJSON.so.${VERSION:?} build/obj/cJSON.o \
+      && unset CFLAGS \
+      && (cd build/lib \
+         && MIN=${VERSION%.*} && MAJ=${MIN%.*} \
+         && ln -s libcJSON.so.${VERSION:?} libcJSON.so.${MIN:?} \
+         && ln -s libcJSON.so.${MIN:?} libcJSON.so.${MAJ} \
+         ) \
+      && ${HOST_?}ar rcs build/lib/libcJSON.a build/obj/cJSON.o \
+      && cp -t build/. LICENSE README.md \
+      && cp -t build/include/. cJSON.h \
+      && rm build/obj -rf \
+      && (cd build && true \
+         && find -type f -not -name MD5SUM -exec md5sum -b {} + > MD5SUM \
+         && tar --owner=0 --group=0 -czf "${DSTTAR:?}" * \
+         ) \
+    ]===]
+    cjson:verifyAndFreeze()
+    return cjson
+end
+
+
+function defineExpat()
+    local expat = newModule()
+    expat.name = "expat"
+    expat.version = version_expat
+    expat.ndebug = ndebug_expat
+    expat.pkgsToAdd = { "make", "findutils", }
+    expat.dloads:add{
+        url = "https://github.com/libexpat/libexpat/releases/download/R_2_4_2/expat-".. version_expat ..".tar.xz",
+        dstFile = envCACHEDIR ..'/src/expat-'.. version_expat ..'.t__',
+    }
+    expat.makeShell = [===[ true \
+      && tar --strip-components 1 -xf "${SRCTAR:?}" \
+      && mkdir build \
+    ]===]
+    if target == "posix" then
+        expat.makeShell = expat.makeShell .. [===[ \
+          && ./configure --prefix=${PWD:?}/build CFLAGS="-Wall -pedantic --std=c99 -O2" \
+        ]===]
+    elseif target == "windoof" then
+        expat.makeShell = expat.makeShell .. [===[ \
+          && HOST=x86_64-w64-mingw32 \
+          && ./configure --prefix=${PWD:?}/build --host=${HOST:?} CFLAGS="-Wall -pedantic --std=c99 -O2" \
+        ]===]
+    else error("ENOTSUP: "..target) end
+    expat.makeShell = expat.makeShell .. [===[ \
+      && make -e clean \
+      && make -e -j${MAKE_JOBS:?} \
+      && make -e install \
+      && cp README.md build/. \
+      && (cd build \
+          && rm -rf lib/cmake lib/libexpat.la lib/pkgconfig \
+          && find -type f -not -name MD5SUM -exec md5sum -b {} + > MD5SUM \
+          && tar --owner=0 --group=0 -cz * > "${DSTTAR:?}" \
+         ) \
+    ]===]
+    expat:verifyAndFreeze()
+    return expat
+end
+
+
+function defineLua()
+    local lua = newModule()
+    lua.name = "lua"
+    lua.version = version_lua
+    lua.ndebug = ndebug_lua
+    lua.pkgsToAdd = {}
+    lua.dloads:add{
+        url = "https://www.lua.org/ftp/lua-".. version_lua ..".tar.gz",
+        dstFile = envCACHEDIR ..'/src/'.. lua.name ..'-'.. lua.version ..'.t__',
+    }
+    lua.makeShell = [===[ true \
+      && tar --strip-components 1 -xf "${SRCTAR:?}" \
+      && mkdir build build/bin build/include build/lib build/man build/man/man1 \
+    ]===]
+    if target == "posix" then
+        lua.makeShell = lua.makeShell .. ' && export CFLAGS="-Wall -Wextra -DLUA_USE_DLOPEN=1" \\\n'
+    elseif target == "windoof" then
+        -- windoof is too "doooof" again ...
+        lua.makeShell = lua.makeShell .. ' && export CFLAGS="-Wall -Wextra" \\\n'
+    else error("ENOTSUP: "..target) end
+    if not lua.ndebug then  lua.makeShell = lua.makeShell ..''
+        ..' && export CFLAGS="$CFLAGS -ggdb -DLUAI_ASSERT -DLUA_USE_APICHECK" \\\n'
+    end
+    if target == "posix" then lua.makeShell = lua.makeShell .. [===[ \
+        && export CFLAGS="$CFLAGS -DLUA_USE_POSIX" \
+        && make -e -j${MAKEJOBS} AR='ar rcu'\
+        && cp -t build/. README \
+        && cp -t build/bin/. src/lua src/luac \
+    ]===]
+    elseif target == "windoof" then lua.makeShell = lua.makeShell .. [===[ \
+        && sed -i -E 's,(RANLIB=)(strip ),\1'"${HOST:?}-"'\2,' src/Makefile \
+        && make -e -j${MAKE_JOBS:?} PLAT=mingw \
+            "CC=${HOST:?}-gcc -std=gnu99" \
+            "AR=${HOST:?}-ar rcu" \
+            "RANLIB=${HOST}-ranlib" \
+        && cp -t build/. README \
+        && cp -t build/bin/. src/lua.exe src/luac.exe \
+        ]===]
+    else error("ENOTSUP: "..target) end
+    lua.makeShell = lua.makeShell .. [===[ \
+      && cp -t build/include/. src/lua.h src/luaconf.h src/lualib.h src/lauxlib.h src/lua.hpp \
+      && cp -t build/lib/. src/liblua.a \
+      && cp -t build/man/man1/. doc/lua.1 doc/luac.1 \
+      && (cd build \
+          && rm -rf include/lua.hpp \
+          && find -not -name MD5SUM -type f -exec md5sum -b {} + > MD5SUM \
+          && tar --owner=0 --group=0 -cz * > "${DSTTAR:?}" \
+         ) \
+    ]===]
+    lua:verifyAndFreeze()
+    return lua
 end
 
 
@@ -57,14 +203,14 @@ function defineMbedtls()
     mbedtls.pkgsToAdd = { "make", "findutils", }
     mbedtls.environ:add("FRAMEWORK_VERSION", version_mbedtls_framework)
     mbedtls.environ:add("FRAMEWORK_SRCTAR",
-        envCACHEDIR ..'/mbedtls-framework-g'.. version_mbedtls_framework ..'.tgz')
+        envCACHEDIR ..'/src/mbedtls-framework-g'.. version_mbedtls_framework ..'.t__')
     mbedtls.dloads:add{
         url = "https://github.com/Mbed-TLS/mbedtls/archive/refs/tags/mbedtls-".. mbedtls.version ..".tar.gz",
-        dstFile = envCACHEDIR ..'/'.. mbedtls.name ..'-'.. mbedtls.version ..'.tgz',
+        dstFile = envCACHEDIR ..'/src/'.. mbedtls.name ..'-'.. mbedtls.version ..'.t__',
     }
     mbedtls.dloads:add{
         url = "https://github.com/Mbed-TLS/mbedtls-framework/archive/".. version_mbedtls_framework ..".tar.gz",
-        dstFile = envCACHEDIR ..'/mbedtls-framework-g'.. version_mbedtls_framework ..'.tgz',
+        dstFile = envCACHEDIR ..'/src/mbedtls-framework-g'.. version_mbedtls_framework ..'.t__',
     }
     mbedtls.makeShell = [===[ true \
   && tar --strip-components=1 -xf "${SRCTAR:?}" \
@@ -98,10 +244,128 @@ function defineMbedtls()
      ) > build/METADATA.INI \
   && (cd build && find -type f -exec md5sum -b {} + > MD5SUM) \
   && (cd build && tar --owner=0 --group=0 -czf "${DSTTAR:?}" METADATA.INI include lib MD5SUM) \
-  && (cd "$(dirname "${DSTTAR:?}")" && md5sum -b "$(basename "${DSTTAR:?}")" >> "${DSTMD5:?}") \
   ]===]
     mbedtls:verifyAndFreeze()
     return mbedtls
+end
+
+
+function defineNuklear()
+    local nk = newModule()
+    nk.name = "nuklear"
+    nk.version = version_nuklear
+    nk.ndebug = true -- has no effect
+    nk.dloads:add{
+        url = "https://github.com/Immediate-Mode-UI/Nuklear/archive/refs/tags/".. version_nuklear ..".tar.gz",
+        dstFile = envCACHEDIR ..'/src/'.. nk.name ..'-'.. nk.version ..'.t__',
+    }
+    nk.pkgsToAdd = { "findutils" }
+    nk.makeShell = [===[ true \
+      && tar --strip-components 1 -xf "${SRCTAR:?}" \
+      && mkdir include \
+      && cp nuklear.h include/. \
+      && find include -type f -exec md5sum -b {} + > MD5SUM \
+      && tar --owner=0 --group=0 -cz include MD5SUM > "${DSTTAR:?}" \
+    ]===]
+    nk:verifyAndFreeze()
+    return nk
+end
+
+
+function defineGLFW()
+    local glfw = newModule()
+    glfw.name = "GLFW"
+    glfw.version = version_GLFW
+    glfw.ndebug = ndebug_GLFW
+    glfw.dloads:add{
+        url = "https://github.com/glfw/glfw/archive/refs/tags/".. glfw.version ..".tar.gz",
+        dstFile = envCACHEDIR ..'/src/'.. glfw.name ..'-'.. glfw.version ..'.t__',
+    }
+    glfw.pkgsToAdd = { "cmake", "libxrandr-dev", "libxinerama-dev", "libxcursor-dev", "libxi-dev", }
+    glfw.makeShell = [===[ true \
+      && tar --strip-components 1 -xf "${SRCTAR:?}" \
+      && rm -rf build \
+    ]===]
+    if target == "posix" then
+        glfw.makeShell = glfw.makeShell .. [===[ \
+          && cmake \
+               -D GLFW_BUILD_EXAMPLES=0 \
+               -D GLFW_BUILD_TESTS=0 \
+               -D GLFW_BUILD_DOCS=1 \
+               -D USE_MSVC_RUNTIME_LIBRARY_DLL=0 \
+               -D GLFW_BUILD_X11=1 \
+               -D GLFW_BUILD_WAYLAND=0 `# TODO enable ` \
+               . \
+          && CC=gcc \
+        ]===]
+    elseif target == "windoof" then
+        glfw.makeShell = glfw.makeShell .. [===[ \
+          && cmake \
+               -D GLFW_BUILD_EXAMPLES=0 \
+               -D GLFW_BUILD_TESTS=0 \
+               -D GLFW_BUILD_DOCS=1 \
+               -D GLFW_BUILD_WIN32=1 \
+               -D USE_MSVC_RUNTIME_LIBRARY_DLL=1 \
+               -D CMAKE_TOOLCHAIN_FILE=CMake/x86_64-w64-mingw32.cmake \
+               . \
+          && CC=${HOST_?}gcc \
+        ]===]
+    else error("ENOTSUP: "..target) end
+    glfw.makeShell = glfw.makeShell .. [===[ \
+      && make clean CC="${CC:?}" \
+      && make -j"${MAKE_JOBS:?}" CC="${CC:?}" \
+      && mkdir  build  build/include  build/lib \
+      && cp -art build/include/. include/* \
+      && cp -t build/lib/.  src/libglfw3.a \
+      && (cd build && find $(ls -A) -type f -not -name MD5SUM -exec md5sum -b {} + > MD5SUM ) \
+      && mkdir dist \
+      && (cd build && tar --owner=0 --group=0 -czf "${DSTTAR:?}" $(ls -A) ) \
+    ]===]
+    glfw:verifyAndFreeze()
+    return glfw
+end
+
+
+function defineSqlite()
+    local sqlite = newModule()
+    sqlite.name = "sqlite"
+    sqlite.version = version_sqlite
+    sqlite.ndebug = ndebug_sqlite
+    sqlite.pkgsToAdd = { "tcl" }
+    sqlite.dloads:add{
+        url = "https://github.com/sqlite/sqlite/archive/refs/tags/version-".. sqlite.version ..".tar.gz",
+        dstFile = envCACHEDIR ..'/src/'.. sqlite.name ..'-'.. sqlite.version ..'.t__',
+    }
+    sqlite.makeShell = [===[ true \
+      && tar --strip-components 1 -xf "${SRCTAR:?}" \
+      && mkdir build \
+    ]===]
+    if target == "posix" then
+        sqlite.makeShell = sqlite.makeShell .. [===[ \
+          && ./configure --prefix=${PWD:?}/build \
+          && make -e clean && make -e -j${MAKE_JOBS:?} && make -e install \
+        ]===]
+    elseif target == "windoof" then
+        sqlite.makeShell = sqlite.makeShell .. [===[ \
+          && ./configure --prefix=${PWD:?}/build --host=${HOST:?} \
+               CC=${CC:?} BEXE=.exe config_TARGET_EXEEXT=.exe \
+          && rm -f mksourceid && ln -s mksourceid.exe mksourceid \
+          && make -e clean \
+          && make -e -j${MAKE_JOBS:?} BCC=gcc\
+          && make -e install \
+          && (cd build && rm -rf lemon* mksourceid lib/pkgconfig lib/*.la) \
+        ]===]
+    else error("ENOTSUP: "..target) end
+    sqlite.makeShell = sqlite.makeShell .. [===[ \
+      && cp README.md LICENSE.md VERSION build/. \
+      && (cd build \
+          && rm -rf lib/libsqlite3.la lib/pkgconfig \
+          && find -not -name MD5SUM -type f -exec md5sum -b {} + > MD5SUM \
+          && tar --owner=0 --group=0 -cz * > "${DSTTAR:?}" \
+         ) \
+    ]===]
+    sqlite:verifyAndFreeze()
+    return sqlite
 end
 
 
@@ -112,7 +376,7 @@ function defineZlib()
     zlib.ndebug = ndebug_zlib
     zlib.dloads:add({
         url = "https://downloads.sourceforge.net/project/libpng/zlib/".. zlib.version .."/zlib-".. zlib.version ..".tar.gz",
-        dstFile = envCACHEDIR ..'/'.. zlib.name ..'-'.. zlib.version ..'.tgz',
+        dstFile = envCACHEDIR ..'/src/'.. zlib.name ..'-'.. zlib.version ..'.t__',
     })
     if host == "devuan5" and target == "posix" then
         zlib.pkgsToAdd = {}
@@ -146,7 +410,6 @@ function defineZlib()
       && (cd build && rm -rf lib/pkgconfig) \
       && (cd build && find -type f -not -name MD5SUM -exec md5sum -b {} + > MD5SUM) \
       && (cd build && tar --owner=0 --group=0 -czf "${DSTTAR:?}" README* include lib $(find . -wholename share) MD5SUM) \
-      && (cd "$(dirname "${DSTTAR:?}")" && md5sum -b "${DSTTAR:?}" >> "${DSTMD5:?}") \
     ]===]
     return zlib
 end
@@ -278,18 +541,20 @@ end
 
 
 function writeModulesPrepare( dst )
+    dst:write(""
+        .." && (cd '".. envCACHEDIR .."' && mkdir -p src dst md5) \\\n"
+        .."")
     for k, mod in pairs(modulesToMake) do
         assert(type(k) == "number", k)
         assert(type(mod) == "table", mod)
         local name = assert(mod.name)
         local version = assert(mod.version)
-        local srcTar = name ..'-'.. version ..'.tgz'
         for dload in pairs(mod.dloads) do
             dst:write(""
                 ..' && if test -e "'.. dload.dstFile ..'" ;then true \\\n'
                 ..'     && echo "OK: EEXISTS: '.. dload.dstFile ..'" \\\n'
                 ..'   ;else true \\\n'
-                ..'     && echo "Dload  '.. dload.url ..'" \\\n'
+                ..'     && echo curl -Lo "'.. dload.dstFile ..'" "'.. dload.url ..'" \\\n'
                 ..'     && curl -Lo "'.. dload.dstFile ..'" "'.. dload.url ..'" \\\n'
                 ..'   ;fi \\\n'
                 .."")
@@ -306,40 +571,40 @@ function writeModulesMake( dst )
         local     name,     version
             = mod.name, mod.version
         assert(name and version)
-        local srcTar = name ..'-'.. version ..'.tgz'
-        local dstTar = name ..'-'.. version ..'-bin.tgz'
+        local srcTar = name ..'-'.. version ..'.t__'
+        local dstTar = name ..'-'.. version ..'+$(/usr/bin/*gcc -dumpmachine).tgz'
         local dstMd5 = name ..'-'.. version ..'.md5'
         local isWindoof
         if     target == "posix"   then isWindoof = false
         elseif target == "windoof" then isWindoof = true
         else   error("ENOTSUP: ".. target) end
         dst:write(""
-            ..' && if test -e "'.. envCACHEDIR ..'/'.. dstTar ..'" ;then true \\\n'
-            ..'     && echo "OK: EEXISTS: '.. envCACHEDIR ..'/'.. dstTar ..'" \\\n'
+            ..' && if test -e "'.. envCACHEDIR ..'/dst/'.. dstTar ..'" ;then true \\\n'
+            ..'     && echo "OK: EEXISTS: '.. envCACHEDIR ..'/dst/'.. dstTar ..'" \\\n'
             ..'   ;else (true \\\n'
             ..'     && export VERSION="'.. version ..'" \\\n'
-            ..'     && export SRCTAR="'.. envCACHEDIR ..'/'.. srcTar ..'" \\\n'
-            ..'     && export DSTTAR="'.. envCACHEDIR ..'/'.. dstTar ..'" \\\n'
-            ..'     && export DSTMD5="'.. envCACHEDIR ..'/'.. dstMd5 ..'" \\\n'
-            ..'     && rm -rf "'.. envWORKDIR ..'/'.. mod.name ..'" \\\n'
-            ..'     && mkdir "'.. envWORKDIR ..'/'.. mod.name ..'" \\\n'
-            ..'     && cd "'.. envWORKDIR ..'/'.. mod.name ..'" \\\n'
+            ..'     && export SRCTAR="'.. envCACHEDIR ..'/src/'.. srcTar ..'" \\\n'
+            ..'     && export DSTTAR="'.. envCACHEDIR ..'/dst/'.. dstTar ..'" \\\n'
+            ..'     && rm -rf "'.. envWORKDIR ..'/make/'.. mod.name ..'" \\\n'
+            ..'     && (cd "'.. envWORKDIR ..'" && mkdir -p make) \\\n'
+            ..'     && (cd "'.. envWORKDIR ..'/make" && mkdir -p "'.. mod.name ..'") \\\n'
+            ..'     && cd "'.. envWORKDIR ..'/make/'.. mod.name ..'" \\\n'
             .."")
         if mod.ndebug then dst:write('     && export NDEBUG=1 \\\n') end
         for env, _ in pairs(mod.environ) do
             assert(type(env) == "table")
             assert(type(env.k) == "string", env.k)
             assert(type(env.v) == "string", env.v)
-            dst:write(""
-                ..'     && export "'.. env.k ..'='.. env.v ..'" \\\n'
-                .."")
+            dst:write('     && export "'.. env.k ..'='.. env.v ..'" \\\n')
         end
         dst:write(""
             ..'     && (echo "set -e" && echo '.. b64e(mod.makeShell) ..'|base64 -d)|sh - \\\n'
+            ..'     && DSTMD5="'.. envCACHEDIR ..'/md5/'.. dstMd5 ..'" \\\n'
+            ..'     && (cd "$(dirname "${DSTTAR:?}")" && md5sum -b "$(basename "${DSTTAR:?}")" >> "${DSTMD5:?}") \\\n'
             ..'   );fi \\\n'
             ..' && mkdir -p "'.. envWORKDIR ..'/dist" \\\n'
-            ..' && cp -t "'.. envWORKDIR ..'/dist/." "'.. envCACHEDIR ..'/'.. dstTar ..'" \\\n'
-            ..' && cp -t "'.. envWORKDIR ..'/dist/." "'.. envCACHEDIR ..'/'.. dstMd5 ..'" \\\n'
+            ..' && cp -t "'.. envWORKDIR ..'/dist/." "'.. envCACHEDIR ..'/dst/'.. dstTar ..'" \\\n'
+            ..' && cp -t "'.. envWORKDIR ..'/dist/." "'.. envCACHEDIR ..'/md5/'.. dstMd5 ..'" \\\n'
             .."")
     end
 end
