@@ -183,6 +183,21 @@ true \
   && `# Add 'user' to 'adm' group to allow access to logs ` \
   && $SUDO sed -i -E 's/^(adm:x:[^:]*:.+)$/\1'",$USER"'/' /etc/group \
   && $SUDO sed -i -E 's,^(adm:x:[^:]*:)$,\1'"$USER"',' /etc/group \
+  && `# Add some inline doc ` \
+  && <<EOF base64 -d|gzip -d > /home/${USER:?}/README.txt &&
+H4sIAAKoTWcAA7VUwWrcMBC9+ysGFuqU4l0aem1LSLOlPaSlCTlnVh7bYmXJSOPdGPrxHUn2kjSl
+6aWLD8toeG/eeyMVAN/xy80FeKp1gMZ56NwY2FlAWwNha6gAeP/Sryika7WCqwfsB0OgXN8LQIjl
++xWEzh0hkD9oRRAYeQxwL0dhrN2pXlX5pEJj4PzDq7fwE1pPQ55tQWI3nEbMQ59Jj0EBKOd6CUfN
+HZSEpqUyiUpCXj/nTAjVghfBTzzo+T8SCfrM9EkH3Illy9kZ7hF63BNwhwyaoXYU4Prb7TyU9Oyc
+40ck41AjU+XVuv6NyFPvDjQzXdkXiBJ+ABzZ9chaSRBTpAtTYOr/nbWmBkfDS2Y3Mf3eBZY2RZbB
+uPaPbu6m6KUY+MxLRm2gsu/OodrC5oB+IxibxLp5wr2WerFs46WzjW5HL1qcjbVrJ5niMEw5uDhX
+jlY+NTdT/RG+ChaoDm1L0RdtxSLSfu6BRhsKAheviBxEm3M02DSkmGY/1sVilUXrYEOsnoyc9K0j
+5t/7Fmmpc9F2sXMjw480/Z0zItGknG878hT1oFzhutZROppZZpkBD3N/+Uh0dmQgH7SEbVW89nVe
+zXoNl4K2k9URxVPO5qHHeNHjf22Z2mwysDgR4Nhp1SWntWxQGLAXNDf6eYxEhbIGsswNsMfQrWGb
+UPPz8VkWy5AY+wa2XpM8JAJ2kKfD9QQH8lMy37pJ2zZRgsIgl0SZkZl8rGYm8c2jhBgZo18Y9nIo
+wfwCtOXoJvkEAAA=
+EOF
+true \
   && `# Cleanup for smaller VM images ` \
   && $SUDO apt clean \
   && printf 'DONE :)\n' \

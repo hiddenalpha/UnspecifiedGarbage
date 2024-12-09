@@ -41,11 +41,12 @@ you're doing! If you don't, you MUST NOT use those instructions!
 
 For master/subkey setup see separate file.
 
-  && REALNAME="Andreas Fankhauser (snakeoil)" \
-  && EMAIL="Andreas.Fankhauser@post.ch" \
-  && COMMENT="fankhauseand@w00o2z $(date +%Y%m%d)" \
-  && EXPIREDATE="20250223" \
-  && WORKHOME="stupidhome" \
+  && REALNAME="___ ___" \
+  && EMAIL="___@example.com" \
+  && COMMENT="USER@HOST $(date +%Y%m%d)" \
+  && PASS= \
+  && EXPIREDATE="$(date +%Y-%m-%d -d@$(($(date +%s) + (7*365*86400))))" \
+  && WORKHOME="./stupidhome" \
   && mkdir "${WORKHOME:?}/private-keys-v1.d" \
   && chmod 700 "${WORKHOME:?}/private-keys-v1.d" \
   && printf %s\\n \
@@ -57,8 +58,20 @@ For master/subkey setup see separate file.
     "Name-Comment: ${COMMENT:?}" \
     "Name-Email: ${EMAIL:?}" \
     "Expire-Date: ${EXPIREDATE:?}" \
-    "Passphrase: 54321" \
+    "Passphrase: ${PASS:?}" \
     | env GNUPGHOME="${WORKHOME:?}" gpg --batch --gen-key \
+
+
+## Share private key to another machine
+
+  `# source host `
+  gpg -K
+  gpg --export-secret-key THEKEY > secret.key
+  `# destination host `
+  gpg --import secret.key
+  gpg --edit-key THENEWKEY trust quit
+  gpg --armor --export THENEWKEY | gpg --import  `# TODO wüük nötig? `
+  gpg -K
 
 
 ## Some other helpful places
