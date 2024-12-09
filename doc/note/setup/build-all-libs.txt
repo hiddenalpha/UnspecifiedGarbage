@@ -9,8 +9,12 @@ Source:
 https://git.hiddenalpha.ch/UnspecifiedGarbage.git/tree/doc/note/setup/build-all-libs.txt
 
 
-TODO: Test, if mbedtls build is usable on NIX.
-TODO: Test, if mbedtls build is usable on WDOOF.
+TODO: Test if (especially wdoof) builds are usable at all.
+TODO: Add expat.
+TODO: Add sqlite.
+TODO: Add lua.
+TODO: Add nuklear.
+TODO: Add GLFW.
 
 
 ### Debian 9
