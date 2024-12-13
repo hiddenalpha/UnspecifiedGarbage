@@ -10,7 +10,7 @@
 -- Config begins here -------------------------------------------------------]]
 
 local host = "devuan5" -- "devuan5", "debian9"
-local target = "windoof" -- "posix", "windoof"
+local target = "posix" -- "posix", "windoof"
 local envWORKDIR = "/home/${USER:?}/work"
 local envCACHEDIR = "/var/tmp"
 local envMAKE_JOBS = 8
