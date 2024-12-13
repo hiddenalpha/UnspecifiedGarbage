@@ -496,8 +496,10 @@ Links (Aka argument amplifiers)
 - logger fail "https://jira.post.ch/browse/SDCISA-9903"
 
 ## FileLogging is a MUST have (kibana is bullsh**)
+- [Andis WARNING](https://wikit.post.ch/x/m4Nreg)
 - [example](https://jira.post.ch/browse/SDCISA-8382?focusedCommentId=1554435&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-1554435)
 - [example](https://jira.post.ch/browse/SDCISA-13655)
+- [example](https://teams.microsoft.com/l/message/19:meeting_NGYzYTY2NzktYTc2NS00OTBjLWFkMjAtMGFjZWQ5NDBhNzhj@thread.v2/1733820055846?context=%7B%22contextType%22%3A%22chat%22%7D)
 - [thought loggt nicht ins Kibana?](https://jira.post.ch/browse/SDCISA-17480)
 - [warning](https://jira.post.ch/browse/SDCISA-7230?focusedCommentId=1550476&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-1550476)
 - [FluentD logging unreliable](https://jira.post.ch/browse/SDCISA-16205)

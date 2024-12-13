@@ -85,9 +85,12 @@ Setup
   && `# kubectl (https://wikit.post.ch/x/w52aS#ISAK8sSetup-K8s/ArgoCDconfiguration) ` \
   && mkdir "/home/${USER:?}/.aws" \
   && `# Minimal pseudo README with in VM ` \
-  && __ \
-  && __ \
-  && __ \
+  && <<EOF base64 -d|gzip -d > /home/${USER:?}/README.txt &&
+H4sIANdRXGcAA43MsQ6CMBCA4b1PcS/AUQphIHFwdCEmDs4HbUJD4Zo7atSn1wdw8F++7TdXutzO
+cGdZFxYNMPIR1Jx+ZQyAFs+Q2W+0Qy4pged5DYIHc1LMrAfOS50pKtVSaZBHnEM1kYbBtmh77Bxa
++/coxUlIXjVt9OY9xb08B2ddiz1+6ZrGNWiN+QB4CfIdxgAAAA==
+EOF
+true \
   && printf '\n  TODO aws access -> https://wikit.post.ch/x/wzi_UQ \n\n' \
   && printf '\n  DONE_vxYAAOBjAAD3HAAA\n\n' \
 

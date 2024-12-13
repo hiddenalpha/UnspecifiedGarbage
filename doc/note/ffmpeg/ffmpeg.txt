@@ -44,11 +44,25 @@ HINT: Repeat afade twice for log.
   -af "afade=t=in:d=500ms,afade=t=out:st=183427ms:d=500ms" \
 
 
-## Record Desktop
+## List codecs
 
-  ffmpeg -f gdigrab -framerate 6 -probesize 10M -offset_x 0 -offset_y 0 \
-      -video_size 1920x1200 -show_region 1 -i desktop -c:v h264_qsv \
-      -pix_fmt yuv420p "output-$(date +%Y%m%d-%H%M%S).mp4"
+  ffmpeg -codecs  `# List`
+  ffmpeg -h encoder=h264_nvenc  `# details`
+
+
+## Record Desktop Screen
+
+  ffmpeg -f gdigrab -framerate 6 -probesize 10M -an `# no-audio` \
+      -offset_x 0 -offset_y 0 -video_size 1920x1080 -show_region 1 \
+      -i desktop \
+      `# regular: libx264,  doof+nvidia: h264_nvenc,  doof+intel: h264_qsv ` \
+      -c:v libx264 -crf 0 -preset ultrafast -color_range 2 \
+      "output-$(date -u +%Y%m%d-%H%M%SZ).mp4"
+
+  The above will compress badly to keep realtime recording responsive. Compress
+  it afterwards with eg:
+
+  ffmpeg -i ${RECORDING:?} -c:v h264_qsv -pix_fmt yuv420p optimized-for-size.mkv
 
 
 ## Trim video
