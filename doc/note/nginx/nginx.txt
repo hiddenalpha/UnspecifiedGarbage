@@ -21,9 +21,9 @@ WARN: Do NOT use 'alias' directive! It is broken as hell. Use 'root'.
   pid /run/nginx.pid;
   events {}
   user www-data www-data;
-  access_log /dev/stderr combined;
-  error_log /dev/stderr error; # debug, info, notice, warn, error, crit, alert, emerg.
   http {
+      access_log /dev/stderr combined;
+      error_log /dev/stderr error; # debug, info, notice, warn, error, crit, alert, emerg.
       # Directories nginx needs configured to start up.
       client_body_temp_path /tmp/nginx;
       proxy_temp_path /tmp/nginx;
