@@ -3,7 +3,7 @@
 -- [Source 2](http://git.hiddenalpha.ch/UnspecifiedGarbage.git/tree/src/main/lua/common/base64.lua)
 function b64enc( src )
     local b = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
-    return ((src:gsub('.', function(x) 
+    return ((src:gsub('.', function(x)
         local r, b = '', x:byte()
         for i = 8, 1, -1 do r = r .. (b%2^i-b%2^(i-1)>0 and '1' or '0') end
         return r;

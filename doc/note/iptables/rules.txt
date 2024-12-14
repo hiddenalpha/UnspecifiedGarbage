@@ -20,6 +20,9 @@
 # DNS client
 #-A OUTPUT -p udp --dport 53 -m udp -j ACCEPT
 #-A INPUT  -p udp --sport 53 -m state --state ESTABLISHED,RELATED -j ACCEPT
+## Some crazy edge-cases need fallback to TCP mode:
+#-A OUTPUT -p tcp --dport 53 -j ACCEPT
+#-A INPUT  -p tcp --sport 53 -m state --state ESTABLISHED,RELATED -j ACCEPT
 
 # mDNS (zeroconf, bonjour)
 #-A INPUT  -p udp --sport 5353 --dport 5353 -j ACCEPT
