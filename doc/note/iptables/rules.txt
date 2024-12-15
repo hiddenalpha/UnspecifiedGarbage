@@ -157,16 +157,20 @@
 #-A INPUT  -p tcp -m state --state NEW,ESTABLISHED --dport 9418 -j ACCEPT
 #-A OUTPUT -p tcp -m state --state RELATED,ESTABLISHED --sport 9418 -j ACCEPT
 
-# Samba (SMB) Client
-#-A OUTPUT -p tcp -m state --state NEW,ESTABLISHED --dport 139 -j ACCEPT
-#-A OUTPUT -p tcp -m state --state NEW,ESTABLISHED --dport 445 -j ACCEPT
-#-A INPUT  -p tcp -m state --state RELATED,ESTABLISHED --sport 139 -j ACCEPT
+# Samba (smb/cifs) Client (137=NameSvc, 138=DatagramSvc, 139=SessionSvc)
+#-A OUTPUT -p udp -m state --state NEW,ESTABLISHED     --match multiport --dports 137:139 -j ACCEPT
+#-A INPUT  -p udp -m state --state RELATED,ESTABLISHED --match multiport --sports 137:139 -j ACCEPT
+#-A OUTPUT -p tcp -m state --state NEW,ESTABLISHED     --match multiport --dports 137:139 -j ACCEPT
+#-A INPUT  -p tcp -m state --state RELATED,ESTABLISHED --match multiport --sports 137:139 -j ACCEPT
+#-A OUTPUT -p tcp -m state --state NEW,ESTABLISHED     --dport 445 -j ACCEPT
 #-A INPUT  -p tcp -m state --state RELATED,ESTABLISHED --sport 445 -j ACCEPT
 
-# Samba (SMB) Server
-#-A INPUT  -p tcp -m state --state NEW,ESTABLISHED --dport 139 -j ACCEPT
-#-A INPUT  -p tcp -m state --state NEW,ESTABLISHED --dport 445 -j ACCEPT
-#-A OUTPUT -p tcp -m state --state RELATED,ESTABLISHED --sport 139 -j ACCEPT
+# Samba (smb/cifs) Server (137=NameSvc, 138=DatagramSvc, 139=SessionSvc)
+#-A INPUT  -p udp -m state --state NEW,ESTABLISHED     --match multiport --dports 137:139 -j ACCEPT
+#-A OUTPUT -p udp -m state --state NEW,RELATED,ESTABLISHED --match multiport --sports 137:139 -j ACCEPT
+#-A INPUT  -p tcp -m state --state NEW,ESTABLISHED     --match multiport --dports 137:139 -j ACCEPT
+#-A OUTPUT -p tcp -m state --state RELATED,ESTABLISHED --match multiport --sports 137:139 -j ACCEPT
+#-A INPUT  -p tcp -m state --state NEW,ESTABLISHED     --dport 445 -j ACCEPT
 #-A OUTPUT -p tcp -m state --state RELATED,ESTABLISHED --sport 445 -j ACCEPT
 
 # MsTeams/MsSkype clients (in addition to TCP 80 & 443)
