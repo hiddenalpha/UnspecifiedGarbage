@@ -5,6 +5,9 @@
 
   Intended to be used with "http://devuan.org/".
 
+  [isa kube/config](https://gitit.post.ch/projects/ISA/repos/wsl-playbooks/raw/roles/isa/files/kube/config?at=refs%2Fheads%2Fmaster)
+  [Some other kube/config](https://artifactory.tools.post.ch/artifactory/generic-kubernetes-local/EKS/Int/eks-int-m01cn0001/config)
+
   ]===========================================================================]
 -- Customize your install here ------------------------------------------------
 -- TODO Make sure to insert your roles, etc here BEFORE use.
@@ -22,10 +25,12 @@ local cmdSudo = "sudo"
 local samlProfile = "default" -- WARN: saml deprecated!
 local awsRegion = "eu-central-1"
 local idProvider = "ADFS2"
+local kubeloginVersion = "0.1.6"
 local samlVersion = "2.36.16"
 local argocdVersion = "2.11.7"
 local getaddrinfoVersion = "0.0.2"
 local cacheDir = "/var/tmp"
+local kubeConfigUrl = "https://gitit.post.ch/projects/ISA/repos/wsl-playbooks/raw/roles/isa/files/kube/config?at=refs%2Fheads%2Fmaster"
 
 -- EndOf Customization --------------------------------------------------------
 
@@ -49,6 +54,8 @@ function main()
   && argocdVersion=']=].. argocdVersion ..[=[' \
   && getaddrinfoVersion=']=].. getaddrinfoVersion ..[=[' \
   && cacheDir=']=].. cacheDir ..[=[' \
+  && kubeloginVersion=']=].. kubeloginVersion ..[=[' \
+  && kubeConfigUrl=']=].. kubeConfigUrl ..[=[' \
   && SUDO=']=].. cmdSudo ..[=[ \'
   && `# 20240715: Removed: gcc-mingw-w64-x86-64-win32 gcc libc6-dev` \
   && printf %s\\n \
@@ -76,6 +83,7 @@ function main()
   && $SUDO RUNLEVEL=1 apt install -y --no-install-recommends \
          net-tools vim curl nfs-common htop ncat git ca-certificates tmux \
          kubernetes-client awscli openjdk-17-jre-headless maven podman \
+         bash-completion \
   && (cd "${cacheDir:?}" && curl -Lo "getaddrinfo-${getaddrinfoVersion:?}+x86_64-linux-gnu.tgz" "https://github.com/hiddenalpha/getaddrinfo-cli/releases/download/v${getaddrinfoVersion:?}/getaddrinfo-${getaddrinfoVersion:?}+x86_64-linux-gnu.tgz") \
   && (cd "${cacheDir:?}" && curl -o saml2aws_${samlVersion:?}_linux_amd64.tgz "https://artifactory.tools.post.ch/artifactory/generic-github-remote/Versent/saml2aws/releases/download/v${samlVersion:?}/saml2aws_${samlVersion:?}_linux_amd64.tar.gz") \
   && (cd "${cacheDir:?}" && curl -Lo "argocd-${argocdVersion:?}+linux-amd64" "https://github.com/argoproj/argo-cd/releases/download/v${argocdVersion:?}/argocd-linux-amd64") \
@@ -98,21 +106,54 @@ function main()
   && saml2aws configure --skip-prompt -p "${samlProfile:?}" --role="${awsRole?}" --region "${awsRegion?}" --url https://adfs.post.ch --username "${samlUser?}" --idp-provider="${IDPPROVIDER?}" --mfa="${samlMfa?}" \
   && printf 'MAVEN_OPTS="--add-opens jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED --add-opens jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED --add-opens jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED --add-opens jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED --add-opens jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.lang.reflect=ALL-UNNAMED --add-opens java.base/java.text=ALL-UNNAMED --add-opens java.desktop/java.awt.font=ALL-UNNAMED"' | $SUDO tee >/dev/null -a /etc/environment \
   && `# kubectl (https://wikit.post.ch/x/w52aS#ISAK8sSetup-K8s/ArgoCDconfiguration) ` \
-  && mkdir "/home/${USER:?}/.aws" \
-  && `# Minimal pseudo README with in VM ` \
+  && mkdir "/home/${USER:?}/.aws" `# TODO unused?` \
+  && mkdir "/home/${USER:?}/.kube" \
+  && printf %s\\n "Dload '${kubeConfigUrl:?}'" \
+  && rspCode=$(curl -sSL -o /home/${USER:?}/.kube/isa.skel -w '%{http_code}\n' "${kubeConfigUrl:?}") \
+  && if test "${rspCode?}" -ne "200" ;then true \
+      && printf "kube/config dload failed:\n%s\n" "${rspCode?}" && false \
+    ;fi \
+  && printf %s\\n \
+       'e990013d2d658dd19ef2731bc9387d4ed88c60097d5364ac2d832871f2fc17d5 *kubelogin-linux-amd64.zip' \
+     | $SUDO tee >> "${cacheDir:?}"/SHA256SUM \
+  && kubeloginUrl="https://github.com/Azure/kubelogin/releases/download/v${kubeloginVersion:?}/kubelogin-linux-amd64.zip" \
+  && printf %s\\n "Dload '${kubeloginUrl:?}'" \
+  && rspCode=$(cd "${cacheDir:?}" && curl -sSL --insecure -O -w '%{http_code}\n' "${kubeloginUrl:?}") \
+  && if test "${rspCode?}" -ne "200" ;then true \
+      && printf "kubelogin dload failed:\n%s\n" "${rspCode?}" && false \
+    ;fi \
+  && if test "$(cd "${cacheDir:?}" && sha256sum --ignore-missing -c SHA256SUM |grep -E ' OK$'|wc -l)" -ne 1 ;then true \
+      && printf 'kubelogin download checksum mismatch\n' && false \
+    ;fi \
+  && mkdir -p /opt/kubelogin-"${kubeloginVersion:?}/bin" /tmp/fuckstupidpackaging \
+  && (cd /tmp/fuckstupidpackaging && rm -rf * && unzip "${cacheDir:?}/kubelogin-*.zip") \
+  && $SUDO mv "$(ls -d /tmp/fuckstupidpackaging/bin/*/kubelogin)" /opt/kubelogin-"${kubeloginVersion:?}/bin/." \
+  && $SUDO chown root:root /opt/kubelogin-"${kubeloginVersion:?}"/bin/kubelogin \
+  && $SUDO chmod 655 /opt/kubelogin-"${kubeloginVersion:?}"/bin/kubelogin \
+  && ln -s /opt/kubelogin-"${kubeloginVersion:?}"/bin/kubelogin /home/${USER:?}/.local/bin/. \
+  && `# Add inline-doc ` \
   && printf %s\\n \
        '' \
        '  PaISA Workhorse Notes' \
        '  =====================' \
-       '' \
-       '  sudo podman pull docker.tools.post.ch/paisa/r-service-base:03.06.42.00' \
-       '  sudo podman pull docker.tools.post.ch/library/amazonlinux:2023.6.20241121.0' \
        '' \
        '  TODO: Remove "saml2aws" because DEPRECATED. See:' \
        '  - [saml is dead](https://wikit.post.ch/x/0Fu4Vg)' \
        '  - [Maybe saml2aws becomes obsolete](https://wikit.post.ch/display/CDAF/How+to%3A+Setup-Guide+saml2aws?focusedCommentId=1741722098&src=mail&src.mail.product=confluence-server&src.mail.timestamp=1721914205401&src.mail.notification=com.atlassian.confluence.plugins.confluence-notifications-batch-plugin%3Abatching-notification&src.mail.recipient=8a81e4a6427b972601427b98b9262c20&src.mail.action=view#comment-1741722098)' \
        '' \
        '  TODO: Fix broken AWS/kubectl/argocd Döns' \
+       '  (https://wikit.post.ch/x/w52aS#ISAK8sSetup-K8s/ArgoCDconfiguration)' \
+       '' \
+       '  [How to run kubectl Commands in my Namespace](https://wikit.post.ch/x/kIeTZg)' \
+       '' \
+       '  sudo podman pull docker.tools.post.ch/paisa/r-service-base:03.06.42.00' \
+       '  sudo podman pull docker.tools.post.ch/library/amazonlinux:2023.6.20241121.0' \
+       '' \
+       '  kubectl config view' \
+       '  kubectl config get-contexts' \
+       '  kubectl config current-context' \
+       '  kubectl config use-context TODO_replace_me' \
+       '  kubectl explain pods' \
        '' \
      | tee /home/${USER:?}/README.txt \
   && printf '\n  DONE. Setup completed.\n\n' \
