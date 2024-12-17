@@ -12,6 +12,7 @@
 
 local env_PROXY_URL = "http://10.0.2.2:31280/" --"http://10.0.2.2:3128/"
 local env_PROXY_NO  = "127.0.0.1,10.0.2.*"
+local isaSshPubKey = nil
 
 -- EndOf Customizations -------------------------------------------------------
 
@@ -25,6 +26,9 @@ function main()
   && SUDO=sudo \
   && PROXY_URL=']=].. env_PROXY_URL ..[=[' \
   && PROXY_NO=']=].. env_PROXY_NO ..[=[' \
+  && isaUid=1000 \
+  && isaGid=1000 \
+  && appGid=990 \
   && if test -n "${PROXY_URL?}" ;then true \
       && printf 'proxy=%s\n' "${PROXY_URL:?}" \
           | $SUDO tee -a /etc/dnf/dnf.conf >/dev/null \
@@ -43,21 +47,13 @@ function main()
            "export NO_PROXY=\"${PROXY_NO?}\"" \
          | $SUDO tee -a /etc/profile >/dev/null \
      ;fi \
-  && `# Force-replace isa related users/groups. ` \
-  && $SUDO cat /etc/passwd \
-     | grep -v -E '^isa:' \
-     | grep -v -E '^[^:]*:[^:]*:1000:' \
-     | $SUDO tee /etc/passwd-9D8AAONcAADpbAAA >/dev/null \
-  && $SUDO mv /etc/passwd-9D8AAONcAADpbAAA /etc/passwd \
-  && printf 'isa:x:1000:1000:isa:/home/isa:/bin/bash\n' | $SUDO tee -a /etc/passwd >/dev/null \
-  && printf 'isa:x:1000:\n' | $SUDO tee -a /etc/group >/dev/null \
-  && printf 'app:x:990:isa\n' | $SUDO tee -a /etc/group >/dev/null \
-  && `# ` \
   && $SUDO mkdir -p /home/isa \
-  && $SUDO chown isa:app /home/isa \
+  && $SUDO chown ${isaUid:?}:${appGid:?} /home/isa \
   && $SUDO mkdir -p /data/instances \
-  && $SUDO chgrp app /data/instances \
+  && $SUDO chgrp ${appGid:?} /data/instances \
   && $SUDO chmod 775 /data/instances \
+  && mkdir -p /home/isa/.ssh \
+  && printf %s ']=].. isaSshPubKey ..[=[' >> /home/isa/.ssh/authorized_keys \
   && `# Inject some inlien documentation ` \
   && printf %s\\n \
          '' \
@@ -68,7 +64,32 @@ function main()
          '  && printf "\n  DONE :)\n\n"' \
          '' \
      | $SUDO tee /home/isa/README.txt >/dev/null \
-  && $SUDO chown isa:isa /home/isa/README.txt \
+  && $SUDO chown ${isaUid:?}:${isaGid:?} /home/isa/README.txt \
+  && `# Force-replace isa related users/groups. ` \
+  && <<EOF $SUDO sh - &&
+true \
+  `# && cat /etc/passwd ` \
+  `#    | grep -v -E '^isa:' ` \
+  `#    | grep -v -E '^[^:]*:[^:]*:'${isaUid:?}':' ` \
+  `#    | tee /etc/passwd-9D8AAONcAADpbAAA >/dev/null ` \
+  `# && cat /etc/group ` \
+  `#    | grep -v -E '^app:' ` \
+  `#    | grep -v -E '^[^:]*:[^:]*:'${appGid:?}':' ` \
+  `#    | tee /etc/group-Y2MAAOIIAABeCQAA >/dev/null ` \
+  `# && mv /etc/group-Y2MAAOIIAABeCQAA /etc/passwd ` \
+  && printf "isa:x:${isaUid:?}:${isaGid:?}:isa:/home/isa:/bin/bash\n" | tee -a /etc/passwd >/dev/null \
+  && printf "isa:x:${isaUid:?}:\n" | tee -a /etc/group >/dev/null \
+  && cat /etc/group \
+     | sed -E 's/^(wheel:.*:)$/\1isa/' | sed -E 's/^(wheel:.*[^:])$/\1,isa/' \
+     | tee /etc/group-PQcAAEApAABzQwAA >/dev/null \
+  && mv /etc/group-PQcAAEApAABzQwAA /etc/group \
+  && printf %s\\n \
+       "app:x:${appGid:?}:isa" \
+     | tee -a /etc/group >/dev/null \
+  && true
+EOF
+true \
+  && cat /home/isa/README.txt \
   && printf '\n  DONE :)\n\n' \
 ]=])
 end

@@ -149,11 +149,13 @@ function main()
        '  sudo podman pull docker.tools.post.ch/paisa/r-service-base:03.06.42.00' \
        '  sudo podman pull docker.tools.post.ch/library/amazonlinux:2023.6.20241121.0' \
        '' \
+       '  (HINT: FüdleWall uftue)' \
        '  kubectl config view' \
        '  kubectl config get-contexts' \
-       '  kubectl config current-context' \
        '  kubectl config use-context TODO_replace_me' \
-       '  kubectl explain pods' \
+       '  kubectl get nodes,pods,service,configmaps' \
+       '  kubectl exec -it POD_NAME -- /bin/bash' \
+       '  kubectl top pod POD_NAME' \
        '' \
      | tee /home/${USER:?}/README.txt \
   && printf '\n  DONE. Setup completed.\n\n' \
