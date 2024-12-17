@@ -64,11 +64,12 @@ function defineCJSON()
     cjson.name = "cJSON"
     cjson.version = version_cJSON
     cjson.ndebug = ndebug_cJSON
-    cjson.pkgsToAdd = {}
+    cjson.pkgsToAdd = { "xz-utils" }
     cjson.dloads:add{
         url = "https://github.com/DaveGamble/cJSON/archive/refs/tags/v".. version_cJSON ..".tar.gz",
         dstFile = envCACHEDIR ..'/src/cJSON-'.. version_cJSON ..'.t__',
     }
+    cjson.makeShell = ""
     cjson.makeShell = cjson.makeShell .. [===[ true \
       && tar --strip-components 1 -xf "${SRCTAR:?}" \
       && mkdir build build/obj build/lib build/include \
@@ -376,13 +377,7 @@ function defineZlib()
         url = "https://downloads.sourceforge.net/project/libpng/zlib/".. zlib.version .."/zlib-".. zlib.version ..".tar.gz",
         dstFile = envCACHEDIR ..'/src/'.. zlib.name ..'-'.. zlib.version ..'.t__',
     })
-    if host == "devuan5" and target == "posix" then
-        zlib.pkgsToAdd = {}
-    elseif host == "devuan5" and target == "windoof" then
-        zlib.pkgsToAdd = {}
-    else
-        error("ENOTSUP: ".. host ..", ".. target)
-    end
+    zlib.pkgsToAdd = {}
     zlib.makeShell = [===[ true \
       && tar --strip-components 1 -xf "${SRCTAR:?}" \
       && mkdir build \
@@ -577,7 +572,7 @@ function writeModulesMake( dst )
         local srcTar = name ..'-'.. version ..'.t__'
         local dstMd5 = name ..'-'.. version ..'.md5'
         local dstTar = name ..'-'.. version ..'+${TRIPLET:?}'
-        dstTar = dstTar .. (mod.ndebug ~= 0 and''or'-G') ..'.tgz'
+        dstTar = dstTar .. (mod.ndebug ~= 0 and''or'.G') ..'.tgz'
         dst:write(""
             ..' && if test -e "'.. envCACHEDIR ..'/dst/'.. dstTar ..'" ;then true \\\n'
             ..'     && echo "OK: EEXISTS: '.. envCACHEDIR ..'/dst/'.. dstTar ..'" \\\n'
@@ -630,8 +625,18 @@ end
 
 
 function TODO_EgXYTUrb6fVdv5wr()
-    if host == "devuan5" and target == "posix" then
+    if false then
+    elseif host == "devuan5" and target == "posix" then
         pkgsToAddGlobally = { "ca-certificates", "curl", "tar", "gzip", "make", "gcc", "libc6-dev", }
+        envHOST = "x86_64-linux-gnu"
+        envHOST_ = envHOST .."-"
+        cmdPkgInit  = "$SUDO apt update"
+        cmdPkgClean = "$SUDO apt clean"
+        cmdPkgAdd   = "$SUDO apt install -y --no-install-recommends"
+    elseif host == "debian9" and target == "posix" then
+        pkgsToAddGlobally = { "ca-certificates", "curl", "tar", "gzip", "make", "gcc", "libc6-dev", }
+        envHOST = "x86_64-linux-gnu"
+        envHOST_ = envHOST .."-"
         cmdPkgInit  = "$SUDO apt update"
         cmdPkgClean = "$SUDO apt clean"
         cmdPkgAdd   = "$SUDO apt install -y --no-install-recommends"
