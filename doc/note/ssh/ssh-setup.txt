@@ -47,10 +47,6 @@ Print public key hash as md5:
 ssh-keygen -E md5 -l -f path/to/key.pub
 ```
 
-Extract public key part:
-```sh
-ssh-keygen -y -f path/to/key > path/to/key.pub
-```
 
 Print detailed DER file content:
   openssl x509 -in dumpcertfile -inform DER -text
@@ -60,6 +56,8 @@ Print key of a host:
 
 
 ## Export pub key in misc formats
+
+  ssh-keygen -y -f path/to/key > path/to/key.pub
 
   ssh-keygen -e -f path/to/ssh2pub-or-privKey -m PKCS8
 

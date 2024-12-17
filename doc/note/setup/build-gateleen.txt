@@ -2,6 +2,8 @@
 Step-by-step shell snippets how to build gateleen
 =================================================
 
+TODO: obsolete. Del file. Use "./build-gateleen.gen.lua" (as soon it is ready).
+
 
 ## Alpine
 
