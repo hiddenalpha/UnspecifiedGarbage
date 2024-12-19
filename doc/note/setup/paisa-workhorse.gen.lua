@@ -8,6 +8,13 @@
   [isa kube/config](https://gitit.post.ch/projects/ISA/repos/wsl-playbooks/raw/roles/isa/files/kube/config?at=refs%2Fheads%2Fmaster)
   [Some other kube/config](https://artifactory.tools.post.ch/artifactory/generic-kubernetes-local/EKS/Int/eks-int-m01cn0001/config)
 
+  [How to run kubectl Commands in my Namespace](https://wikit.post.ch/x/kIeTZg)
+
+  TODO keep! Mit dem gehts! (vo mattiphil 2024-12-19:
+  (https://artifactory.tools.post.ch/artifactory/generic-kubernetes-local/EKS/Int/eks-int-m15cn0001/config)
+
+  [übersicht, namespaces, etc](https://deployment-eks-int-m15cn0001.eks.aws.pnetcloud.ch/applications?view=list&showFavorites=false&proj=&sync=&autoSync=&health=&namespace=&cluster=&labels=)
+
   ]===========================================================================]
 -- Customize your install here ------------------------------------------------
 -- TODO Make sure to insert your roles, etc here BEFORE use.
@@ -30,7 +37,8 @@ local samlVersion = "2.36.16"
 local argocdVersion = "2.11.7"
 local getaddrinfoVersion = "0.0.2"
 local cacheDir = "/var/tmp"
-local kubeConfigUrl = "https://gitit.post.ch/projects/ISA/repos/wsl-playbooks/raw/roles/isa/files/kube/config?at=refs%2Fheads%2Fmaster"
+local kubeConfigFile = "eks-int-m15cn0001"
+local kubeConfigUrl = "https://artifactory.tools.post.ch/artifactory/generic-kubernetes-local/EKS/Int/eks-int-m15cn0001/config"
 
 -- EndOf Customization --------------------------------------------------------
 
@@ -56,6 +64,7 @@ function main()
   && cacheDir=']=].. cacheDir ..[=[' \
   && kubeloginVersion=']=].. kubeloginVersion ..[=[' \
   && kubeConfigUrl=']=].. kubeConfigUrl ..[=[' \
+  && kubeConfigFile=']=].. kubeConfigFile ..[=[' \
   && SUDO=']=].. cmdSudo ..[=[ \'
   && `# 20240715: Removed: gcc-mingw-w64-x86-64-win32 gcc libc6-dev` \
   && printf %s\\n \
@@ -109,10 +118,11 @@ function main()
   && mkdir "/home/${USER:?}/.aws" `# TODO unused?` \
   && mkdir "/home/${USER:?}/.kube" \
   && printf %s\\n "Dload '${kubeConfigUrl:?}'" \
-  && rspCode=$(curl -sSL -o /home/${USER:?}/.kube/isa.skel -w '%{http_code}\n' "${kubeConfigUrl:?}") \
+  && rspCode=$(curl -sSL -o /home/${USER:?}/.kube/"${kubeConfigFile:?}" -w '%{http_code}\n' "${kubeConfigUrl:?}") \
   && if test "${rspCode?}" -ne "200" ;then true \
       && printf "kube/config dload failed:\n%s\n" "${rspCode?}" && false \
     ;fi \
+  && cp /home/${USER:?}/.kube/"${kubeConfigFile:?}" /home/${USER:?}/.kube/config \
   && printf %s\\n \
        'e990013d2d658dd19ef2731bc9387d4ed88c60097d5364ac2d832871f2fc17d5 *kubelogin-linux-amd64.zip' \
      | $SUDO tee >> "${cacheDir:?}"/SHA256SUM \
@@ -141,30 +151,50 @@ function main()
        '  - [saml is dead](https://wikit.post.ch/x/0Fu4Vg)' \
        '  - [Maybe saml2aws becomes obsolete](https://wikit.post.ch/display/CDAF/How+to%3A+Setup-Guide+saml2aws?focusedCommentId=1741722098&src=mail&src.mail.product=confluence-server&src.mail.timestamp=1721914205401&src.mail.notification=com.atlassian.confluence.plugins.confluence-notifications-batch-plugin%3Abatching-notification&src.mail.recipient=8a81e4a6427b972601427b98b9262c20&src.mail.action=view#comment-1741722098)' \
        '' \
-       '  TODO: Fix broken AWS/kubectl/argocd Döns' \
-       '  (https://wikit.post.ch/x/w52aS#ISAK8sSetup-K8s/ArgoCDconfiguration)' \
        '' \
-       '  [How to run kubectl Commands in my Namespace](https://wikit.post.ch/x/kIeTZg)' \
+       '' \
+       '  ## Docker (local)' \
        '' \
        '  sudo podman pull docker.tools.post.ch/paisa/r-service-base:03.06.42.00' \
        '  sudo podman pull docker.tools.post.ch/library/amazonlinux:2023.6.20241121.0' \
+       '' \
+       '' \
+       '' \
+       '  ## Kubectl, Kubernetes, AWS, ...' \
+       '' \
+       '  Common args:  --namespace isa-houston-int --kubeconfig ~/.kube/config' \
+       '  export KUBECONFIG=path/to/one:path/to/two' \
        '' \
        '  Vo erbmi übercho (2024-12-19):' \
        '  alias eksm15int="aws eks update-kubeconfig --name eks-int-m15cn0001"' \
        '  alias agrajagtest="kubectl config set-context --current --namespace=isa-diNamespace-test"' \
        '' \
-       '  (HINT: FüdleWall uftue)' \
+       '  FüdleWall: https://fwehfnet.pnet.ch/connect' \
+       '  Namespaces: isa-houston-prod, isa-houston-int, isa-houston-snapshot, isa-houston-test' \
+       '' \
+       '  kubectl version    (WARN: server/client max 2 minor versions auseinander)' \
        '  kubectl config view' \
        '  kubectl config get-contexts' \
        '  kubectl config use-context TODO_replace_me' \
-       '  kubectl get nodes,pods,service,configmaps' \
-       '  kubectl exec -it POD_NAME -- /bin/bash' \
+       '  kubectl config view | grep namespace' \
+       '  kubectl config set-context $(kubectl config current-context) --namespace=YOUR_CHOICE' \
+       '  kubectl get nodes,pods,service,configmaps,deployments,statefulset' \
+       '  kubectl get pods houston-42' \
+       '  kubectl get statefulset houston-42 -o yaml' \
+       '  kubectl exec -ti POD_NAME -- /bin/bash' \
+       '  kubectl exec -ti preflux-5d57f7dbcc-42w7m -- bash' \
        '  kubectl top pod POD_NAME' \
+       '' \
+       '  Output with details:  -o yaml' \
        '' \
      | tee /home/${USER:?}/README.txt \
   && printf '\n  DONE. Setup completed.\n\n' \
 ]=])
 end
+
+
+
+
 
 
 main()

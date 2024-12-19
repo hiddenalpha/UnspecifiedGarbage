@@ -36,7 +36,8 @@ function main()
       && printf 'proxy=%s\n' "${PROXY_URL:?}" \
           | $SUDO tee -a /etc/dnf/dnf.conf >/dev/null \
      ;fi \
-  && $SUDO dnf install -y openssh-server podman \
+  && `# Würgaround: dnf --setopt=sslverify=false ` \
+  && $SUDO dnf install -y openssh-server podman nmap-ncat tcpdump \
   && $SUDO dnf remove -y firewalld \
   && $SUDO systemctl enable sshd \
   && $SUDO systemctl start sshd \
