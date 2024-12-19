@@ -23,6 +23,7 @@ MustHave in: .
     ;else true \
       && git checkout "HEAD^" \
     ;fi \
+  && GIT_PUSH_ARGS= \
   && printf '\n  DONE :)\n\n' \
 
 

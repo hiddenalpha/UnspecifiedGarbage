@@ -40,6 +40,8 @@ function main()
   && $SUDO dnf remove -y firewalld \
   && $SUDO systemctl enable sshd \
   && $SUDO systemctl start sshd \
+  && `# timezone ` \
+  && $SUDO ln -f /usr/share/zoneinfo/Europe/Zurich /etc/localtime \
   && printf %s\\n \
        "export PAISA_ENV=]=].. env_PAISA_ENV ..[=[" \
      | $SUDO tee -a /etc/profile >/dev/null \

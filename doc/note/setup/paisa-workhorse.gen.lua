@@ -149,6 +149,10 @@ function main()
        '  sudo podman pull docker.tools.post.ch/paisa/r-service-base:03.06.42.00' \
        '  sudo podman pull docker.tools.post.ch/library/amazonlinux:2023.6.20241121.0' \
        '' \
+       '  Vo erbmi übercho (2024-12-19):' \
+       '  alias eksm15int="aws eks update-kubeconfig --name eks-int-m15cn0001"' \
+       '  alias agrajagtest="kubectl config set-context --current --namespace=isa-diNamespace-test"' \
+       '' \
        '  (HINT: FüdleWall uftue)' \
        '  kubectl config view' \
        '  kubectl config get-contexts' \
