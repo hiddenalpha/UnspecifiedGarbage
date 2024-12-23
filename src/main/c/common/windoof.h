@@ -1,5 +1,11 @@
-
-#if 0
+#ifndef INCGUARD_9FmkWxtr4vncFE0S
+#define INCGUARD_9FmkWxtr4vncFE0S
+/*
+ *
+ * [Source](https://git.hiddenalpha.ch/UnspecifiedGarbage.git/tree/src/main/c/common/windoof.c)
+ *
+ */
+#if 0 /* <- manual switch real/fake header for debugging */
 #   include <windows.h>
 #else
 
@@ -11,49 +17,52 @@
 
 
 typedef struct _PROCESS_INFORMATION {
-    void* hProcess;
-    void* hThread;
-    uint32_t  dwProcessId;
-    uint32_t  dwThreadId;
+    void    *hProcess   ;
+    void    *hThread    ;
+    uint32_t dwProcessId;
+    uint32_t dwThreadId ;
 } PROCESS_INFORMATION, *PPROCESS_INFORMATION, *LPPROCESS_INFORMATION;
 
 
 typedef struct _SECURITY_ATTRIBUTES {
-    uint32_t nLength;
-    void* lpSecurityDescriptor;
-    int bInheritHandle;
+    uint32_t nLength             ;
+    void    *lpSecurityDescriptor;
+    int      bInheritHandle      ;
 } SECURITY_ATTRIBUTES, *PSECURITY_ATTRIBUTES, *LPSECURITY_ATTRIBUTES;
 
 
 typedef struct _STARTUPINFOA {
-  uint32_t cb;
-  char *lpReserved;
-  char *lpDesktop;
-  char *lpTitle;
-  uint32_t dwX;
-  uint32_t dwY;
-  uint32_t dwXSize;
-  uint32_t dwYSize;
-  uint32_t dwXCountChars;
-  uint32_t dwYCountChars;
+  uint32_t cb             ;
+  char    *lpReserved     ;
+  char    *lpDesktop      ;
+  char    *lpTitle        ;
+  uint32_t dwX            ;
+  uint32_t dwY            ;
+  uint32_t dwXSize        ;
+  uint32_t dwYSize        ;
+  uint32_t dwXCountChars  ;
+  uint32_t dwYCountChars  ;
   uint32_t dwFillAttribute;
-  uint32_t dwFlags;
-  short wShowWindow;
-  short cbReserved2;
-  uint8_t lpReserved2;
-  void *hStdInput, *hStdOutput, *hStdError;
+  uint32_t dwFlags        ;
+  short    wShowWindow    ;
+  short    cbReserved2    ;
+  uint8_t  lpReserved2    ;
+  void    *hStdInput      ;
+  void    *hStdOutput     ;
+  void    *hStdError      ;
 } STARTUPINFOA, *LPSTARTUPINFOA;
 
 
 
-int  CreateProcessA( char const*, char*, LPSECURITY_ATTRIBUTES, LPSECURITY_ATTRIBUTES, int, uint32_t,
-        void*, char const*, LPSTARTUPINFOA, LPPROCESS_INFORMATION );
+int CreateProcessA( char const*, char*, LPSECURITY_ATTRIBUTES, LPSECURITY_ATTRIBUTES,
+    int, uint32_t, void*, char const*, LPSTARTUPINFOA, LPPROCESS_INFORMATION );
 
 
-int  GetExitCodeProcess(void*, unsigned long*);
+int GetExitCodeProcess( void*, unsigned long* );
 
 
 
 
 
 #endif /*manual windoof on/off switch*/
+#endif /* INCGUARD_9FmkWxtr4vncFE0S */
