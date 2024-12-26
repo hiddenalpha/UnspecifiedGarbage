@@ -4,4 +4,8 @@ Java / JVM
 
   --add-opens java.base/java.lang=ALL-UNNAMED
 
+  JDK_JAVA_OPTIONS   (somewhen since jdk9) for PREpending args
+
+  _JAVA_OPTS  (seems deprecated/unusable since jdk9 or so)
+
 

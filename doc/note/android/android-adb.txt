@@ -1,0 +1,24 @@
+
+
+  adb devices
+  adb devices -l
+  adb shell
+  adb kill-server
+
+  adb logcat
+  adb logcat -t 42 '*:W'
+  adb logcat --help
+
+  adb install my.apk
+  adb install -t my.apk  (test mode eh.. what?)
+  adb install -r my.apk  (re-inst app but keep data)
+  adb install -d my.apk  (downgrade, allow intall older version)
+  adb install -g my.apk  (grant all permissions listed in manifest)
+
+  adb uninstall com.example.foo
+
+  adb pull remote/file local/file
+  adb push local/file remote/file
+
+  adb shell pm list packages
+
