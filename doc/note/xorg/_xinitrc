@@ -1,0 +1,15 @@
+
+# [Source](http://git.hiddenalpha.ch/UnspecifiedGarbage.git/tree/doc/notes/xorg/_xinitrc)
+
+#xset mouse 3/1 0  # mouse acceleration
+
+# [Credits to](https://raspberrypi.stackexchange.com/a/753)
+xset s off      # screensaver
+xset -dpms      # disable DPMS (Energy Star) features
+xset s noblank  # don't blank the video device
+
+# Or as a CopyPasta oneliner:
+# xset s off && xset -dpms && xset s noblank
+
+exec /etc/alternatives/x-session-manager
+
