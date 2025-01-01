@@ -4,10 +4,9 @@
 #xset mouse 3/1 0  # mouse acceleration
 
 # [Credits to](https://raspberrypi.stackexchange.com/a/753)
-xset s off      # screensaver
-xset -dpms      # disable DPMS (Energy Star) features
-xset s noblank  # don't blank the video device
-
+#xset s off      # screensaver
+#xset -dpms      # disable DPMS (Energy Star) features
+#xset s noblank  # don't blank the video device
 # Or as a CopyPasta oneliner:
 # xset s off && xset -dpms && xset s noblank
 

@@ -104,7 +104,7 @@ Populate "/etc/environment" as described by "./etc-environment".
        vim-gtk3 firefox-esr pcmanfm file-roller thunderbird chromium okular \
        `# software devel` \
        git sqlite3 manpages-dev gdb qemu-utils qemu-system-x86 qemu-system-arm wireshark samba \
-       tigervnc-viewer jq universal-ctags \
+       tigervnc-viewer jq universal-ctags binutils \
        `# network config` \
        iwgtk \
        `# server` \
@@ -113,6 +113,7 @@ Populate "/etc/environment" as described by "./etc-environment".
        libnss-mdns avahi-utils \
        `# multimedia` \
        pulseaudio pavucontrol vlc audacity eom darktable gimp hugin lame flac opus-tools ffmpeg \
+       alsa-utils \
        `# encryption` \
        keepassxc gpg \
        `# UI customization` \

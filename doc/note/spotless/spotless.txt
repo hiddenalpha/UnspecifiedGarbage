@@ -3,27 +3,25 @@
 Fu** this horrible fu**ing bastard of code destroyer!
 
 NonSense in: preflux.
-MustHave in: .
+MustHave in: lazlar.
 
 
-  && GIT_COMMIT_MSG=" TODO_ReplaceMe: Auto-destroy code-format" \
+  && GIT_COMMIT_MSG="${MSG_PRE:?}: Auto-destroy code-format" \
   && PR_REMOTE=upstream \
   && PR_BRANCH= \
   && LOCL_BRANCH="$(git branch --show-current)" \
-  && GIT_PUSH_ARGS= \
 
   && if test -n "$(git status --porcelain)" ;then echo "ERROR: Git worktree not clean"; false ;fi \
   && git checkout --detach \
   && mvn spotless:apply \
   && git add -- . \
   && git commit -m "${GIT_COMMIT_MSG:?}" \
-  && git push ${GIT_PUSH_ARGS?} "${PR_REMOTE:?}" HEAD:"${PR_BRANCH:?}" \
+  && destroyedSha1="$(git log -n1 --format=format:%H)" \
   && if test -n "${LOCL_BRANCH?}" ;then true \
       && git checkout "${LOCL_BRANCH:?}" \
     ;else true \
       && git checkout "HEAD^" \
     ;fi \
-  && GIT_PUSH_ARGS= \
-  && printf '\n  DONE :)\n\n' \
+  && printf "\nTODO:\n git push ${PR_REMOTE:?} ${destroyedSha1:?}:${PR_BRANCH:?} -f\n\n" \
 
 

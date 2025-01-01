@@ -32,16 +32,19 @@ Use  -codec:v copy  to keep video, or -codec:v no  for audio-only.
   -filter:a lowpass=f=16000
 
 
-## Fix Loudness war, bring bass back
+## Fix Loudness war (a bit at least)
 
-  -af "equalizer=f=200:w=200:t=h:g=-9,equalizer=f=400:w=600:t=h:g=-9,equalizer=f=2000:w=2000:t=h:g=-12,equalizer=f=4000:w=4000:t=h:g=-12,equalizer=f=10000:w=10000:t=h:g=-12,volume=+0.0dB"
+    -af "aformat=f=flt,equalizer=f=1:w=200:t=h:g=+48,equalizer=f=1000:w=1000:t=h:g=+9,equalizer=f=16k:w=26k:t=h:g=+12,volume=-37dB"
+
+  `# older version`
+  -af "aformat=f=flt,equalizer=f=200:w=200:t=h:g=-9,equalizer=f=400:w=600:t=h:g=-9,equalizer=f=2000:w=2000:t=h:g=-12,equalizer=f=4000:w=4000:t=h:g=-12,equalizer=f=10000:w=10000:t=h:g=-12,volume=-0.0dB"
 
 
 ## Audio trim
 
-HINT: Repeat afade twice for log.
+HINT: Repeat afade twice for log scale.
 
-  -af "afade=t=in:d=500ms,afade=t=out:st=183427ms:d=500ms" \
+  -t 183.927 -af "afade=t=in:d=500ms,afade=t=out:st=183427ms:d=500ms" \
 
 
 ## List codecs

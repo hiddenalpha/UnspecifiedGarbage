@@ -9,33 +9,51 @@ How to clone minimally required commits to have a working repo. VERY handy if
 we just need to diff two refs from a GIANT repo where we do not have a local
 copy of.
 
-Basic setup:
-  mkdir MyTinyClone
-  cd MyTinyClone
-  git init
-  git co --orphan empty
-  git commit --allow-empty -m "Empty commit where our HEAD can stay to reduce unwanted disk IO"
-  git tag empty empty
-  git co --detach
-  git br -D empty
+  && `# Basic setup ` \
+  && `# PREPARE: Make sure you're in an EMPTY workdir ` \
+  && git init \
+  && git checkout --orphan empty \
+  && git commit --allow-empty -m "Empty commit where our HEAD can stay to reduce unwanted disk IO" \
+  && git tag empty HEAD \
+  && currBr="$(git branch --show-current)" \
+  && git checkout --detach \
+  && git branch -D "${currBr:?}" \
 
-Seek what we wanna download:
-  git remote add origin ssh://example.com/repo.git
-  git ls-remote origin | grep whatever
+  && `# Seek what we wanna download ` \
+  && git remote add origin ssh://example.com/repo.git \
+  && git ls-remote origin | grep whatever \
 
-Fetch only EXACTLY the branches we want (for example using previous output to
-decide):
-  git fetch origin --depth=1 refs/heads/the-branch
-  git br the-branch FETCH_HEAD
+  && `# Fetch only EXACTLY the branches we want (for example using previous ` \
+  && `# output to decide): ` \
+  && branchName=the_branch \
+  && git fetch origin --depth=1 refs/heads/"${branchName:?}"
+  && git branch "${branchName:?}" FETCH_HEAD \
 
-Usually tags are of special interest in such a clone (note how we specify it
-twice with colon in between):
-  git fetch origin --depth=1 refs/tags/v1.2.3:refs/tags/v1.2.3
+  && `# Usually tags are of special interest in such a clone (note how we ` \
+  && `# specify it twice with colon in between): ` \
+  && theTag=v1.2.3 \
+  && git fetch origin --depth=1 "refs/tags/${theTag:?}:refs/tags/${theTag:?}" \
+
+
+
+## Cut-off history for self-contained source tarballs.
+
+  && WORKDIR=../tmp \
+  && selfRemote="file://${PWD:?}/.git" \
+  && shaToCpy="$(git log -n1 --format=format:%H)" \
+  && mkdir "${WORKDIR:?}" \
+  && cd "${WORKDIR:?}" \
+  && git init \
+  && git fetch --depth=1 "${selfRemote:?}" "${shaToCpy:?}" \
+  && git checkout -b master "${shaToCpy:?}" \
+  && git log --all --decorate \
+
 
 
 ## History digging for specific file
 
   git log --follow -- path/to/file
+
 
 
 ## History search for file contents
@@ -51,18 +69,11 @@ For "-G" add "--patch" to get diff in place of ref.
 [src](https://stackoverflow.com/a/1340245/4415884)
 
 
+
 ## Auto-destroy code-format
 
-  && REMOTENAME=upstream \
-  && BRANCH= \
-  && ISSUENR= \
-  && if test -n "$(git status --porcelain)"; then echo "working tree not clean" && false; fi \
-  && git detach \
-  && mvn spotless:apply \
-  && git add -- . && git commit -m "[${ISSUENR:?}] Auto-destroy code-format" \
-  && git l2 \
-  && printf '\nTODO git br %s HEAD\n\n' "${BRANCH:?}" \
-  && printf '\nTODO git push %s HEAD:%s\n\n' "${REMOTENAME:?}" "HEAD:${BRANCH:?}" \
+  See "../spotless/".
+
 
 
 ## Reduce local disk usage

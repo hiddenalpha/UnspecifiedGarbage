@@ -637,3 +637,7 @@ Links (Aka argument amplifiers)
 ## Unix CPU Load Average / Linux System Load Average
 - [Linux Load Averages](https://www.brendangregg.com/blog/2017-08-08/linux-load-averages.html)
 
+## C Versus C++
+- [C++ is not x-platform anymore](https://gcher.com/posts/2019-07-04-cpp-is-not-cross-platform-anymore/)
+
+
