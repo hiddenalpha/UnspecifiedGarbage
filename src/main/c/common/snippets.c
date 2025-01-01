@@ -33,7 +33,7 @@
 /* [Source](https://git.hiddenalpha.ch/UnspecifiedGarbage.git/tree/src/main/c/common/snippets.c) */
 #ifndef container_of
 #   define container_of(P, T, M) \
-        ((T*)( ((size_t)P) - ((size_t)((char*)&((T*)0)->M - (char*)0) )))
+        ((T*)( ((size_t)P) - ((size_t)((ptrdiff_t)&((T*)0)->M - (ptrdiff_t)0) )))
 #endif
 
 
