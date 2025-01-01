@@ -1,0 +1,46 @@
+
+# SSH client config
+
+# General config for all hosts
+Host *
+    # No idea why I should wait full 30 seconds for a peer to reply ...
+    ConnectTimeout 5
+    # Prevents hung-up sessions. I guess a firewall dropped the connection as
+    # no packages were thransferred for longer time (eg half a hour). This
+    # setting sends some ping-like packets after some time which helps
+    # firewalls to recognize the connection as alive.
+    ServerAliveInterval 107
+
+# Quit hung sessions after 10 seconds
+Host example.com 127.0.0.1
+    ServerAliveInterval 5
+    ServerAliveCountMax 2    # on some systems it is `ServerAliveCount`
+
+# Makes bash autocomplete the hostname :)
+Host example.com
+    Hostname example.com
+
+# Use non-default user/port/whatever for listed hosts
+Host 42.42.42.42 example.com
+    User myUsernameOnRemote
+    Port 12345
+
+# Get rid of annoying security checks where it doesn't make sense (eg
+# throw-away VirtualBox machines).
+Host 192.168.56.*
+    StrictHostKeyChecking no
+    UserKnownHostsFile /dev/null
+
+# Forward X11 by default
+Host example.com
+    ForwardX11 yes
+
+# Run few setup cmds before starting a shell.
+Host example.com
+    RequestTTY yes
+    RemoteCommand echo foo bar && exec /usr/bin/bash -i
+
+Host example.com
+    # Strongest way I found so far to force remote prompt:
+    RemoteCommand export PROMPT_COMMAND='export PS1='"'"'my-prompt\n\$ '"'"'' && exec /usr/bin/bash -li
+
