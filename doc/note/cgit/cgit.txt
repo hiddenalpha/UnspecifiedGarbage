@@ -1,0 +1,38 @@
+#
+# cgit config
+# see cgitrc(5) for details
+#
+# cgit webroot is at "/usr/share/cgit" so some of the paths here
+# are based there.
+# 
+# Copy-Pasta sources:
+# - [Setup](https://eliteinformatiker.de/2020/02/16/installing-cgit-nginx-on-debian)
+# - [Setup](https://www.cloudsavvyit.com/2510/how-to-set-up-a-private-git-server/)
+# - [Config Tuning](https://gist.github.com/schnell18/10391249)
+
+
+# Enable artifact downloads (MUST be before 'scan-path')
+snapshots=tar.gz zip 
+
+# Where the git repos are.
+scan-path=/path/to/scm
+
+virtual-root=/
+enable-git-clone=1
+clone-url=http://$HTTP_HOST$SCRIPT_NAME/$CGIT_REPO_URL
+enable-commit-graph=1
+noplainemail=1
+
+# Customize Styling (SOME paths here are relative to cgit root dir)
+root-title=TODO_XotEv5bHb8ux4hqp
+root-desc=TODO_9Tjc1aBurQ30hMME
+root-readme=/usr/share/cgit/root-readme.html
+css=/cgit.css
+logo=/cgit-bike.png
+
+# Search for these files in the root of the default branch of repositories
+# for coming up with the about page:
+readme=:README.md
+readme=:README.txt
+readme=:README
+
