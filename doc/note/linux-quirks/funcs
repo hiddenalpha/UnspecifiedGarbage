@@ -1,0 +1,55 @@
+
+
+vol-dec () {
+    local vol=$(my-pa-getdefaultsinkvol)
+    vol=$(expr $vol - 3)
+    if test $vol -lt   0; then vol=0  ; fi
+    if test $vol -gt 100; then vol=100; fi
+    my-pa-setdefaultsinkvolpercent $vol
+}
+
+vol-inc () {
+    local vol=$(my-pa-getdefaultsinkvol)
+    vol=$(expr $vol + 3)
+    if test $vol -lt   0; then vol=0  ; fi
+    if test $vol -gt 100; then vol=100; fi
+    my-pa-setdefaultsinkvolpercent $vol
+}
+
+# [pacmd](https://unix.stackexchange.com/a/274850/292722)
+my-pa-getdefaultsinkname() {
+    pacmd stat | awk -F": " '/^Default sink name: /{print $2}'
+}
+
+my-pa-getdefaultsinkvol() {
+    pacmd list-sinks |
+        awk '/^\s+name: /{indefault = $2 == "<'$(my-pa-getdefaultsinkname)'>"}
+            /^\s+volume: / && indefault {print $5; exit}' |
+        awk -F"%" '{print $1}'
+}
+
+my-pa-setdefaultsinkvolpercent() {
+    pactl -- set-sink-volume $(my-pa-getdefaultsinkname) $1%
+}
+
+
+
+
+
+
+touchbad-disable () { synclient TouchpadOff=1; }
+
+touchpad-tap1-disable () { synclient TapButton1=0; }
+
+touchpad-tap1-enable () { synclient TapButton1=1; }
+
+touchpad-tap1-toggle () {
+    newVal=$(synclient | awk '/TapButton1 *= *([0-9]+)/ {print $3==1?0:1}')
+    synclient TapButton1=$newVal
+}
+
+touchbad-toggle () {
+    newVal=$(synclient | awk '/^    TouchpadOff             = ([0-9]+)$/ { print $3==1 ? 0 : 1 }')
+    synclient TouchpadOff=$newVal
+}
+

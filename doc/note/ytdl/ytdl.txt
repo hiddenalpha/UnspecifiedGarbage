@@ -1,0 +1,8 @@
+
+Use "yt-dl" project. NOT "youtube-dl".
+
+
+## srf full-url:
+
+  srgssr:srf:video:{hash}
+

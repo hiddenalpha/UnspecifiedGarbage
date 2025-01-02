@@ -2,11 +2,17 @@
 POSIX shell
 ================
 
-This is for POSIX shells. For specific shells see "../bash/" or "../dash/".
+This is for POSIX shells. For bullshit features see "../bash/", "../dash/", ...
+
 
 
 ## Set pipefail only if it is supported
 
 if (set -o pipefail 2>/dev/null) ;then set -o pipefail ;fi
 
+
+
+## Links
+
+[Shell pipes error handling](https://www.shellscript.sh/tips/pipestatus/)
 

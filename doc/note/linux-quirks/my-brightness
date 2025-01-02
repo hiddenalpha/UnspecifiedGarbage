@@ -1,0 +1,106 @@
+#!/bin/sh
+#
+# non-root alternative to "my-backlight"
+# (Unluckily requires gnuAWK for now)
+#
+
+set -e
+
+MONITOR="LVDS-1"
+PHYS_MIN=0    # smallest value xrandr accepts/reports
+PHYS_MAX=100  # largest value xrandr accepts/reports
+VIRT_MIN=20   # smallest percent value allowed
+VIRT_MAX=100  # largest percent value allowed
+
+
+getCurrentLevelVirtValue () {
+    local val=$(xrandr --verbose | gawk 'match($0,/Brightness: ([0-9\\.]+)/,m) {print m[1]}')
+    val=$(echo "$val * 100 + 0.5" | bc | sed -E 's_^([0-9]+)\.?[0-9]*$_\1_')
+    val=$(asVirtualScale "$val")
+    echo >&2 "getCurrentLevelVirtValue $@ --> $val"
+    echo $val
+}
+
+
+asVirtualScale () {
+    local tmp=${1:?}
+    local vRange=$(echo "${VIRT_MAX:?}-${VIRT_MIN:?}"|bc)
+    local physRange=$(echo "${PHYS_MAX:?}-${PHYS_MIN}"|bc)
+    tmp=$(echo "($tmp * $vRange / $physRange) + $VIRT_MIN - $PHYS_MIN" | bc)
+    echo >&2 "asVirtualScale $@ --> $tmp"
+    echo $tmp
+}
+
+
+asPhysicalScale () {
+    #echo >&2 "asPhysicalScale" "$@"
+    local tmp=${1:?}
+    local vRange=$(echo "${VIRT_MAX:?}-${VIRT_MIN:?}"|bc)
+    local physRange=$(echo "${PHYS_MAX:?}-${PHYS_MIN}"|bc)
+    tmp=$(echo "($tmp + $PHYS_MIN - $VIRT_MIN) * $physRange / $vRange" | bc)
+    echo >&2 "asPhysicalScale $@ --> $tmp"
+    echo $tmp
+}
+
+
+xrandrScaleByVirtScale () {
+    local tmp=${1:?}
+    tmp=$(echo "scale=2;($tmp / $VIRT_MAX)" | bc)
+    echo >&2 "xrandrScaleByVirtScale $@ --> $tmp"
+    echo $tmp
+}
+
+
+cropToMinMax () {
+    local tmp=${1:?}
+    local min=${2:?}
+    local max=${3:?}
+    local ret=""
+    if [   "$tmp" -lt "$min" ]; then
+        ret=$min
+    elif [ "$tmp" -gt "$max" ]; then
+        ret=$max
+    else
+        ret=$tmp
+    fi
+    echo >&2 "cropToMinMax $@ --> $ret"
+    echo $ret
+}
+
+
+startsWithPlusOrMinus () { echo ${1:?} | grep -qE '^[+-]'; }
+
+
+main () {
+    local cur=$(getCurrentLevelVirtValue)
+
+    # Print current brightness in percent if No argument given.
+    if [ $# -eq 0 ]; then echo $cur; return 0; fi
+
+    if [ "$1" = "--help" ]; then
+        echo "  Examples:"
+        echo "    $(basename $0)  50  # Set brightness to 50%"
+        echo "    $(basename $0) +10  # Increase brightness by 10%"
+        echo "    $(basename $0) -10  # Decrease brightness by 10%"
+        return 1;
+    fi
+
+    local level=$1
+
+    if startsWithPlusOrMinus $level; then
+        # Calculate absolute out of relative value.
+        cur=$(asPhysicalScale "$cur")
+        level=$(echo "${cur:?}${level:?}" | bc)
+    fi
+
+    level=$(cropToMinMax "$level" "$VIRT_MIN" "$VIRT_MAX")
+    level=$(xrandrScaleByVirtScale "$level")
+
+    # Write evaluated brightness
+    echo >&2 CMD: xrandr --output $MONITOR --brightness "${level:?}"
+    xrandr --output $MONITOR --brightness "${level:?}"
+}
+
+
+main "$@"
+

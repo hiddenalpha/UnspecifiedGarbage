@@ -1,0 +1,6 @@
+
+
+Windoof drivers installation location:
+
+  C:\Windows\System32\DriverStore\FileRepository
+

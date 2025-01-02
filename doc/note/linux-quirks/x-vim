@@ -1,0 +1,5 @@
+#!/bin/env bash
+# TODO where's the bashism?
+
+dir=$(dirname "$1")
+x-terminal-emulator -e sh -ic "cd \"$dir\"; vim \"$@\"; bash;"
