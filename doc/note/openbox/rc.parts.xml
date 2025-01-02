@@ -1,0 +1,326 @@
+<!-- *************************************************************** -->
+<!-- Parts for "~/.config/openbox/rc.xml".                           -->
+<!-- *************************************************************** -->
+
+<!-- General shortcuts -->
+<openbox_config>
+  <keyboard>
+    <keybind key="A-F2">
+      <action name="Execute">
+        <command>gmrun</command>
+      </action>
+    </keybind>
+    <keybind key="W-r">
+      <action name="Execute">
+        <command>gmrun</command>
+      </action>
+    </keybind>
+    <keybind key="W-t">
+      <action name="Execute">
+        <command>x-terminal-emulator</command>
+      </action>
+    </keybind>
+    <keybind key="W-g">
+      <action name="Execute">
+        <command>gvim</command>
+      </action>
+    </keybind>
+    <keybind key="W-e">
+      <action name="Execute">
+        <command>x-file-manager</command>
+      </action>
+    </keybind>
+    <keybind key="C-S-Escape">
+      <action name="Execute">
+        <command>gnome-system-monitor</command>
+      </action>
+    </keybind>
+    <keybind key="W-c">
+      <action name="Execute">
+        <command>qalculate</command>
+      </action>
+    </keybind>
+    <keybind key="C-S-F11">
+      <action name="ShowMenu">
+        <menu>client-list-combined-menu</menu>
+      </action>
+    </keybind>
+    <keybind key="C-S-F12">
+      <action name="ShowMenu">
+        <menu>root-menu</menu>
+      </action>
+    </keybind>
+    <keybind key="Print">
+      <action name="Execute">
+        <command>scrot</command>
+      </action>
+    </keybind>
+    <keybind key="A-Print">
+      <action name="Execute">
+        <command>scrot --focused --border</command>
+      </action>
+    </keybind>
+    <keybind key="A-F1">
+      <action name="Execute">
+        <command>lxpanelctl menu</command>
+      </action>
+    </keybind>
+  </keyboard>
+</openbox_config>
+
+<!-- Screen locking -->
+<openbox_config>
+  <keyboard>
+    <keybind key="W-l">
+      <action name="Execute">
+        <!-- HINT: This only is save with additinal packages installed. -->
+        <command>dm-tool lock</command>
+        <!-- Obsolete alternative using xscreensaver -->
+        <!--                               vvv- make double-dash here -->
+        <!-- <command>xscreensaver-command - -lock</command> -->
+      </action>
+    </keybind>
+  </keyboard>
+</openbox_config>
+
+<!-- openboxTile to tile the active window to different locations -->
+<openbox_config>
+  <keyboard>
+    <!-- maximize -->
+    <keybind key="W-Left">
+      <action name="MoveResizeTo">
+        <monitor>prev</monitor>
+      </action>
+    </keybind>
+    <keybind key="W-Right">
+      <action name="MoveResizeTo">
+        <monitor>next</monitor>
+      </action>
+    </keybind>
+    <keybind key="W-Up">
+      <action name="Maximize"/>
+    </keybind>
+    <!-- left half -->
+    <keybind key="W-KP_4">
+      <action name="Unmaximize"/>
+      <action name="MoveResizeTo">
+        <x>0</x>
+        <width>50%</width>
+      </action>
+      <action name="Maximize">
+        <direction>Vertical</direction>
+      </action>
+    </keybind>
+    <!-- right half -->
+    <keybind key="W-KP_6">
+      <action name="Unmaximize"/>
+      <action name="MoveResizeTo">
+        <x>-0</x>
+        <width>50%</width>
+      </action>
+      <action name="Maximize">
+        <direction>Vertical</direction>
+      </action>
+    </keybind>
+    <!-- top right corner -->
+    <keybind key="W-KP_9">
+      <action name="Unmaximize"/>
+      <action name="MoveResizeTo">
+        <x>-0</x>
+        <y>0</y>
+        <height>50%</height>
+        <width>50%</width>
+      </action>
+    </keybind>
+    <!-- top left corner -->
+    <keybind key="W-KP_7">
+      <action name="Unmaximize"/>
+      <action name="MoveResizeTo">
+        <x>0</x>
+        <y>0</y>
+        <height>50%</height>
+        <width>50%</width>
+      </action>
+    </keybind>
+    <!-- bottom left corner -->
+    <keybind key="W-KP_1">
+      <action name="Unmaximize"/>
+      <action name="MoveResizeTo">
+        <x>0</x>
+        <y>-0</y>
+        <height>50%</height>
+        <width>50%</width>
+      </action>
+    </keybind>
+    <!-- bottom right corner -->
+    <keybind key="W-KP_3">
+      <action name="Unmaximize"/>
+      <action name="MoveResizeTo">
+        <x>-0</x>
+        <y>-0</y>
+        <height>50%</height>
+        <width>50%</width>
+      </action>
+    </keybind>
+    <!-- top half -->
+    <keybind key="W-KP_8">
+      <action name="Unmaximize"/>
+      <action name="MoveResizeTo">
+        <y>0</y>
+        <height>50%</height>
+      </action>
+      <action name="Maximize">
+        <direction>Horizontal</direction>
+      </action>
+    </keybind>
+    <!-- bottom half -->
+    <keybind key="W-KP_2">
+      <action name="Unmaximize"/>
+      <action name="Maximize">
+        <direction>horizontal</direction>
+      </action>
+      <action name="MoveResizeTo">
+        <y>-0</y>
+        <height>50%</height>
+      </action>
+    </keybind>
+    <!-- center -->
+    <keybind key="W-KP_5">
+      <action name="Unmaximize"/>
+      <action name="MoveResizeTo">
+        <x>20%</x>
+        <y>8%</y>
+        <height>80%</height>
+        <width>60%</width>
+      </action>
+    </keybind>
+    <!-- MaximizeVertical -->
+    <keybind key="W-KP_0">
+      <action name="Unmaximize"/>
+      <action name="MaximizeVert"/>
+    </keybind>
+    <!-- openboxTile end -->
+  </keyboard>
+</openbox_config>
+
+<!-- MultiMediaKeys -->
+<openbox_config>
+  <keyboard>
+    <keybind key="XF86MonBrightnessUp">
+      <action name="Execute">
+        <command>my-brightness.sh +10</command>
+      </action>
+    </keybind>
+    <keybind key="XF86MonBrightnessDown">
+      <action name="Execute">
+        <command>my-brightness.sh -10</command>
+      </action>
+    </keybind>
+    <keybind key="XF86AudioRaiseVolume">
+      <action name="Execute">
+        <command>amixer set Master 5%+</command>
+      </action>
+    </keybind>
+    <keybind key="XF86AudioLowerVolume">
+      <action name="Execute">
+        <command>amixer set Master 5%-</command>
+      </action>
+    </keybind>
+    <keybind key="XF86AudioMute">
+      <action name="Execute">
+        <command>amixer set Master toggle</command>
+      </action>
+    </keybind>
+  </keyboard>
+</openbox_config>
+
+<!-- Stop that ugly desktop switching by Alt+Mouse -->
+<!-- In other words: Comment out those six bindings. -->
+<openbox_config>
+ <mouse>
+   <context name="Frame">
+     <!-- <mousebind button="A-Up" action="Click"> -->
+     <!--   <action name="GoToDesktop"> -->
+     <!--     <to>previous</to> -->
+     <!--   </action> -->
+     <!-- </mousebind> -->
+     <!-- <mousebind button="A-Down" action="Click"> -->
+     <!--   <action name="GoToDesktop"> -->
+     <!--     <to>next</to> -->
+     <!--   </action> -->
+     <!-- </mousebind> -->
+     <!-- <mousebind button="C-A-Up" action="Click"> -->
+     <!--   <action name="GoToDesktop"> -->
+     <!--     <to>previous</to> -->
+     <!--   </action> -->
+     <!-- </mousebind> -->
+     <!-- <mousebind button="C-A-Down" action="Click"> -->
+     <!--   <action name="GoToDesktop"> -->
+     <!--     <to>next</to> -->
+     <!--   </action> -->
+     <!-- </mousebind> -->
+     <!-- <mousebind button="A-S-Up" action="Click"> -->
+     <!--   <action name="SendToDesktop"> -->
+     <!--     <to>previous</to> -->
+     <!--   </action> -->
+     <!-- </mousebind> -->
+     <!-- <mousebind button="A-S-Down" action="Click"> -->
+     <!--   <action name="SendToDesktop"> -->
+     <!--     <to>next</to> -->
+     <!--   </action> -->
+     <!-- </mousebind> -->
+   </context>
+ </mouse>
+</openbox_config>
+
+<!-- Stop confusing mouse behavior for window/desktop management. -->
+<!-- Comment out (or remove) those six handlers. -->
+<openbox_config>
+ <mouse>
+   <context name="Titlebar">
+    <!-- <mousebind button="Up" action="Click"> -->
+    <!--   <action name="if"> -->
+    <!--     <shaded>no</shaded> -->
+    <!--     <then> -->
+    <!--       <action name="Shade"/> -->
+    <!--       <action name="FocusToBottom"/> -->
+    <!--       <action name="Unfocus"/> -->
+    <!--       <action name="Lower"/> -->
+    <!--     </then> -->
+    <!--   </action> -->
+    <!-- </mousebind> -->
+    <!-- <mousebind button="Down" action="Click"> -->
+    <!--   <action name="if"> -->
+    <!--     <shaded>yes</shaded> -->
+    <!--     <then> -->
+    <!--       <action name="Unshade"/> -->
+    <!--       <action name="Raise"/> -->
+    <!--     </then> -->
+    <!--   </action> -->
+    <!-- </mousebind> -->
+   </context>
+   <context name="Desktop">
+     <!-- <mousebind button="A-Up" action="Click"> -->
+     <!--   <action name="GoToDesktop"> -->
+     <!--     <to>previous</to> -->
+     <!--   </action> -->
+     <!-- </mousebind> -->
+     <!-- <mousebind button="A-Down" action="Click"> -->
+     <!--   <action name="GoToDesktop"> -->
+     <!--     <to>next</to> -->
+     <!--   </action> -->
+     <!-- </mousebind> -->
+     <!-- <mousebind button="C-A-Up" action="Click"> -->
+     <!--   <action name="GoToDesktop"> -->
+     <!--     <to>previous</to> -->
+     <!--   </action> -->
+     <!-- </mousebind> -->
+     <!-- <mousebind button="C-A-Down" action="Click"> -->
+     <!--   <action name="GoToDesktop"> -->
+     <!--     <to>next</to> -->
+     <!--   </action> -->
+     <!-- </mousebind> -->
+   </context>
+ </mouse>
+</openbox_config>
+

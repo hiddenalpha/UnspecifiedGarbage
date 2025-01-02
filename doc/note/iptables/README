@@ -1,0 +1,19 @@
+
+# Firewall Configuration
+
+## Initial Setup
+
+  apt-get install --no-install-recommends iptables-persistent
+  cp src-v4 /etc/iptables/src-v4
+
+
+## IPv4 activate for session.
+
+  cat /etc/iptables/src-v4 | sudo iptables-restore
+
+
+## ipv4 store current session as default.
+
+  sudo iptables-save | sudo tee /etc/iptables/rules.v4
+
+

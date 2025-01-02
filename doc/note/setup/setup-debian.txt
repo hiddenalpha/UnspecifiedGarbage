@@ -100,6 +100,8 @@ Populate "/etc/environment" as described by "./etc-environment".
        `# basic CLI` \
        vim htop pv openssh-client iptables iptables-persistent xxd zip unzip xz-utils p7zip-full \
        file trash-cli ncat curl ntp \
+       `# keyboard ` \
+       numlockx \
        `# basic UI (vim-gtk required for system clipboard)` \
        vim-gtk3 firefox-esr pcmanfm file-roller thunderbird chromium okular \
        `# software devel` \

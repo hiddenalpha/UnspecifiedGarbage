@@ -1,0 +1,14 @@
+
+Cmnd_Alias CMD_POWEROFF = /sbin/poweroff ""
+Cmnd_Alias CMD_MOUNT_C1 = /usr/bin/mount -o "uid=1000\,gid=1000,noatime,noexec" /dev/sdc1 /mnt/[abcdefghijklmnopqrstuvwxyz]
+
+# MUST be BELOW the "%sudo" line !!!!!!!!
+alice ALL=(root) NOPASSWD: CMD_POWEROFF
+alice ALL=(root) NOPASSWD: CMD_MOUNT_C1
+
+
+## Links
+
+# [Syntax](https://unix.stackexchange.com/a/18880/292722)
+
+

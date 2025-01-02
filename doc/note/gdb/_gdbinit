@@ -1,0 +1,4 @@
+# [Source](https://git.hiddenalpha.ch/UnspecifiedGarbage.git/tree/doc/note/gdb/_gdbinit)
+set history save on
+set print thread-events off
+set print inferior-events off

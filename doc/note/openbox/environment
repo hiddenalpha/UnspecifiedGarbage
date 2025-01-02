@@ -1,0 +1,7 @@
+# 
+# Put this file to: "~/.config/openbox/environment"
+#
+
+# Delegate to that other file so we can have environ in ONE place.
+. ~/.config/user/setup-env
+

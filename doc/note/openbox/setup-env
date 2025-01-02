@@ -1,0 +1,29 @@
+# 
+# Put this file to: "~/.config/user/setup-env"
+#
+# Used by eg "~/.config/openbox/environment".
+#
+
+# Make sure launchers (eg gmrun) are able to find custom executables.
+export PATH=~/.bin:$PATH
+
+# For ls command.
+export TIME_STYLE=+%Y-%m-%d_%H:%M
+
+# Use ISO date format (originates from configuring thunderbird)
+export LC_TIME=en_DK.UTF-8
+# Does not work anymore. Create those keys via configEditor instead:
+# intl.date_time.pattern_override.date_short "yyyy-MM-dd"
+# intl.date_time.pattern_override.time_short "HH:mm"
+
+# Configure UI colors
+# .. for GTK-2
+export GTK2_RC_FILES=/usr/share/themes/Adwaita-dark/gtk-2.0/gtkrc
+# .. for GTK-3
+export GTK_THEME=Adwaita:dark
+# .. Qt 5 (needs 'qt5-style-plugins' to be installed)
+export QT_QPA_PLATFORMTHEME=gtk2
+
+# Disable QT DPI scaling. (aka fix vlc in multi-monitor setup)
+export QT_AUTO_SCREEN_SCALE_FACTOR=0
+

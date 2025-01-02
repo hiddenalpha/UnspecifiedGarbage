@@ -63,11 +63,11 @@
 #-A OUTPUT -p tcp -m state --state NEW,ESTABLISHED --dport 22 -j ACCEPT
 #-A INPUT -p tcp -m state --state ESTABLISHED --sport 22 -j ACCEPT
 
-# SSH client (for hiddn)
+# SSH client (for hdn)
 #-A OUTPUT -p tcp -m state --state NEW,ESTABLISHED --dport 10022 -j ACCEPT
 #-A INPUT -p tcp -m state --state ESTABLISHED --sport 10022 -j ACCEPT
 
-# SSH client (for brgmt)
+# SSH client (for bgmt)
 #-A OUTPUT -p tcp -m state --state NEW,ESTABLISHED --dport 5566 -j ACCEPT
 #-A INPUT -p tcp -m state --state ESTABLISHED --sport 5566 -j ACCEPT
 
@@ -131,7 +131,7 @@
 #-A INPUT -p udp --dport 631 -j ACCEPT
 #-A INPUT -p tcp --dport 631 -j ACCEPT
 #-A OUTPUT -p tcp --sport 631 -j ACCEPT
-#-A OUTPUT -p tcp --sport 631 -j ACCEPT
+#-A OUTPUT -p udp --sport 631 -j ACCEPT
 
 # POP3 client
 #-A OUTPUT -p tcp --dport 995 -j ACCEPT
@@ -177,17 +177,25 @@
 #-A OUTPUT -p udp --match multiport --dports 3478:3481  -j ACCEPT
 #-A INPUT  -p udp --match multiport --sports 3478:3481  -j ACCEPT
 
+# Allow vbox host-only network
+#-A OUTPUT -o vboxnet0 -j ACCEPT
+#-A INPUT  -i vboxnet0 -j ACCEPT
+
+# Allow docker hosted services
+#-A OUTPUT -o docker0 -m state --state NEW,RELATED -j ACCEPT
+#-A INPUT  -i docker0 -m state --state ESTABLISHED,RELATED -j ACCEPT
+
 # Some client ports for debugging.
-#-A OUTPUT -p tcp -m tcp --match multiport --dports 1230:1239 -j ACCEPT
-#-A INPUT  -p tcp -m state --state ESTABLISHED,RELATED --match multiport --sports 1230:1239 -j ACCEPT
-#-A OUTPUT -p udp -m udp --match multiport --dports 1230:1239 -j ACCEPT
-#-A INPUT  -p udp -m state --state ESTABLISHED,RELATED --match multiport --sports 1230:1239 -j ACCEPT
+#-A OUTPUT -p tcp -m tcp --match multiport --dports 10000:10010 -j ACCEPT
+#-A INPUT  -p tcp -m state --state ESTABLISHED,RELATED --match multiport --sports 10000:10010 -j ACCEPT
+#-A OUTPUT -p udp -m udp --match multiport --dports 10000:10010 -j ACCEPT
+#-A INPUT  -p udp -m state --state ESTABLISHED,RELATED --match multiport --sports 10000:10010 -j ACCEPT
 
 # Some server ports for debugging.
-#-A INPUT  -p tcp --match multiport --dports 1230:1239 -j ACCEPT
-#-A OUTPUT -p tcp -m tcp --match multiport --sports 1230:1239 -m state --state RELATED,ESTABLISHED -j ACCEPT
-#-A INPUT  -p udp --match multiport --dports 1230:1239 -j ACCEPT
-#-A OUTPUT -p udp -m udp --match multiport --sports 1230:1239 -m state --state RELATED,ESTABLISHED -j ACCEPT
+#-A INPUT  -p tcp --match multiport --dports 10000:10010 -j ACCEPT
+#-A OUTPUT -p tcp -m tcp --match multiport --sports 10000:10010 -m state --state RELATED,ESTABLISHED -j ACCEPT
+#-A INPUT  -p udp --match multiport --dports 10000:10010 -j ACCEPT
+#-A OUTPUT -p udp -m udp --match multiport --sports 10000:10010 -m state --state RELATED,ESTABLISHED -j ACCEPT
 
 # Log blocked connection attemps
 #-A INPUT   -j LOG --log-prefix "FwBadInn: " --log-level 6
@@ -195,7 +203,7 @@
 -A OUTPUT  -j LOG --log-prefix "FwBadOut: " --log-level 6
 
 # Disallow any non-whitelisted packets (Use either DROP or REJECT. Your choice)
--A INPUT   -j REJECT
+-A INPUT   -j DROP
 -A FORWARD -j REJECT
 -A OUTPUT  -j REJECT
 

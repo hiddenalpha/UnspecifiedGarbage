@@ -90,3 +90,30 @@ what gets deleted:
   git prune
 
 
+
+
+## Fix mouse scrolling diff in SOME terminals
+
+[core]
+    pager = less -R -+X
+
+
+
+
+## How to push to multiple remotes in one go:
+
+[remote "all"]
+	pushurl = user@ONE.example.com:foo/bar.git
+	pushurl = user@TWO.example.com:foo/bar.git
+
+git push all --dry-run --all
+
+
+
+## Fetch multiple remotes (but NOT all!) at once
+
+git fetch --multiple origin upstream
+
+
+
+

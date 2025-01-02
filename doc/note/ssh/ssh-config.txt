@@ -43,4 +43,4 @@ Host example.com
 Host example.com
     # Strongest way I found so far to force remote prompt:
     RemoteCommand export PROMPT_COMMAND='export PS1='"'"'my-prompt\n\$ '"'"'' && exec /usr/bin/bash -li
-
+ 
