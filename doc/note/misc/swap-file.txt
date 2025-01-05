@@ -15,7 +15,7 @@ Swap File
   && `# enable on-demand, non permanent. Revert with swapoff ` \
   && $SUDO swapon --priority "${PRI:?}" "${PATH_TO_SWAPFILE:?}" \
   && `# Enable permanent ` \
-  && printf "${PATH_TO_SWAPFILE:?}"'  none  swap  sw,pri='"${PRI:?}"'  0  0\n' | $SUDO tee > /dev/null -a /etc/fstab \
+  && printf "${PATH_TO_SWAPFILE:?}"'  none  swap  sw,pri='"${PRI:?}"',nofail  0  0\n' | $SUDO tee > /dev/null -a /etc/fstab \
 
 
 
