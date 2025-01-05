@@ -91,6 +91,7 @@ run () {
         --exclude="/.m2/repository" \
         --exclude="/mnt" \
         --exclude="/.mozilla/firefox" \
+        `# TODO exclude either "/.mysave" or "/mysave" ` \
         --exclude="/.NERDTreeBookmarks" \
         --exclude="/.recently-used" \
         --exclude="/.recoll" \

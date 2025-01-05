@@ -19,6 +19,22 @@ Swap File
 
 
 
+
+
+## Hibernate-To-Swap (aka to disk)
+
+[TODO check extra notes here](https://askubuntu.com/a/126049/834386)
+it says:
+- find UUID of partition
+- find swapfile offset
+- In "/etc/grub/default" to "GRUB_CMDLINE_LINUX_DEFAULT" add:
+  `resume=UUID=xxx resume_offset=xxx`
+- possibly do also for initramfs.
+
+
+
+
+
 ## Refs
 
 - man swapon

@@ -117,7 +117,7 @@ Populate "/etc/environment" as described by "./etc-environment".
        pulseaudio pavucontrol vlc audacity eom darktable gimp hugin lame flac opus-tools ffmpeg \
        alsa-utils \
        `# encryption` \
-       keepassxc gpg \
+       keepassxc gpg gocryptfs \
        `# UI customization` \
        gnome-themes-extra darkmint-gtk-theme dconf-cli \
        `# Office Suite` \

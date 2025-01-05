@@ -85,6 +85,21 @@ TODO to PKCS8:
 
 
 
+## Print key info
+
+  `# public key`
+  ssh-keygen -lf path/to/key
+  `# private key (WARN: sensitive!)`
+  openssl rsa -text -noout -in path/to/key
+
+
+
+## Change key comments (for private keys)
+
+  ssh-keygen -c -f path/to/key
+
+
+
 ## TODO
 
  -e      This option will read a private or public OpenSSH key file

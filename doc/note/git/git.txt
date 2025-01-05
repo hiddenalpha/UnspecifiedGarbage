@@ -45,8 +45,20 @@ copy of.
   && cd "${WORKDIR:?}" \
   && git init \
   && git fetch --depth=1 "${selfRemote:?}" "${shaToCpy:?}" \
-  && git checkout -b master "${shaToCpy:?}" \
+  && git branch master "${shaToCpy:?}" \
   && git log --all --decorate \
+  && printf '\n\nTODO: To fill worktree, do:\n  git checkout master\n\n' \
+
+
+
+## Commit worktree to a new orphan branch
+
+  && git checkout --orphan tmp-6o6uq7oKwd0o24iW \
+  && git commit -m "TODO: Use   git --amend   to edit this message" \
+  && git checkout --detach \
+  && git branch -d tmp-6o6uq7oKwd0o24iW \
+  && printf \\n \
+  && git log --decorate \
 
 
 

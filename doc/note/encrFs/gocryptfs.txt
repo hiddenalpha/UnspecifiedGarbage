@@ -1,0 +1,28 @@
+
+gocryptfs
+================
+
+  Angeblich nachfolger von "./encfs.txt".
+
+  Comparison and competitors see also
+  https://nuetzlich.net/gocryptfs/comparison/
+
+  apt install --no-install-recommends -y gocryptfs
+
+  `# Create new`
+  mkdir mycryptdir
+  gocryptfs -init mycryptdir
+
+  `# mount`
+  mkdir mymount
+  gocryptfs mycryptdir mymount
+
+  `# umount`
+  fusermount -u mymount
+
+
+
+  TODO: Im "reverse-mode" könnte man mit gocryptfs evtl sogar backups
+  encrypten.
+
+

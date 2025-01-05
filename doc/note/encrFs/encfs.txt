@@ -1,0 +1,10 @@
+
+encfs
+================
+
+  apt show encfs
+
+  Projekt ist angeblich obsolete, und es wird Wechsel auf "./gocryptfs.txt"
+  empfohlen.
+
+
