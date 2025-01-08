@@ -18,7 +18,19 @@ as path via arg instead.
 1st prio -> REQUEST A VALID KEY FROM THE RECEIVER!
 
 Workaround for stubborn receivers:
-  gpg --faked-system-time 20241231T000000
+  gpg --faked-system-time 20231231T000000
+
+
+
+
+
+
+## error retrieving 'foo@example.com' via WKD: No data
+
+- Add '-vv'.
+- Likely output now says something about expiry.
+- Solve the expiry issue.
+
 
 
 
