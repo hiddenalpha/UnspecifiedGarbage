@@ -17,3 +17,11 @@ Commands look the same as with openshift.
   && saml2aws login \
 
 
+
+[kubectl logs](https://kubernetes.io/docs/reference/kubectl/generated/kubectl_logs/)
+
+  kubectl logs ${POD:?} --tail=42 -f
+
+  kubectl logs ${POD:?} --since-time=2024-12-31T24:59:59Z --timestamps=true
+
+

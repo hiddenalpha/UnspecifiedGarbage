@@ -496,6 +496,7 @@ Links (Aka argument amplifiers)
 - logger fail "https://jira.post.ch/browse/SDCISA-9903"
 
 ## FileLogging is a MUST have (kibana is bullsh**)
+- [Ignore errors is funny](https://jira.post.ch/browse/SDCISA-18593)
 - [Andis WARNING](https://wikit.post.ch/x/m4Nreg)
 - [example](https://jira.post.ch/browse/SDCISA-8382?focusedCommentId=1554435&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-1554435)
 - [example](https://jira.post.ch/browse/SDCISA-13655)

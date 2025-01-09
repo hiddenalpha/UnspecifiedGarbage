@@ -121,7 +121,7 @@ function writeSwapSetup( dst )
   && $SUDO dd if=/dev/zero of=/swapfile1 bs=$((1024*1024)) count="${SWAP_MIB:?}" \
   && $SUDO chmod 0600 /swapfile1 \
   && $SUDO mkswap /swapfile1 \
-  && printf '/swapfile1  none  swap  sw,pri=10  0  0\n' | $SUDO tee -a /etc/fstab > /dev/null \
+  && printf '/swapfile1  none  swap  sw,nofail,user  0  0\n' | $SUDO tee -a /etc/fstab > /dev/null \
 ]=])
 end
 
@@ -134,7 +134,7 @@ function writePkgInstallation( dst )
   && $SUDO apt update \
   && $SUDO RUNLEVEL=1 apt install -y --no-install-recommends \
          net-tools vim curl nfs-common htop ncat git ca-certificates tmux \
-         kubernetes-client awscli openjdk-17-jre-headless maven podman \
+         kubernetes-client awscli openjdk-17-jdk-headless maven podman \
          bash-completion lua5.4 \
 ]=])
 end
@@ -275,7 +275,7 @@ function writeEmbeddedReadme( dst )
        '  alias eksm15int="aws eks update-kubeconfig --name eks-int-m15cn0001"' \
        '  alias agrajagtest="kubectl config set-context --current --namespace=isa-diNamespace-test"' \
        '' \
-       '  FüdleWall: https://fwehfnet.pnet.ch/connect' \
+       '  Firewall: https://fwehfnet.pnet.ch/connect' \
        '  Known Namespaces: isa-houston-prod, isa-houston-int, isa-houston-snapshot,' \
        '      isa-houston-test' \
        '' \
