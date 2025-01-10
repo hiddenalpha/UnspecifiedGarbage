@@ -130,3 +130,14 @@ server {
   && true
 
 
+## Fine-Tune proxy buffering
+
+Some silly (aka fancy modern) webapp serves assets with OVER 6MB IN SIZE!! This
+made my nginx bufering to disk. Here my guess of better buffer settings for such
+silly upstream apps.
+
+Can be anywhere in 'http{}' or 'server{}' or 'location{}' depending on scope needed.
+
+  proxy_buffers 512 16k;
+
+
