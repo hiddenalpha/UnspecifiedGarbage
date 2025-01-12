@@ -13,7 +13,7 @@ local host = "devuan5" -- "devuan5", "debian9"
 local target = "posix" -- "posix", "windoof"
 local envWORKDIR = "/home/${USER:?}/work"
 local envCACHEDIR = "/var/tmp"
-local envMAKE_JOBS = 8
+local envMAKE_JOBS = 16
 local envSUDO = "sudo"
 
 local version_cJSON   = "1.7.15"
