@@ -12,7 +12,7 @@ set -o errexit
 readonly NOW_SHORT="$(date -u '+%Y%m%d-%H%M%S')"
 readonly DIR_FROM="/home/${USER:?}/."
 readonly DST_PREFIX="${DIR_FROM:?}"
-readonly DIR_TO="/mnt/x/ROOT_DIR/bkup-rsync/tux-six"
+#readonly DIR_TO="/mnt/x/ROOT_DIR/bkup-rsync/tux-six"
 readonly BACKUP_PATH="${DIR_TO:?}/${NOW_SHORT:?}"
 
 
