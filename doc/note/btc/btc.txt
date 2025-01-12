@@ -17,7 +17,9 @@ kto isch?!? Ws söu dä Schrott??
   && curl -LO 'https://download.electrum.org/'"${VERSION_ELECTRUM:?}"'/Electrum-'"${VERSION_ELECTRUM:?}"'.tar.gz' \
   && gpg --verify Electrum-"${VERSION_ELECTRUM:?}".tar.gz.asc \
   && tar xf Electrum-"${VERSION_ELECTRUM:?}".tar.gz \
-  && printf '\nRun (from sources) with:\n  python3 Electrum-%s/run_electrum\n\n' "${VERSION_ELECTRUM:?}" \
+  && printf '\nRun (from sources) with:\n  python3 Electrum-%s/run_electrum\n\n' "${VERSION_ELECTRUM:?}" | tee README.txt \
+
+  -netdev '...,restrict=y,...'
 
 [setup tutorial](https://freedomnode.com/blog/how-to-create-and-use-an-offline-bitcoin-wallet-aka-cold-storage-with-electrum/)
 [sftware](https://github.com/spesmilo/electrum.git)
