@@ -1,0 +1,31 @@
+
+BTC eval
+================
+
+
+## paper wallet
+
+kes produkt, sondrn vou vo papier widerhersteubar.
+
+
+## electrum org Nachtiile
+
+- NUMÄ btc, nix angärs.
+- kei locl klon, mues servr ha.
+
+
+## btc core
+
+- bruucht evt viiel spicher.
+
+
+## wasabi
+
+- abhängig vo zäntralem servr.
+
+
+## Coinbase Nachtiile
+
+- Eher für schwauderi Nutzer gmacht.
+- Eher für händi gfotz.
+
