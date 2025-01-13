@@ -26,6 +26,7 @@ local proxy_no  = "localhost,pnet.ch,post.ch,tools.post.ch,gitit.post.ch,pnetclo
 
 -- Values from here onwards usually are ok as-is.
 local cmdSudo = "sudo"
+local kubectlVersion = "1.31"
 local kubeloginVersion = "0.1.6"
 local argocdVersion = "2.11.7"
 local getaddrinfoVersion = "0.0.2"
@@ -43,6 +44,7 @@ function writeVariables( dst )
     dst:write([=[
   && SUDO=']=].. cmdSudo ..[=[' \
   && ARCH=x86_64-linux-gnu \
+  && fuckCerts=--insecure \
   && proxy_url=']=].. proxy_url ..[=[' \
   && proxy_no="]=].. proxy_no ..[=[" \
   && cacheDir=']=].. cacheDir ..[=[' \
@@ -126,6 +128,17 @@ function writeSwapSetup( dst )
 end
 
 
+function writeAptConfigUglyWorkarounds( dst )
+    dst:write([=[
+  && printf %s\\n \
+       '// FUCK those annoying TLS intercepting proxies!' \
+       'Acquire::https::Verify-Peer "false";' \
+       'Acquire::https::Verify-Host "false";' \
+     | $SUDO tee -a /etc/apt/apt.conf.d/80fixnonsense > /dev/null \
+]=])
+end
+
+
 function writePkgInstallation( dst )
     -- 20240715: Removed: gcc-mingw-w64-x86-64-win32 gcc libc6-dev
     -- TODO: update only all few hours.
@@ -171,6 +184,22 @@ function writeHiddenalphaToolsInstallation( dst )
           && ln -s "$E" \
         ;done) \
 ]=])end
+end
+
+
+function writeKubectlAptConfig( dst )
+    dst:write([=[
+  && `# In "theory", kubectl (via kubernetes-client) would be available via` \
+  && `# proper system packaging tools. But like most break-it-all-the-` \
+  && `# time-bullshit-software, also kubectl needs to be workarounded...` \
+  && curl -fL ${fuckCerts?} https://pkgs.k8s.io/core:/stable:/v]=].. kubectlVersion ..[=[/deb/Release.key \
+     | gpg --batch --dearmor | $SUDO tee /etc/apt/keyrings/kubernetes-apt-keyring.gpg >/dev/null \
+  && $SUDO chmod 644 /etc/apt/keyrings/kubernetes-apt-keyring.gpg \
+  && printf 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v]=].. kubectlVersion ..[=[/deb/ /\n' \
+     | $SUDO tee /etc/apt/sources.list.d/kubernetes.list >/dev/null \
+  && $SUDO chmod 644 /etc/apt/sources.list.d/kubernetes.list \
+  && `# apt update  needs to be executed for the above changes to take effect ` \
+]=])
 end
 
 
@@ -228,6 +257,7 @@ end
 function writeKnownHashes( dst )
     dst:write([=[
   && `# Known hashes ` \
+  && mkdir -p "${cacheDir:?}" "${repoDir:?}" \
   && printf %s\\n \
        'e990013d2d658dd19ef2731bc9387d4ed88c60097d5364ac2d832871f2fc17d5 *kubelogin-linux-amd64.zip' \
        'ca47b335ee7433eca7d839ece328498944427b4f83f99de919ea26e8d7f07ee4 *CeeMiscLib-0.0.5-306-g99d785d+aarch64-linux-gnu.tgz' \
@@ -256,6 +286,22 @@ function writeEmbeddedReadme( dst )
        '' \
        '  - [saml is dead](https://wikit.post.ch/x/0Fu4Vg)' \
        '  - [Maybe saml2aws becomes obsolete](https://wikit.post.ch/display/CDAF/How+to%3A+Setup-Guide+saml2aws?focusedCommentId=1741722098&src=mail&src.mail.product=confluence-server&src.mail.timestamp=1721914205401&src.mail.notification=com.atlassian.confluence.plugins.confluence-notifications-batch-plugin%3Abatching-notification&src.mail.recipient=8a81e4a6427b972601427b98b9262c20&src.mail.action=view#comment-1741722098)' \
+       '' \
+       '' \
+       '' \
+       '  ## How to upgrade kubectl version (for humans)' \
+       '' \
+       '  - Change version in sources.list' \
+       '  - Update "kubectl" via systems package manager' \
+       '' \
+       '' \
+       '' \
+       '  ## How to upgrade kubectl version (for scripters)' \
+       '' \
+       '  sudo nano /etc/apt/sources.list.d/kubernetes.list' \
+       '  sudo apt update' \
+       '  sudo apt purge -y kubectl' \
+       '  sudo apt install --no-install-recommends -y kubectl' \
        '' \
        '' \
        '' \
@@ -303,9 +349,10 @@ function main()
     dst:write("#!/bin/sh\nset -e \\\n")
     writeVariables(dst)
     writeDloadIfMissingFunc(dst)
-    dst:write("  && mkdir -p \"${cacheDir:?}\" \"${repoDir:?}\" \\\n")
     writeKnownHashes(dst)
     writeProxySettings(dst)
+    writeAptConfigUglyWorkarounds(dst)
+    writeKubectlAptConfig(dst)
     writePkgInstallation(dst)
     writeSwapSetup(dst)
     writeAwsToolsInstallation(dst)

@@ -11,10 +11,10 @@
 +            machine = new Machine() {
 +                @Override public String getHostname() { return hostname; }
 +                @Override public String getExpectedRemoteHostname() {
-+                    return "TODO_putYourHostnameHere";
++                    return TODO_putYourVmsHostnameHere;
 +                }
 +                @Override public String getSshUsername() {
-+                    return "TODO_putUsernameHere";
++                    return TODO_putYourVmsUsernameHere_maybe_isa;
 +                }
 +                @Override public boolean needsLegacyDocker() { return false; }
 +            };
