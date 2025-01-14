@@ -179,7 +179,8 @@ nmap <C-s> :up<CR>
 
 "set rtp+=/opt/nerdtree
 "source /opt/nerdtree/plugin/NERD_tree.vim
-"nnoremap ° :NERDTreeToggle<CR>
+"nnoremap § :NERDTreeToggle<CR>
+"nnoremap ° :NERDTreeFind<CR>
 
 
 " OS integration --------------------------------------------------------------
