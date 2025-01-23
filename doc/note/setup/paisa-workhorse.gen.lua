@@ -289,14 +289,7 @@ function writeEmbeddedReadme( dst )
        '' \
        '' \
        '' \
-       '  ## How to upgrade kubectl version (for humans)' \
-       '' \
-       '  - Change version in sources.list' \
-       '  - Update "kubectl" via systems package manager' \
-       '' \
-       '' \
-       '' \
-       '  ## How to upgrade kubectl version (for scripters)' \
+       '  ## How to upgrade kubectl version' \
        '' \
        '  sudo nano /etc/apt/sources.list.d/kubernetes.list' \
        '  sudo apt update' \
@@ -327,9 +320,8 @@ function writeEmbeddedReadme( dst )
        '' \
        '  kubectl version   (WARN: server/client max 2 minor versions apart of each other!)' \
        '  kubectl config view' \
-       '  kubectl config get-contexts' \
-       '  kubectl config use-context TODO_replace_me' \
        '  kubectl config view | grep namespace' \
+       '  kubectl config use-context eks-int-m15cn0001' \
        '  kubectl config set-context $(kubectl config current-context) --namespace=TODO_replace_me' \
        '  kubectl get nodes,pods,service,configmaps,deployments,statefulset' \
        '  kubectl get pods houston-42' \

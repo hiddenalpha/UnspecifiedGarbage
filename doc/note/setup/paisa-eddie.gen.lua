@@ -7,6 +7,13 @@
 
   WARN: Setup script will assign uid 1000 to user "isa"!
 
+  TODO:
+
+      "/etc/selinux/config":
+      - SELINUX=enforcing
+      + SELINUX=permissive
+      dann reboot
+
   ]===========================================================================]
 -- Customize your setup here: -------------------------------------------------
 
