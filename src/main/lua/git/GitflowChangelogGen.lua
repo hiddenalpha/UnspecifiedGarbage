@@ -22,6 +22,9 @@ function printHelp()
         .."    --tags\n"
         .."      Pass '--tags' to git-log.\n"
         .."  \n"
+        .."    --html\n"
+        .."      Produce HTML output in place of text.\n"
+        .."  \n"
         )
 end
 
@@ -44,6 +47,8 @@ function parseArgs( app )
             app.isFetch = false
         elseif arg == "--tags" then
             app.isTags = true
+        elseif arg == "--html" then
+            app.isPrintHtml = true
         elseif arg == "--help" then
             app.isHelp = true; return 0
         else
@@ -157,17 +162,13 @@ function run( app )
         prevVersion = version
         _, version = v.hdr:match("^([^\n]+)\n"):match("tag: ([a-z]+)-([^,]+)[,)]")
         if not version then version = prevVersion end
-
         if version ~= prevVersion or not dateEntry then
             if dateEntry then table.insert(entries, dateEntry) end
-            dateEntry = {
-                txt = date .." - ".. version .."\n\n" --.."Resolved issues:\n\n"
-            }
+            dateEntry = {}
             prevDate = date
         end
-        -- Drop some crappy bloat
         local msg = short or v.msg
-        local jiraNr = msg:match("^(SDCISA%-%d%d%d%d%d?)[^%d]")
+        -- Drop some crappy bloat
         if false
         or msg:find("^Develop$")
         or msg:find("^Release$")
@@ -176,17 +177,45 @@ function run( app )
         then
             goto nextCommit
         end
-        if jiraNr then dateEntry.txt = dateEntry.txt .."[".. jiraNr .."] " end
-        dateEntry.txt = dateEntry.txt .. msg
-        if prNr then dateEntry.txt = dateEntry.txt .." (PR ".. prNr ..")" end
-        dateEntry.txt = dateEntry.txt .."\n"
+        local jiraNr
+        local jiraNrPref = msg:match("^(%[?SDCISA%-%d%d%d%d%d?[^%d] ?)")
+        if jiraNrPref then
+            jiraNr = msg:match("^%[?(SDCISA%-%d%d%d%d%d?)[^%d]")
+            if jiraNr then msg = msg:sub(#jiraNrPref) end
+        end
+        if app.isPrintHtml then
+            if not dateEntry.html then
+                dateEntry.html = '<h3>'.. date .." - ".. version .."</h3>\n\n"
+            end
+            if jiraNr then
+                dateEntry.html = dateEntry.html
+                    ..'[<a href="https://jira.post.ch/browse/'.. jiraNr ..'">'.. jiraNr .."</a>] "
+            end
+            dateEntry.html = dateEntry.html .. msg
+            if prNr then
+                dateEntry.html = dateEntry.html
+                    ..' (<a href="https://gitit.post.ch/projects/ISA/repos/preflux/pull-requests/'
+                    .. prNr ..'">PR '.. prNr ..'</a>)'
+            end
+            dateEntry.html = dateEntry.html .."</br>\n"
+        else
+            if not dateEntry.txt then
+                dateEntry.txt = date .." - ".. version .."\n\n"
+            end
+            if jiraNr then
+                dateEntry.txt = dateEntry.txt .."[".. jiraNr .."] "
+            end
+            dateEntry.txt = dateEntry.txt .. msg
+            if prNr then dateEntry.txt = dateEntry.txt .." (PR ".. prNr ..")" end
+            dateEntry.txt = dateEntry.txt .."\n"
+        end
         ::nextCommit::
     end
     if dateEntry then table.insert(entries, dateEntry) end
     -- output
     for k, v in ipairs(entries) do
         snk:write("\n\n")
-        snk:write(v.txt)
+        snk:write(v.txt and v.txt or v.html)
         snk:write("\n")
     end
 end
