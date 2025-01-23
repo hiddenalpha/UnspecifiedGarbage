@@ -36,6 +36,15 @@ copy of.
 
 
 
+## Push shallow clone to empty/bare/new remote repo
+
+  remote$  git config receive.shallowUpdate true
+  local$   git push the-grafted-thingy
+  remote$  git config receive.shallowUpdate false
+
+  HINT: Can push only ONE branch at a time.
+
+
 ## Cut-off history for self-contained source tarballs.
 
   && WORKDIR=../tmp \
@@ -127,5 +136,9 @@ git push all --dry-run --all
 git fetch --multiple origin upstream
 
 
+
+## Refs
+
+  [push shallow](https://stackoverflow.com/a/35030063/4415884)
 
 

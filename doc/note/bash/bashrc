@@ -8,7 +8,7 @@ if test -z "$HISTCONTROL"; then export HISTCONTROL="ignorespace:ignoredups"; fi
 if test -z "$HISTFILESIZE"; then export HISTFILESIZE=99999; fi
 if test -z "$HISTSIZE"; then export HISTSIZE=99999; fi
 
-if [ $SHLVL -eq 1 ]; then
+if test $SHLVL -eq 1; then
     set -o ignoreeof # Require explicit 'exit' cmd to exit shell.
 else
     set +o ignoreeof
