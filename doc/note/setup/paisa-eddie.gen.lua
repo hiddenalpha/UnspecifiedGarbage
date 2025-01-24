@@ -34,7 +34,8 @@ function main()
     dst:write([=[
 #!/bin/sh
 # Required min disk space is 24GiB NOPE, 16GiB is not enough, because PaISA
-# is include-all-the-framebloat software. See also:.
+# is include-all-the-framebloat software. Also, to start PaISA, at LEAST 10GiB
+# of RAM are required. See also:
 # - "https://devrant.com/rants/5107044"
 # - "https://medium.com/dinahmoe/escape-dependency-hell-b289de537403"
 set -e \
