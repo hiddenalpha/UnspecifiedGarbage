@@ -148,7 +148,7 @@ function writePkgInstallation( dst )
   && $SUDO RUNLEVEL=1 apt install -y --no-install-recommends \
          net-tools vim curl nfs-common htop ncat git ca-certificates tmux \
          kubernetes-client awscli openjdk-17-jdk-headless maven podman \
-         bash-completion lua5.4 \
+         bash-completion lua5.4 trash-cli \
 ]=])
 end
 

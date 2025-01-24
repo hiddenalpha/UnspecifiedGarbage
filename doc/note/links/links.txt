@@ -465,7 +465,7 @@ Links (Aka argument amplifiers)
 - [Houston losing hook messages](https://jira.post.ch/browse/SDCISA-13346)
 - [Not interested in the fix](https://jira.post.ch/browse/SDCISA-11619?focusedId=1913186&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-1913186)
 
-## Bugs, Frameworks, Dependencies include them all
+## Bugs, Frameworks, Dependencies include all the framebloat
 - "https://medium.com/dinahmoe/escape-dependency-hell-b289de537403"
 - "https://gitit.post.ch/projects/ISA/repos/preflux/pull-requests/119/overview?commentId=46245"
 - [Stop Ductaping crap together](https://devrant.com/rants/5107044)

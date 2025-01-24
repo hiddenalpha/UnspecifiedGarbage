@@ -31,8 +31,13 @@ local main
 function main()
     local dst = io.stdout
     assert(not(isaSshPubKey:find("'")))
-    dst:write("#!/bin/sh\nset -e\n")
-    dst:write([=[true \
+    dst:write([=[
+#!/bin/sh
+# Required min disk space is 24GiB NOPE, 16GiB is not enough, because PaISA
+# is include-all-the-framebloat software. See also:.
+# - "https://devrant.com/rants/5107044"
+# - "https://medium.com/dinahmoe/escape-dependency-hell-b289de537403"
+set -e \
   && SUDO=sudo \
   && PROXY_URL=']=].. env_PROXY_URL ..[=[' \
   && PROXY_NO=']=].. env_PROXY_NO ..[=[' \
@@ -86,6 +91,11 @@ function main()
          '' \
          '  && $SUDO dnf install -y java-11-openjdk-devel.x86_64' \
          '  && $SUDO dnf install -y nss-mdns avahi avahi-tools' \
+         '' \
+         '  ## Podman cleanup (handy for disk space issues)' \
+         '' \
+         '  sudo podman image prune --all --build-cache --external' \
+         '  sudo podman volume prune' \
          '' \
      | $SUDO tee /home/isa/README.txt >/dev/null \
   && $SUDO chown ${isaUid:?}:${isaGid:?} /home/isa/README.txt \
