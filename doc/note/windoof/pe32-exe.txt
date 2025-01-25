@@ -1,0 +1,9 @@
+
+PE32
+================
+
+  && objdump -p ${TARGET:?} \
+     | grep DLL\ Name \
+     | grep -E -v ' (KERNEL32.dll|SHELL32.dll|WS2_32.dll|ADVAPI32.dll|USER32.dll|GDI32.dll|OPENGL32.dll|msvcrt.dll)$' \
+
+
