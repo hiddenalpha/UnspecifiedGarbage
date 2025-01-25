@@ -1,0 +1,3 @@
+
+  && convert 01.jpg 02.jpg -auto-orient out.pdf \
+
