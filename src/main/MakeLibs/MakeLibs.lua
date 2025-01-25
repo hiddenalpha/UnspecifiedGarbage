@@ -11,7 +11,7 @@
 
 local host = "devuan5" -- "devuan5", "debian9"
 local target = "posix" -- "posix", "windoof"
-local envWORKDIR = "/home/${USER:?}/work"
+local envWORKDIR = "${PWD:?}"
 local envCACHEDIR = "/var/tmp"
 local envMAKE_JOBS = 16
 local envSUDO = "sudo"
