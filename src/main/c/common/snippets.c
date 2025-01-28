@@ -176,12 +176,30 @@ static int ensureBufCap(
 
 
 /* [source](https://git.hiddenalpha.ch/UnspecifiedGarbage.git/tree/src/main/c/common/snippets.c) */
-#if __WIN32
+#if _WIN32
     int _setmode(int,int);
 #   define FUCK_BROKEN_SYSTEMS() do{char a=0;for(;!(a&10);){_setmode(a++,32768);}}while(0)
 #else
 #   define FUCK_BROKEN_SYSTEMS()
 #endif
 
+
+
+
+
+
+
+/* [source](https://git.hiddenalpha.ch/UnspecifiedGarbage.git/tree/src/main/c/common/snippets.c) */
+#if _WIN32
+    switch( WSAStartup(1, &(WSADATA){0}) ){
+    case 0: break;
+    case WSASYSNOTREADY    : assert(!"WSASYSNOTREADY"    ); break;
+    case WSAVERNOTSUPPORTED: assert(!"WSAVERNOTSUPPORTED"); break;
+    case WSAEINPROGRESS    : assert(!"WSAEINPROGRESS"    ); break;
+    case WSAEPROCLIM       : assert(!"WSAEPROCLIM"       ); break;
+    case WSAEFAULT         : assert(!"WSAEFAULT"         ); break;
+    default                : assert(!"ERROR"             ); break;
+    }
+#endif
 
 
