@@ -1,0 +1,8 @@
+
+
+PUT /eagle/user/identification/v1/card
+Host: eddieXXXXX:7012
+
+{"legicId": 01392041 }
+
+
