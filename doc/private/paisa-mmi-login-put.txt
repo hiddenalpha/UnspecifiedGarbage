@@ -1,8 +1,15 @@
 
 
-PUT /eagle/user/identification/v1/card
-Host: eddieXXXXX:7012
-
-{"legicId": 01392041 }
+  && legicId=01392041 \
+  && host=eddieXXXXX \
+  && port=7012 \
+  && path=/eagle/user/identification/v1/card \
+  && curl -sSD- -X "http://${host:?}:${port:?}${path:?}" \
+       --data-raw '{"legicId":'"${legicId:?}"'}' \
+       > /dev/null \
+  && sleep 1 \
+  && curl -sSD- -X "http://${host:?}:${port:?}${path:?}" \
+       --data-raw '{"legicId":'"${legicId:?}"'}' \
+       > /dev/null \
 
 
