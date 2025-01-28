@@ -4,12 +4,12 @@
   && host=eddieXXXXX \
   && port=7012 \
   && path=/eagle/user/identification/v1/card \
-  && curl -sSD- -X "http://${host:?}:${port:?}${path:?}" \
-       --data-raw '{"legicId":'"${legicId:?}"'}' \
-       > /dev/null \
+  && curl -sSD- -X PUT "http://${host:?}:${port:?}${path:?}" \
+       -H 'Content-Type: application/json' \
+       --data-raw '{"legicId":"'"${legicId:?}"'"}' \
   && sleep 1 \
-  && curl -sSD- -X "http://${host:?}:${port:?}${path:?}" \
-       --data-raw '{"legicId":'"${legicId:?}"'}' \
-       > /dev/null \
+  && curl -sSD- -X PUT "http://${host:?}:${port:?}${path:?}" \
+       -H 'Content-Type: application/json' \
+       --data-raw '{"legicId":"'"${legicId:?}"'"}' \
 
 
