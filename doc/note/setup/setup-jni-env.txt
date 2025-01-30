@@ -9,7 +9,7 @@ set -e
 
 
 ### For debian 12
-true \
+
   && SUDO=sudo \
   && export JAVA_HOME="/usr/lib/jvm/java-17-openjdk-amd64" \
   && $SUDO apt update \

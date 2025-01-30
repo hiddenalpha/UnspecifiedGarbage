@@ -1,0 +1,67 @@
+
+
+https://artifactory.tools.post.ch/artifactory/generic-paisa-local/mdis5-src/13MD05-90_02_07.tar.gz
+
+https://git.duagon.com/project/13/13mdis/linux/13MD05-90/-/tree/master/MDISforLinux?ref_type=heads
+
+
+  && POODOO_SRC_WORKTREE=/c/work/projects/isa-svc/poodoo \
+  && MDIS_SRC_WORKTREE=/c/work/projects/forks/duagon-mdis/from-artifactory \
+
+
+  && wd=$PWD \
+  && (cd "${MDIS_SRC_WORKTREE:?}" \
+  && tar --owner=0 --group=0 -czf "${wd:?}"/mdis-headers.tgz \
+       13MD05-90/MDISforLinux/INCLUDE/COM/MEN \
+       13MD05-90/13Z015-06/INCLUDE/COM/MEN \
+  && true)  \
+
+  && wd=$PWD \
+  && (cd "${POODOO_SRC_WORKTREE:?}" \
+  && tar --owner=0 --group=0 -czf "${wd:?}"/poodoo-src.tgz poodoo-web/src/main/c \
+  && true) \
+
+
+  && $SUDO podman build -f- -t poodoo-jni:0.0.0-SNAPSHOT . <<EOF &&
+FROM docker.tools.post.ch/paisa/alice:04.00.09.00
+USER root
+RUN true \\
+  && SUDO=sudo \\
+  && $SUDO apt-get install --no-install-recommends -y \\
+       gcc libc-dev make openjdk-17-jdk-headless \\
+  && true
+USER jetty
+EOF
+true \
+
+
+  && $SUDO podman run --rm -ti --name gugus poodoo-jni:0.0.0-SNAPSHOT tail -f /dev/null \
+
+
+  && tar --owner=0 --group=0 -c poodoo-src.tgz mdis-headers.tgz \
+     | ssh "${vm:?}" -T 'sudo podman exec -i gugus sh -c '\''true \
+         && cd /var/tmp \
+         && tar x \
+         && true'\''' \
+
+
+  && `# ssh "${vm:?}"` \
+  && `# sudo podman exec -ti gugus bash` \
+  && mkdir poodoo mdis \
+  && (cd poodoo && tar xf /var/tmp/poodoo-src.tgz) \
+  && (cd mdis && tar xf /var/tmp/mdis-headers.tgz) \
+
+
+  && wd=$PWD \
+  && (cd poodoo/poodoo-web/src/main/c \
+  && BUILD="${wd:?}"/build \
+  && CC=gcc \
+  && LD=gcc \
+  && CFLAGS="-Wall -O3 -fPIC -std=gnu99 -I${wd:?}/mdis/13MD05-90/13Z015-06/INCLUDE/COM -I${wd:?}/mdis/13MD05-90/MDISforLinux/INCLUDE/COM -I/usr/lib/jvm/java-1.17.0-openjdk-amd64/include -I/usr/lib/jvm/java-1.17.0-openjdk-amd64/include/linux" \
+  && LDFLAGS="-shared -lmscan_api -lmdis_api" \
+  && mkdir -p "${BUILD:?}" \
+  && ${CC:?} -c -o /tmp/ch_post_it_paisa_poodoo_jni_CanBus.o ${CFLAGS:?} ch_post_it_paisa_poodoo_jni_CanBus.c \
+  && ${LD:?} -o "${BUILD:?}"/lib_poodoo_canbus.so /tmp/ch_post_it_paisa_poodoo_jni_CanBus.o ${LDFLAGS:?} \
+  && true) \
+
+
