@@ -37,6 +37,7 @@ end
 function write_vars( dst )
     dst:write([=[
   && SUDO=sudo \
+  && PODMAN="sudo podman" \
   && poodooSrcWorktree=/home/${USER:?}/work/poodoo \
   && mdisSrcWorktree=./CopyPasta-headers \
   && baseImgTag=docker.tools.post.ch/paisa/alice:04.00.09.00 \
@@ -47,35 +48,42 @@ end
 
 
 function write_createDockerimage( dst )
-    dst:write("  && echo ")
-    dst:write(b64enc([=[
+    dst:write("  && echo ".. b64enc([=[
 FROM ${baseImgTag}
 USER root
 WORKDIR /work
-COPY CopyPasta-headers /work/CopyPasta-headers
+COPY CopyPasta-headers /opt/mdis-headers
 RUN true \
   && SUDO=sudo \
   && $SUDO apt-get install --no-install-recommends -y \
        gcc libc-dev make openjdk-17-jdk-headless \
-  && find -exec chown jetty:jetty {} + \
-  && find -type d -exec chmod 755 {} + \
-  && find -type f -exec chmod 644 {} + \
+  && mkdir /work/poodoo \
+  && find /work -exec chown jetty:jetty {} + \
+  && find /work -type d -exec chmod 755 {} + \
+  && find /work -type f -exec chmod 644 {} + \
   && true
 USER jetty
 ]=]).." \\\n")
     dst:write([=[
   | base64 -d \
   | sed -e 's,${baseImgTag},'"${baseImgTag:?}"',' \
-  | sudo podman build --file - emptyDir \
+  | ${PODMAN:?} build --tag "${imgTag:?}" --file - . \
 ]=])
 end
 
 
-function write_restartContainer( dst )
+function write_purgeContainer( dst )
     dst:write([=[
-  && $SUDO podman stop "${cntnrNm:?}" \
-  && $SUDO podman create --name '"${cntnrNm:?}"' '"${imgTag:?}"' tail -f /dev/null \
-  && $SUDO podman start '"${cntnrNm:?}"' \
+  && (${PODMAN:?} stop "${cntnrNm:?}" || true) \
+  && ${PODMAN:?} rm -f "${cntnrNm:?}" \
+]=])
+end
+
+
+function write_createAndStartContainer( dst )
+    dst:write([=[
+  && ${PODMAN:?} create --name "${cntnrNm:?}" "${imgTag:?}" sleep 43200 \
+  && ${PODMAN:?} start "${cntnrNm:?}" \
 ]=])
 end
 
@@ -84,10 +92,10 @@ function write_poodooCopy( dst )
     dst:write([=[
   && (wd=$PWD && cd "${poodooSrcWorktree:?}" \
     && tar --owner=0 --group=0 -cz poodoo-web/src/main/c \
-       | $SUDO podman exec -i "${cntnrNm:?}" 'true \
-          && cd "${podmanHost_wd:?}"/poodoo \
+       | ${PODMAN:?} exec -i "${cntnrNm:?}" sh -c 'true \
+          && cd /work/poodoo \
           && rm -rf $(ls -A) \
-          && tar x \
+          && tar xz \
           && true' \
   && true) \
 ]=])
@@ -96,16 +104,33 @@ end
 
 function write_poodooMake( dst )
     dst:write([=[
-  && (wd=$PWD && cd poodoo/poodoo-web/src/main/c \
-  && BUILD="${wd:?}"/build \
-  && CC=gcc \
-  && LD=gcc \
-  && CFLAGS="-Wall -O3 -fPIC -std=gnu99 -I${wd:?}/mdis/13MD05-90/13Z015-06/INCLUDE/COM -I${wd:?}/mdis/13MD05-90/MDISforLinux/INCLUDE/COM -I/usr/lib/jvm/java-1.17.0-openjdk-amd64/include -I/usr/lib/jvm/java-1.17.0-openjdk-amd64/include/linux" \
-  && LDFLAGS="-shared -lmscan_api -lmdis_api" \
-  && mkdir -p "${BUILD:?}" \
-  && ${CC:?} -c -o /tmp/ch_post_it_paisa_poodoo_jni_CanBus.o ${CFLAGS:?} ch_post_it_paisa_poodoo_jni_CanBus.c \
-  && ${LD:?} -o "${BUILD:?}"/lib_poodoo_canbus.so /tmp/ch_post_it_paisa_poodoo_jni_CanBus.o ${LDFLAGS:?} \
-  && true) \
+  && ${PODMAN:?} exec -i "${cntnrNm:?}" sh -c 'true \
+       && wd="${PWD:?}" \
+       && cd poodoo/poodoo-web/src/main/c \
+       && CC=gcc \
+       && LD=gcc \
+       && CFLAGS="-Wall -O1 -fPIC -std=gnu99]=])
+     dst:write([=[ -I/usr/lib/jvm/java-1.17.0-openjdk-amd64/include]=])
+     dst:write([=[ -I/usr/lib/jvm/java-1.17.0-openjdk-amd64/include/linux]=])
+     dst:write([=[ -I/opt/mdis-headers/13MD05-90/13Z015-06/INCLUDE/COM]=])
+     dst:write([=[ -I/opt/mdis-headers/13MD05-90/MDISforLinux/INCLUDE/COM]=])
+     dst:write([=[" \
+       && LDFLAGS="-shared -lmscan_api -lmdis_api" \
+       && mkdir -p "${wd:?}/build" \
+       && ${CC:?} -c -o /tmp/ch_post_it_paisa_poodoo_jni_CanBus.o ${CFLAGS:?} ch_post_it_paisa_poodoo_jni_CanBus.c \
+       && ${LD:?} -o "${wd:?}"/build/lib_poodoo_canbus.so /tmp/ch_post_it_paisa_poodoo_jni_CanBus.o ${LDFLAGS:?} \
+       && cd "${wd:?}" \
+       && true' \
+]=])
+end
+
+
+function write_cpyResultToHostFromContainer( dst )
+    dst:write([=[
+  && mkdir -p build \
+  && (cd build && rm -rf $(ls -A)) \
+  && ${PODMAN:?} exec -i "${cntnrNm:?}" sh -c 'cd build && tar c $(ls -A)' | (cd build && tar x) \
+  && echo && file build/* && echo \
 ]=])
 end
 
@@ -116,14 +141,13 @@ function main()
     dst:write("\ntrue `# configure ` \\\n")
     write_vars(dst)
     dst:write("\ntrue `# setup docker container` \\\n")
-    dst:write([=[
-  && mkdir -p mdis podman emptyDir \
-]=])
     write_createDockerimage(dst)
-    write_restartContainer(dst)
+    write_purgeContainer(dst)
+    write_createAndStartContainer(dst)
     dst:write("\ntrue `# build poodoo jni parts` \\\n")
     write_poodooCopy(dst)
     write_poodooMake(dst)
+    write_cpyResultToHostFromContainer(dst)
 end
 
 
