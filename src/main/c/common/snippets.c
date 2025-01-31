@@ -201,5 +201,15 @@ static int ensureBufCap(
     default                : assert(!"ERROR"             ); break;
     }
 #endif
+/* [source](https://git.hiddenalpha.ch/UnspecifiedGarbage.git/tree/src/main/c/common/snippets.c) */
+#if _WIN32
+    switch( WSACleanup() ){
+    case 0: break;
+    case WSANOTINITIALISED : assert(!"WSANOTINITIALISED" ); break;
+    case WSAENETDOWN       : assert(!"WSAENETDOWN"       ); break;
+    case WSAEINPROGRESS    : assert(!"WSAEINPROGRESS"    ); break;
+    default                : assert(!"ERROR"             ); break;
+    }
+#endif
 
 
