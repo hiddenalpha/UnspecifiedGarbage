@@ -1,0 +1,140 @@
+/***********************  I n c l u d e  -  F i l e  ************************
+ *
+ *         Name: 16z044_disp.h
+ *
+ *       Author: cs/kp
+ *
+ *  Description: Header file for duagon Z044_DISP graphics controller
+ *
+ *     Switches: -
+ *
+ *---------------------------------------------------------------------------
+ * Copyright 2005-2023, duagon
+ ******************************************************************************/
+/*
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#ifndef _Z044_DISP_H
+#define _Z044_DISP_H
+
+#ifdef __cplusplus
+	extern "C" {
+#endif
+
+/*--------------------------------------+
+|   DEFINES                             |
++--------------------------------------*/
+
+/* registers etc. */
+#define Z044_DISP_FBSTART			0x00		/**< framebuffer start */
+#define Z044_DISP_CTRL				0x00		/**< control register */
+#define Z044_DISP_FOFFS             0x04        /**< frame offset */
+#define Z044_LVDS_CTRL				0x08		/**< lvds control register */
+#define MEN_16Z044_FP_CTRL			0x0C		/**< flat panel register */
+#define MEN_16Z044_DISPLAY_RES			0x10		/**< display resolution register (only in 16Z044-03)*/
+#define MEN_16Z044_DISPLAY_TYP			0x14		/**< display type register (only in 16Z044-03)*/
+
+
+/* Z044_DISP_CTRL bit definitions */
+#define Z044_DISP_CTRL_CHANGE	0x80000000
+							/**< bit enabling change of this register */
+							/**< 0: disable that changes of register settings
+							 *      affect mode of display controller \n
+							 *   1: changes to register also change mode of
+							 *      display controller
+							 */
+#define Z044_DISP_CTRL_ONOFF	0x40000000
+							/**< bit setting power on/off status of display */
+							/**< 0: display (and controller) enabled \n
+							 *   1: display (and controller) disabled
+							 */
+#define Z044_DISP_CTRL_DEBUG	0x20000000
+							/**< bit setting debug mode of display controller*/
+							/**< 0: disable debug mode \n
+							 *   1: enable debug mode
+							 *      a colored rectangular the size of the
+							 *      actual resolution is drawn
+							 */
+#define Z044_DISP_CTRL_BYTESWAP	0x00000008 /**< perform FB byte swapping */
+#define Z044_DISP_CTRL_REFRESH	0x00000004
+							/**< bit setting refresh frequency of display */
+							/**< 0: 60 Hz \n
+							 *   1: 75 Hz
+							 */
+#define Z044_DISP_CTRL_RES_MASK	0x00000033
+							/**< mask for all bits setting the resolution */
+#define Z044_DISP_CTRL_RES_320X240		0x00000010
+							/**< setting VGA resolution (  320 x  240 ) */
+#define Z044_DISP_CTRL_RES_640X480		0x00000000
+							/**< setting VGA resolution (  640 x  480 ) */
+#define Z044_DISP_CTRL_RES_800X600		0x00000001
+							/**< setting VGA resolution (  800 x  600 ) */
+#define Z044_DISP_CTRL_RES_1024X768	0x00000002
+							/**< setting VGA resolution ( 1024 x  768 ) */
+#define Z044_DISP_CTRL_RES_1280X1024	0x00000003
+							/**< setting VGA resolution ( 1280 x 1024 ) */
+#define Z044_DISP_CTRL_RES_1280X800		0x00000011
+							/**< setting VGA resolution ( 1280 x 800 ) */
+
+#define Z044_DISP_RES_MASK			0x000000FF
+#define Z044_DISP_RES_320X240		4
+#define Z044_DISP_RES_640X480		0
+#define Z044_DISP_RES_800X600		1
+#define Z044_DISP_RES_1024X768		2
+#define Z044_DISP_RES_1280X1024		3
+#define Z044_DISP_RES_1280X800		5
+
+#define Z044_DISP_LVDS_MASK			0xF0000000
+#define Z044_DISP_LVDS				(1<<28)
+
+/* Z044_LVDS_CTRL bit definitions */
+#define Z044_LVDS_WIDTH_24_BIT	0x00000001
+							/**< Panel Type (determines number of used
+                             *   LVDS channels) */
+#define Z044_LVDS_HITACHI		0x00000002
+							/**< Panel Mode (used when WIDTH_24_BIT = 1) */
+#define Z044_LVDS_TWO_PORTS		0x00000004
+							/**< Select number of used FPD Link ports */
+#define Z044_LVDS_SEL_PORT		0x00000008
+							/**< Select FPD Link Port
+                             *   (used when TWO_PORTS = 0) */
+#define Z044_LVDS_INV_TX_CLK	0x00000010
+							/**< Invert TX_CLK (= LVDS pixel clock) */
+#define Z044_LVDS_DISABLE_LVDS	0x00000020
+							/**< Disable LVDS */
+#define Z044_LVDS_BOTH_PORTS	0x00000040
+							/**< enable one or both LVDS ports */
+
+/* Color mapping mask to get COLOR_MAPPING value with size 24 bits */
+#define COLOR_MAPPING_MASK	0x00FFFFFF
+
+/* Supported color mapping modes for 16Z044-03*/
+#define MEN_16Z044_MONOCROME			0
+#define MEN_16Z044_GRAYSCALE_4BPP		1
+#define MEN_16Z044_GRAYSCALE_4BIT_MSB_8BPP	2
+#define MEN_16Z044_GRAYSCALE_4BIT_LSB_8BPP	3
+#define MEN_16Z044_GRAYSCALE_8BPP		4
+#define MEN_16Z044_RGB_15BPP			5
+#define MEN_16Z044_RGB_16BPP			6
+#define MEN_16Z044_RGB_24BPP			7
+#define MEN_16Z044_RGBA_32BPP			8
+#define MEN_16Z044_ARGB_32BPP			9
+
+#ifdef __cplusplus
+	}
+#endif
+
+#endif	/* _Z044_DISP_H */
+

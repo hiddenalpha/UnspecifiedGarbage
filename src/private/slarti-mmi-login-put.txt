@@ -1,7 +1,7 @@
 
 
   && legicId=01392041 \
-  && host=eddieXXXXX \
+  && host=eddie00849 \
   && port=7012 \
   && path=/eagle/user/identification/v1/card \
   && curl -sSD- -X PUT "http://${host:?}:${port:?}${path:?}" \
