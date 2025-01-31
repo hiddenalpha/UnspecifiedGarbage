@@ -1,0 +1,5 @@
+# [origin](https://gitit.post.ch/projects/ISA/repos/isa-chromium/pull-requests/5/diff#sources.list)
+deb https://artifactory.tools.post.ch/artifactory/apt-debian-remote/ bullseye main
+deb https://artifactory.tools.post.ch/artifactory/apt-debian-remote/ bullseye-updates main
+deb https://artifactory.tools.post.ch/artifactory/apt-debian-remote/ bullseye-backports main
+deb https://artifactory.tools.post.ch/artifactory/apt-debian-security-remote/ bullseye-security main
