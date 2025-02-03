@@ -23,7 +23,7 @@ Beispiel 2 (Vannharl):
 | "000local-0000-0010-0010-000000000019"="v2.30|Action=Allow|Active=TRUE|Dir=Out|Protocol=17|Profile=Private|Profile=Public|LPort=67|RPort=68|Name=public_dhcpserver|Desc=public_dhcpserver: Erlaubt alle ausgehenden DHCP-Antworten an die IO-Boxen.-H_65143246207102249188115157124281886222713371|"
 +-----------------------------------------------------------------------
 
-Beispiel 3 (Lazlar, UNTESTED):
+Beispiel 3 (Lazlar):
 
 +-----------------------------------------------------------------------
 | Windows Registry Editor Version 5.00
@@ -45,7 +45,7 @@ SideNote:
 Mehrere Ports/Adressen kombinierbar mit | (pipe). Für Gegenrichtung, statt
 RPort und RA4, LPort und LA4 verwenden. 
 
-Nach reg-file import noch folgendes command:
+Nach reg-file import noch folgendes command (ALS ADMIN!) ausführen:
 
 +-----------------------------------------------------------------------
 | gpupdate /target:computer /force
