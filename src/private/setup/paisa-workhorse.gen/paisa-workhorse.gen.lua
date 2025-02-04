@@ -5,23 +5,23 @@
 
   Intended to be used with "http://devuan.org/".
 
+  lua -W "${pathToThisFile:?}" | dos2unix | ssh "${vm:?}" -t 'cat > /var/tmp/setup && sh /var/tmp/setup'
+
   [isa kube/config](https://gitit.post.ch/projects/ISA/repos/wsl-playbooks/raw/roles/isa/files/kube/config?at=refs%2Fheads%2Fmaster)
   [Some other kube/config](https://artifactory.tools.post.ch/artifactory/generic-kubernetes-local/EKS/Int/eks-int-m01cn0001/config)
 
   [How to run kubectl Commands in my Namespace](https://wikit.post.ch/x/kIeTZg)
 
-  TODO keep! Mit dem gehts! (vo mattiphil 2024-12-19:
+  KEEP! MIT DEM GEHTS! (vo mattiphil 2024-12-19:
   (https://artifactory.tools.post.ch/artifactory/generic-kubernetes-local/EKS/Int/eks-int-m15cn0001/config)
 
   [übersicht, namespaces, etc](https://deployment-eks-int-m15cn0001.eks.aws.pnetcloud.ch/applications?view=list&showFavorites=false&proj=&sync=&autoSync=&health=&namespace=&cluster=&labels=)
 
   ]===========================================================================]
 -- Customize your install here ------------------------------------------------
--- TODO Make sure to insert your roles, etc here BEFORE use.
 
--- UNUSED local awsNamespace = "_TODO_-snapshot"
-local yourPhysicalHostname = "${PUT_YOUR_HOSTS_NAME_HERE:?}" -- "w00o2z", "${PUT_YOUR_HOSTS_NAME_HERE:?}"
-local proxy_url = "http://10.0.2.2:${PUT_YOUR_PROXY_PORT_HERE:?}/"
+local yourPhysicalHostname = "w00o2z"
+local proxy_url = "http://10.0.2.2:3128/"
 local proxy_no  = "localhost,pnet.ch,post.ch,tools.post.ch,gitit.post.ch,pnetcloud.ch,eu-central-1.eks.amazonaws.com,"..assert(yourPhysicalHostname)
 
 -- Features
@@ -678,7 +678,7 @@ function main()
     dst:write([=[
   && printf 'export PATH="%s/.local/bin:$PATH"\n' ~ >> ~/.bashrc \
   && export PATH="/home/${USER?}/.local/bin:$PATH" \
-  && printf 'export MAVEN_OPTS="--add-opens jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED --add-opens jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED --add-opens jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED --add-opens jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED --add-opens jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.lang.reflect=ALL-UNNAMED --add-opens java.base/java.text=ALL-UNNAMED --add-opens java.desktop/java.awt.font=ALL-UNNAMED"' | $SUDO tee -a /etc/environment > /dev/null \
+  && printf 'export MAVEN_OPTS="--add-opens jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED --add-opens jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED --add-opens jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED --add-opens jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED --add-opens jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.lang.reflect=ALL-UNNAMED --add-opens java.base/java.text=ALL-UNNAMED --add-opens java.desktop/java.awt.font=ALL-UNNAMED"\n' | $SUDO tee -a /etc/environment > /dev/null \
 ]=])
     writeEmbeddedReadme(dst)
     dst:write("  && printf '\\n  DONE. Setup completed.\\n\\n' \\\n\n")
