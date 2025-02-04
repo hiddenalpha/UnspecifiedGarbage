@@ -20,8 +20,8 @@
 -- TODO Make sure to insert your roles, etc here BEFORE use.
 
 -- UNUSED local awsNamespace = "_TODO_-snapshot"
-local yourPhysicalHostname = "TODO_your_windoof_hostname" -- "w00o2z", "${PUT_YOUR_HOSTS_NAME_HERE:?}"
-local proxy_url = "http://10.0.2.2:3128/"
+local yourPhysicalHostname = "${PUT_YOUR_HOSTS_NAME_HERE:?}" -- "w00o2z", "${PUT_YOUR_HOSTS_NAME_HERE:?}"
+local proxy_url = "http://10.0.2.2:${PUT_YOUR_PROXY_PORT_HERE:?}/"
 local proxy_no  = "localhost,pnet.ch,post.ch,tools.post.ch,gitit.post.ch,pnetcloud.ch,eu-central-1.eks.amazonaws.com,"..assert(yourPhysicalHostname)
 
 -- Features
@@ -51,6 +51,7 @@ function wrap99( str )
     str = str
         :gsub("(...................................................................................................)", "%1\n")
         :gsub("\n$", "")
+    if str:byte(str:len()) ~= 0x10 then str = str.."\n" end
     return str
 end
 
@@ -86,7 +87,7 @@ function writeVariables( dst )
   && SUDO=']=].. cmdSudo ..[=[' \
   && ARCH=x86_64-linux-gnu \
   && fuckCerts=--insecure \
-  && proxy_url=']=].. proxy_url ..[=[' \
+  && proxy_url="]=].. proxy_url ..[=[" \
   && proxy_no="]=].. proxy_no ..[=[" \
   && cacheDir=']=].. cacheDir ..[=[' \
   && repoDir="${cacheDir:?}/repo" \
@@ -104,7 +105,7 @@ function writeVariables( dst )
 end
 
 
-function writeDloadIfMissingFunc( dst )
+function writeGenericShellFuncs( dst )
     dst:write([=[
   && dloadIfMissing () { true \
       && dst="${1:?}" \
@@ -126,6 +127,37 @@ function writeDloadIfMissingFunc( dst )
           && curl --insecure -Lo "${dst:?}" "${uri:?}" \
         ;fi \
   } \
+  && aptUpdateForce () { true \
+      && $SUDO apt update \
+      && touch "/tmp/w14AAE0xAACLfAAA" \
+    ;} \
+  && aptUpdateMaybe () { true \
+      && now="$(date +%s)" \
+      && old="$(date +%s -r "/tmp/w14AAE0xAACLfAAA" || echo 0)" \
+      && if test "$((now - old))" -gt "$((7*3600))" ;then true \
+          && aptUpdateForce \
+        ;else true \
+          && echo apt cache looks fresh enough \
+        ;fi \
+    ;} \
+  && nextFreeUserId () { true \
+      && i=1 \
+      && while true ;do true \
+          && exists="$(grep -E '^[^:]+:[^:]+:'"${i:?}"':' /etc/passwd || true)" \
+          && if test -z "${exists?}" ;then break ;fi \
+          && i="$((i + 1))" \
+        ;done \
+      && echo "${i:?}" \
+    ;} \
+  && nextFreeGroupId () { true \
+      && i=1 \
+      && while true ;do true \
+          && exists="$(grep -E '^[^:]+:[^:]+:'"${i:?}"':' /etc/group || true)" \
+          && if test -z "${exists?}" ;then break ;fi \
+          && i="$((i + 1))" \
+        ;done \
+      && echo "${i:?}" \
+    ;} \
 ]=])
 end
 
@@ -134,12 +166,12 @@ function writeProxySettings( dst )
     dst:write([=[
   && `# Proxy settings ` \
   && printf %s\\n \
-        "no_proxy=${proxy_no?}" \
-        "https_proxy=${proxy_url:?}" \
-        "http_proxy=${proxy_url:?}" \
-        "NO_PROXY=${proxy_no?}" \
-        "HTTPS_PROXY=${proxy_url:?}" \
-        "HTTP_PROXY=${proxy_url:?}" \
+        "export no_proxy=${proxy_no?}" \
+        "export https_proxy=${proxy_url:?}" \
+        "export http_proxy=${proxy_url:?}" \
+        "export NO_PROXY=${proxy_no?}" \
+        "export HTTPS_PROXY=${proxy_url:?}" \
+        "export HTTP_PROXY=${proxy_url:?}" \
      | $SUDO tee -a /etc/environment >/dev/null \
   && export "no_proxy=${proxy_no?}" \
   && export "https_proxy=${proxy_url:?}" \
@@ -191,7 +223,7 @@ function writePkgInstallation( dst )
     end
     dst:write([=[
   && `# Install packages ` \
-  && $SUDO apt update \
+  && aptUpdateMaybe \
   && $SUDO RUNLEVEL=1 apt install -y --no-install-recommends \
        ]=])
     local lineLen, pkgsList, alreadyAdded = 7, {}, {}
@@ -249,9 +281,16 @@ function writeRedisSetup( dst ) --{
     end
     dst:write([=[
   && `# Disable default redis-server ` \
-  && $SUDO service redis-server stop \
-  && $SUDO update-rc.d redis-server remove \
-  && $SUDO rm /etc/init.d/redis-server \
+  && ($SUDO service redis-server stop || true) \
+  && ($SUDO update-rc.d redis-server remove || true) \
+  && $SUDO mkdir -p /etc/redis \
+  && if test -z "$(grep -E '^redis:' /etc/passwd||true)" ;then true \
+      && `# Create redis user and group ` \
+      && rUid=$(nextFreeUserId) \
+      && rGid=$(nextFreeGroupId) \
+      && printf 'redis:x:%s:%s:::' "${rUid:?}" "${rGid:?}" | $SUDO tee -a /etc/passwd >/dev/null \
+      && printf 'redis:x:%s:' "${rGid:?}" | $SUDO tee -a /etc/group >/dev/null \
+    ;fi \
   && `# Create redis-houston.conf ` \
   && <<EOF base64 -d |
 ]=])
@@ -307,10 +346,11 @@ zset-max-ziplist-entries 128
 zset-max-ziplist-value 64
 shutdown-on-sigint "now force"
 shutdown-on-sigterm "now force"
-    ]=]), 79).."\n")
+    ]=])))
     dst:write([=[
 EOF
-  | $SUDO tee /etc/redis/redis-houston.conf >/dev/null \
+    $SUDO tee /etc/redis/redis-houston.conf >/dev/null \
+  && if test ! -s /etc/redis/redis-houston.conf ;then false ;fi \
   && `# Create redis-eagle.conf ` \
   && <<EOF base64 -d |
 ]=])
@@ -364,10 +404,11 @@ list-max-ziplist-entries 512
 list-max-ziplist-value 64
 zset-max-ziplist-entries 128
 zset-max-ziplist-value 64
-]=])).."\n")
+]=])))
     dst:write([=[
 EOF
-  | $SUDO tee /etc/redis/redis-eagle.conf >/dev/null &&
+    $SUDO tee /etc/redis/redis-eagle.conf >/dev/null \
+  && if test ! -s /etc/redis/redis-eagle.conf ;then false ;fi \
   && `# Create redis-volatile.conf ` \
   && <<EOF base64 -d |
 ]=])
@@ -410,10 +451,11 @@ list-max-ziplist-entries 512
 list-max-ziplist-value 64
 zset-max-ziplist-entries 128
 zset-max-ziplist-value 64
-]=])).."\n")
+]=])))
     dst:write([=[
 EOF
-  | $SUDO tee /etc/redis/redis-volatile.conf >/dev/null \
+    $SUDO tee /etc/redis/redis-volatile.conf >/dev/null \
+  && if test ! -s /etc/redis/redis-volatile.conf ;then false ;fi \
   && `# Configure logging ` \
   && <<EOF base64 -d | $SUDO tee /etc/logrotate.d/redis-houston >/dev/null &&
 ]=])
@@ -426,11 +468,11 @@ EOF
         notifempty
         delaycompress
 }
-]=])).."\n")
+]=])))
     dst:write([=[
 EOF
 true \
-  && <<EOF base64 -d|gzip -d|$SUDO tee /etc/logrotate.d/redis-eagle >/dev/null &&
+  && <<EOF base64 -d | $SUDO tee /etc/logrotate.d/redis-eagle >/dev/null &&
 ]=])
     dst:write(wrap99(b64enc([=[
 /var/log/redis/redis-eagle*.log {
@@ -441,11 +483,11 @@ true \
         notifempty
         delaycompress
 }
-]=])).."\n")
+]=])))
     dst:write([=[
 EOF
 true \
-  && <<EOF base64 -d|gzip -d|$SUDO tee /etc/logrotate.d/redis-volatile >/dev/null &&
+  && <<EOF base64 -d | $SUDO tee /etc/logrotate.d/redis-volatile >/dev/null &&
 ]=])
     dst:write(wrap99(b64enc([=[
 /var/log/redis/redis-volatile*.log {
@@ -456,7 +498,7 @@ true \
         notifempty
         delaycompress
 }
-]=])).."\n")
+]=])))
     dst:write([=[
 EOF
 true \
@@ -483,7 +525,7 @@ EOF
 true \
   && `# Tune file permissions, etc ` \
   && $SUDO chmod 755 /etc/init.d/redis-houston /etc/init.d/redis-eagle /etc/init.d/redis-volatile \
-  && $SUDO mkdir /var/lib/redis/houston /var/lib/redis/eagle /var/lib/redis/volatile \
+  && $SUDO mkdir -p /var/lib/redis/houston /var/lib/redis/eagle /var/lib/redis/volatile \
   && $SUDO chown redis:redis /var/lib/redis/houston /var/lib/redis/eagle /var/lib/redis/volatile \
 ]=])
     dst:write((redisHouston.enable)
@@ -498,18 +540,40 @@ true \
 end --}
 
 
+function writeAliases( dst ) --{
+    dst:write([=[
+  && <<EOF_lTMAAGs7AA | base64 -d >> "/home/${USER:?}/.bashrc" &&
+]=])
+    dst:write(wrap99(b64enc([=[
+alias     kubeprod='kubectl --context=eks-prod-m15cp0001 -n isa-houston-prod'
+alias  kubepreprod='kubectl --context=eks-prod-m15cp0001 -n isa-houston-preprod'
+alias      kubeint='kubectl --context=eks-int-m15cn0001  -n isa-houston-int'
+alias     kubetest='kubectl --context=eks-int-m15cn0001  -n isa-houston-test'
+alias kubesnapshot='kubectl --context=eks-int-m15cn0001  -n isa-houston-snapshot'
+]=])))
+    dst:write([=[
+EOF_lTMAAGs7AA
+true \
+]=])
+end --}
+
+
 function writeKubectlAptConfig( dst ) --{
     dst:write([=[
   && `# In "theory", kubectl (via kubernetes-client) would be available via` \
   && `# proper system packaging tools. But like most break-it-all-the-` \
   && `# time-bullshit-software, also kubectl needs to be workarounded...` \
+  && `# GRRRR... Fu** this shitty non-pkg managed shit software!` \
+  && aptUpdateMaybe && $SUDO apt install --no-install-recommends -y gpg \
+  && `# EndOf GRRRR` \
   && curl -fL ${fuckCerts?} https://pkgs.k8s.io/core:/stable:/v]=].. kubectlVersion ..[=[/deb/Release.key \
      | gpg --batch --dearmor | $SUDO tee /etc/apt/keyrings/kubernetes-apt-keyring.gpg >/dev/null \
+  && if test ! -s /etc/apt/keyrings/kubernetes-apt-keyring.gpg ;then echo ERR_hUAAAARMAADwAgAA && false ;fi \
   && $SUDO chmod 644 /etc/apt/keyrings/kubernetes-apt-keyring.gpg \
   && printf 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v]=].. kubectlVersion ..[=[/deb/ /\n' \
      | $SUDO tee /etc/apt/sources.list.d/kubernetes.list >/dev/null \
   && $SUDO chmod 644 /etc/apt/sources.list.d/kubernetes.list \
-  && `# apt update  needs to be executed for the above changes to take effect ` \
+  && aptUpdateForce \
 ]=])
 end --}
 
@@ -589,7 +653,7 @@ end
 
 
 function writeEmbeddedReadme( dst )
-    dst:write("  && <<EOF base64 -d | gzip -d | tee /home/${USER:?}/README.txt \\\n")
+    dst:write("  && <<EOF base64 -d | gzip -d | tee /home/${USER:?}/README.txt &&\n")
     fileAsB64Gz(__DIR__.."/inline-readme.txt", dst)
     dst:write("EOF\ntrue \\\n")
 end
@@ -597,9 +661,9 @@ end
 
 function main()
     local dst = io.stdout
-    dst:write("#!/bin/sh\nset -e \\\n")
+    dst:write("#!/bin/sh\nset -e\ntrue \\\n")
     writeVariables(dst)
-    writeDloadIfMissingFunc(dst)
+    writeGenericShellFuncs(dst)
     writeKnownHashes(dst)
     writeProxySettings(dst)
     writeAptConfigUglyWorkarounds(dst)
@@ -609,14 +673,15 @@ function main()
     writeAwsToolsInstallation(dst)
     writeHiddenalphaToolsInstallation(dst)
     writeRedisSetup(dst)
+    writeAliases(dst)
     --writeHostShareSetup(dst)
     dst:write([=[
   && printf 'export PATH="%s/.local/bin:$PATH"\n' ~ >> ~/.bashrc \
   && export PATH="/home/${USER?}/.local/bin:$PATH" \
-  && printf 'MAVEN_OPTS="--add-opens jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED --add-opens jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED --add-opens jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED --add-opens jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED --add-opens jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.lang.reflect=ALL-UNNAMED --add-opens java.base/java.text=ALL-UNNAMED --add-opens java.desktop/java.awt.font=ALL-UNNAMED"' | $SUDO tee -a /etc/environment > /dev/null \
+  && printf 'export MAVEN_OPTS="--add-opens jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED --add-opens jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED --add-opens jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED --add-opens jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED --add-opens jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.lang.reflect=ALL-UNNAMED --add-opens java.base/java.text=ALL-UNNAMED --add-opens java.desktop/java.awt.font=ALL-UNNAMED"' | $SUDO tee -a /etc/environment > /dev/null \
 ]=])
     writeEmbeddedReadme(dst)
-    dst:write("  && printf '\\n  DONE. Setup completed.\\n\\n' \\\n")
+    dst:write("  && printf '\\n  DONE. Setup completed.\\n\\n' \\\n\n")
 end
 
 
