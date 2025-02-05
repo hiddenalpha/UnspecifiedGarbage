@@ -2,7 +2,9 @@
 Kubectl usage
 =============
 
-HINT: See also "../aws/aws.txt".
+HINT: See also
+- "../aws/aws.txt"
+- "../../../src/private/kube/"
 
 Commands look the same as with openshift.
 
@@ -23,5 +25,10 @@ Commands look the same as with openshift.
   kubectl logs ${POD:?} --tail=42 -f
 
   kubectl logs ${POD:?} --since-time=2024-12-31T24:59:59Z --timestamps=true
+
+  && POD=houston-0 \
+  && LOGNAME=houston \
+  && STAGE=prod \
+  && kubectl logs ${POD:?} > ${LOGNAME:?}-${STAGE:?}-log-$(date -u +%Y%m%d-%H%M%S).stdout.log 2> ${LOGNAME:?}-${STAGE:?}-log-$(date -u +%Y%m%d-%H%M%S).stderr.log \
 
 

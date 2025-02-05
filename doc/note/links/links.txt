@@ -2,6 +2,10 @@
 Links (Aka argument amplifiers)
 ===============================
 
+## VI IS REQUIRED!
+
+[r u sure? no vi in containers?](https://jira.post.ch/browse/SDCISA-16752?focusedId=2163274&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-2163274)
+
 ## Pro DI over serviceLocator
 - "http://blog.ploeh.dk/2010/02/03/ServiceLocatorisanAnti-Pattern/"
 - "https://adamcod.es/2013/11/25/service-locator-vs-dependency-injection-container.html"
