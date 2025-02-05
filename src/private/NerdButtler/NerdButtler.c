@@ -6,23 +6,23 @@
   && BINEXT= \
   && LIBSPRE=lib \
   && LIBSEXT=.a \
-  && CFLAGS="-Wall -Werror -fmax-errors=1 -O1 -s -Isrc/private/AndysButtler -Iimport/include" \
+  && CFLAGS="-Wall -Werror -fmax-errors=1 -O1 -s -Isrc/private/NerdButtler -Iimport/include" \
   && LDFLAGS="-lgarbage -lpthread -Limport/lib" \
   \
-  && rm -rf "build/${ARCH:?}/bin/AndysButtler${BINEXT?}" \
-  && tar c src/private/AndysButtler \
+  && rm -rf "build/${ARCH:?}/bin/NerdButtler${BINEXT?}" \
+  && tar c src/private/NerdButtler \
      | ssh "${vm:?}" -T 'cd garb && rm -rf src && tar x' \
   && ssh "${vm:?}" -t 'cd garb \
      && mkdir -p build/'${ARCH:?}'/bin \
-     && '${CC:?}' -c -o /tmp/qujXMSXIeM06EKHj src/private/AndysButtler/AndysButtler.c '"${CFLAGS?} -DEXPOSE_AndysButtler_main=1"' \
-     && '${CC:?}' -o build/'${ARCH:?}'/bin/AndysButtler'${BINEXT?}' /tmp/qujXMSXIeM06EKHj '"${LDFLAGS?}"' \
+     && '${CC:?}' -c -o /tmp/qujXMSXIeM06EKHj src/private/NerdButtler/NerdButtler.c '"${CFLAGS?} -DEXPOSE_NerdButtler_main=1"' \
+     && '${CC:?}' -o build/'${ARCH:?}'/bin/NerdButtler'${BINEXT?}' /tmp/qujXMSXIeM06EKHj '"${LDFLAGS?}"' \
      && true' \
   && rm -rf "build/${ARCH:?}/bin/*" \
   && ssh "${vm:?}" -T 'cd garb && tar c build/'${ARCH:?}'/bin' | tar x \
 
 #endif
 
-#include <AndysButtler_Private.h>
+#include <NerdButtler_Private.h>
 
 #include <assert.h>
 #include <errno.h>
@@ -340,7 +340,7 @@ static int initApp( App*const app ){
 }
 
 
-int AndysButtler_main( int argc, char**argv ){
+int NerdButtler_main( int argc, char**argv ){
     REGISTER int err;
     App*const app = &(App){
         .mAGIC = App_mAGIC,
@@ -358,7 +358,7 @@ int AndysButtler_main( int argc, char**argv ){
 }
 
 
-#if EXPOSE_AndysButtler_main
-int main( int argc, char**argv ){ return AndysButtler_main(argc, argv); }
+#if EXPOSE_NerdButtler_main
+int main( int argc, char**argv ){ return NerdButtler_main(argc, argv); }
 #endif
 
