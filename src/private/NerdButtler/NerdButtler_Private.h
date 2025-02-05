@@ -18,13 +18,15 @@ extern "C" {
 #define STR_QUOT(S) STR_QUOT_(S)
 
 
-#define MALLOCATOR_REALLOC(A, B, C, D) (*A)->reallocBlocking(A, B, C, D)
+#define MALLOCATOR_REALLOC(A, B, C, D, E, F) (*A)->reallocBlocking(A, B, C, D, E, F)
+#define MALLOCATOR_REALLOCBLOCKING(A, B, C, D) (*A)->reallocBlocking(A, B, C, D)
 
 #define ENV_ENQUEBLOCKING(A, B, C) (*A)->enqueBlocking(A, B, C)
 
 #define THREADPOOL_START(A) (*A)->start(A)
 
 #define IOMULTIPLEXER_START(A) (*A)->start(A)
+#define IOMULTIPLEXER_READ(A, B, C, D, E, F, G) (*A)->read(A, B, C, D, E, F, G)
 
 #define HTTPSERVER_RUNUNTILPAUSE(A, B) (*A)->runUntilPause(A, B)
 #define HTTPSERVER_WAITUNTIL(A, B, C) (*A)->waitUntil(A, B, C)

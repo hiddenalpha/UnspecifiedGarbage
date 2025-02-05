@@ -6,7 +6,7 @@
   && BINEXT= \
   && LIBSPRE=lib \
   && LIBSEXT=.a \
-  && CFLAGS="-Wall -Werror -fmax-errors=1 -O1 -s -Isrc/private/NerdButtler -Iimport/include" \
+  && CFLAGS="-Wall -Werror -fmax-errors=1 -O1 -s -Isrc/private/NerdButtler -Iimport/include -DPROJECT_VERSION=$(date -u +0.0.0-%Y%m%d.%H%M%S)" \
   && LDFLAGS="-lgarbage -lpthread -Limport/lib" \
   \
   && rm -rf "build/${ARCH:?}/bin/NerdButtler${BINEXT?}" \
@@ -26,6 +26,7 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -34,9 +35,9 @@
 
 #include <Garbage_Bootstrap.h>
 
-#define FLG_isSrcClosed (1<<0)
-#define FLG_isRspInProgress (1<<1)
-
+#define FLG_isHelp (1<<0)
+#define FLG_isSrcClosed (1<<1)
+#define FLG_isRspInProgress (1<<2)
 
 typedef  struct App  App;
 typedef  struct HttpClient  HttpClient;
@@ -56,6 +57,7 @@ struct App {
     unsigned mAGIC;
     unsigned flg;
     int exitCode;
+    char *webroot;
     ptrdiff_t envMem[SIZEOF_struct_Garbage_Env/sizeof(ptrdiff_t)];
     struct Garbage_Env **env;
     struct Garbage_Mallocator **mallocator;
@@ -64,7 +66,7 @@ struct App {
     struct Garbage_SocketMgr **socketMgr;
     struct Garbage_ThreadPool **ioThreadPool;
     struct Garbage_IoMultiplexer **ioMultiplexer;
-    struct HttpReqHandler httpReqHandlers[2];
+    struct HttpReqHandler httpReqHandlers[3];
 };
 
 
@@ -80,6 +82,13 @@ struct HttpClient {
         int onHttpMessageEnd_state;
         int eno;
     };
+    struct/*webroot handler*/{
+        FILE *fh;
+        int webroot_state;
+        int webroot_eno;
+        char *webrootBuf;
+        int webrootBuf_cap, webrootBuf_len;
+    };
 };
 
 
@@ -94,6 +103,165 @@ TPL_assert_is(HttpReqHandler, obj->mAGIC == HttpReqHandler_mAGIC)
 
 
 static void noopVoid(){/*no-op*/}
+
+
+static void printHelp( char const*arg0 ){
+    printf("  \n"
+        "  %s  " STR_QUOT(PROJECT_VERSION) "\n"
+        "  \n"
+        "  Usage:\n"
+        "    %s  options...\n"
+        "  \n"
+        "  Options:\n"
+        "  \n"
+        "    --webroot <path>\n"
+        "        Path where to serve requests from, which do not match\n"
+        "        otherwise. Can be useful to serve static assets like a\n"
+        "        webapp.\n"
+        "  \n"
+        "  \n", strrchr(__FILE__,'/')+1, strrchr(arg0,'/')+1);
+}
+
+
+static int parseArgs( App*const app, int argc, char**argv ){
+    REGISTER int iA = 0;
+    app->webroot = NULL;
+nextArg:;
+    char *arg = argv[++iA];
+    if( !arg ){
+        goto verify;
+    }else if( !strcmp(arg,"--help") ){
+        app->flg |= FLG_isHelp; return 0;
+    }else if( !strcmp(arg,"--webroot") ){
+        app->webroot = argv[++iA];
+        /* normalize, that it ALWAYS ends with '/' */
+        int webroot_len = strlen(app->webroot);
+        if( app->webroot[webroot_len-1] != '/' ){
+            static char mem[PATH_MAX+1];
+            /*TODO err=*/snprintf(mem, sizeof mem, "%.*s/", webroot_len, app->webroot);
+            app->webroot = mem;
+        }
+    }else{
+        LOGE("EINVAL: %s\n", arg); return -1;
+    }
+    goto nextArg;
+verify:
+    if( argc <= 1 ){ LOGE("EINVAL: Too few args. Try --help\n"); return-1; }
+    if( !app->webroot ){ LOGW("[WARN ] No webroot given. UI won't be available.\n"); }
+    return 0;
+}
+
+
+static void HttpWebroot_continueServingOpenedFile( HttpClient* );
+static void f48amiHOXCmp8YpZu( int eno, void*httpClient_ ){
+    HttpClient*const httpClient = assert_is_HttpClient(httpClient_);
+    httpClient->webroot_eno = eno;
+    HttpWebroot_continueServingOpenedFile(httpClient_);
+}
+static void HttpWebroot_continueServingOpenedFile( HttpClient*httpClient ){
+    #define CORO_STATE (httpClient->webroot_state)
+    #define CORO_GOTO(S) do{CORO_STATE=S;goto S;}while(0)
+    REGISTER int err;
+    enum { begin=0, sM4psQzMaIHDCENAd, sibOSBcQKz0qxTlPs, sk9HYMmhgSBi1dWeK, endOfFile, };
+    switch( CORO_STATE ){case begin:{
+        struct Garbage_HttpMsg_Hdr hdrs[] = {{
+            .key = "Transfer-Encoding", .val = "chunked",
+            .key_len = 17, .val_len = 7,
+        }};
+        CORO_STATE = sM4psQzMaIHDCENAd;
+        HTTPCLIENT_SENDHTTPHDR(httpClient->handle, NULL, 200, NULL, hdrs, sizeof hdrs/sizeof*hdrs,
+            f48amiHOXCmp8YpZu, httpClient);
+        return;
+    }case sM4psQzMaIHDCENAd:sM4psQzMaIHDCENAd:{
+        if( httpClient->webroot_eno < 0 ){
+            LOGD("%s: %s:%d\n", strerrname(-httpClient->webroot_eno), __FILE__, __LINE__); abort();
+        }
+        #define BUF (httpClient->webrootBuf)
+        #define BUF_LEN (httpClient->webrootBuf_len)
+        #define BUF_CAP (httpClient->webrootBuf_cap)
+        if( BUF_CAP < 8192 ){
+            size_t const oldSz = BUF_CAP;
+            BUF_CAP = 8192;
+            void *tmp = MALLOCATOR_REALLOCBLOCKING(httpClient->app->mallocator,
+                BUF, oldSz*sizeof*BUF, BUF_CAP*sizeof*BUF);
+            if( !tmp ){ assert(!"TODO_IjPJwl8thttTS6ci"); }
+            BUF = tmp;
+        }
+        CORO_STATE = sibOSBcQKz0qxTlPs;
+        IOMULTIPLEXER_READ(httpClient->app->ioMultiplexer, BUF, 1, BUF_CAP, httpClient->fh,
+            f48amiHOXCmp8YpZu, httpClient);
+        return;
+    }case sibOSBcQKz0qxTlPs:{
+        if( httpClient->webroot_eno < 0 ){ /*ERROR*/
+            assert(!"TODO_Xme47BSVE4roVZlI");
+        }
+        if( httpClient->webroot_eno == 0){ /*EOF*/
+            CORO_STATE = endOfFile;
+            HTTPCLIENT_SENDBODY(httpClient->handle, NULL, 0, 4, f48amiHOXCmp8YpZu, httpClient);
+            return;
+        }
+        assert(httpClient->webroot_eno > 0);
+        BUF_LEN = httpClient->webroot_eno;
+        int const IS_LAST = 4;
+        CORO_STATE = sk9HYMmhgSBi1dWeK;
+        HTTPCLIENT_SENDBODY(httpClient->handle, BUF, BUF_LEN, 0, f48amiHOXCmp8YpZu, httpClient);
+        return;
+    }case sk9HYMmhgSBi1dWeK:{
+        if( httpClient->webroot_eno < 0 ){
+            LOGD("%s: %s:%d\n", strerrname(-httpClient->webroot_eno), __FILE__, __LINE__); abort();
+        }
+        assert(httpClient->webroot_eno == BUF_LEN);
+        /* loop back to read next chunk */
+        httpClient->webroot_eno = 0;
+        CORO_GOTO(sM4psQzMaIHDCENAd);
+    }case endOfFile:{
+        if( httpClient->webroot_eno < 0 ){
+            LOGE("%s: %s:%d\n", strerrname(-httpClient->webroot_eno), __FILE__, __LINE__); abort();
+        }
+        err = fclose(httpClient->fh);  httpClient->fh = NULL;
+        if( err ){
+            LOGD("%s: fclose(httpClient->fh) %s:%d\n", strerrname(errno), __FILE__, __LINE__);
+            /*continue anyway*/
+        }
+        HTTPCLIENT_RESUME(httpClient->handle);
+        return;
+        #undef BUF
+        #undef BUF_LEN
+        #undef BUF_CAP
+    }}
+    LOGD("assert(s != %d)  %s:%d\n", CORO_STATE, __FILE__, __LINE__); abort();
+    #undef CORO_STATE
+    #undef CORO_GOTO
+}
+
+
+static int HttpWebroot_onHttpRequestHeader( HttpClient*httpClient ){
+    #define REQHDR (&httpClient->stepCtx.reqHdr)
+    App*const app = assert_is_App(httpClient->app);
+    if( !app->webroot ) return -ENOTSUP; /*no dir given we could serve from*/
+    if( strncmp("GET", REQHDR->mthd, REQHDR->mthd_len) ) return -ENOTSUP;
+    assert(app->webroot[strlen(app->webroot)-1] == '/');
+    assert(REQHDR->path_len > 0);
+    char *path = REQHDR->path;
+    int path_len = REQHDR->path_len;
+    if( path[0] == '/' ){ path += 1; path_len -= 1; }
+    char pathAbs[PATH_MAX+1];
+    int const pathAbs_len = snprintf(pathAbs, sizeof pathAbs, "%s%.*s",
+        app->webroot, path_len, path);
+    /* TODO make async! */
+    assert(pathAbs[pathAbs_len] == '\0');
+    FILE *fh = fopen(pathAbs, "rb");
+    if( !fh ){ /*nothing we could serve*/
+        LOGD("ENOENT: %.*s\n", pathAbs_len, pathAbs);
+        return -ENOTSUP;
+    }
+    httpClient->fh = fh;
+    HTTPCLIENT_PAUSE(httpClient->handle); /*prevent problems with pipelining*/
+    assert(httpClient->webroot_state == 0);
+    HttpWebroot_continueServingOpenedFile(httpClient);
+    return 0;
+    #undef REQHDR
+}
 
 
 static void fmtCshCEVvN22FwbW( int eno, void*httpClient_ ){
@@ -257,7 +425,7 @@ static void continueOnHttpClient( void*httpClient_ ){
         HTTPCLIENT_SENDRAW(httpClient->handle, NULL, 0, SHUTDOWN, noopVoid, NULL);
         httpClient->mAGIC = 0;
         HTTPCLIENT_UNREF(httpClient->handle);
-        MALLOCATOR_REALLOC(httpClient->app->mallocator, httpClient, sizeof httpClient, 0);
+        MALLOCATOR_REALLOCBLOCKING(httpClient->app->mallocator, httpClient, sizeof httpClient, 0);
     }else{
         ENV_ENQUEBLOCKING(app->env, continueOnHttpClient, httpClient);
     }
@@ -271,7 +439,8 @@ continueServer:
     err = HTTPSERVER_RUNUNTILPAUSE(app->httpServer, &app->httpServerStepCtx);
     if( err == -EWOULDBLOCK ){ goto waitForServerEvents; }
     if( err == 1 ){
-        HttpClient*const httpClient = MALLOCATOR_REALLOC(app->mallocator, NULL, 0, sizeof*httpClient);
+        HttpClient*const httpClient = MALLOCATOR_REALLOCBLOCKING(
+            app->mallocator, NULL, 0, sizeof*httpClient);
         if( !httpClient ){ assert(!"TODO_tCoYwHTuw9ulzvyT"); }
         *httpClient = (HttpClient){
             .mAGIC = HttpClient_mAGIC,
@@ -345,11 +514,15 @@ int NerdButtler_main( int argc, char**argv ){
     App*const app = &(App){
         .mAGIC = App_mAGIC,
         .httpReqHandlers = {{
+            .onHttpRequestHeader = HttpWebroot_onHttpRequestHeader,
+        },{
             .onHttpRequestHeader = Http418_onHttpRequestHeader,
         },{
             .onHttpRequestHeader = NULL, /*end-marker*/
         }},
     };
+    if( parseArgs(app, argc, argv) ) return 1;
+    if( app->flg & FLG_isHelp ){ printHelp(argv[0]); return 0; }
     err = initApp(app);  assert(!err);
     (*app->env)->enqueBlocking(app->env, run, app);
     (*app->env)->runUntilDone(app->env);
