@@ -44,7 +44,7 @@ while true ;do
     echo FuckThisShit: $actual ; sleep .1
 done
 while true ;do
-    xrandr --output "${LG4K:?}" --mode 2560x1440 --rate 59.95 --pos 1200x350 --dpi 93 --rotate normal
+    xrandr --output "${LG4K:?}" --mode 2560x1440 --rate 59.95 --pos 1200x0 --dpi 93 --rotate normal
     isOk=true ; actual="$(xrandr | grep "${LG4K:?}")"
     if echo ${actual:?} | grep -q '2560' ;then true ;else isOk=false ;fi
     if echo ${actual:?} | grep -q '1200+350' ;then true ;else isOk=false ;fi

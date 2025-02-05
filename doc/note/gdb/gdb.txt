@@ -4,6 +4,13 @@
   x/3i $pc
 
 
+
+## Allow child to handle SIGPIPE itself
+
+(gdb) handle SIGPIPE nostop noprint
+
+
+
 ## Sources
 
 - [Print asm instructions](https://stackoverflow.com/a/59331366/4415884)
