@@ -140,24 +140,6 @@ function writeGenericShellFuncs( dst )
           && echo apt cache looks fresh enough \
         ;fi \
     ;} \
-  && nextFreeUserId () { true \
-      && i=1 \
-      && while true ;do true \
-          && exists="$(grep -E '^[^:]+:[^:]+:'"${i:?}"':' /etc/passwd || true)" \
-          && if test -z "${exists?}" ;then break ;fi \
-          && i="$((i + 1))" \
-        ;done \
-      && echo "${i:?}" \
-    ;} \
-  && nextFreeGroupId () { true \
-      && i=1 \
-      && while true ;do true \
-          && exists="$(grep -E '^[^:]+:[^:]+:'"${i:?}"':' /etc/group || true)" \
-          && if test -z "${exists?}" ;then break ;fi \
-          && i="$((i + 1))" \
-        ;done \
-      && echo "${i:?}" \
-    ;} \
 ]=])
 end
 
@@ -284,13 +266,6 @@ function writeRedisSetup( dst ) --{
   && ($SUDO service redis-server stop || true) \
   && ($SUDO update-rc.d redis-server remove || true) \
   && $SUDO mkdir -p /etc/redis \
-  && if test -z "$(grep -E '^redis:' /etc/passwd||true)" ;then true \
-      && `# Create redis user and group ` \
-      && rUid=$(nextFreeUserId) \
-      && rGid=$(nextFreeGroupId) \
-      && printf 'redis:x:%s:%s:::' "${rUid:?}" "${rGid:?}" | $SUDO tee -a /etc/passwd >/dev/null \
-      && printf 'redis:x:%s:' "${rGid:?}" | $SUDO tee -a /etc/group >/dev/null \
-    ;fi \
   && `# Create redis-houston.conf ` \
   && <<EOF base64 -d |
 ]=])
@@ -350,7 +325,7 @@ shutdown-on-sigterm "now force"
     dst:write([=[
 EOF
     $SUDO tee /etc/redis/redis-houston.conf >/dev/null \
-  && if test ! -s /etc/redis/redis-houston.conf ;then false ;fi \
+  && if $SUDO test ! -s /etc/redis/redis-houston.conf ;then false ;fi \
   && `# Create redis-eagle.conf ` \
   && <<EOF base64 -d |
 ]=])
@@ -408,7 +383,7 @@ zset-max-ziplist-value 64
     dst:write([=[
 EOF
     $SUDO tee /etc/redis/redis-eagle.conf >/dev/null \
-  && if test ! -s /etc/redis/redis-eagle.conf ;then false ;fi \
+  && if $SUDO test ! -s /etc/redis/redis-eagle.conf ;then false ;fi \
   && `# Create redis-volatile.conf ` \
   && <<EOF base64 -d |
 ]=])
@@ -455,7 +430,7 @@ zset-max-ziplist-value 64
     dst:write([=[
 EOF
     $SUDO tee /etc/redis/redis-volatile.conf >/dev/null \
-  && if test ! -s /etc/redis/redis-volatile.conf ;then false ;fi \
+  && if $SUDO test ! -s /etc/redis/redis-volatile.conf ;then false ;fi \
   && `# Configure logging ` \
   && <<EOF base64 -d | $SUDO tee /etc/logrotate.d/redis-houston >/dev/null &&
 ]=])
@@ -568,7 +543,7 @@ function writeKubectlAptConfig( dst ) --{
   && `# EndOf GRRRR` \
   && curl -fL ${fuckCerts?} https://pkgs.k8s.io/core:/stable:/v]=].. kubectlVersion ..[=[/deb/Release.key \
      | gpg --batch --dearmor | $SUDO tee /etc/apt/keyrings/kubernetes-apt-keyring.gpg >/dev/null \
-  && if test ! -s /etc/apt/keyrings/kubernetes-apt-keyring.gpg ;then echo ERR_hUAAAARMAADwAgAA && false ;fi \
+  && if $SUDO test ! -s /etc/apt/keyrings/kubernetes-apt-keyring.gpg ;then echo ERR_hUAAAARMAADwAgAA && false ;fi \
   && $SUDO chmod 644 /etc/apt/keyrings/kubernetes-apt-keyring.gpg \
   && printf 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v]=].. kubectlVersion ..[=[/deb/ /\n' \
      | $SUDO tee /etc/apt/sources.list.d/kubernetes.list >/dev/null \
