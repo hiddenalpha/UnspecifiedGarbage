@@ -41,9 +41,9 @@ HINT: In case of based images, need rebase afterwards because convert
 
 Normal systems:
   `# TODO try "fstrim -av" instead zero fill. `
-  dd if=/dev/zero of=/tmp/deleteme ; rm /tmp/deleteme && poweroff
+  `# HINT: Configure hostname and PS1 BEFOREHAND, also rm ~/.bash_history ~/.viminfo `
+  dd if=/dev/zero of=/tmp/deleteme ; rm /tmp/deleteme ; poweroff
   qemu-img convert -O qcow2 -S 1M input.qcow2 output.qcow2
-  qemu-img rebase -F qcow2 -b base.qcow2 output.qcow2
 
 Windoof:
   Win -> "Disk Cleanup" -> "Clean System (Admin)" -> "More" -> "Prog+Features" -> uninst bloat.

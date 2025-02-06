@@ -5,7 +5,7 @@
 
   Intended to be used with "http://devuan.org/".
 
-  lua -W "${pathToThisFile:?}" | dos2unix | ssh "${vm:?}" -t 'cat > /var/tmp/setup && sh /var/tmp/setup'
+  lua -W "${pathToThisFile:?}" | dos2unix | ssh "${vm:?}" -t 'cat > /var/tmp/setup && cp /var/tmp/setup /tmp/setup'
 
   [isa kube/config](https://gitit.post.ch/projects/ISA/repos/wsl-playbooks/raw/roles/isa/files/kube/config?at=refs%2Fheads%2Fmaster)
   [Some other kube/config](https://artifactory.tools.post.ch/artifactory/generic-kubernetes-local/EKS/Int/eks-int-m01cn0001/config)
@@ -217,7 +217,7 @@ function writePkgInstallation( dst )
         ["ncat"]=1, ["git"]=1, ["ca-certificates"]=1, ["tmux"]=1, ["awscli"]=1,
         ["openjdk-17-jdk-headless"]=1, ["maven"]=1, ["podman"]=1, ["bash-completion"]=1,
         ["lua5.4"]=1, ["trash-cli"]=1, }
-    if redisHouston.install or redisEagle.install or redisVolatile.install then
+    if redisHouston.setup or redisEagle.setup or redisVolatile.setup then
         pkgs["redis-server"] = 1
         pkgs["redis-tools"] = 1
     end
