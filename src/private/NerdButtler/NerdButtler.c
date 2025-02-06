@@ -86,6 +86,7 @@ struct HttpClient {
         FILE *fh;
         int webroot_state;
         int webroot_eno;
+        char const *webroot_mime, *webroot_chrst;
         char *webrootBuf;
         int webrootBuf_cap, webrootBuf_len;
     };
@@ -152,6 +153,23 @@ verify:
 }
 
 
+static void guessMimeByFileExt(
+    char const*path, int path_len, char const**mime, char const**charset
+){
+    char const *ext = path + path_len;
+    for(; ext -1 > path && ext[-1] != '.' ; --ext );
+    int const ext_len = path_len - (ext - path);
+    if( !strncasecmp("HTML", ext, ext_len) ){ *mime = "text/html";  *charset = "utf-8";  return; }
+    if( !strncasecmp("CSS", ext, ext_len) ){ *mime = "text/css";  *charset = "utf-8";  return; }
+    if( !strncasecmp("JS", ext, ext_len) ){
+        *mime = "application/javascript";  *charset = "utf-8";  return; }
+    if( !strncasecmp("JSON", ext, ext_len) ){
+        *mime = "application/json";  *charset = "utf-8";  return; }
+    LOGD("NoMimeFor: '%.*s'\n", path_len, path);
+    *mime = NULL;  *charset = NULL;
+}
+
+
 static void HttpWebroot_continueServingOpenedFile( HttpClient* );
 static void f48amiHOXCmp8YpZu( int eno, void*httpClient_ ){
     HttpClient*const httpClient = assert_is_HttpClient(httpClient_);
@@ -164,9 +182,25 @@ static void HttpWebroot_continueServingOpenedFile( HttpClient*httpClient ){
     REGISTER int err;
     enum { begin=0, sM4psQzMaIHDCENAd, sibOSBcQKz0qxTlPs, sk9HYMmhgSBi1dWeK, endOfFile, };
     switch( CORO_STATE ){case begin:{
+        char contentType[64];
+        int contentType_len;
+        if( httpClient->webroot_mime && httpClient->webroot_chrst ){
+            contentType_len = snprintf(contentType, sizeof contentType, "%s;charset=%s",
+                httpClient->webroot_mime, httpClient->webroot_chrst);
+        }else if( httpClient->webroot_mime ){
+            contentType_len = snprintf(contentType, sizeof contentType, "%s",
+                httpClient->webroot_mime);
+        }else{
+            contentType_len = 24;
+            memcpy(contentType, "application/octet-stream", contentType_len+1);
+        }
+        assert(contentType_len < sizeof contentType);
         struct Garbage_HttpMsg_Hdr hdrs[] = {{
             .key = "Transfer-Encoding", .val = "chunked",
             .key_len = 17, .val_len = 7,
+        },{
+            .key = "Content-Type", .val = contentType,
+            .key_len = 12, .val_len = contentType_len,
         }};
         CORO_STATE = sM4psQzMaIHDCENAd;
         HTTPCLIENT_SENDHTTPHDR(httpClient->handle, NULL, 200, NULL, hdrs, sizeof hdrs/sizeof*hdrs,
@@ -223,6 +257,8 @@ static void HttpWebroot_continueServingOpenedFile( HttpClient*httpClient ){
             LOGD("%s: fclose(httpClient->fh) %s:%d\n", strerrname(errno), __FILE__, __LINE__);
             /*continue anyway*/
         }
+        httpClient->flg &= ~FLG_isRspInProgress;
+        CORO_STATE = 0;
         HTTPCLIENT_RESUME(httpClient->handle);
         return;
         #undef BUF
@@ -237,6 +273,7 @@ static void HttpWebroot_continueServingOpenedFile( HttpClient*httpClient ){
 
 static int HttpWebroot_onHttpRequestHeader( HttpClient*httpClient ){
     #define REQHDR (&httpClient->stepCtx.reqHdr)
+    REGISTER int err;
     App*const app = assert_is_App(httpClient->app);
     if( !app->webroot ) return -ENOTSUP; /*no dir given we could serve from*/
     if( strncmp("GET", REQHDR->mthd, REQHDR->mthd_len) ) return -ENOTSUP;
@@ -245,6 +282,11 @@ static int HttpWebroot_onHttpRequestHeader( HttpClient*httpClient ){
     char *path = REQHDR->path;
     int path_len = REQHDR->path_len;
     if( path[0] == '/' ){ path += 1; path_len -= 1; }
+    /*cut-off query*/
+    for( err = 0 ; err < path_len ; ++err ){
+        if( path[err] == '?' ){ path_len = err; break; }
+    }
+    guessMimeByFileExt(path, path_len, &httpClient->webroot_mime, &httpClient->webroot_chrst);
     char pathAbs[PATH_MAX+1];
     int const pathAbs_len = snprintf(pathAbs, sizeof pathAbs, "%s%.*s",
         app->webroot, path_len, path);
