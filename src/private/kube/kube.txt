@@ -1,5 +1,15 @@
 
-  ## TCPdump
+
+## TCPdump setup
+
+- Goto "https://iamweb.pnet.ch/IdentityManager/page.axd?RuntimeFormID=64211fa0-af22-4166-b274-c53d970bf6b3&aeweb_handler=p&aeweb_rp=&wproj=0&MenuID=Portal_IAM_MyIdentity&ContextID=CCC_ITShop_ProductSelection"
+- Order role "APP_kubernetes-ephemeral-admin"
 
 
+
+
+
+## Refs
+
+- [tcpdump setup doc](https://wikit.post.ch/x/7KZNfw)
 

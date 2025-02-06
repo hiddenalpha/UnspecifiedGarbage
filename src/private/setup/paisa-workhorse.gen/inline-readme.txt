@@ -39,7 +39,7 @@
   ## Docker (local)
 
   sudo podman pull docker.tools.post.ch/paisa/r-service-base:03.06.49.00
-  sudo podman pull docker.tools.post.ch/paisa/r-service-base:04.00.09.00
+  sudo podman pull docker.tools.post.ch/paisa/alice:04.00.09.00
   sudo podman pull docker.tools.post.ch/library/amazonlinux:2023.6.20241121.0
 
 
@@ -60,6 +60,7 @@
   kubectl version   (WARN: server/client max 2 minor versions apart of each other!)
   kubectl config view
   kubectl config view | grep namespace
+  kubectl config get-contexts
   kubectl config use-context eks-int-m15cn0001
   kubectl config set-context $(kubectl config current-context) --namespace=TODO_replace_me
   kubectl get nodes,pods,service,configmaps,deployments,statefulset

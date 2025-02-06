@@ -25,6 +25,8 @@
   KEEP! MIT DEM GEHTS! (vo mattiphil 2024-12-19:
   (https://artifactory.tools.post.ch/artifactory/generic-kubernetes-local/EKS/Int/eks-int-m15cn0001/config)
 
+  TODO: lad kube prod cfg ou outomatisch via setup.
+
   [übersicht, namespaces, etc](https://deployment-eks-int-m15cn0001.eks.aws.pnetcloud.ch/applications?view=list&showFavorites=false&proj=&sync=&autoSync=&health=&namespace=&cluster=&labels=)
 
   ]===========================================================================]
@@ -45,8 +47,10 @@ local kubeloginVersion = "0.1.6"
 local argocdVersion = "2.11.7"
 local getaddrinfoVersion = "0.0.2"
 local cacheDir = "/var/tmp"
-local kubeConfigFile = "eks-int-m15cn0001"
-local kubeConfigUrl = "https://artifactory.tools.post.ch/artifactory/generic-kubernetes-local/EKS/Int/eks-int-m15cn0001/config"
+local kubeConfigFileInt = "eks-int-m15cn0001"
+local kubeConfigUrlInt = "https://artifactory.tools.post.ch/artifactory/generic-kubernetes-local/EKS/Int/eks-int-m15cn0001/config"
+local kubeConfigFileProd = "eks-prod-m15cp0001"
+local kubeConfigUrlProd = "https://artifactory.tools.post.ch/artifactory/generic-kubernetes-local/EKS/Prod/eks-prod-m15cp0001/config"
 local ceeMiscLibVersion = false -- "0.0.5-330-g2b037a5"
 
 -- EndOf Customization --------------------------------------------------------
@@ -104,8 +108,8 @@ function writeVariables( dst )
   && argocdVersion=]=].. argocdVersion ..[=[ \
   && getaddrinfoVersion=]=].. getaddrinfoVersion ..[=[ \
   && kubeloginVersion=]=].. kubeloginVersion ..[=[ \
-  && kubeConfigUrl=']=].. kubeConfigUrl ..[=[' \
-  && kubeConfigFile=']=].. kubeConfigFile ..[=[' \
+  && kubeConfigUrlInt=']=].. kubeConfigUrlInt ..[=[' \
+  && kubeConfigFileInt=']=].. kubeConfigFileInt ..[=[' \
 ]=])
     if ceeMiscLibVersion then dst:write([=[
   && ceeMiscLibVersion=]=].. (ceeMiscLibVersion or"") ..[=[ \
@@ -276,6 +280,7 @@ function writeRedisSetup( dst ) --{
   && `# Disable default redis-server ` \
   && ($SUDO service redis-server stop || true) \
   && ($SUDO update-rc.d redis-server remove || true) \
+  && $SUDO rm /etc/init.d/redis-server \
   && $SUDO mkdir -p /etc/redis \
   && `# Create redis-houston.conf ` \
   && <<EOF base64 -d |
@@ -534,6 +539,7 @@ function writeAliases( dst ) --{
 alias     kube-prod='kubectl --context=eks-prod-m15cp0001 -n isa-houston-prod'
 alias  kube-preprod='kubectl --context=eks-prod-m15cp0001 -n isa-houston-preprod'
 alias      kube-int='kubectl --context=eks-int-m15cn0001  -n isa-houston-int'
+alias     kube-test='kubectl --context=eks-int-m15cn0001  -n isa-houston-test'
 alias kube-snapshot='kubectl --context=eks-int-m15cn0001  -n isa-houston-snapshot'
 ]=])))
     dst:write([=[
@@ -591,15 +597,15 @@ function writeAwsToolsInstallation( dst )
   && ln -s /opt/kubelogin-"${kubeloginVersion:?}"/bin/kubelogin ~/.local/bin/. \
 ]=])dst:write--[[config]]([=[
   && mkdir "/home/${USER:?}/.kube" \
-  && printf %s\\n "Dload '${kubeConfigUrl:?}'" \
-  && rspCode=$(curl -sSL -o /home/${USER:?}/.kube/"${kubeConfigFile:?}" -w '%{http_code}\n' "${kubeConfigUrl:?}") \
+  && printf %s\\n "Dload '${kubeConfigUrlInt:?}'" \
+  && rspCode=$(curl -sSL -o /home/${USER:?}/.kube/"${kubeConfigFileInt:?}" -w '%{http_code}\n' "${kubeConfigUrlInt:?}") \
   && if test "${rspCode?}" -ne "200" ;then true \
       && printf "kube/config dload failed:\n%s\n" "${rspCode?}" && false \
     ;fi \
   && if test -e "/home/${USER:?}/.kube/config" ;then true \
       && mv /home/${USER:?}/.kube/config /home/${USER:?}/.kube/config-$(date +%s).old \
     ;fi \
-  && cp /home/${USER:?}/.kube/"${kubeConfigFile:?}" /home/${USER:?}/.kube/config \
+  && cp /home/${USER:?}/.kube/"${kubeConfigFileInt:?}" /home/${USER:?}/.kube/config \
 ]=])
 end
 
