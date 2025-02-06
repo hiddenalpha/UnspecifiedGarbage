@@ -5,7 +5,17 @@
 
   Intended to be used with "http://devuan.org/".
 
-  lua -W "${pathToThisFile:?}" | dos2unix | ssh "${vm:?}" -t 'cat > /var/tmp/setup && cp /var/tmp/setup /tmp/setup'
+  Steps:
+  - lua -W "${pathToThisFile:?}" | dos2unix | ssh "${vm:?}" -t 'cat > /var/tmp/setup && cp /var/tmp/setup /tmp/setup'
+  - adapt-n-run setup
+  - sudo vim /etc/hostname /etc/hosts
+  - set PS1
+  - fix proxyPort
+  - rm -rf ~/.bash_history ~/.viminfo
+  - zerofill, sparsify
+  - md5sum, tar, md5sum
+  - TEST
+  - compress
 
   [isa kube/config](https://gitit.post.ch/projects/ISA/repos/wsl-playbooks/raw/roles/isa/files/kube/config?at=refs%2Fheads%2Fmaster)
   [Some other kube/config](https://artifactory.tools.post.ch/artifactory/generic-kubernetes-local/EKS/Int/eks-int-m01cn0001/config)
@@ -25,8 +35,8 @@ local proxy_url = "http://10.0.2.2:3128/"
 local proxy_no  = "localhost,pnet.ch,post.ch,tools.post.ch,gitit.post.ch,pnetcloud.ch,eu-central-1.eks.amazonaws.com,"..assert(yourPhysicalHostname)
 
 -- Features
-local redisHouston  = { setup = true ,  enable = true ,  port = 6389, pass = "isarulez", }
-local redisEagle    = { setup = true ,  enable = true ,  port = 6399, pass = false, }
+local redisHouston  = { setup = true ,  enable = false,  port = 6389, pass = "isarulez", }
+local redisEagle    = { setup = true ,  enable = false,  port = 6399, pass = false, }
 local redisVolatile = { setup = true ,  enable = false,  port = 6379, pass = false, }
 
 local cmdSudo = "sudo"
@@ -203,6 +213,7 @@ function writePkgInstallation( dst )
         pkgs["redis-server"] = 1
         pkgs["redis-tools"] = 1
     end
+    if kubectlVersion then pkgs["kubectl"] = 1 end
     dst:write([=[
   && `# Install packages ` \
   && aptUpdateMaybe \
@@ -517,14 +528,13 @@ end --}
 
 function writeAliases( dst ) --{
     dst:write([=[
-  && <<EOF_lTMAAGs7AA | base64 -d >> "/home/${USER:?}/.bashrc" &&
+  && <<EOF_lTMAAGs7AA base64 -d >> "/home/${USER:?}/.bashrc" &&
 ]=])
     dst:write(wrap99(b64enc([=[
-alias     kubeprod='kubectl --context=eks-prod-m15cp0001 -n isa-houston-prod'
-alias  kubepreprod='kubectl --context=eks-prod-m15cp0001 -n isa-houston-preprod'
-alias      kubeint='kubectl --context=eks-int-m15cn0001  -n isa-houston-int'
-alias     kubetest='kubectl --context=eks-int-m15cn0001  -n isa-houston-test'
-alias kubesnapshot='kubectl --context=eks-int-m15cn0001  -n isa-houston-snapshot'
+alias     kube-prod='kubectl --context=eks-prod-m15cp0001 -n isa-houston-prod'
+alias  kube-preprod='kubectl --context=eks-prod-m15cp0001 -n isa-houston-preprod'
+alias      kube-int='kubectl --context=eks-int-m15cn0001  -n isa-houston-int'
+alias kube-snapshot='kubectl --context=eks-int-m15cn0001  -n isa-houston-snapshot'
 ]=])))
     dst:write([=[
 EOF_lTMAAGs7AA

@@ -33,6 +33,8 @@
 
 #define REGISTER
 #define LOGE(...) fprintf(stderr, __VA_ARGS__)
+#define LOGW(...) fprintf(stderr, __VA_ARGS__)
+#define LOGI(...) fprintf(stderr, __VA_ARGS__)
 #define LOGD(...) fprintf(stderr, __VA_ARGS__)
 #define LOGT(...) fprintf(stderr, __VA_ARGS__)
 
@@ -181,15 +183,44 @@ static int run( App*this ){
     *it++ = 0x00;  *it++ = 0x0C;
     int const msg_len = it - msg;
     assert(msg_len < msg_cap);
-    LOGD("[DEBUG] sendto() ...\n");
+    LOGI("Send mDNS-SD request ...\n");
     err = sendto(this->sock, msg, msg_len, MSG_NOSIGNAL, MCASTADDR, MCASTADDR_LEN); 
     if( err != msg_len ) assert(!"TODO_vRoAAPYqAAAzPAAA");
-    LOGD("[DEBUG] sendto() -> %d\n", err);
+    LOGI("mDNS-SD sent\n");
     /**/
     char recvBuf[1024];
     int const recvBuf_cap = sizeof recvBuf;
     PEERADDR_LEN = sizeof*PEERADDR_MEM;
-    LOGD("[DEBUG] recvfrom() ...\n");
+    int const maxRecvWaitSec = 17;
+    int const recvTimeoutSec = 3;
+    int totalWaitingSec = 0;
+    for(;;){
+        if( totalWaitingSec > maxRecvWaitSec ){
+            LOGE("Nothing received after waiting %d seconds. Giving up.\n",
+                totalWaitingSec);
+            return -1;
+        }
+        //LOGD("recvfrom() ...\n");
+        fd_set rdFds, exFds;
+        FD_ZERO(&rdFds);
+        FD_ZERO(&exFds);
+        FD_SET(this->sock, &rdFds);
+        FD_SET(this->sock, &exFds);
+        struct timeval timeout = { .tv_sec = recvTimeoutSec, .tv_usec = 0, };
+        err = select(this->sock + 1, &rdFds, NULL, &exFds, &timeout);
+        if( err == -1 ){
+            err = WSAGetLastError();
+            LOGE("mDNS: recv(): select(): %d (See https://learn.microsoft.com/en-us/windows/win32/winsock/windows-sockets-error-codes-2)\n", err);
+            return -1;
+        }
+        if( err == 0 ){ /*timeout*/
+            LOGI("No response ...\n");
+            totalWaitingSec += recvTimeoutSec;
+            continue;
+        }
+        assert(err > 0);
+        break;
+    }
     ssize_t const recvLen = recvfrom(
         this->sock, recvBuf, recvBuf_cap, 0, PEERADDR, &PEERADDR_LEN);
     if( recvLen == -1 ){
