@@ -4,3 +4,6 @@
 [submodule "src/private/aws-tcpdump-setup-20250207"]
 	path = src/private/aws-tcpdump-setup-20250207
 	url = ssh://pi-one.local/~/scm/notes/aws-tcpdump-setup-20250207.git
+[submodule "src/private/redis7-test-20250131"]
+	path = src/private/redis7-test-20250131
+	url = ssh://pi-one.local/~/scm/notes/redis7-test-20250131.git
