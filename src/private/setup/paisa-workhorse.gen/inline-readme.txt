@@ -67,6 +67,7 @@
   kubectl config use-context eks-int-m15cn0001
   kubectl config set-context $(kubectl config current-context) --namespace=TODO_replace_me
   kubectl get nodes,pods,service,configmaps,deployments,statefulset
+  kubectl describe configmaps ${SERVICE:?}-config
   kubectl get pods houston-42
   kubectl get statefulset houston-42 -o yaml
   kubectl exec -ti preflux-5d57f7dbcc-42w7m -- bash

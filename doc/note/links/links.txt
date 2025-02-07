@@ -254,6 +254,7 @@ Links (Aka argument amplifiers)
 
 
 ## Performance DOES matter
+- [Thought OOM auf int](https://jira.post.ch/browse/SDCISA-19003)
 - [Preflux OOM](https://gitit.post.ch/projects/ISA/repos/isa-k8s-deployment/pull-requests/1045)
 - [aws database HMS 2024](https://jira.post.ch/browse/SDCISA-16381)
 - [Performance gefühlt viel zu langsam in Wikkit bei Linienaufruf und Export erstellen](https://jira.post.ch/browse/SDCISA-16103)
