@@ -254,6 +254,7 @@ Links (Aka argument amplifiers)
 
 
 ## Performance DOES matter
+- [Preflux OOM](https://gitit.post.ch/projects/ISA/repos/isa-k8s-deployment/pull-requests/1045)
 - [aws database HMS 2024](https://jira.post.ch/browse/SDCISA-16381)
 - [Performance gefühlt viel zu langsam in Wikkit bei Linienaufruf und Export erstellen](https://jira.post.ch/browse/SDCISA-16103)
 - "https://github.com/swisspush/gateleen/pull/456#discussion_r844865066"
@@ -503,6 +504,7 @@ Links (Aka argument amplifiers)
 ## FileLogging is a MUST have (kibana is bullsh**)
 - [Ignore errors is funny](https://jira.post.ch/browse/SDCISA-18593)
 - [Andis WARNING](https://wikit.post.ch/x/m4Nreg)
+- [houston prod down wegen elk certs (singlePointOfFailure)](https://wikit.post.ch/x/KIHZg)
 - [example](https://jira.post.ch/browse/SDCISA-8382?focusedCommentId=1554435&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-1554435)
 - [example](https://jira.post.ch/browse/SDCISA-13655)
 - [example](https://teams.microsoft.com/l/message/19:meeting_NGYzYTY2NzktYTc2NS00OTBjLWFkMjAtMGFjZWQ5NDBhNzhj@thread.v2/1733820055846?context=%7B%22contextType%22%3A%22chat%22%7D)

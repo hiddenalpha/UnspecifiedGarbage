@@ -18,31 +18,16 @@
 
   ## redis 
 
-  `# show service status `
   sudo service --status-all 2>&1 | grep redis
-
-  `# stop houston redis `
   sudo service redis-houston stop
-
-  `# start houston redis `
   sudo service redis-houston start
-
-  `# Disable houston (aka make that it does NOT start on boot) `
   sudo update-rc.d redis-houston remove
-
-  `# Enable houston (aka make that it starts automatically on boot) `
   sudo update-rc.d redis-houston defaults
-
-  `# Show most recent logs `
   tail -n42 -F /var/log/redis/redis-houston.log
-
-  Not happy with how redis is configured? Just change it in their config files
-  and then restart affected redis.
 
   sudo nano /etc/redis/redis-eagle.conf
   sudo nano /etc/redis/redis-houston.conf
-
-  ## About Redis Volatile
+  sudo nano /etc/redis/redis-volatile.conf
 
   There is an additional redis 'redis-volatile' configured with persistence
   disabled. Can be handy for exmaple for integration tests which happily spam
@@ -53,7 +38,8 @@
 
   ## Docker (local)
 
-  sudo podman pull docker.tools.post.ch/paisa/r-service-base:03.06.42.00
+  sudo podman pull docker.tools.post.ch/paisa/r-service-base:03.06.49.00
+  sudo podman pull docker.tools.post.ch/paisa/alice:04.00.09.00
   sudo podman pull docker.tools.post.ch/library/amazonlinux:2023.6.20241121.0
 
 
@@ -74,6 +60,7 @@
   kubectl version   (WARN: server/client max 2 minor versions apart of each other!)
   kubectl config view
   kubectl config view | grep namespace
+  kubectl config get-contexts
   kubectl config use-context eks-int-m15cn0001
   kubectl config set-context $(kubectl config current-context) --namespace=TODO_replace_me
   kubectl get nodes,pods,service,configmaps,deployments,statefulset

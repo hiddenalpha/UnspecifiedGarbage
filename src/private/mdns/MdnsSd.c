@@ -13,7 +13,7 @@
   && OUT=build/bin/mdns${BINEXT?} \
   && rm -rf "${OUT:?}" \
   && mkdir -p "$(dirname "${OUT:?}")" \
-  && ${CC:?} -c -o /tmp/HlAAAIJ4AADgEwAA src/main/mdns/Mdns.c ${CFLAGS?} -DPROJECT_VERSION=${PROJECT_VERSION:?} \
+  && ${CC:?} -c -o /tmp/HlAAAIJ4AADgEwAA src/private/mdns/MdnsSd.c ${CFLAGS?} -DPROJECT_VERSION=${PROJECT_VERSION:?} \
   && ${LD:?} -o "${OUT:?}" /tmp/HlAAAIJ4AADgEwAA ${LDFLAGS?} \
   && bullshit=$(${OBJDUMP?} -p "${OUT:?}"|grep DLL\ Name|egrep -v '\'' (KERNEL32.dll|SHELL32.dll|WS2_32.dll|ADVAPI32.dll|msvcrt.dll)$'\''||true) \
   && if test -n "$bullshit"; then printf '\''\n  ERROR: Bullshit has sneaked in:\n\n%s\n\n'\'' "$bullshit"; rm "${OUT:?}"; false; fi \
@@ -33,7 +33,10 @@
 
 #define REGISTER
 #define LOGE(...) fprintf(stderr, __VA_ARGS__)
+#define LOGW(...) fprintf(stderr, __VA_ARGS__)
+#define LOGI(...) fprintf(stderr, __VA_ARGS__)
 #define LOGD(...) fprintf(stderr, __VA_ARGS__)
+#define LOGT(...) fprintf(stderr, __VA_ARGS__)
 
 #define FLG_isHelp (1<<0)
 
@@ -62,6 +65,7 @@ static inline void printHelp( void ){
 
 static inline int parseArgs( App*this, int argc, char**argv ){
     int iA = 0;
+    int isYolo = 0;
 nextArg:;
     char *arg = argv[++iA];
     if( !arg ){
@@ -69,12 +73,15 @@ nextArg:;
     }else if( !strcmp(arg, "--help") ){
         this->flg |= FLG_isHelp;
         return 0;
+    }else if( !strcmp(arg, "--yolo") ){
+        isYolo = 1;
     }else{
         LOGE("EINVAL: %s\n", arg);
         return -1;
     }
     goto nextArg;
 verify:
+    if( argc <= 1 && !isYolo ){ LOGE("EINVAL: Try --help\n"); return-1; }
     return 0;
 }
 
@@ -176,12 +183,44 @@ static int run( App*this ){
     *it++ = 0x00;  *it++ = 0x0C;
     int const msg_len = it - msg;
     assert(msg_len < msg_cap);
+    LOGI("Send mDNS-SD request ...\n");
     err = sendto(this->sock, msg, msg_len, MSG_NOSIGNAL, MCASTADDR, MCASTADDR_LEN); 
     if( err != msg_len ) assert(!"TODO_vRoAAPYqAAAzPAAA");
+    LOGI("mDNS-SD sent\n");
     /**/
     char recvBuf[1024];
     int const recvBuf_cap = sizeof recvBuf;
     PEERADDR_LEN = sizeof*PEERADDR_MEM;
+    int const maxRecvWaitSec = 17;
+    int const recvTimeoutSec = 3;
+    int totalWaitingSec = 0;
+    for(;;){
+        if( totalWaitingSec > maxRecvWaitSec ){
+            LOGE("Nothing received after waiting %d seconds. Giving up.\n",
+                totalWaitingSec);
+            return -1;
+        }
+        //LOGD("recvfrom() ...\n");
+        fd_set rdFds, exFds;
+        FD_ZERO(&rdFds);
+        FD_ZERO(&exFds);
+        FD_SET(this->sock, &rdFds);
+        FD_SET(this->sock, &exFds);
+        struct timeval timeout = { .tv_sec = recvTimeoutSec, .tv_usec = 0, };
+        err = select(this->sock + 1, &rdFds, NULL, &exFds, &timeout);
+        if( err == -1 ){
+            err = WSAGetLastError();
+            LOGE("mDNS: recv(): select(): %d (See https://learn.microsoft.com/en-us/windows/win32/winsock/windows-sockets-error-codes-2)\n", err);
+            return -1;
+        }
+        if( err == 0 ){ /*timeout*/
+            LOGI("No response ...\n");
+            totalWaitingSec += recvTimeoutSec;
+            continue;
+        }
+        assert(err > 0);
+        break;
+    }
     ssize_t const recvLen = recvfrom(
         this->sock, recvBuf, recvBuf_cap, 0, PEERADDR, &PEERADDR_LEN);
     if( recvLen == -1 ){
@@ -189,6 +228,7 @@ static int run( App*this ){
         LOGE("%s: recvfrom()\n", strerrname(err));
         assert(!"TODO_VgUAAEIEAADrAgAA");
     }
+    LOGD("[DEBUG] recvfrom() -> %lld\n", recvLen);
     assert(recvLen >= 0);
     LOGD("[DEBUG] recvLen := %lld\n", recvLen);
     /**/

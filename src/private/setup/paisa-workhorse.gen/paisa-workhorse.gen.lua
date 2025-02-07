@@ -5,28 +5,40 @@
 
   Intended to be used with "http://devuan.org/".
 
+  Steps:
+  - lua -W "${pathToThisFile:?}" | dos2unix | ssh "${vm:?}" -t 'cat > /var/tmp/setup && cp /var/tmp/setup /tmp/setup'
+  - adapt-n-run setup
+  - sudo vim /etc/hostname /etc/hosts
+  - set PS1
+  - fix proxyPort
+  - rm -rf ~/.bash_history ~/.viminfo
+  - zerofill, sparsify
+  - md5sum, tar, md5sum
+  - TEST
+  - compress
+
   [isa kube/config](https://gitit.post.ch/projects/ISA/repos/wsl-playbooks/raw/roles/isa/files/kube/config?at=refs%2Fheads%2Fmaster)
   [Some other kube/config](https://artifactory.tools.post.ch/artifactory/generic-kubernetes-local/EKS/Int/eks-int-m01cn0001/config)
 
   [How to run kubectl Commands in my Namespace](https://wikit.post.ch/x/kIeTZg)
 
-  TODO keep! Mit dem gehts! (vo mattiphil 2024-12-19:
+  KEEP! MIT DEM GEHTS! (vo mattiphil 2024-12-19:
   (https://artifactory.tools.post.ch/artifactory/generic-kubernetes-local/EKS/Int/eks-int-m15cn0001/config)
+
+  TODO: lad kube prod cfg ou outomatisch via setup.
 
   [übersicht, namespaces, etc](https://deployment-eks-int-m15cn0001.eks.aws.pnetcloud.ch/applications?view=list&showFavorites=false&proj=&sync=&autoSync=&health=&namespace=&cluster=&labels=)
 
   ]===========================================================================]
 -- Customize your install here ------------------------------------------------
--- TODO Make sure to insert your roles, etc here BEFORE use.
 
--- UNUSED local awsNamespace = "_TODO_-snapshot"
-local yourPhysicalHostname = "${PUT_YOUR_HOSTS_NAME_HERE:?}" -- "w00o2z", "${PUT_YOUR_HOSTS_NAME_HERE:?}"
-local proxy_url = "http://10.0.2.2:${PUT_YOUR_PROXY_PORT_HERE:?}/"
+local yourPhysicalHostname = "w00o2z"
+local proxy_url = "http://10.0.2.2:3128/"
 local proxy_no  = "localhost,pnet.ch,post.ch,tools.post.ch,gitit.post.ch,pnetcloud.ch,eu-central-1.eks.amazonaws.com,"..assert(yourPhysicalHostname)
 
 -- Features
-local redisHouston  = { setup = true ,  enable = true ,  port = 6389, pass = "isarulez", }
-local redisEagle    = { setup = true ,  enable = true ,  port = 6399, pass = false, }
+local redisHouston  = { setup = true ,  enable = false,  port = 6389, pass = "isarulez", }
+local redisEagle    = { setup = true ,  enable = false,  port = 6399, pass = false, }
 local redisVolatile = { setup = true ,  enable = false,  port = 6379, pass = false, }
 
 local cmdSudo = "sudo"
@@ -35,8 +47,10 @@ local kubeloginVersion = "0.1.6"
 local argocdVersion = "2.11.7"
 local getaddrinfoVersion = "0.0.2"
 local cacheDir = "/var/tmp"
-local kubeConfigFile = "eks-int-m15cn0001"
-local kubeConfigUrl = "https://artifactory.tools.post.ch/artifactory/generic-kubernetes-local/EKS/Int/eks-int-m15cn0001/config"
+local kubeConfigFileInt = "eks-int-m15cn0001"
+local kubeConfigUrlInt = "https://artifactory.tools.post.ch/artifactory/generic-kubernetes-local/EKS/Int/eks-int-m15cn0001/config"
+local kubeConfigFileProd = "eks-prod-m15cp0001"
+local kubeConfigUrlProd = "https://artifactory.tools.post.ch/artifactory/generic-kubernetes-local/EKS/Prod/eks-prod-m15cp0001/config"
 local ceeMiscLibVersion = false -- "0.0.5-330-g2b037a5"
 
 -- EndOf Customization --------------------------------------------------------
@@ -94,8 +108,8 @@ function writeVariables( dst )
   && argocdVersion=]=].. argocdVersion ..[=[ \
   && getaddrinfoVersion=]=].. getaddrinfoVersion ..[=[ \
   && kubeloginVersion=]=].. kubeloginVersion ..[=[ \
-  && kubeConfigUrl=']=].. kubeConfigUrl ..[=[' \
-  && kubeConfigFile=']=].. kubeConfigFile ..[=[' \
+  && kubeConfigUrlInt=']=].. kubeConfigUrlInt ..[=[' \
+  && kubeConfigFileInt=']=].. kubeConfigFileInt ..[=[' \
 ]=])
     if ceeMiscLibVersion then dst:write([=[
   && ceeMiscLibVersion=]=].. (ceeMiscLibVersion or"") ..[=[ \
@@ -139,24 +153,6 @@ function writeGenericShellFuncs( dst )
         ;else true \
           && echo apt cache looks fresh enough \
         ;fi \
-    ;} \
-  && nextFreeUserId () { true \
-      && i=1 \
-      && while true ;do true \
-          && exists="$(grep -E '^[^:]+:[^:]+:'"${i:?}"':' /etc/passwd || true)" \
-          && if test -z "${exists?}" ;then break ;fi \
-          && i="$((i + 1))" \
-        ;done \
-      && echo "${i:?}" \
-    ;} \
-  && nextFreeGroupId () { true \
-      && i=1 \
-      && while true ;do true \
-          && exists="$(grep -E '^[^:]+:[^:]+:'"${i:?}"':' /etc/group || true)" \
-          && if test -z "${exists?}" ;then break ;fi \
-          && i="$((i + 1))" \
-        ;done \
-      && echo "${i:?}" \
     ;} \
 ]=])
 end
@@ -217,10 +213,11 @@ function writePkgInstallation( dst )
         ["ncat"]=1, ["git"]=1, ["ca-certificates"]=1, ["tmux"]=1, ["awscli"]=1,
         ["openjdk-17-jdk-headless"]=1, ["maven"]=1, ["podman"]=1, ["bash-completion"]=1,
         ["lua5.4"]=1, ["trash-cli"]=1, }
-    if redisHouston.install or redisEagle.install or redisVolatile.install then
+    if redisHouston.setup or redisEagle.setup or redisVolatile.setup then
         pkgs["redis-server"] = 1
         pkgs["redis-tools"] = 1
     end
+    if kubectlVersion then pkgs["kubectl"] = 1 end
     dst:write([=[
   && `# Install packages ` \
   && aptUpdateMaybe \
@@ -283,14 +280,8 @@ function writeRedisSetup( dst ) --{
   && `# Disable default redis-server ` \
   && ($SUDO service redis-server stop || true) \
   && ($SUDO update-rc.d redis-server remove || true) \
+  && $SUDO rm /etc/init.d/redis-server \
   && $SUDO mkdir -p /etc/redis \
-  && if test -z "$(grep -E '^redis:' /etc/passwd||true)" ;then true \
-      && `# Create redis user and group ` \
-      && rUid=$(nextFreeUserId) \
-      && rGid=$(nextFreeGroupId) \
-      && printf 'redis:x:%s:%s:::' "${rUid:?}" "${rGid:?}" | $SUDO tee -a /etc/passwd >/dev/null \
-      && printf 'redis:x:%s:' "${rGid:?}" | $SUDO tee -a /etc/group >/dev/null \
-    ;fi \
   && `# Create redis-houston.conf ` \
   && <<EOF base64 -d |
 ]=])
@@ -350,7 +341,7 @@ shutdown-on-sigterm "now force"
     dst:write([=[
 EOF
     $SUDO tee /etc/redis/redis-houston.conf >/dev/null \
-  && if test ! -s /etc/redis/redis-houston.conf ;then false ;fi \
+  && if $SUDO test ! -s /etc/redis/redis-houston.conf ;then false ;fi \
   && `# Create redis-eagle.conf ` \
   && <<EOF base64 -d |
 ]=])
@@ -408,7 +399,7 @@ zset-max-ziplist-value 64
     dst:write([=[
 EOF
     $SUDO tee /etc/redis/redis-eagle.conf >/dev/null \
-  && if test ! -s /etc/redis/redis-eagle.conf ;then false ;fi \
+  && if $SUDO test ! -s /etc/redis/redis-eagle.conf ;then false ;fi \
   && `# Create redis-volatile.conf ` \
   && <<EOF base64 -d |
 ]=])
@@ -455,7 +446,7 @@ zset-max-ziplist-value 64
     dst:write([=[
 EOF
     $SUDO tee /etc/redis/redis-volatile.conf >/dev/null \
-  && if test ! -s /etc/redis/redis-volatile.conf ;then false ;fi \
+  && if $SUDO test ! -s /etc/redis/redis-volatile.conf ;then false ;fi \
   && `# Configure logging ` \
   && <<EOF base64 -d | $SUDO tee /etc/logrotate.d/redis-houston >/dev/null &&
 ]=])
@@ -542,14 +533,14 @@ end --}
 
 function writeAliases( dst ) --{
     dst:write([=[
-  && <<EOF_lTMAAGs7AA | base64 -d >> "/home/${USER:?}/.bashrc" &&
+  && <<EOF_lTMAAGs7AA base64 -d >> "/home/${USER:?}/.bashrc" &&
 ]=])
     dst:write(wrap99(b64enc([=[
-alias     kubeprod='kubectl --context=eks-prod-m15cp0001 -n isa-houston-prod'
-alias  kubepreprod='kubectl --context=eks-prod-m15cp0001 -n isa-houston-preprod'
-alias      kubeint='kubectl --context=eks-int-m15cn0001  -n isa-houston-int'
-alias     kubetest='kubectl --context=eks-int-m15cn0001  -n isa-houston-test'
-alias kubesnapshot='kubectl --context=eks-int-m15cn0001  -n isa-houston-snapshot'
+alias     kube-prod='kubectl --context=eks-prod-m15cp0001 -n isa-houston-prod'
+alias  kube-preprod='kubectl --context=eks-prod-m15cp0001 -n isa-houston-preprod'
+alias      kube-int='kubectl --context=eks-int-m15cn0001  -n isa-houston-int'
+alias     kube-test='kubectl --context=eks-int-m15cn0001  -n isa-houston-test'
+alias kube-snapshot='kubectl --context=eks-int-m15cn0001  -n isa-houston-snapshot'
 ]=])))
     dst:write([=[
 EOF_lTMAAGs7AA
@@ -568,7 +559,7 @@ function writeKubectlAptConfig( dst ) --{
   && `# EndOf GRRRR` \
   && curl -fL ${fuckCerts?} https://pkgs.k8s.io/core:/stable:/v]=].. kubectlVersion ..[=[/deb/Release.key \
      | gpg --batch --dearmor | $SUDO tee /etc/apt/keyrings/kubernetes-apt-keyring.gpg >/dev/null \
-  && if test ! -s /etc/apt/keyrings/kubernetes-apt-keyring.gpg ;then echo ERR_hUAAAARMAADwAgAA && false ;fi \
+  && if $SUDO test ! -s /etc/apt/keyrings/kubernetes-apt-keyring.gpg ;then echo ERR_hUAAAARMAADwAgAA && false ;fi \
   && $SUDO chmod 644 /etc/apt/keyrings/kubernetes-apt-keyring.gpg \
   && printf 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v]=].. kubectlVersion ..[=[/deb/ /\n' \
      | $SUDO tee /etc/apt/sources.list.d/kubernetes.list >/dev/null \
@@ -606,15 +597,15 @@ function writeAwsToolsInstallation( dst )
   && ln -s /opt/kubelogin-"${kubeloginVersion:?}"/bin/kubelogin ~/.local/bin/. \
 ]=])dst:write--[[config]]([=[
   && mkdir "/home/${USER:?}/.kube" \
-  && printf %s\\n "Dload '${kubeConfigUrl:?}'" \
-  && rspCode=$(curl -sSL -o /home/${USER:?}/.kube/"${kubeConfigFile:?}" -w '%{http_code}\n' "${kubeConfigUrl:?}") \
+  && printf %s\\n "Dload '${kubeConfigUrlInt:?}'" \
+  && rspCode=$(curl -sSL -o /home/${USER:?}/.kube/"${kubeConfigFileInt:?}" -w '%{http_code}\n' "${kubeConfigUrlInt:?}") \
   && if test "${rspCode?}" -ne "200" ;then true \
       && printf "kube/config dload failed:\n%s\n" "${rspCode?}" && false \
     ;fi \
   && if test -e "/home/${USER:?}/.kube/config" ;then true \
       && mv /home/${USER:?}/.kube/config /home/${USER:?}/.kube/config-$(date +%s).old \
     ;fi \
-  && cp /home/${USER:?}/.kube/"${kubeConfigFile:?}" /home/${USER:?}/.kube/config \
+  && cp /home/${USER:?}/.kube/"${kubeConfigFileInt:?}" /home/${USER:?}/.kube/config \
 ]=])
 end
 
@@ -678,7 +669,7 @@ function main()
     dst:write([=[
   && printf 'export PATH="%s/.local/bin:$PATH"\n' ~ >> ~/.bashrc \
   && export PATH="/home/${USER?}/.local/bin:$PATH" \
-  && printf 'export MAVEN_OPTS="--add-opens jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED --add-opens jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED --add-opens jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED --add-opens jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED --add-opens jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.lang.reflect=ALL-UNNAMED --add-opens java.base/java.text=ALL-UNNAMED --add-opens java.desktop/java.awt.font=ALL-UNNAMED"' | $SUDO tee -a /etc/environment > /dev/null \
+  && printf 'export MAVEN_OPTS="--add-opens jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED --add-opens jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED --add-opens jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED --add-opens jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED --add-opens jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.lang.reflect=ALL-UNNAMED --add-opens java.base/java.text=ALL-UNNAMED --add-opens java.desktop/java.awt.font=ALL-UNNAMED"\n' | $SUDO tee -a /etc/environment > /dev/null \
 ]=])
     writeEmbeddedReadme(dst)
     dst:write("  && printf '\\n  DONE. Setup completed.\\n\\n' \\\n\n")
