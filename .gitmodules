@@ -1,3 +1,6 @@
 [submodule "src/private/eddie-performance-20250207"]
 	path = src/private/eddie-performance-20250207
 	url = ssh://pi-one.local/~/scm/notes/eddie-performance-20250207.git
+[submodule "src/private/aws-tcpdump-setup-20250207"]
+	path = src/private/aws-tcpdump-setup-20250207
+	url = ssh://pi-one.local/~/scm/notes/aws-tcpdump-setup-20250207.git
