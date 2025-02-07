@@ -1,5 +1,6 @@
 #if 0
 
+  && outBinDir=build/${ARCH:?}/bin \
   && CC=gcc \
   && LD=gcc \
   && ARCH=x86_64-linux-gnu \
@@ -13,12 +14,12 @@
   && tar c src/private/NerdButtler \
      | ssh "${vm:?}" -T 'cd garb && rm -rf src && tar x' \
   && ssh "${vm:?}" -t 'cd garb \
-     && mkdir -p build/'${ARCH:?}'/bin \
-     && '${CC:?}' -c -o /tmp/qujXMSXIeM06EKHj src/private/NerdButtler/NerdButtler.c '"${CFLAGS?} -DEXPOSE_NerdButtler_main=1"' \
-     && '${CC:?}' -o build/'${ARCH:?}'/bin/NerdButtler'${BINEXT?}' /tmp/qujXMSXIeM06EKHj '"${LDFLAGS?}"' \
+     && mkdir -p build/'${ARCH:?}'/bin build/'${ARCH:?}'/obj \
+     && '${CC:?}' -c -o build/'${ARCH:?}'/obj/private/NerdButtler/NerdButtler.c src/private/NerdButtler/NerdButtler.c '"${CFLAGS?} -DEXPOSE_NerdButtler_main=1"' \
+     && '${LD:?}' -o build/'${ARCH:?}'/bin/NerdButtler'${BINEXT?}' build/'${ARCH:?}'/obj/private/NerdButtler/NerdButtler.c '"${LDFLAGS?}"' \
      && true' \
   && rm -rf "build/${ARCH:?}/bin/*" \
-  && ssh "${vm:?}" -T 'cd garb && tar c build/'${ARCH:?}'/bin' | tar x \
+  && ssh "${vm:?}" -T 'cd garb/build/'${ARCH:?}'/bin' | (cd "${outBinDir:?}" && tar x) \
 
 #endif
 
@@ -30,8 +31,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
+#if _WIN32
+#   include <winsock2.h>
+#   include <windows.h>
+#else
+#   include <sys/socket.h>
+#   include <arpa/inet.h>
+#endif
 
 #include <Garbage_Bootstrap.h>
 
@@ -194,7 +200,7 @@ static void HttpWebroot_continueServingOpenedFile( HttpClient*httpClient ){
             contentType_len = 24;
             memcpy(contentType, "application/octet-stream", contentType_len+1);
         }
-        assert(contentType_len < sizeof contentType);
+        assert(contentType_len < (int)sizeof contentType);
         struct Garbage_HttpMsg_Hdr hdrs[] = {{
             .key = "Transfer-Encoding", .val = "chunked",
             .key_len = 17, .val_len = 7,
