@@ -185,6 +185,13 @@ function writeProxySettings( dst )
 end
 
 
+function writeCgroupsMountHachForPodman( dst )
+    dst:write([=[
+  && printf 'none  /sys/fs/cgroup  cgroup2  nofail,user  0  0\n' | $SUDO tee -a /etc/fstab >/dev/null \
+]=])
+end
+
+
 function writeSwapSetup( dst )
     dst:write([=[
   && `# Add some swap ` \
@@ -660,6 +667,7 @@ function main()
     writeAptConfigUglyWorkarounds(dst)
     writeKubectlAptConfig(dst)
     writePkgInstallation(dst)
+    writeCgroupsMountHachForPodman(dst)
     writeSwapSetup(dst)
     writeAwsToolsInstallation(dst)
     writeHiddenalphaToolsInstallation(dst)

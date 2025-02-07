@@ -38,9 +38,12 @@
 
   ## Docker (local)
 
-  sudo podman pull docker.tools.post.ch/paisa/r-service-base:03.06.49.00
   sudo podman pull docker.tools.post.ch/paisa/alice:04.00.09.00
+  sudo podman pull docker.tools.post.ch/paisa/r-service-base:03.06.49.00
   sudo podman pull docker.tools.post.ch/library/amazonlinux:2023.6.20241121.0
+  sudo podman pull docker.tools.post.ch/library/alpine:3.21.2
+  sudo podman pull docker.tools.post.ch/library/busybox:1.37.0-musl
+  sudo podman pull docker.tools.post.ch/library/busybox:1.37.0-glibc
 
 
 
