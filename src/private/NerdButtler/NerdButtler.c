@@ -126,7 +126,7 @@ static void printHelp( char const*arg0 ){
         "        otherwise. Can be useful to serve static assets like a\n"
         "        webapp.\n"
         "  \n"
-        "  \n", strrchr(__FILE__,'/')+1, strrchr(arg0,'/')+1);
+        "  \n", strrchr(__FILE__,'/')+1, arg0);
 }
 
 
@@ -532,6 +532,7 @@ static int initApp( App*const app ){
     }); assert(app->ioThreadPool);
     app->ioMultiplexer = Garbage_newIoMultiplexer(app->env, &(struct Garbage_IoMultiplexer_Opts){
         .mallocator = app->mallocator,
+        .ioWorker = app->ioThreadPool,
     }); assert(app->ioMultiplexer);
     app->socketMgr = Garbage_newSocketMgr(app->env, &(struct Garbage_SocketMgr_Opts){
         .mallocator = app->mallocator,
@@ -580,6 +581,28 @@ int NerdButtler_main( int argc, char**argv ){
 
 
 #if EXPOSE_NerdButtler_main
-int main( int argc, char**argv ){ return NerdButtler_main(argc, argv); }
+int main( int argc, char**argv ){
+#if _WIN32 /* [source](https://git.hiddenalpha.ch/UnspecifiedGarbage.git/tree/src/main/c/common/snippets.c) */
+    switch( WSAStartup(1, &(WSADATA){0}) ){
+    case 0: break;
+    case WSASYSNOTREADY    : assert(!"WSASYSNOTREADY"    ); break;
+    case WSAVERNOTSUPPORTED: assert(!"WSAVERNOTSUPPORTED"); break;
+    case WSAEINPROGRESS    : assert(!"WSAEINPROGRESS"    ); break;
+    case WSAEPROCLIM       : assert(!"WSAEPROCLIM"       ); break;
+    case WSAEFAULT         : assert(!"WSAEFAULT"         ); break;
+    default                : assert(!"ERROR"             ); break;
+    }
+#endif
+    return NerdButtler_main(argc, argv);
+#if _WIN32 /* [source](https://git.hiddenalpha.ch/UnspecifiedGarbage.git/tree/src/main/c/common/snippets.c) */
+    switch( WSACleanup() ){
+    case 0: break;
+    case WSANOTINITIALISED : assert(!"WSANOTINITIALISED" ); break;
+    case WSAENETDOWN       : assert(!"WSAENETDOWN"       ); break;
+    case WSAEINPROGRESS    : assert(!"WSAEINPROGRESS"    ); break;
+    default                : assert(!"ERROR"             ); break;
+    }
+#endif
+}
 #endif
 
