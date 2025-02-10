@@ -54,6 +54,11 @@ struct Cls4B5C0000/*HttpJenkinsStatus*/{
     unsigned mAGIC;
     int coroState;
     HttpClient *httpClient;
+    int eno;
+    char *buf;
+    int buf_len;
+    char buildResult[16];
+    int buildResult_len;
 };
 
 
@@ -63,7 +68,9 @@ struct ClsE8750000/*getJenkinsBuildStatus*/{
     int eno, childExit, childSig;
     App *app;
     struct Garbage_Process **child;
-    char flip[8192], flop[8192];
+    void (*onDone)(char*,int,void*);
+    void *onDoneArg;
+    char flip[65536], flop[65536];
     int flip_len, flop_len;
 };
 
@@ -225,7 +232,9 @@ static void appendToFlip( const char*buf, int buf_len, void*cls_ ){
     #define BUF_LEN (cls->flip_len)
     struct ClsE8750000*const cls = cls_; assert(cls->mAGIC == 0xE8750000);
     if( buf_len > 0 ){
-        assert(BUF_CAP > BUF_LEN + buf_len);
+        if( BUF_CAP <= BUF_LEN + buf_len ){
+            LOGD("assert(%d > %d) %s:%d\n", BUF_CAP, BUF_LEN + buf_len, __FILE__, __LINE__); abort();
+        }
         memcpy(BUF + BUF_LEN, buf, buf_len);
         BUF_LEN += buf_len;
     }
@@ -241,7 +250,9 @@ static void appendToFlop( const char*buf, int buf_len, void*cls_ ){
     #define BUF_LEN (cls->flop_len)
     struct ClsE8750000*const cls = cls_; assert(cls->mAGIC == 0xE8750000);
     if( buf_len > 0 ){
-        assert(BUF_CAP > BUF_LEN + buf_len);
+        if( BUF_CAP <= BUF_LEN + buf_len ){
+            LOGD("assert(%d > %d) %s:%d\n", BUF_CAP, BUF_LEN + buf_len, __FILE__, __LINE__); abort();
+        }
         memcpy(BUF + BUF_LEN, buf, buf_len);
         BUF_LEN += buf_len;
     }
@@ -273,7 +284,8 @@ static void getJenkinsBuildStatus_kontinue( void*cls_ ){
     char const *svcName = "preflux";
     char const *prName = "PR-893";
     #define CORO_STATE (cls->coroState)
-    enum { begin=0, srx8AAH84AAD8LwAA, skE4AAIxKAADyQAAA, sAT4AADZCAAAiTgAA, };
+    enum { begin=0, srx8AAH84AAD8LwAA, skE4AAIxKAADyQAAA, sAT4AADZCAAAiTgAA, sQk0AAENdAADiPQAA,
+        sPkIAAIhbAACrDQAA, suhoAACw0AAAXMwAA, };
     switch( CORO_STATE ){case begin:{
     }/* need to get the job number bcause 'latest' is not valid :( */{
         char url[512];
@@ -323,16 +335,19 @@ static void getJenkinsBuildStatus_kontinue( void*cls_ ){
         (*cls->child)->closeSnk(cls->child);
         (*cls->child)->join(cls->child, 2000);
         return;
-        #undef BUF
-        #undef BUF_LEN
     }case sAT4AADZCAAAiTgAA:{
-        #define BUF (cls->flop)
-        #define BUF_LEN (cls->flop_len)
         if( cls->eno || cls->childExit || cls->childSig ){
+            if( cls->childExit == 4 ){ /*jq parsing error (likely auth issue with curl?)*/
+                LOGD("\n[DEBUG] Input was:\n%.*s\n", MIN(BUF_LEN, 2048), BUF); abort();
+            }
             LOGD("assert(!%d && !%d && !%d) %s:%d\n",
                 cls->eno, cls->childExit, cls->childSig, __FILE__, __LINE__);
             abort();
         }
+        #undef BUF
+        #undef BUF_LEN
+        #define BUF (cls->flop)
+        #define BUF_LEN (cls->flop_len)
         if( BUF_LEN <= 0 || BUF_LEN > 5 ){
             LOGD("assert(!%d) %s:%d\n", BUF_LEN, __FILE__, __LINE__); abort();
         }
@@ -345,24 +360,87 @@ static void getJenkinsBuildStatus_kontinue( void*cls_ ){
         LOGD("buildNr := %d\n", buildNr);
         #undef BUF
         #undef BUF_LEN
-
-#if 0
-Steps to get build status:
-- svcName := "preflux"
-- buildName := "PR-893"
-- rsp := GET "https://jenkinspaisa-temp.tools.pnet.ch/job/${svcName}/job/${buildName}/api/json"
-- jobNr := rsp.lastBuild.number
-- "https://jenkinspaisa-temp.tools.pnet.ch/job/${svcName}/job/${buildName}/${jobNr}/api/json"
-#endif
-        assert(!"TODO_WEQAAGIRAADBaAAA");
-
+        char url[512];
+        err = snprintf(url, sizeof url, "https://%s/job/%s/job/%s/%d/api/json",
+            host, svcName, prName, buildNr);
+        assert(err < (signed)sizeof url);
+        char cookieHdr[768];
+        err = snprintf(cookieHdr, sizeof cookieHdr, "Cookie: %s", app->jenkinsCookie);
+        assert(err < (signed)sizeof url);
+        if( cls->child ){ (*cls->child)->unref(cls->child); }
+        cls->flip_len = 0;
+        CORO_STATE = sQk0AAENdAADiPQAA;
+        cls->child = (*app->processFactory)->newProcess(
+            app->processFactory, &(struct Garbage_Process_Mentor){
+                .cls = cls,
+                .usePathSearch = 1,
+                .argv = (char*[]){"curl", "-sS", "-H", cookieHdr, url, NULL},
+                .onStdout = appendToFlip,
+                .onJoined = fIxIAALgAAA0SwAAa,
+            });
+        (*cls->child)->closeSnk(cls->child);
+        (*cls->child)->join(cls->child, 5000);
+        return;
+    }case sQk0AAENdAADiPQAA:{
+        if( cls->eno || cls->childExit || cls->childSig ){
+            LOGD("assert(!%d && !%d && !%d) %s:%d\n",
+                cls->eno, cls->childExit, cls->childSig, __FILE__, __LINE__);
+            abort();
+        }
+        if( cls->child ){ (*cls->child)->unref(cls->child); }
+        cls->flop_len = 0;
+        CORO_STATE = sPkIAAIhbAACrDQAA;
+        cls->child = (*app->processFactory)->newProcess(
+            app->processFactory, &(struct Garbage_Process_Mentor){
+                .cls = cls,
+                .usePathSearch = 1,
+                .argv = (char*[]){"jq", ".result", NULL},
+                .onStdout = appendToFlop,
+                .onJoined = fIxIAALgAAA0SwAAa,
+            });
+        #define BUF (cls->flip)
+        #define BUF_LEN (cls->flip_len)
+        (*cls->child)->write(cls->child, BUF, BUF_LEN, fs3gAADBZAADUNgAA, cls);
+        return;
+    }case sPkIAAIhbAACrDQAA:{
+        if( cls->eno != BUF_LEN ){
+            LOGD("assert(!%d) %s:%d\n", cls->eno, __FILE__, __LINE__); abort(); }
+        CORO_STATE = suhoAACw0AAAXMwAA;
+        (*cls->child)->closeSnk(cls->child);
+        (*cls->child)->join(cls->child, 2000);
+        return;
+        #undef BUF
+        #undef BUF_LEN
+    }case suhoAACw0AAAXMwAA:{
+        #define BUF (cls->flop)
+        #define BUF_LEN (cls->flop_len)
+        if( cls->eno || cls->childExit || cls->childSig ){
+            LOGD("assert(!%d && !%d && !%d) %s:%d\n",
+                cls->eno, cls->childExit, cls->childSig, __FILE__, __LINE__);
+            abort();
+        }
+        if( BUF_LEN <= 0 || BUF_LEN > 32 ){
+            LOGD("assert(!%d) %s:%d\n", BUF_LEN, __FILE__, __LINE__); abort();
+        }
+        BUF[BUF_LEN] = '\0';
+        int beg = 0, end = BUF_LEN;
+        if( BUF_LEN >= 2 && BUF[0] == '"' ){
+            beg += 1;
+            for( end = beg + 1 ; end < BUF_LEN ; ++end ){ if( BUF[end] == '"' ) break; }
+        }
+        cls->onDone(BUF + beg, end - beg, cls->onDoneArg);
+        cls->mAGIC = 0;
         MALLOCATOR_REALLOCBLOCKING(app->mallocator, cls, sizeof*cls, 0);
+        return;
+        #undef BUF
+        #undef BUF_LEN
     }}
     LOGD("assert(s != %d) %s:%d\n", CORO_STATE, __FILE__, __LINE__); abort();
     #undef CORO_STATE
 }
 
-static void getJenkinsBuildStatus( void*cls_ ){
+static void getJenkinsBuildStatus( void*cls_, void(*onDone)(char*,int,void*), void*onDoneArg ){
+    assert(onDone);
     App*const app = assert_is_App(cls_);
     struct ClsE8750000 *cls;
     cls = MALLOCATOR_REALLOCBLOCKING(app->mallocator, NULL, 0, sizeof*cls);
@@ -370,6 +448,8 @@ static void getJenkinsBuildStatus( void*cls_ ){
     *cls = (struct ClsE8750000){
         .mAGIC = 0xE8750000,
         .app = app,
+        .onDone = onDone,
+        .onDoneArg = onDoneArg,
     };
     getJenkinsBuildStatus_kontinue(cls);
 }
@@ -477,21 +557,58 @@ static void HttpWebroot_continueServingOpenedFile( HttpClient*httpClient ){
 }
 
 
+
+static void HttpJenkinsStatus_kontinue( void* );
+static void fzAEAAHdDAABNcQAA( char*buf, int buf_len, void*cls_ ){
+    struct Cls4B5C0000*const cls = cls_; assert(cls->mAGIC == 0x4B5C0000);
+    cls->buf = buf;
+    cls->buf_len = buf_len;
+    HttpJenkinsStatus_kontinue(cls);
+}
+static void fFyoAANUaAADfcQAA( int eno, void*cls_ ){
+    struct Cls4B5C0000*const cls = cls_; assert(cls->mAGIC == 0x4B5C0000);
+    cls->eno = eno;
+    HttpJenkinsStatus_kontinue(cls);
+}
 static void HttpJenkinsStatus_kontinue( void*cls_ ){
+    REGISTER int err;
     struct Cls4B5C0000*const cls = cls_; assert(cls->mAGIC == 0x4B5C0000);
     App*const app = assert_is_App(cls->httpClient->app);
     #define CORO_STATE (cls->coroState)
-    enum { begin=0 };
+    enum { begin=0, stzUAAAlnAAC3GwAA, sllEAANEYAADVagAA, slVIAAOBaAABAWQAA, };
     switch( CORO_STATE ){case begin:{
-        getJenkinsBuildStatus(app);
-        LOGD("TODO_BnAAAPYUAACkBgAA add callback here\n");
+        CORO_STATE = stzUAAAlnAAC3GwAA;
+        getJenkinsBuildStatus(app, fzAEAAHdDAABNcQAA, cls);
         return;
-    }{
-LOGT("[TRACE] LINE %d\n", __LINE__);
+    }case stzUAAAlnAAC3GwAA:{
+        if( cls->buf_len <= 0 ){
+            LOGD("assert(%d > 0) %s:%d\n", cls->buf_len, __FILE__, __LINE__); abort();
+        }
+        assert(sizeof cls->buildResult > cls->buf_len + (sizeof"\n\0"-1));
+        memcpy(cls->buildResult, cls->buf, cls->buf_len);
+        memcpy(cls->buildResult + cls->buf_len, "\n\0", 2);
+        cls->buildResult_len = cls->buf_len + 1;
+        char contentLenStr[8];
+        err = snprintf(contentLenStr, sizeof contentLenStr, "%d", cls->buildResult_len);
+        assert(err < (signed)sizeof contentLenStr);
+        struct Garbage_HttpMsg_Hdr hdrs[] = {{
+            .key = "Content-Length", .val = contentLenStr,
+            .key_len = 14, .val_len = err,
+        }};
+        CORO_STATE = sllEAANEYAADVagAA;
+        HTTPCLIENT_SENDHTTPHDR(cls->httpClient->handle, NULL, 200, NULL, hdrs, sizeof hdrs/sizeof*hdrs,
+            fFyoAANUaAADfcQAA, cls);
+        return;
+    }case sllEAANEYAADVagAA:{
+        if( cls->eno ){ assert(!"TODO_9w0AAGp9AAAxHgAA"); }
+        CORO_STATE = slVIAAOBaAABAWQAA;
+        HTTPCLIENT_SENDBODY(cls->httpClient->handle, cls->buildResult, cls->buildResult_len, 4,
+            fFyoAANUaAADfcQAA, cls);
+        return;
+    }case slVIAAOBaAABAWQAA:{
         cls->mAGIC = 0;
         MALLOCATOR_REALLOCBLOCKING(app->mallocator, cls, sizeof*cls, 0);
-LOGT("[TRACE] LINE %d\n", __LINE__);
-        assert(!"TODO_Kw4AABJSAACdVQAA");
+        return;
     }}
     LOGD("assert(s != %d) %s:%d\n", CORO_STATE, __FILE__, __LINE__); abort();
     #undef CORO_STATE

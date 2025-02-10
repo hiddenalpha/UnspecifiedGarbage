@@ -20,6 +20,7 @@ extern "C" {
 #define STR_QUOT_(S) #S
 #define STR_QUOT(S) STR_QUOT_(S)
 
+#define MIN(a, b) (((a) < (b)) * (a) + ((a) >= (b)) * (b))
 
 #define MALLOCATOR_REALLOC(A, B, C, D, E, F) (*A)->reallocBlocking(A, B, C, D, E, F)
 #define MALLOCATOR_REALLOCBLOCKING(A, B, C, D) (*A)->reallocBlocking(A, B, C, D)
