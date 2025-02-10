@@ -97,6 +97,8 @@ set -e \
          '' \
          '  sudo podman image prune --all --build-cache --external' \
          '  sudo podman volume prune' \
+         '  `# vv-- WARN WIPES EVERYTHING `' \
+         '  $SUDO podman system prune -a -f' \
          '' \
      | $SUDO tee /home/isa/README.txt >/dev/null \
   && $SUDO chown ${isaUid:?}:${isaGid:?} /home/isa/README.txt \

@@ -10,9 +10,12 @@ extern "C" {
 
 #define REGISTER /*no-op*/
 
+#define LOGF(...) fprintf(stderr, __VA_ARGS__)
 #define LOGE(...) fprintf(stderr, __VA_ARGS__)
 #define LOGW(...) fprintf(stderr, __VA_ARGS__)
+#define LOGI(...) fprintf(stderr, __VA_ARGS__)
 #define LOGD(...) fprintf(stderr, __VA_ARGS__)
+#define LOGT(...) fprintf(stderr, __VA_ARGS__)
 
 #define STR_QUOT_(S) #S
 #define STR_QUOT(S) STR_QUOT_(S)

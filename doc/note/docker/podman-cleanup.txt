@@ -1,0 +1,29 @@
+
+
+
+  $SUDO podman system df
+  $SUDO podman container prune
+  $SUDO podman rmi $($SUDO podman images -q --filter dangling=true)
+  $SUDO podman volume prune
+  `# vv-- WARN WIPES EVERYTHING `
+  $SUDO podman system prune -a -f
+
+
+
+docker rm
+
+    --force
+
+docker images
+
+    --quiet
+    --all
+    --filter dangling=true
+
+docker rmi
+
+    -- force
+
+Your hacky way is fine.
+
+docker rm `docker ps -a | grep Exited | awk '{print $1 }'`

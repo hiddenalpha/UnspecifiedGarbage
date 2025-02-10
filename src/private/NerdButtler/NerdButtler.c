@@ -50,6 +50,24 @@ typedef  struct HttpClient  HttpClient;
 typedef  struct HttpReqHandler  HttpReqHandler;
 
 
+struct Cls4B5C0000/*HttpJenkinsStatus*/{
+    unsigned mAGIC;
+    int coroState;
+    HttpClient *httpClient;
+};
+
+
+struct ClsE8750000/*getJenkinsBuildStatus*/{
+    unsigned mAGIC;
+    int coroState;;
+    int eno, childExit, childSig;
+    App *app;
+    struct Garbage_Process **child;
+    char flip[8192], flop[8192];
+    int flip_len, flop_len;
+};
+
+
 #define HttpReqHandler_mAGIC 0x0BF2974B
 struct HttpReqHandler {
     unsigned mAGIC;
@@ -63,7 +81,9 @@ struct App {
     unsigned mAGIC;
     unsigned flg;
     int exitCode;
+    int httpPort;
     char *webroot;
+    char *jenkinsCookie;
     ptrdiff_t envMem[SIZEOF_struct_Garbage_Env/sizeof(ptrdiff_t)];
     struct Garbage_Env **env;
     struct Garbage_Mallocator **mallocator;
@@ -71,8 +91,10 @@ struct App {
     struct Garbage_HttpServer_StepCtx httpServerStepCtx;
     struct Garbage_SocketMgr **socketMgr;
     struct Garbage_ThreadPool **ioThreadPool;
+    struct Garbage_Networker **networker;
     struct Garbage_IoMultiplexer **ioMultiplexer;
-    struct HttpReqHandler httpReqHandlers[3];
+    struct Garbage_ProcessFactory **processFactory;
+    struct HttpReqHandler httpReqHandlers[4];
 };
 
 
@@ -121,17 +143,28 @@ static void printHelp( char const*arg0 ){
         "  \n"
         "  Options:\n"
         "  \n"
+        "    --port <int>\n"
+        "        Port for the webserver to listen on.\n"
+        "  \n"
         "    --webroot <path>\n"
         "        Path where to serve requests from, which do not match\n"
         "        otherwise. Can be useful to serve static assets like a\n"
         "        webapp.\n"
         "  \n"
+        "    --cookie <str>\n"
+        "        This client does not yet have any way of auth. This can help\n"
+        "        for jenkins requests with session riding for now.\n"
+        "        Not yet sure which cookies are really needed. Did work with\n"
+        "        those:\n"
+        "        ittrksessid=...; JSESSIONID.AAA=...; JSESSIONID.BBB=...;\n"
+        "        mod_auth_openidc_session=...;\n"
         "  \n", strrchr(__FILE__,'/')+1, arg0);
 }
 
 
 static int parseArgs( App*const app, int argc, char**argv ){
     REGISTER int iA = 0;
+    int isHttpPort =  0;
     app->webroot = NULL;
 nextArg:;
     char *arg = argv[++iA];
@@ -139,6 +172,11 @@ nextArg:;
         goto verify;
     }else if( !strcmp(arg,"--help") ){
         app->flg |= FLG_isHelp; return 0;
+    }else if( !strcmp(arg,"--port") ){
+        int const port = strtol(argv[++iA], NULL, 0);
+        if( port < 1 || port > 0xFFFF ){ LOGE("EINVAL: %s %s\n", arg, argv[iA]); return-1; }
+        app->httpPort = port;
+        isHttpPort = 1;
     }else if( !strcmp(arg,"--webroot") ){
         app->webroot = argv[++iA];
         /* normalize, that it ALWAYS ends with '/' */
@@ -148,6 +186,9 @@ nextArg:;
             /*TODO err=*/snprintf(mem, sizeof mem, "%.*s/", webroot_len, app->webroot);
             app->webroot = mem;
         }
+    }else if( !strcmp(arg,"--cookie") ){
+        app->jenkinsCookie = argv[++iA];
+        if( !app->jenkinsCookie ){ LOGE("EINVAL: %s needs value\n", arg); return-1; }
     }else{
         LOGE("EINVAL: %s\n", arg); return -1;
     }
@@ -155,6 +196,8 @@ nextArg:;
 verify:
     if( argc <= 1 ){ LOGE("EINVAL: Too few args. Try --help\n"); return-1; }
     if( !app->webroot ){ LOGW("[WARN ] No webroot given. UI won't be available.\n"); }
+    if( !isHttpPort ){
+        app->httpPort = 8080; LOGW("[WARN ] --port missing. Fallback to %d\n", app->httpPort); }
     return 0;
 }
 
@@ -173,6 +216,162 @@ static void guessMimeByFileExt(
         *mime = "application/json";  *charset = "utf-8";  return; }
     LOGD("NoMimeFor: '%.*s'\n", path_len, path);
     *mime = NULL;  *charset = NULL;
+}
+
+
+static void appendToFlip( const char*buf, int buf_len, void*cls_ ){
+    #define BUF (cls->flip)
+    #define BUF_CAP ((signed)sizeof cls->flip)
+    #define BUF_LEN (cls->flip_len)
+    struct ClsE8750000*const cls = cls_; assert(cls->mAGIC == 0xE8750000);
+    if( buf_len > 0 ){
+        assert(BUF_CAP > BUF_LEN + buf_len);
+        memcpy(BUF + BUF_LEN, buf, buf_len);
+        BUF_LEN += buf_len;
+    }
+    #undef BUF
+    #undef BUF_CAP
+    #undef BUF_LEN
+}
+
+
+static void appendToFlop( const char*buf, int buf_len, void*cls_ ){
+    #define BUF (cls->flop)
+    #define BUF_CAP ((signed)sizeof cls->flop)
+    #define BUF_LEN (cls->flop_len)
+    struct ClsE8750000*const cls = cls_; assert(cls->mAGIC == 0xE8750000);
+    if( buf_len > 0 ){
+        assert(BUF_CAP > BUF_LEN + buf_len);
+        memcpy(BUF + BUF_LEN, buf, buf_len);
+        BUF_LEN += buf_len;
+    }
+    #undef BUF
+    #undef BUF_CAP
+    #undef BUF_LEN
+}
+
+
+static void getJenkinsBuildStatus_kontinue( void* );
+static void fs3gAADBZAADUNgAA( int err, void*cls_){
+    struct ClsE8750000*const cls = cls_; assert(cls->mAGIC == 0xE8750000);
+    cls->eno = err;
+    getJenkinsBuildStatus_kontinue(cls);
+}
+static void fIxIAALgAAA0SwAAa( int err, int exitCode, int sigNum, void*cls_ ){
+    struct ClsE8750000*const cls = cls_; assert(cls->mAGIC == 0xE8750000);
+    cls->eno = err;
+    cls->childExit = exitCode;
+    cls->childSig = sigNum;
+    getJenkinsBuildStatus_kontinue(cls);
+}
+static void getJenkinsBuildStatus_kontinue( void*cls_ ){
+    /* TODO replace this sub process mess by proper http client */
+    REGISTER int err;
+    struct ClsE8750000*const cls = cls_; assert(cls->mAGIC == 0xE8750000);
+    App*const app = assert_is_App(cls->app);
+    char const *host = "jenkinspaisa-temp.tools.pnet.ch";
+    char const *svcName = "preflux";
+    char const *prName = "PR-893";
+    #define CORO_STATE (cls->coroState)
+    enum { begin=0, srx8AAH84AAD8LwAA, skE4AAIxKAADyQAAA, sAT4AADZCAAAiTgAA, };
+    switch( CORO_STATE ){case begin:{
+    }/* need to get the job number bcause 'latest' is not valid :( */{
+        char url[512];
+        err = snprintf(url, sizeof url, "https://%s/job/%s/job/%s/api/json", host, svcName, prName);
+        assert(err < (signed)sizeof url);
+        char cookieHdr[768];
+        err = snprintf(cookieHdr, sizeof cookieHdr, "Cookie: %s", app->jenkinsCookie);
+        assert(err < (signed)sizeof url);
+        if( cls->child ){ (*cls->child)->unref(cls->child); }
+        cls->flip_len = 0;
+        CORO_STATE = srx8AAH84AAD8LwAA;
+        cls->child = (*app->processFactory)->newProcess(app->processFactory, &(struct Garbage_Process_Mentor){
+            .cls = cls,
+            .usePathSearch = 1,
+            .argv = (char*[]){"curl", "-sS", "-H", cookieHdr, url, NULL},
+            .onStdout = appendToFlip,
+            .onJoined = fIxIAALgAAA0SwAAa,
+        });
+        (*cls->child)->closeSnk(cls->child);
+        (*cls->child)->join(cls->child, 5000);
+        return;
+    }case srx8AAH84AAD8LwAA:{
+        if( cls->eno || cls->childExit || cls->childSig ){
+            LOGD("assert(!%d && !%d && !%d) %s:%d\n",
+                cls->eno, cls->childExit, cls->childSig, __FILE__, __LINE__);
+            abort();
+        }
+        if( cls->child ){ (*cls->child)->unref(cls->child); }
+        cls->flop_len = 0;
+        CORO_STATE = skE4AAIxKAADyQAAA;
+        cls->child = (*app->processFactory)->newProcess(
+            app->processFactory, &(struct Garbage_Process_Mentor){
+                .cls = cls,
+                .usePathSearch = 1,
+                .argv = (char*[]){"jq", ".lastBuild.number", NULL},
+                .onStdout = appendToFlop,
+                .onJoined = fIxIAALgAAA0SwAAa,
+            });
+        #define BUF (cls->flip)
+        #define BUF_LEN (cls->flip_len)
+        (*cls->child)->write(cls->child, BUF, BUF_LEN, fs3gAADBZAADUNgAA, cls);
+        return;
+    }case skE4AAIxKAADyQAAA:{
+        if( cls->eno != BUF_LEN ){
+            LOGD("assert(!%d) %s:%d\n", cls->eno, __FILE__, __LINE__); abort(); }
+        CORO_STATE = sAT4AADZCAAAiTgAA;
+        (*cls->child)->closeSnk(cls->child);
+        (*cls->child)->join(cls->child, 2000);
+        return;
+        #undef BUF
+        #undef BUF_LEN
+    }case sAT4AADZCAAAiTgAA:{
+        #define BUF (cls->flop)
+        #define BUF_LEN (cls->flop_len)
+        if( cls->eno || cls->childExit || cls->childSig ){
+            LOGD("assert(!%d && !%d && !%d) %s:%d\n",
+                cls->eno, cls->childExit, cls->childSig, __FILE__, __LINE__);
+            abort();
+        }
+        if( BUF_LEN <= 0 || BUF_LEN > 5 ){
+            LOGD("assert(!%d) %s:%d\n", BUF_LEN, __FILE__, __LINE__); abort();
+        }
+        BUF[BUF_LEN] = '\0';
+        char *end;
+        int const buildNr = strtol(BUF, &end, 10);
+        if( end - BUF == 0 ){
+            LOGD("assert(%lld > 0) %s:%d\n", end - BUF, __FILE__, __LINE__); abort();
+        }
+        LOGD("buildNr := %d\n", buildNr);
+        #undef BUF
+        #undef BUF_LEN
+
+#if 0
+Steps to get build status:
+- svcName := "preflux"
+- buildName := "PR-893"
+- rsp := GET "https://jenkinspaisa-temp.tools.pnet.ch/job/${svcName}/job/${buildName}/api/json"
+- jobNr := rsp.lastBuild.number
+- "https://jenkinspaisa-temp.tools.pnet.ch/job/${svcName}/job/${buildName}/${jobNr}/api/json"
+#endif
+        assert(!"TODO_WEQAAGIRAADBaAAA");
+
+        MALLOCATOR_REALLOCBLOCKING(app->mallocator, cls, sizeof*cls, 0);
+    }}
+    LOGD("assert(s != %d) %s:%d\n", CORO_STATE, __FILE__, __LINE__); abort();
+    #undef CORO_STATE
+}
+
+static void getJenkinsBuildStatus( void*cls_ ){
+    App*const app = assert_is_App(cls_);
+    struct ClsE8750000 *cls;
+    cls = MALLOCATOR_REALLOCBLOCKING(app->mallocator, NULL, 0, sizeof*cls);
+    if( !cls ){ assert(!"TODO_cg0AAHhJAADBBwAA"); }
+    *cls = (struct ClsE8750000){
+        .mAGIC = 0xE8750000,
+        .app = app,
+    };
+    getJenkinsBuildStatus_kontinue(cls);
 }
 
 
@@ -214,7 +413,7 @@ static void HttpWebroot_continueServingOpenedFile( HttpClient*httpClient ){
         return;
     }case sM4psQzMaIHDCENAd:sM4psQzMaIHDCENAd:{
         if( httpClient->webroot_eno < 0 ){
-            LOGD("%s: %s:%d\n", strerrname(-httpClient->webroot_eno), __FILE__, __LINE__); abort();
+            LOGF("%s: %s:%d\n", strerrname(-httpClient->webroot_eno), __FILE__, __LINE__); abort();
         }
         #define BUF (httpClient->webrootBuf)
         #define BUF_LEN (httpClient->webrootBuf_len)
@@ -228,12 +427,13 @@ static void HttpWebroot_continueServingOpenedFile( HttpClient*httpClient ){
             BUF = tmp;
         }
         CORO_STATE = sibOSBcQKz0qxTlPs;
-        IOMULTIPLEXER_READ(httpClient->app->ioMultiplexer, BUF, 1, BUF_CAP, httpClient->fh,
-            f48amiHOXCmp8YpZu, httpClient);
+        IOMULTIPLEXER_READ(httpClient->app->ioMultiplexer, BUF, 1, BUF_CAP,
+            (ptrdiff_t)httpClient->fh, f48amiHOXCmp8YpZu, httpClient);
         return;
     }case sibOSBcQKz0qxTlPs:{
         if( httpClient->webroot_eno < 0 ){ /*ERROR*/
-            assert(!"TODO_Xme47BSVE4roVZlI");
+            LOGE("%s(%d): file:read()\n", strerrname(-httpClient->webroot_eno), httpClient->webroot_eno);
+            abort();
         }
         if( httpClient->webroot_eno == 0){ /*EOF*/
             CORO_STATE = endOfFile;
@@ -248,7 +448,7 @@ static void HttpWebroot_continueServingOpenedFile( HttpClient*httpClient ){
         return;
     }case sk9HYMmhgSBi1dWeK:{
         if( httpClient->webroot_eno < 0 ){
-            LOGD("%s: %s:%d\n", strerrname(-httpClient->webroot_eno), __FILE__, __LINE__); abort();
+            LOGF("%s: %s:%d\n", strerrname(-httpClient->webroot_eno), __FILE__, __LINE__); abort();
         }
         assert(httpClient->webroot_eno == BUF_LEN);
         /* loop back to read next chunk */
@@ -260,7 +460,7 @@ static void HttpWebroot_continueServingOpenedFile( HttpClient*httpClient ){
         }
         err = fclose(httpClient->fh);  httpClient->fh = NULL;
         if( err ){
-            LOGD("%s: fclose(httpClient->fh) %s:%d\n", strerrname(errno), __FILE__, __LINE__);
+            LOGW("%s: fclose(httpClient->fh) %s:%d\n", strerrname(errno), __FILE__, __LINE__);
             /*continue anyway*/
         }
         httpClient->flg &= ~FLG_isRspInProgress;
@@ -274,6 +474,44 @@ static void HttpWebroot_continueServingOpenedFile( HttpClient*httpClient ){
     LOGD("assert(s != %d)  %s:%d\n", CORO_STATE, __FILE__, __LINE__); abort();
     #undef CORO_STATE
     #undef CORO_GOTO
+}
+
+
+static void HttpJenkinsStatus_kontinue( void*cls_ ){
+    struct Cls4B5C0000*const cls = cls_; assert(cls->mAGIC == 0x4B5C0000);
+    App*const app = assert_is_App(cls->httpClient->app);
+    #define CORO_STATE (cls->coroState)
+    enum { begin=0 };
+    switch( CORO_STATE ){case begin:{
+        getJenkinsBuildStatus(app);
+        LOGD("TODO_BnAAAPYUAACkBgAA add callback here\n");
+        return;
+    }{
+LOGT("[TRACE] LINE %d\n", __LINE__);
+        cls->mAGIC = 0;
+        MALLOCATOR_REALLOCBLOCKING(app->mallocator, cls, sizeof*cls, 0);
+LOGT("[TRACE] LINE %d\n", __LINE__);
+        assert(!"TODO_Kw4AABJSAACdVQAA");
+    }}
+    LOGD("assert(s != %d) %s:%d\n", CORO_STATE, __FILE__, __LINE__); abort();
+    #undef CORO_STATE
+}
+
+
+static int HttpJenkinsStatus_onHttpRequestHeader( HttpClient*httpClient ){
+    #define REQHDR (&httpClient->stepCtx.reqHdr)
+    if( strncmp("GET", REQHDR->mthd, REQHDR->mthd_len) ) return -ENOTSUP;
+    LOGD("[DEBUG] %.*s\n", REQHDR->path_len, REQHDR->path);
+    if( strncmp("/api/v0/getJenkinsBuildStatus", REQHDR->path, REQHDR->path_len) ) return -ENOTSUP;
+    App*const app = assert_is_App(httpClient->app);
+    struct Cls4B5C0000*const cls = MALLOCATOR_REALLOCBLOCKING(app->mallocator, NULL, 0, sizeof*cls);
+    *cls = (struct Cls4B5C0000){
+        .mAGIC = 0x4B5C0000,
+        .httpClient = httpClient,
+    };
+    HttpJenkinsStatus_kontinue(cls);
+    return 0;
+    #undef REQHDR
 }
 
 
@@ -370,12 +608,6 @@ askNextRequestHandler:
 }
 
 
-static void onHttpMessageEnd( void* );
-// UNUSED static void onHttpMessageEnd_IV( int eno, void*httpClient_ ){
-// UNUSED     HttpClient*const httpClient = assert_is_HttpClient(httpClient_);
-// UNUSED     httpClient->eno = eno;
-// UNUSED     onHttpMessageEnd(httpClient_);
-// UNUSED }
 static void onHttpMessageEnd( void*httpClient_ ){
     REGISTER int err;
     HttpClient*const httpClient = assert_is_HttpClient(httpClient_);
@@ -386,55 +618,6 @@ static void onHttpMessageEnd( void*httpClient_ ){
         REQHDLR->onHttpMessageEnd(httpClient);
     }
     #undef REQHDLR
-#if 0 /* vv-- OBSOLETE */
-    static char const *const rspBody = "Git nüüt ds gugge hie :)\n";
-    #define CORO_STATE (httpClient->onHttpMessageEnd_state)
-    enum { begin=0, sGK9YdOh9Wg8Wk5xL, stvA6avryUmn9fnQM, sPzZrabRvyjtBNQU0 };
-    switch( CORO_STATE ){case begin:{
-        ///* pause, to prevent problems with overtaking requests */
-        //HTTPCLIENT_PAUSE(httpClient->handle);
-        int const rspBody_len = strlen(rspBody);
-        char rspBody_lenStr[8];
-        err = snprintf(rspBody_lenStr, sizeof rspBody_lenStr, "%d", rspBody_len);
-        assert(err < sizeof rspBody_lenStr);
-        struct Garbage_HttpMsg_Hdr hdrs[] = {{
-            .key = "Content-Length", .val = rspBody_lenStr,
-            .key_len = 14, .val_len = strlen(rspBody_lenStr),
-        },{
-            .key = "Content-Type", .val = "text/plain; charset=utf-8",
-            .key_len = 12, .val_len = 25,
-        }};
-        CORO_STATE = stvA6avryUmn9fnQM;
-        HTTPCLIENT_SENDHTTPHDR(httpClient->handle, NULL, 418, NULL, hdrs, sizeof hdrs/sizeof*hdrs,
-            onHttpMessageEnd_IV, httpClient);
-        return;
-    }case stvA6avryUmn9fnQM:{
-        err = httpClient->eno;
-        if( err < 0 ){
-            /* TODO WhereTheFu** is this EIO coming from? */
-            LOGW("[WARN ] %s: send(httpClient, rspHdr)\n", strerrname(-err));
-            err = 0;
-        }
-        assert(err == 0);
-        int const isEndOfMsg = 4;
-        CORO_STATE = sPzZrabRvyjtBNQU0;
-        HTTPCLIENT_SENDBODY(httpClient->handle, rspBody, strlen(rspBody), isEndOfMsg, onHttpMessageEnd_IV, httpClient);
-        return;
-    }case sPzZrabRvyjtBNQU0:{
-        err = httpClient->eno;
-        if( err < 0 ){
-            LOGW("%s: send(httpClient, emptyRspBody)\n", strerrname(-err));
-            assert(!"TODO_ZEijoIFoHOOA5NLO");
-        }
-        CORO_STATE = 0; /*reset for next request*/
-        assert(httpClient->flg & FLG_isRspInProgress);
-        httpClient->flg &= ~FLG_isRspInProgress;
-        HTTPCLIENT_RESUME(httpClient->handle);
-        return;
-    }}
-    LOGD("assert(coroState != %d)\n", CORO_STATE); abort();
-#endif
-    #undef CORO_STATE
 }
 
 
@@ -521,19 +704,29 @@ static void run( void*cls_ ){
 
 static int initApp( App*const app ){
     app->mallocator = Garbage_newMallocator();  assert(app->mallocator);
+    /**/
     app->env = Garbage_newEnv(&(struct Garbage_Env_Opts){
         .memBlockToUse = app->envMem,
         .memBlockToUse_sz = sizeof app->envMem,
         .mallocator = app->mallocator,
     });  assert(app->env);
+    /**/
     app->ioThreadPool = Garbage_newThreadPool(&(struct Garbage_ThreadPool_Opts){
         .mallocator = app->mallocator,
         .numThrds = 4,
     }); assert(app->ioThreadPool);
+    /**/
     app->ioMultiplexer = Garbage_newIoMultiplexer(app->env, &(struct Garbage_IoMultiplexer_Opts){
         .mallocator = app->mallocator,
         .ioWorker = app->ioThreadPool,
     }); assert(app->ioMultiplexer);
+    /**/
+    assert(app->mallocator); assert(app->ioThreadPool);
+    app->networker = Garbage_newNetworker(&(struct Garbage_Networker_Opts){
+        .mallocator = app->mallocator,
+        .ioWorker = app->ioThreadPool,
+    }); assert(app->networker);
+    /**/
     app->socketMgr = Garbage_newSocketMgr(app->env, &(struct Garbage_SocketMgr_Opts){
         .mallocator = app->mallocator,
         .ioMultiplexer = app->ioMultiplexer,
@@ -546,11 +739,16 @@ static int initApp( App*const app ){
         .sockaddr_len = sizeof(struct sockaddr_in),
         .sockaddr = (&(struct sockaddr_in){
             .sin_family = AF_INET,
-            .sin_port = htons(8080),
+            .sin_port = htons(app->httpPort),
             .sin_addr.s_addr = inet_addr("127.0.0.1"),
         }),
         //.backlog = ,
     }); assert(app->httpServer);
+    assert(app->mallocator); assert(app->env);
+    app->processFactory = Garbage_newProcessFactory(&(struct Garbage_ProcessFactory_Opts){
+        .mallocator = app->mallocator,
+        .env = app->env,
+    }); assert(app->processFactory);
     /**/
     THREADPOOL_START(app->ioThreadPool);
     IOMULTIPLEXER_START(app->ioMultiplexer);
@@ -563,6 +761,8 @@ int NerdButtler_main( int argc, char**argv ){
     App*const app = &(App){
         .mAGIC = App_mAGIC,
         .httpReqHandlers = {{
+            .onHttpRequestHeader = HttpJenkinsStatus_onHttpRequestHeader,
+        },{
             .onHttpRequestHeader = HttpWebroot_onHttpRequestHeader,
         },{
             .onHttpRequestHeader = Http418_onHttpRequestHeader,

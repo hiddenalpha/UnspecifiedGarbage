@@ -68,6 +68,15 @@ Windoof:
   qemu-img resize my.disk 32G    (<- or with abs size)
 
 
+## Resize/Enlarge disk (RHEL edition Grrr....)
+
+  qemu-img info my.disk
+  qemu-img resize my.disk 32G
+  $SUDO fdisk -l
+  $SUDO lvs   (or lvdisplay for more details)
+  $SUDO lvextend -r --extents +100%FREE /dev/mapper/fedora-root
+
+
 ## Create common base for two diverged VMs.
 
   (TODO: test and vote "https://unix.stackexchange.com/a/657073/292722")

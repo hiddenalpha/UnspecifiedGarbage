@@ -415,7 +415,7 @@ EOF
 # redis-server config adapted for PaISA Eagle.
 # 
 bind 0.0.0.0
-port ]=].. redisVolatile.port ..[=[
+port ]=].. redisVolatile.port .."\n"..[=[
 protected-mode no
 tcp-backlog 511
 timeout 0
