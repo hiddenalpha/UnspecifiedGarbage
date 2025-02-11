@@ -113,12 +113,20 @@ syntax on
 
 " indent ----------------------------------------------------------------------
 
-set expandtab
-set tabstop=4
-set shiftwidth=4
 set autoindent
 set nosmartindent
 set nocindent
+set expandtab
+set tabstop=4
+set shiftwidth=4
+" PLEASE, STAY AWAY WITH THOSE TERRIBLE BULLSHIT INDENTATION RULES!
+set indentexpr=
+set indentkeys=
+filetype indent plugin off
+filetype indent off
+autocmd BufNew,BufNewFile,BufRead *, set indentkeys= indentexpr=
+" EndOf Bullshit
+
 vnoremap > >gv
 vnoremap <Tab> >gv
 vnoremap < <gv
