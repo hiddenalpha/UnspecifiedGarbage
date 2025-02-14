@@ -238,6 +238,7 @@ Links (Aka argument amplifiers)
 - [java streams are ugly](https://gitit.post.ch/projects/ISA/repos/nsync/pull-requests/55/overview?commentId=328210)
 
 ## Backward compatibility, Breaking Changes
+- [Redis7 vs Redis4 aof breaking migration problems](https://wikit.post.ch/x/2g-ygQ)
 - [SprintFeedback says STOP IT](https://jira.post.ch/projects/SDCISA?selectedItem=com.arijea.plugins.easy-agile-user-story-maps&rapidView=9825#/retros/board/9825/sprint/48137)
 - [preflux 2024 storage/redis aws isaVersion](https://gitit.post.ch/projects/ISA/repos/preflux/pull-requests/780/overview?commentId=396322)
 - "https://www.redstar.be/backward-compatibility-in-software-development-what-and-why/"
