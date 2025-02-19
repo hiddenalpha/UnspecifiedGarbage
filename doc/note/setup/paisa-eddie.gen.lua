@@ -20,12 +20,81 @@
 local env_PROXY_URL = "http://10.0.2.2:3128/"
 local env_PROXY_NO  = "127.0.0.1,localhost,10.0.2.2,10.0.2.15"
 local env_PAISA_ENV = "test"
+local guestHostname = "veddie01"
 -- keys on fedora/RHEL MUST be at least 3072 bits.
 local isaSshPubKey = nil
 
 -- EndOf Customizations -------------------------------------------------------
 
-local main
+
+
+-- [Source 2](http://git.hiddenalpha.ch/UnspecifiedGarbage.git/tree/src/main/lua/common/base64.lua)
+function b64enc( src )
+    local b = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+    return ((src:gsub('.', function(x)
+        local r, b = '', x:byte()
+        for i = 8, 1, -1 do r = r .. (b%2^i-b%2^(i-1)>0 and '1' or '0') end
+        return r;
+    end)..'0000'):gsub('%d%d%d?%d?%d?%d?', function(x)
+        if (#x < 6) then return '' end
+        local c=0
+        for i=1,6 do c=c+(x:sub(i,i)=='1' and 2^(6-i) or 0) end
+        return b:sub(c+1,c+1)
+    end)..({ '', '==', '=' })[#src%3+1])
+end
+
+
+
+function write_setupPodmanNetworks( dst )
+    -- [docker networking](https://gitit.post.ch/projects/ISA/repos/wowbagger-puppetconfig/browse/site/profile/templates/container-networking-setup.sh.erb)
+    dst:write([=[
+  && $SUDO podman network create \
+         --driver=bridge \
+         --subnet=192.168.198.0/25 \
+]=])
+    -- Hmm? Real eddies seem to have that. But looks not needed somehow?
+    --   --opt com.docker.network.driver.mtu=<%= @mtu %>
+    --   --opt com.docker.network.bridge.enable_icc=true
+    --   --opt com.docker.network.bridge.enable_ip_masquerade=false
+    --   --opt com.docker.network.bridge.host_binding_ipv4=0.0.0.0
+    dst:write([=[
+         --opt "com.docker.network.bridge.name=isa-docker" \
+         isa-docker \
+  && $SUDO podman network create \
+         --driver=macvlan \
+         --subnet=192.168.10.0/24 \
+         --gateway=192.168.10.1 \
+         --ip-range=192.168.10.8/29 \
+         --opt parent=ens3 \
+         isa-vehicle \
+]=])
+end
+
+
+-- Grrrr...
+-- www is full of useless shit-advice how to do housekeeping with podman.
+-- The only way I found so far, is to just WIPE EVERYTHING. Unluckily,
+-- 'everything' includes 'networks' too. So now we need yet another kludge
+-- script which allows us to restore our machine occasionly, without
+-- wasting time with all this www-bullshit-advice everytime we've a disk
+-- space emergency.
+function write_saveMyAssPodmanReset( dst )
+    local absPath = "/home/isa/.local/bin/podman-force-wipe"
+    dst:write([=[
+  && (cd /home/isa && mkdir -p .local/bin) \
+  && <<EOF_oAlBwAA base64 -d > ]=].. absPath ..[=[ &&
+]=])
+    local buf = "#!/bin/sh\n# Grrrrr... Why cannot just this tool do its job by itself?\nset -e \\\n"
+        ..'  && SUDO=$(if test "$(id -u)" -ne 0 ;then echo sudo ;fi) \\\n'
+        .."  && $SUDO podman system prune -a -f \\\n"
+    write_setupPodmanNetworks{write=function(t,b)buf=buf..b end}
+    dst:write(b64enc(buf) .."\n")
+    dst:write([=[
+EOF_oAlBwAA
+true \
+  && $SUDO chmod u+x ]=].. absPath ..[=[ \
+]=])
+end
 
 
 function main()
@@ -97,28 +166,15 @@ set -e \
          '' \
          '  sudo podman image prune --all --build-cache --external' \
          '  sudo podman volume prune' \
-         '  `# vv-- WARN WIPES EVERYTHING `' \
+         '  `# vv-- WARN WIPES EVERYTHING, (including networks!) `' \
          '  $SUDO podman system prune -a -f' \
          '' \
      | $SUDO tee /home/isa/README.txt >/dev/null \
   && $SUDO chown ${isaUid:?}:${isaGid:?} /home/isa/README.txt \
-  && `# [docker networking](https://gitit.post.ch/projects/ISA/repos/wowbagger-puppetconfig/browse/site/profile/templates/container-networking-setup.sh.erb) ` \
-  && $SUDO podman network create \
-         --driver=bridge \
-         --subnet=192.168.198.0/25 \
-         `# --opt com.docker.network.driver.mtu=<%= @mtu %> ` \
-         `# --opt com.docker.network.bridge.enable_icc=true ` \
-         `# --opt com.docker.network.bridge.enable_ip_masquerade=false ` \
-         `# --opt com.docker.network.bridge.host_binding_ipv4=0.0.0.0 ` \
-         --opt "com.docker.network.bridge.name=isa-docker" \
-         isa-docker \
-  && $SUDO podman network create \
-         --driver=macvlan \
-         --subnet=192.168.10.0/24 \
-         --gateway=192.168.10.1 \
-         --ip-range=192.168.10.8/29 \
-         --opt parent=ens3 \
-         isa-vehicle \
+]=])
+    write_setupPodmanNetworks(dst)
+    write_saveMyAssPodmanReset(dst)
+    dst:write([=[
   && `# Force-replace isa related users/groups. ` \
   && $SUDO sed -i -E 's/^(%wheel\s+ALL=\(ALL\)\s+)(ALL\s*)$/\1NOPASSWD:\2/' /etc/sudoers \
   && $SUDO mv /etc/sudoers-FBsAAJpmAAA5ewAA /etc/sudoers \
@@ -143,6 +199,7 @@ true \
        "app:x:${appGid:?}:isa" \
      | tee -a /etc/group >/dev/null \
   && echo 'isa:12345' | $SUDO chpasswd \
+  && $SUDO hostnamectl set-hostname "]=].. guestHostname ..[=[" \
   && true
 EOF
 true \

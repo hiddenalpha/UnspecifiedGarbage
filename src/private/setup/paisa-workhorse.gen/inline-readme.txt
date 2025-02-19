@@ -46,7 +46,6 @@
   sudo podman pull docker.tools.post.ch/library/busybox:1.37.0-glibc
 
 
-
   ## Kubectl, Kubernetes, AWS, ...
 
   Common args:  --namespace isa-houston-int --kubeconfig ~/.kube/config
