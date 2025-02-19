@@ -211,7 +211,7 @@ function run( app )
         end
         ::nextCommit::
     end
-    if dateEntry then table.insert(entries, dateEntry) end
+    if dateEntry.txt or dateEntry.html then table.insert(entries, dateEntry) end
     -- output
     for k, v in ipairs(entries) do
         snk:write("\n\n")

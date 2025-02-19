@@ -5,17 +5,13 @@
 
 --- a/preflux-web/src/main/java/ch/post/it/paisa/preflux/process/inventory/InventoryService.java
 +++ b/preflux-web/src/main/java/ch/post/it/paisa/preflux/process/inventory/InventoryService.java
-@@ -398,2 +402,14 @@ public class InventoryService implements Cache {
+@@ -398,2 +402,10 @@ public class InventoryService implements Cache {
              machine = getEddieMachine(hostname);
 +        } else if (Pattern.compile("^localhost$").matcher(hostname).matches()) {
 +            machine = new Machine() {
 +                @Override public String getHostname() { return hostname; }
-+                @Override public String getExpectedRemoteHostname() {
-+                    return TODO_putYourVmsHostnameHere;
-+                }
-+                @Override public String getSshUsername() {
-+                    return TODO_putYourVmsUsernameHere_maybe_isa;
-+                }
++                @Override public String getExpectedRemoteHostname() { return "veddie01"; }
++                @Override public String getSshUsername() { return "isa"; }
 +                @Override public boolean needsLegacyDocker() { return false; }
 +                @Override public boolean isTeddie() { return true; }
 +            };

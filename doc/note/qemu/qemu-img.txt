@@ -41,9 +41,8 @@ HINT: In case of based images, need rebase afterwards because convert
 
 Normal systems:
   `# TODO try "fstrim -av" instead zero fill. `
-  dd if=/dev/zero of=/tmp/deleteme ; rm /tmp/deleteme && poweroff
+  dd if=/dev/zero of=/tmp/deleteme ; rm /tmp/deleteme ; poweroff
   qemu-img convert -O qcow2 -S 1M input.qcow2 output.qcow2
-  qemu-img rebase -F qcow2 -b base.qcow2 output.qcow2
 
 Windoof:
   Win -> "Disk Cleanup" -> "Clean System (Admin)" -> "More" -> "Prog+Features" -> uninst bloat.
@@ -67,6 +66,15 @@ Windoof:
   qemu-img info my.disk
   qemu-img resize my.disk to disk -5G   (<- relative size change)
   qemu-img resize my.disk 32G    (<- or with abs size)
+
+
+## Resize/Enlarge disk (RHEL edition Grrr....)
+
+  qemu-img info my.disk
+  qemu-img resize my.disk 32G
+  $SUDO fdisk -l
+  $SUDO lvs   (or lvdisplay for more details)
+  $SUDO lvextend -r --extents +100%FREE /dev/mapper/fedora-root
 
 
 ## Create common base for two diverged VMs.
