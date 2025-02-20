@@ -10,6 +10,9 @@
   ]===========================================================================]
 
 
+local poodooSrcWorktree = "/home/${USER:?}/work/poodoo"
+
+
 -- [Source 1](https://stackoverflow.com/a/35303321/4415884)
 -- [Source 2](http://git.hiddenalpha.ch/UnspecifiedGarbage.git/tree/src/main/lua/common/base64.lua)
 function b64enc( src )
@@ -38,11 +41,39 @@ function write_vars( dst )
     dst:write([=[
   && SUDO=sudo \
   && PODMAN="sudo podman" \
-  && poodooSrcWorktree=/home/${USER:?}/work/poodoo \
+  && poodooSrcWorktree="]=].. poodooSrcWorktree ..[=[" \
   && mdisSrcWorktree=./CopyPasta-headers \
   && baseImgTag=docker.tools.post.ch/paisa/alice:04.00.09.00 \
   && imgTag=gcc-for-poodoo:0.0.0-SNAPSHOT \
   && cntnrNm=gcc-for-poodoo \
+]=])
+end
+
+
+function write_sshHelper( dst )
+    dst:write([=[
+  && true <<EOF_XAANRAy \
+
+  Helper in case docker is not available on localhost.
+
+  && vm= \
+  && SSH=ssh \
+  && poodooHostSrcDir=/abs/host/path/to/poodoo \
+  && (cd . && tar --owner=0 --group=0 -c CopyPasta-headers/13MD05-90/13Z015-06/INCLUDE/COM CopyPasta-headers/13MD05-90/MDISforLinux/INCLUDE/COM) \
+     | ${SSH:?} "${vm:?}" -T 'true \
+        && SUDO=sudo \
+        && $SUDO mkdir /opt/mdis-headers \
+        && cd /opt/mdis-headers \
+        && $SUDO tar x \
+        && true' \
+  && (cd "${poodooHostSrcDir:?}" && tar --owner=0 --group=0 -c poodoo-web/src/main/c) \
+     | ${SSH:?} "${vm:?}" -T 'true \
+       && cd "]=].. poodooSrcWorktree ..[=[" \
+       && tar x \
+       && true' \
+
+EOF_XAANRAy
+true \
 ]=])
 end
 
@@ -140,6 +171,8 @@ function main()
     dst:write("#!/bin/sh\nset -e\n")
     dst:write("\ntrue `# configure ` \\\n")
     write_vars(dst)
+    dst:write("\ntrue `# ssh helper ` \\\n")
+    write_sshHelper(dst)
     dst:write("\ntrue `# setup docker container` \\\n")
     write_createDockerimage(dst)
     write_purgeContainer(dst)

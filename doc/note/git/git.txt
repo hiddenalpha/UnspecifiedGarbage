@@ -137,6 +137,13 @@ git fetch --multiple origin upstream
 
 
 
+
+## Prevent accidental push by branch name to remote
+
+Setup a "pre-push" hook.
+
+
+
 ## Refs
 
   [push shallow](https://stackoverflow.com/a/35030063/4415884)

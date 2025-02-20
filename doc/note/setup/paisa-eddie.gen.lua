@@ -154,9 +154,6 @@ set -e \
   && `# Inject some inlien documentation ` \
   && printf %s\\n \
          '' \
-         '  TODO: setup *isa-docker* network' \
-         '  TODO: setup *isa-vehicle* network' \
-         '' \
          '  ## Additional packages, helpful for some debugging scenarios' \
          '' \
          '  && $SUDO dnf install -y java-11-openjdk-devel.x86_64' \

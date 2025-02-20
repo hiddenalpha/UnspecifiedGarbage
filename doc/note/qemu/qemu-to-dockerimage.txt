@@ -1,0 +1,17 @@
+
+TODO very incomplete here
+
+
+
+
+
+  && ssh "${vm:?}" -T 'cd / && sudo tar c /bin /etc /home /lib /lib64 /opt /root /sbin /srv /usr /var/lib /var/local /var/mail /var/opt /var/run' \
+
+
+RUN true \
+  && mkdir /var/cache /var/log \
+  && chown 0:0 /var/cache /var/log \
+  && chmod 755 /var/cache /var/log \
+  && true
+
+
