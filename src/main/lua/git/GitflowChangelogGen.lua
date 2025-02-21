@@ -10,6 +10,9 @@ function printHelp()
         .."  \n"
         .."  Options:\n"
         .."  \n"
+        .."    --svcName <str>\n"
+        .."      Eg: 'preflux', 'trin', ...\n"
+        .."  \n"
         .."    --since <date>\n"
         .."        Ignore commits with this ISO date and older.\n"
         .."  \n"
@@ -38,6 +41,13 @@ function parseArgs( app )
         local arg = _ENV.arg[iA]
         if not arg then
             break
+        elseif arg == "--svcName" then
+            iA = iA + 1; arg = _ENV.arg[iA]
+            if not arg then log:write("EINVAL: --svcName needs value\n")return end
+            if arg ~= "preflux" and arg ~= "trin" then
+                log:write("ENOTSUP: TODO impl svcName '".. arg .."'\n")return
+            end
+            app.svcName = arg
         elseif arg == "--since" then
             iA = iA + 1; arg = _ENV.arg[iA]
             if not arg then log:write("EINVAL: --since needs value\n")return end
@@ -62,6 +72,7 @@ function parseArgs( app )
     end
     if not app.since then log:write("EINVAL: --since missing\n")return end
     if not app.remoteName then app.remoteName = "upstream" end
+    if not app.svcName then log:write("EINVAL: --svcName missing\n")return end
     local i = 0
     if app.isPrintHtml then i = i + 1 end
     if app.isPrintMarkdown then i = i + 1 end
@@ -129,7 +140,7 @@ function readCommitMsg( app )
 end
 
 
-function newTextPrinter( dst )
+function newTextPrinter( app, dst )
     return { append = function( t, entry )
         dst:write("\n\n")
         dst:write(entry.date .." - ".. entry.version .."\n\n")
@@ -146,7 +157,7 @@ function newTextPrinter( dst )
 end
 
 
-function newHtmlPrinter( dst )
+function newHtmlPrinter( app, dst )
     return { append = function( t, entry )
         dst:write('\n\n\n<h3>'.. entry.date .." - ".. entry.version .."</h3>\n\n")
         for k, msg in ipairs(entry.msgs) do
@@ -158,7 +169,7 @@ function newHtmlPrinter( dst )
             dst:write(msg.body)
             if msg.prNr then
                 dst:write(""
-                    ..' (<a href="https://gitit.post.ch/projects/ISA/repos/preflux/pull-requests/'
+                    ..' (<a href="https://gitit.post.ch/projects/ISA/repos/'.. app.svcName ..'/pull-requests/'
                     .. msg.prNr ..'">PR '.. msg.prNr ..'</a>)'
                     .."")
             end
@@ -168,7 +179,7 @@ function newHtmlPrinter( dst )
 end
 
 
-function newMarkdownPrinter( dst )
+function newMarkdownPrinter( app, dst )
     return { append = function( t, entry )
         dst:write(""
             .."\n\n"
@@ -176,13 +187,13 @@ function newMarkdownPrinter( dst )
             .."\n")
         for k, msg in ipairs(entry.msgs) do
             if msg.jiraNr then
-                dst:write("- [".. msg.jiraNr .."](https://jira.post.ch/browse/".. msg.jiraNr ..") ")
+                dst:write("- [[".. msg.jiraNr .."](https://jira.post.ch/browse/".. msg.jiraNr ..")] ")
             else
                 dst:write("- [ NO-JIRA ] ")
             end
             dst:write(msg.body)
             if msg.prNr then
-                dst:write(" ([PR ".. msg.prNr .."](https://gitit.post.ch/projects/ISA/repos/preflux/pull-requests/".. msg.prNr .."))")
+                dst:write(" ([PR ".. msg.prNr .."](https://gitit.post.ch/projects/ISA/repos/".. app.svcName .."/pull-requests/".. msg.prNr .."))")
             end
             dst:write("\n")
         end
@@ -223,11 +234,11 @@ function run( app )
     while app.parseFn do app.parseFn(app) end
     -- Prepare output
     if app.isPrintHtml then
-        app.outputPrinter = newHtmlPrinter(snk)
+        app.outputPrinter = newHtmlPrinter(app, snk)
     elseif app.isPrintMarkdown then
-        app.outputPrinter = newMarkdownPrinter(snk)
+        app.outputPrinter = newMarkdownPrinter(app, snk)
     else
-        app.outputPrinter = newTextPrinter(snk)
+        app.outputPrinter = newTextPrinter(app, snk)
     end
     local prevDate = "0000-00-00"
     local version, prevVersion = "v_._._", false
@@ -260,7 +271,7 @@ function run( app )
         local jiraNrPref = msg:match("^(%[?SDCISA%-%d%d%d%d%d?[^%d] ?)")
         if jiraNrPref then
             jiraNr = msg:match("^%[?(SDCISA%-%d%d%d%d%d?)[^%d]")
-            if jiraNr then msg = msg:sub(#jiraNrPref) end
+            if jiraNr then msg = msg:sub(#jiraNrPref):gsub("^%s+", "") end
         end
         if not dateEntry.msgs then dateEntry.msgs = {} end
         table.insert(dateEntry.msgs, {
@@ -282,6 +293,7 @@ function main()
     local app = {
         since = false,
         remoteName = false,
+        svcName = false,
         isFetch = true,
         isTags = false,
         isPrintHtml = false,
