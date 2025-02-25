@@ -22,6 +22,7 @@
   && ssh "${vm:?}" -T 'cd garb/build/'${ARCH:?}'/bin' | (cd "${outBinDir:?}" && tar x) \
 
 #endif
+#define OS_IS_UGLY _WIN32
 
 #include <NerdButtler_Private.h>
 
@@ -31,7 +32,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#if _WIN32
+#if OS_IS_UGLY
 #   include <winsock2.h>
 #   include <windows.h>
 #else
@@ -66,11 +67,13 @@ struct ClsE8750000/*getJenkinsBuildStatus*/{
     unsigned mAGIC;
     int coroState;;
     int eno, childExit, childSig;
+    int stillRunningIoPipes;
     App *app;
     struct Garbage_Process **child;
+    char *ptrToPublish;
     void (*onDone)(char*,int,void*);
     void *onDoneArg;
-    char flip[65536], flop[65536];
+    char flip[1<<18], flop[1<<18];
     int flip_len, flop_len;
 };
 
@@ -237,6 +240,9 @@ static void appendToFlip( const char*buf, int buf_len, void*cls_ ){
         }
         memcpy(BUF + BUF_LEN, buf, buf_len);
         BUF_LEN += buf_len;
+    }else{
+        assert(cls->stillRunningIoPipes > 0);
+        cls->stillRunningIoPipes -= 1;
     }
     #undef BUF
     #undef BUF_CAP
@@ -255,6 +261,9 @@ static void appendToFlop( const char*buf, int buf_len, void*cls_ ){
         }
         memcpy(BUF + BUF_LEN, buf, buf_len);
         BUF_LEN += buf_len;
+    }else{
+        assert(cls->stillRunningIoPipes > 0);
+        cls->stillRunningIoPipes -= 1;
     }
     #undef BUF
     #undef BUF_CAP
@@ -284,8 +293,9 @@ static void getJenkinsBuildStatus_kontinue( void*cls_ ){
     char const *svcName = "preflux";
     char const *prName = "PR-893";
     #define CORO_STATE (cls->coroState)
+    #define CORO_GOTO(S) do{CORO_STATE=S;goto S;}while(0)
     enum { begin=0, srx8AAH84AAD8LwAA, skE4AAIxKAADyQAAA, sAT4AADZCAAAiTgAA, sQk0AAENdAADiPQAA,
-        sPkIAAIhbAACrDQAA, suhoAACw0AAAXMwAA, };
+        sPkIAAIhbAACrDQAA, suhoAACw0AAAXMwAA, publishByEno, freeClsIfRefZero, };
     switch( CORO_STATE ){case begin:{
     }/* need to get the job number bcause 'latest' is not valid :( */{
         char url[512];
@@ -295,6 +305,7 @@ static void getJenkinsBuildStatus_kontinue( void*cls_ ){
         err = snprintf(cookieHdr, sizeof cookieHdr, "Cookie: %s", app->jenkinsCookie);
         assert(err < (signed)sizeof url);
         if( cls->child ){ (*cls->child)->unref(cls->child); }
+        cls->stillRunningIoPipes += 1;
         cls->flip_len = 0;
         CORO_STATE = srx8AAH84AAD8LwAA;
         cls->child = (*app->processFactory)->newProcess(app->processFactory, &(struct Garbage_Process_Mentor){
@@ -314,6 +325,7 @@ static void getJenkinsBuildStatus_kontinue( void*cls_ ){
             abort();
         }
         if( cls->child ){ (*cls->child)->unref(cls->child); }
+        cls->stillRunningIoPipes += 1;
         cls->flop_len = 0;
         CORO_STATE = skE4AAIxKAADyQAAA;
         cls->child = (*app->processFactory)->newProcess(
@@ -330,7 +342,13 @@ static void getJenkinsBuildStatus_kontinue( void*cls_ ){
         return;
     }case skE4AAIxKAADyQAAA:{
         if( cls->eno != BUF_LEN ){
-            LOGD("assert(!%d) %s:%d\n", cls->eno, __FILE__, __LINE__); abort(); }
+            /* TODO EIO isch bug in lib. Sött äuä eiglich EPIPE sii. */
+            if( cls->eno == -EIO ){
+                LOGD("[DEBUG] e=%d %s:%d\n", cls->eno, __FILE__, __LINE__);
+                goto publishByEno;
+            }
+            LOGD("[DEBUG] assert(!%d) %s:%d\n", cls->eno, __FILE__, __LINE__); abort();
+        }
         CORO_STATE = sAT4AADZCAAAiTgAA;
         (*cls->child)->closeSnk(cls->child);
         (*cls->child)->join(cls->child, 2000);
@@ -368,6 +386,7 @@ static void getJenkinsBuildStatus_kontinue( void*cls_ ){
         err = snprintf(cookieHdr, sizeof cookieHdr, "Cookie: %s", app->jenkinsCookie);
         assert(err < (signed)sizeof url);
         if( cls->child ){ (*cls->child)->unref(cls->child); }
+        cls->stillRunningIoPipes += 1;
         cls->flip_len = 0;
         CORO_STATE = sQk0AAENdAADiPQAA;
         cls->child = (*app->processFactory)->newProcess(
@@ -382,12 +401,18 @@ static void getJenkinsBuildStatus_kontinue( void*cls_ ){
         (*cls->child)->join(cls->child, 5000);
         return;
     }case sQk0AAENdAADiPQAA:{
+        { /* bcause prev join call just has completed */
+            assert(cls->stillRunningIoPipes > 0);
+            cls->stillRunningIoPipes -= 1;
+            if( cls->stillRunningIoPipes == 0 ) CORO_GOTO(freeClsIfRefZero);
+        }
         if( cls->eno || cls->childExit || cls->childSig ){
             LOGD("assert(!%d && !%d && !%d) %s:%d\n",
                 cls->eno, cls->childExit, cls->childSig, __FILE__, __LINE__);
             abort();
         }
         if( cls->child ){ (*cls->child)->unref(cls->child); }
+        cls->stillRunningIoPipes += 1;
         cls->flop_len = 0;
         CORO_STATE = sPkIAAIhbAACrDQAA;
         cls->child = (*app->processFactory)->newProcess(
@@ -403,10 +428,18 @@ static void getJenkinsBuildStatus_kontinue( void*cls_ ){
         (*cls->child)->write(cls->child, BUF, BUF_LEN, fs3gAADBZAADUNgAA, cls);
         return;
     }case sPkIAAIhbAACrDQAA:{
+        { /* bcause prev join call just has completed */
+            assert(cls->stillRunningIoPipes > 0);
+            cls->stillRunningIoPipes -= 1;
+            if( cls->stillRunningIoPipes == 0 ) CORO_GOTO(freeClsIfRefZero);
+        }
         if( cls->eno != BUF_LEN ){
             LOGD("assert(!%d) %s:%d\n", cls->eno, __FILE__, __LINE__); abort(); }
         CORO_STATE = suhoAACw0AAAXMwAA;
         (*cls->child)->closeSnk(cls->child);
+        /* yeah.. kind of cheating. We add a "io" token for the joining too,
+         * bcause it makes it easier to unref-count later. */
+        cls->stillRunningIoPipes += 1;
         (*cls->child)->join(cls->child, 2000);
         return;
         #undef BUF
@@ -428,15 +461,25 @@ static void getJenkinsBuildStatus_kontinue( void*cls_ ){
             beg += 1;
             for( end = beg + 1 ; end < BUF_LEN ; ++end ){ if( BUF[end] == '"' ) break; }
         }
-        cls->onDone(BUF + beg, end - beg, cls->onDoneArg);
-        cls->mAGIC = 0;
-        MALLOCATOR_REALLOCBLOCKING(app->mallocator, cls, sizeof*cls, 0);
-        return;
+        cls->ptrToPublish = BUF + beg;
+        cls->eno = end - beg;
+        CORO_GOTO(publishByEno);
         #undef BUF
         #undef BUF_LEN
+    }case publishByEno:publishByEno:{
+        cls->onDone(cls->ptrToPublish, cls->eno, cls->onDoneArg);
+        CORO_GOTO(freeClsIfRefZero);
+        return;
+    }case freeClsIfRefZero:freeClsIfRefZero:{
+        if( cls->stillRunningIoPipes == 0 ){
+            cls->mAGIC = 0;
+            MALLOCATOR_REALLOCBLOCKING(app->mallocator, cls, sizeof*cls, 0);
+        }
+        return;
     }}
     LOGD("assert(s != %d) %s:%d\n", CORO_STATE, __FILE__, __LINE__); abort();
     #undef CORO_STATE
+    #undef CORO_GOTO
 }
 
 static void getJenkinsBuildStatus( void*cls_, void(*onDone)(char*,int,void*), void*onDoneArg ){
@@ -581,23 +624,33 @@ static void HttpJenkinsStatus_kontinue( void*cls_ ){
         getJenkinsBuildStatus(app, fzAEAAHdDAABNcQAA, cls);
         return;
     }case stzUAAAlnAAC3GwAA:{
+        int rspCode;
         if( cls->buf_len <= 0 ){
-            LOGD("assert(%d > 0) %s:%d\n", cls->buf_len, __FILE__, __LINE__); abort();
+            LOGD("[DEBUG] %s: %s\n", strerrname(-cls->buf_len), __func__);
+            struct Garbage_HttpMsg_Hdr hdrs[] = {{
+                .key = "Content-Length", .val = "0",
+                .key_len = 14, .val_len = 1,
+            }};
+            cls->buildResult_len = 0;
+            CORO_STATE = sllEAANEYAADVagAA;
+            HTTPCLIENT_SENDHTTPHDR(cls->httpClient->handle, NULL, 500, NULL, hdrs, sizeof hdrs/sizeof*hdrs,
+                fFyoAANUaAADfcQAA, cls);
+        }else{
+            assert(sizeof cls->buildResult > cls->buf_len + (sizeof"\n\0"-1));
+            memcpy(cls->buildResult, cls->buf, cls->buf_len);
+            memcpy(cls->buildResult + cls->buf_len, "\n\0", 2);
+            cls->buildResult_len = cls->buf_len + 1;
+            char contentLenStr[8];
+            err = snprintf(contentLenStr, sizeof contentLenStr, "%d", cls->buildResult_len);
+            assert(err < (signed)sizeof contentLenStr);
+            struct Garbage_HttpMsg_Hdr hdrs[] = {{
+                .key = "Content-Length", .val = contentLenStr,
+                .key_len = 14, .val_len = err,
+            }};
+            CORO_STATE = sllEAANEYAADVagAA;
+            HTTPCLIENT_SENDHTTPHDR(cls->httpClient->handle, NULL, 200, NULL, hdrs, sizeof hdrs/sizeof*hdrs,
+                fFyoAANUaAADfcQAA, cls);
         }
-        assert(sizeof cls->buildResult > cls->buf_len + (sizeof"\n\0"-1));
-        memcpy(cls->buildResult, cls->buf, cls->buf_len);
-        memcpy(cls->buildResult + cls->buf_len, "\n\0", 2);
-        cls->buildResult_len = cls->buf_len + 1;
-        char contentLenStr[8];
-        err = snprintf(contentLenStr, sizeof contentLenStr, "%d", cls->buildResult_len);
-        assert(err < (signed)sizeof contentLenStr);
-        struct Garbage_HttpMsg_Hdr hdrs[] = {{
-            .key = "Content-Length", .val = contentLenStr,
-            .key_len = 14, .val_len = err,
-        }};
-        CORO_STATE = sllEAANEYAADVagAA;
-        HTTPCLIENT_SENDHTTPHDR(cls->httpClient->handle, NULL, 200, NULL, hdrs, sizeof hdrs/sizeof*hdrs,
-            fFyoAANUaAADfcQAA, cls);
         return;
     }case sllEAANEYAADVagAA:{
         if( cls->eno ){ assert(!"TODO_9w0AAGp9AAAxHgAA"); }
@@ -899,7 +952,7 @@ int NerdButtler_main( int argc, char**argv ){
 
 #if EXPOSE_NerdButtler_main
 int main( int argc, char**argv ){
-#if _WIN32 /* [source](https://git.hiddenalpha.ch/UnspecifiedGarbage.git/tree/src/main/c/common/snippets.c) */
+#if OS_IS_UGLY
     switch( WSAStartup(1, &(WSADATA){0}) ){
     case 0: break;
     case WSASYSNOTREADY    : assert(!"WSASYSNOTREADY"    ); break;
@@ -911,7 +964,7 @@ int main( int argc, char**argv ){
     }
 #endif
     return NerdButtler_main(argc, argv);
-#if _WIN32 /* [source](https://git.hiddenalpha.ch/UnspecifiedGarbage.git/tree/src/main/c/common/snippets.c) */
+#if OS_IS_UGLY
     switch( WSACleanup() ){
     case 0: break;
     case WSANOTINITIALISED : assert(!"WSANOTINITIALISED" ); break;

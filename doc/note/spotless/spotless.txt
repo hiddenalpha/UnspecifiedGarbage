@@ -7,7 +7,6 @@ MustHave in: lazlar.
 
 
   && GIT_COMMIT_MSG="${MSG_PRE:?}: Auto-destroy code-format" \
-  && PR_REMOTE=upstream \
   && PR_BRANCH= \
   && LOCL_BRANCH="$(git branch --show-current)" \
 
@@ -22,6 +21,6 @@ MustHave in: lazlar.
     ;else true \
       && git checkout "HEAD^" \
     ;fi \
-  && printf "\nTODO:\n git push ${PR_REMOTE:?} ${destroyedSha1:?}:${PR_BRANCH:?} -f\n\n" \
+  && printf "\nTODO:\n git push ${PR_REMOTE:-upstream} ${destroyedSha1:?}:${PR_BRANCH:?} -f\n\n" \
 
 
