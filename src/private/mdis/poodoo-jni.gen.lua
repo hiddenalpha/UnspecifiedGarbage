@@ -10,7 +10,14 @@
   ]===========================================================================]
 
 
-local poodooSrcWorktree = "/home/${USER:?}/work/poodoo"
+local thisSrcDir = "/c/work/projects/UnspecifiedGarbage/src/private/mdis"
+--
+-- 'bapoXXX' intended for BAPO ssh helpers via commented blocks only
+local bapoPoodooSrcDir = "/c/work/projects/isa-svc/poodoo"
+--
+local vmUser = "user"
+local vmPoodooSrcDir = "/home/${vmUser:?}/work/poodoo"
+local vmMdisHdrsDir = "/opt/mdis-headers"
 
 
 -- [Source 1](https://stackoverflow.com/a/35303321/4415884)
@@ -39,10 +46,14 @@ end
 
 function write_vars( dst )
     dst:write([=[
+  && thisSrcDir="]=].. thisSrcDir ..[=[" \
   && SUDO=sudo \
   && PODMAN="sudo podman" \
-  && poodooSrcWorktree="]=].. poodooSrcWorktree ..[=[" \
-  && mdisSrcWorktree=./CopyPasta-headers \
+  && thisSrcDir="]=].. thisSrcDir ..[=[" \
+  && vmUser="]=].. vmUser ..[=[" \
+  && vmPoodooSrcDir="]=].. vmPoodooSrcDir ..[=[" \
+  && mdisSrcWorktree="${thisSrcDir:?}/CopyPasta-headers" \
+  && vmMdisHdrsDir="]=].. vmMdisHdrsDir ..[=[" \
   && baseImgTag=docker.tools.post.ch/paisa/alice:04.00.09.00 \
   && imgTag=gcc-for-poodoo:0.0.0-SNAPSHOT \
   && cntnrNm=gcc-for-poodoo \
@@ -56,19 +67,25 @@ function write_sshHelper( dst )
 
   Helper in case docker is not available on localhost.
 
-  && vm= \
-  && SSH=ssh \
-  && poodooHostSrcDir=/abs/host/path/to/poodoo \
-  && (cd . && tar --owner=0 --group=0 -c CopyPasta-headers/13MD05-90/13Z015-06/INCLUDE/COM CopyPasta-headers/13MD05-90/MDISforLinux/INCLUDE/COM) \
-     | ${SSH:?} "${vm:?}" -T 'true \
+  && `# Copy stuff into vm ` \
+  && SSH_T="ssh localhost -p22 -T" \
+  && thisSrcDir="]=].. thisSrcDir ..[=[" \
+  && vmUser="]=].. vmUser ..[=[" \
+  && vmMdisHdrsDir="]=].. vmMdisHdrsDir ..[=[" \
+  && vmPoodooSrcDir="]=].. vmPoodooSrcDir ..[=[" \
+  && bapoPoodooSrcDir="]=].. bapoPoodooSrcDir ..[=[" \
+  && (cd ${thisSrcDir:?}/CopyPasta-headers \
+     && tar --owner=0 --group=0 -c 13MD05-90/13Z015-06/INCLUDE/COM 13MD05-90/MDISforLinux/INCLUDE/COM) \
+     | ${SSH_T:?} 'true \
         && SUDO=sudo \
-        && $SUDO mkdir /opt/mdis-headers \
-        && cd /opt/mdis-headers \
+        && $SUDO mkdir "'"${vmMdisHdrsDir:?}"'" \
+        && cd "'"${vmMdisHdrsDir:?}"'" \
         && $SUDO tar x \
         && true' \
-  && (cd "${poodooHostSrcDir:?}" && tar --owner=0 --group=0 -c poodoo-web/src/main/c) \
-     | ${SSH:?} "${vm:?}" -T 'true \
-       && cd "]=].. poodooSrcWorktree ..[=[" \
+  && (cd "${bapoPoodooSrcDir:?}" && tar --owner=0 --group=0 -c poodoo-web/src/main/c) \
+     | ${SSH_T:?} 'true \
+       && mkdir -p "'"${vmPoodooSrcDir:?}"'" \
+       && cd "'"${vmPoodooSrcDir:?}"'" \
        && tar x \
        && true' \
 
@@ -79,11 +96,17 @@ end
 
 
 function write_createDockerimage( dst )
+    dst:write([=[
+  && rm -rf mdis-headers \
+  && mkdir -p mdis-headers \
+  && (cd "${vmMdisHdrsDir:?}" && tar c *) | (cd mdis-headers && tar x) \
+]=])
     dst:write("  && echo ".. b64enc([=[
 FROM ${baseImgTag}
 USER root
 WORKDIR /work
-COPY CopyPasta-headers /opt/mdis-headers
+COPY mdis-headers/13MD05-90/13Z015-06/INCLUDE/COM /usr/include
+COPY mdis-headers/13MD05-90/MDISforLinux/INCLUDE/COM /usr/include
 RUN true \
   && SUDO=sudo \
   && $SUDO apt-get install --no-install-recommends -y \
@@ -113,22 +136,8 @@ end
 
 function write_createAndStartContainer( dst )
     dst:write([=[
-  && ${PODMAN:?} create --name "${cntnrNm:?}" "${imgTag:?}" sleep 43200 \
+  && ${PODMAN:?} create --name "${cntnrNm:?}" -v"${vmPoodooSrcDir:?}:/work/poodoo:rw" "${imgTag:?}" sleep 43200 \
   && ${PODMAN:?} start "${cntnrNm:?}" \
-]=])
-end
-
-
-function write_poodooCopy( dst )
-    dst:write([=[
-  && (wd=$PWD && cd "${poodooSrcWorktree:?}" \
-    && tar --owner=0 --group=0 -cz poodoo-web/src/main/c \
-       | ${PODMAN:?} exec -i "${cntnrNm:?}" sh -c 'true \
-          && cd /work/poodoo \
-          && rm -rf $(ls -A) \
-          && tar xz \
-          && true' \
-  && true) \
 ]=])
 end
 
@@ -140,28 +149,18 @@ function write_poodooMake( dst )
        && cd poodoo/poodoo-web/src/main/c \
        && CC=gcc \
        && LD=gcc \
-       && CFLAGS="-Wall -O1 -fPIC -std=gnu99]=])
+       && CFLAGS="-Wall -Os -fPIC -std=gnu99]=])
      dst:write([=[ -I/usr/lib/jvm/java-1.17.0-openjdk-amd64/include]=])
      dst:write([=[ -I/usr/lib/jvm/java-1.17.0-openjdk-amd64/include/linux]=])
-     dst:write([=[ -I/opt/mdis-headers/13MD05-90/13Z015-06/INCLUDE/COM]=])
-     dst:write([=[ -I/opt/mdis-headers/13MD05-90/MDISforLinux/INCLUDE/COM]=])
+     -- OBSOLETE dst:write([=[ -I/opt/mdis-headers/13MD05-90/13Z015-06/INCLUDE/COM]=])
+     -- OBSOLETE dst:write([=[ -I/opt/mdis-headers/13MD05-90/MDISforLinux/INCLUDE/COM]=])
      dst:write([=[" \
        && LDFLAGS="-shared -lmscan_api -lmdis_api" \
-       && mkdir -p "${wd:?}/build" \
+       && mkdir -p "${wd:?}/poodoo/target/x86_64-linux-gnu/lib" \
        && ${CC:?} -c -o /tmp/ch_post_it_paisa_poodoo_jni_CanBus.o ${CFLAGS:?} ch_post_it_paisa_poodoo_jni_CanBus.c \
-       && ${LD:?} -o "${wd:?}"/build/lib_poodoo_canbus.so /tmp/ch_post_it_paisa_poodoo_jni_CanBus.o ${LDFLAGS:?} \
+       && ${LD:?} -o "${wd:?}"/poodoo/target/x86_64-linux-gnu/lib/lib_poodoo_canbus.so /tmp/ch_post_it_paisa_poodoo_jni_CanBus.o ${LDFLAGS:?} \
        && cd "${wd:?}" \
        && true' \
-]=])
-end
-
-
-function write_cpyResultToHostFromContainer( dst )
-    dst:write([=[
-  && mkdir -p build \
-  && (cd build && rm -rf $(ls -A)) \
-  && ${PODMAN:?} exec -i "${cntnrNm:?}" sh -c 'cd build && tar c $(ls -A)' | (cd build && tar x) \
-  && echo && file build/* && echo \
 ]=])
 end
 
@@ -169,18 +168,16 @@ end
 function main()
     local dst = io.stdout
     dst:write("#!/bin/sh\nset -e\n")
-    dst:write("\ntrue `# configure ` \\\n")
+    dst:write("\ntrue `# configure ` \\\n  && printf '\\033[0m' \\\n")
     write_vars(dst)
-    dst:write("\ntrue `# ssh helper ` \\\n")
+    dst:write("\ntrue `# ssh helper ` \\\n  && printf '\\033[0m' \\\n")
     write_sshHelper(dst)
-    dst:write("\ntrue `# setup docker container` \\\n")
+    dst:write("\ntrue `# setup docker container` \\\n  && printf '\\033[0m' \\\n")
     write_createDockerimage(dst)
     write_purgeContainer(dst)
     write_createAndStartContainer(dst)
-    dst:write("\ntrue `# build poodoo jni parts` \\\n")
-    write_poodooCopy(dst)
+    dst:write("\ntrue `# build poodoo jni parts` \\\n  && printf '\\033[0m' \\\n")
     write_poodooMake(dst)
-    write_cpyResultToHostFromContainer(dst)
 end
 
 

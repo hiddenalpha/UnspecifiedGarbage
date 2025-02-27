@@ -219,7 +219,7 @@ function writePkgInstallation( dst )
     local pkgs = { ["net-tools"]=1, ["vim"]=1, ["curl"]=1, ["nfs-common"]=1, ["htop"]=1,
         ["ncat"]=1, ["git"]=1, ["ca-certificates"]=1, ["tmux"]=1, ["awscli"]=1,
         ["openjdk-17-jdk-headless"]=1, ["maven"]=1, ["podman"]=1, ["bash-completion"]=1,
-        ["lua5.4"]=1, ["trash-cli"]=1, }
+        ["lua5.4"]=1, ["trash-cli"]=1, ["binutils"]=1, }
     if redisHouston.setup or redisEagle.setup or redisVolatile.setup then
         pkgs["redis-server"] = 1
         pkgs["redis-tools"] = 1

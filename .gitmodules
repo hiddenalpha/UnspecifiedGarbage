@@ -7,3 +7,9 @@
 [submodule "src/private/redis7-test-20250131"]
 	path = src/private/redis7-test-20250131
 	url = ssh://pi-one.local/~/scm/notes/redis7-test-20250131.git
+[submodule "src/private/poodoo-NewLibEnoent-20250220"]
+	path = src/private/poodoo-NewLibEnoent-20250220
+	# TODO add pi URL = file:///c/work/tmp/gugg/.git
+[submodule "src/private/babelfish-Deadlock-20250226"]
+	path = src/private/babelfish-Deadlock-20250226
+	url = file:///c/work/tmp/du/.git
