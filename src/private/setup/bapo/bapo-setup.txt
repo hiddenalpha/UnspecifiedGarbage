@@ -1,0 +1,22 @@
+
+BaPo Setup
+================
+
+Install cntlm, 7zPortable.
+
+Install Notepad++ (evtl schon vorinstalliert)
+
+Install nginx, LinkList.
+
+Install FfPortable, GitPortable.
+
+Install IntelliJ
+
+Install qemu.
+
+Install KeePassXC.
+
+Install ssh (and its keys)
+
+Install gpg (and its keys)
+
