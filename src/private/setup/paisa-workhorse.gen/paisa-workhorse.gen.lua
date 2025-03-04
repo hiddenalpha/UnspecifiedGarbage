@@ -32,9 +32,8 @@
   ]===========================================================================]
 -- Customize your install here ------------------------------------------------
 
-local yourPhysicalHostname = "w00o2z"
 local proxy_url = "http://10.0.2.2:3128/"
-local proxy_no  = "localhost,pnet.ch,post.ch,tools.post.ch,gitit.post.ch,pnetcloud.ch,eu-central-1.eks.amazonaws.com,"..assert(yourPhysicalHostname)
+local proxy_no  = "localhost,pnet.ch,post.ch,tools.post.ch,gitit.post.ch,pnetcloud.ch,eu-central-1.eks.amazonaws.com"
 
 -- Features
 local redisHouston  = { setup = true ,  enable = false,  port = 6389, pass = "isarulez", }

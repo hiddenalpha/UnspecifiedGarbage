@@ -651,4 +651,6 @@ Links (Aka argument amplifiers)
 ## C Versus C++
 - [C++ is not x-platform anymore](https://gcher.com/posts/2019-07-04-cpp-is-not-cross-platform-anymore/)
 
+## ...
+- [git for windoof macht crlf newlines kapput](https://wikit.post.ch/display/ISA/Code+Formatting?focusedCommentId=791239536#comment-791239536)
 

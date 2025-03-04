@@ -8,7 +8,7 @@ Install Notepad++ (evtl schon vorinstalliert)
 
 Install nginx, LinkList.
 
-Install FfPortable, GitPortable.
+Install FfPortable, GitPortable, NerdTree.
 
 Install IntelliJ
 
