@@ -3,6 +3,7 @@
 
 # General config for all hosts
 Host *
+    #IdentityFile ~/.ssh/id_whatever
     # No idea why I should wait full 30 seconds for a peer to reply ...
     ConnectTimeout 5
     # Prevents hung-up sessions. I guess a firewall dropped the connection as

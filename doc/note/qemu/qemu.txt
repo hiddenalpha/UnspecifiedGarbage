@@ -188,6 +188,15 @@ TODO: move this to a better place. Eg: debian/setup.txt or whatever.
   && true
 
 
+
+## HotPlug via qemu monitor prompt
+
+  help hostfwd_add
+  help hostfwd_remove
+  info usernet
+  hostfwd_add n0 tcp:127.0.0.1:8080-:80
+
+
 ## Qemu-Monitor in combo with VNC
 
   --monitor stdio

@@ -238,6 +238,7 @@ Links (Aka argument amplifiers)
 - [java streams are ugly](https://gitit.post.ch/projects/ISA/repos/nsync/pull-requests/55/overview?commentId=328210)
 
 ## Backward compatibility, Breaking Changes
+- [BuildPipeline broken bcause agrajag/god NOT backward compatible](https://teams.microsoft.com/l/message/19:261fb671bd664d4fb30d6d9e09869a7f@thread.tacv2/1740481260032?tenantId=3ae7c479-0cf1-47f4-8f84-929f364eff67&groupId=dce34a79-5661-41ab-b495-60a46b69d38e&parentMessageId=1740481260032&teamName=SDC-ISA&channelName=%F0%9F%A4%96SDC-ISA%20DevOps-Support&createdTime=1740481260032)
 - [Redis7 vs Redis4 aof breaking migration problems](https://wikit.post.ch/x/2g-ygQ)
 - [SprintFeedback says STOP IT](https://jira.post.ch/projects/SDCISA?selectedItem=com.arijea.plugins.easy-agile-user-story-maps&rapidView=9825#/retros/board/9825/sprint/48137)
 - [preflux 2024 storage/redis aws isaVersion](https://gitit.post.ch/projects/ISA/repos/preflux/pull-requests/780/overview?commentId=396322)
@@ -650,4 +651,6 @@ Links (Aka argument amplifiers)
 ## C Versus C++
 - [C++ is not x-platform anymore](https://gcher.com/posts/2019-07-04-cpp-is-not-cross-platform-anymore/)
 
+## ...
+- [git for windoof macht crlf newlines kapput](https://wikit.post.ch/display/ISA/Code+Formatting?focusedCommentId=791239536#comment-791239536)
 

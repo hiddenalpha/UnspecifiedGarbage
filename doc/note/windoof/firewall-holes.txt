@@ -33,6 +33,16 @@ Beispiel 3 (Lazlar):
 | "000local-0000-0001-0010-000000000018"="v2.30|Action=Allow|Active=TRUE|Dir=In|Protocol=17|Profile=Public|LPort=5353|RPort=5353|LA4=224.0.0.251/4|RA4=192.168.0.0/16|Name=public_local_ISA_Lazlar_mdns-inn|Desc=public_local_ISA_Lazlar_mdns-inn: Bonjour service discovery development|"
 +-----------------------------------------------------------------------
 
+Beispiel 4 (PiSsh):
+
++-----------------------------------------------------------------------
+| Windows Registry Editor Version 5.00
+| 
+| [HKEY_LOCAL_MACHINE\Software\WOW6432Node\AutoInst\WindowsFirewall\091_PiOne]
+| "000local-0000-0010-0010-000000009191"="v2.30|Action=Allow|Active=TRUE|Dir=Out|Protocol=6|Profile=Public|RPort=22|LA4=192.168.0.0/16|RA4=192.168.0.0/16|Name=public_local_PiOne-out|Desc=public_local_PiOne-out|"
+| "000local-0000-0001-0010-000000009191"="v2.30|Action=Allow|Active=TRUE|Dir=In|Protocol=6|Profile=Public|RPort=22|LA4=192.168.0.0/16|RA4=192.168.0.0/16|Name=public_local_PiOne-inn|Desc=public_local_PiOne-inn|"
++-----------------------------------------------------------------------
+
 SideNote:
 
 - Protocol (6=TCP, 17=UDP)
@@ -41,6 +51,10 @@ SideNote:
 - RA4 (Remote Address IPv4)
 - LA4 (Local Address IPv4)
 - Dir (Direction In/Out)
+
+HINT: Im registry editor unbedingt sicherstellen, dass die UUID EINDEUTIG ist.
+Bei konflikten spinnt sonst die firewall und lädt nur random irgendeine der
+rules.
 
 Mehrere Ports/Adressen kombinierbar mit | (pipe). Für Gegenrichtung, statt
 RPort und RA4, LPort und LA4 verwenden. 

@@ -7,13 +7,12 @@ MustHave in: lazlar.
 
 
   && GIT_COMMIT_MSG="${MSG_PRE:?}: Auto-destroy code-format" \
-  && PR_REMOTE=upstream \
   && PR_BRANCH= \
   && LOCL_BRANCH="$(git branch --show-current)" \
 
   && if test -n "$(git status --porcelain)" ;then echo "ERROR: Git worktree not clean"; false ;fi \
   && git checkout --detach \
-  && mvn spotless:apply \
+  && mvn clean verify spotless:apply \
   && git add -- . \
   && git commit -m "${GIT_COMMIT_MSG:?}" \
   && destroyedSha1="$(git log -n1 --format=format:%H)" \
@@ -22,6 +21,6 @@ MustHave in: lazlar.
     ;else true \
       && git checkout "HEAD^" \
     ;fi \
-  && printf "\nTODO:\n git push ${PR_REMOTE:?} ${destroyedSha1:?}:${PR_BRANCH:?} -f\n\n" \
+  && printf "\nTODO:\n git push ${PR_REMOTE:-upstream} ${destroyedSha1:?}:${PR_BRANCH:?} -f\n\n" \
 
 
