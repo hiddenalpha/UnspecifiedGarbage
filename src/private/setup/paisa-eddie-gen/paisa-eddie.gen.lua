@@ -20,7 +20,7 @@
 local env_PROXY_URL = "http://10.0.2.2:3128/"
 local env_PROXY_NO  = "127.0.0.1,localhost,10.0.2.2,10.0.2.15"
 local env_PAISA_ENV = "test"
-local guestHostname = "veddie01"
+local guestHostname = "veddie42"
 -- keys on fedora/RHEL MUST be at least 3072 bits.
 local isaSshPubKey = nil
 
@@ -28,20 +28,12 @@ local isaSshPubKey = nil
 
 
 
--- [Source 2](http://git.hiddenalpha.ch/UnspecifiedGarbage.git/tree/src/main/lua/common/base64.lua)
-function b64enc( src )
-    local b = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
-    return ((src:gsub('.', function(x)
-        local r, b = '', x:byte()
-        for i = 8, 1, -1 do r = r .. (b%2^i-b%2^(i-1)>0 and '1' or '0') end
-        return r;
-    end)..'0000'):gsub('%d%d%d?%d?%d?%d?', function(x)
-        if (#x < 6) then return '' end
-        local c=0
-        for i=1,6 do c=c+(x:sub(i,i)=='1' and 2^(6-i) or 0) end
-        return b:sub(c+1,c+1)
-    end)..({ '', '==', '=' })[#src%3+1])
-end
+-- [Source](http://git.hiddenalpha.ch/UnspecifiedGarbage.git/tree/src/main/lua/common/base64.lua)
+function b64enc( src ) local b = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+return((src:gsub('.',function(x)local r,b='',x:byte()for i=8,1,-1 do r=r..(b%2^i-b%2^(i-1)>0 and'1'
+or'0') end return r;end)..'0000'):gsub('%d%d%d?%d?%d?%d?',function(x)if #x< 6 then return''end
+local c=0 for i=1,6 do c=c+(x:sub(i,i)=='1'and 2^(6-i)or 0)end return b:sub(c+1,c+1)end)..({'','=='
+,'='})[#src%3+1])end
 
 
 
@@ -81,8 +73,8 @@ end
 function write_saveMyAssPodmanReset( dst )
     local absPath = "/home/isa/.local/bin/podman-force-wipe"
     dst:write([=[
-  && (cd /home/isa && mkdir -p .local/bin) \
-  && <<EOF_oAlBwAA base64 -d > ]=].. absPath ..[=[ &&
+  && $SUDO sh -c 'cd /home/isa && mkdir -p .local/bin && chown '"${isaUid:?}:${isaGid:?}"' .local .local/bin' \
+  && <<EOF_oAlBwAA base64 -d | $SUDO tee ]=].. absPath ..[=[ > /dev/null &&
 ]=])
     local buf = "#!/bin/sh\n# Grrrrr... Why cannot just this tool do its job by itself?\nset -e \\\n"
         ..'  && SUDO=$(if test "$(id -u)" -ne 0 ;then echo sudo ;fi) \\\n'
@@ -119,6 +111,7 @@ set -e \
           | $SUDO tee -a /etc/dnf/dnf.conf >/dev/null \
      ;fi \
   && `# Würgaround: dnf --setopt=sslverify=false ` \
+  && `# Grrr.... Yet another würgaround: dnf --setopt=zchunk=false ` \
   && $SUDO dnf install -y openssh-server podman nmap-ncat tcpdump \
   && $SUDO dnf remove -y firewalld \
   && $SUDO systemctl enable sshd \
@@ -142,15 +135,15 @@ set -e \
   && $SUDO chown ${isaUid:?}:${appGid:?} /home/isa \
   && $SUDO mkdir -p /data/instances \
   && $SUDO mkdir -p /mnt/data/fenchurch \
-  && $SUDO chown root:app /mnt/data/fenchurch \
+  && $SUDO chown root:${appGid:?} /mnt/data/fenchurch \
   && $SUDO chmod 775 /mnt/data/fenchurch \
   && $SUDO chgrp ${appGid:?} /data/instances \
   && $SUDO chmod 775 /data/instances \
-  && mkdir -p /home/isa/.ssh \
-  && printf %s\\n ']=].. isaSshPubKey ..[=[' >> /home/isa/.ssh/authorized_keys \
-  && find /home/isa/.ssh $SUDO chown ${isaUid:?}:${isaGid:?} /home/isa/.ssh \
-  && find /home/isa/.ssh -type d $SUDO chmod 700 /home/isa/.ssh \
-  && find /home/isa/.ssh -type f $SUDO chmod 600 /home/isa/.ssh \
+  && $SUDO mkdir -p /home/isa/.ssh \
+  && printf %s\\n ']=].. isaSshPubKey ..[=[' | $SUDO tee -a /home/isa/.ssh/authorized_keys >/dev/null \
+  && $SUDO find /home/isa/.ssh -exec chown ${isaUid:?}:${isaGid:?} {} + \
+  && $SUDO find /home/isa/.ssh -type d -exec chmod 700 {} + \
+  && $SUDO find /home/isa/.ssh -type f -exec chmod 600 {} + \
   && `# Inject some inlien documentation ` \
   && printf %s\\n \
          '' \
@@ -173,10 +166,10 @@ set -e \
     write_saveMyAssPodmanReset(dst)
     dst:write([=[
   && `# Force-replace isa related users/groups. ` \
+  && $SUDO cp /etc/sudoers /etc/sudoers-$(date -u +%Y%m%d-%H%M%S).bk \
   && $SUDO sed -i -E 's/^(%wheel\s+ALL=\(ALL\)\s+)(ALL\s*)$/\1NOPASSWD:\2/' /etc/sudoers \
-  && $SUDO mv /etc/sudoers-FBsAAJpmAAA5ewAA /etc/sudoers \
   && <<EOF $SUDO sh - &&
-true \
+true `# WARN danger zone zere!` \
   && cat /etc/passwd \
      | grep -v -E '^isa:' \
      | grep -v -E '^[^:]*:[^:]*:'${isaUid:?}':' \
@@ -185,21 +178,23 @@ true \
      | grep -v -E '^app:' \
      | grep -v -E '^[^:]*:[^:]*:'${appGid:?}':' \
      | tee /etc/group-Y2MAAOIIAABeCQAA >/dev/null \
-  && mv /etc/group-Y2MAAOIIAABeCQAA /etc/passwd \
-  && printf "isa:x:${isaUid:?}:${isaGid:?}:isa:/home/isa:/bin/bash\n" | tee -a /etc/passwd >/dev/null \
-  && printf "isa:x:${isaUid:?}:\n" | tee -a /etc/group >/dev/null \
-  && cat /etc/group \
+  && printf "isa:x:${isaUid:?}:${isaGid:?}:isa:/home/isa:/bin/bash\n" | tee -a /etc/passwd-9D8AAONcAADpbAAA >/dev/null \
+  && printf "isa:x:${isaUid:?}:\n" | tee -a /etc/group-Y2MAAOIIAABeCQAA >/dev/null \
+  && cat /etc/group-Y2MAAOIIAABeCQAA \
      | sed -E 's/^(wheel:.*:)$/\1isa/' | sed -E 's/^(wheel:.*[^:])$/\1,isa/' \
      | tee /etc/group-PQcAAEApAABzQwAA >/dev/null \
-  && mv /etc/group-PQcAAEApAABzQwAA /etc/group \
-  && printf %s\\n \
+  && rm /etc/group-Y2MAAOIIAABeCQAA \
+  && printf '%s\n' \
        "app:x:${appGid:?}:isa" \
-     | tee -a /etc/group >/dev/null \
-  && echo 'isa:12345' | $SUDO chpasswd \
-  && $SUDO hostnamectl set-hostname "]=].. guestHostname ..[=[" \
+     | tee -a /etc/group-PQcAAEApAABzQwAA >/dev/null \
+  && cat /etc/group-PQcAAEApAABzQwAA > /etc/group \
+  && cat /etc/passwd-9D8AAONcAADpbAAA > /etc/passwd \
+  && echo 'isa:12345' | chpasswd \
+  && hostnamectl set-hostname "]=].. guestHostname ..[=[" \
   && true
 EOF
 true \
+  && $SUDO sed -i -E 's_^SELINUX=enforcing$_SELINUX=permissive_g' /etc/selinux/config \
   && cat /home/isa/README.txt \
   && printf '\n  DONE :)\n\n' \
 ]=])

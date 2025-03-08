@@ -650,7 +650,10 @@ end
 
 
 function writeEmbeddedReadme( dst )
-    dst:write("  && <<EOF base64 -d | gzip -d | tee /home/${USER:?}/README.txt &&\n")
+    dst:write([=[
+  && mkdir /home/${USER:?}/doc \
+  && <<EOF base64 -d | gzip -d | tee /home/${USER:?}/doc/README.txt && \
+]=])
     fileAsB64Gz(__DIR__.."/inline-readme.txt", dst)
     dst:write("EOF\ntrue \\\n")
 end
