@@ -131,6 +131,14 @@ git push all --dry-run --all
 
 
 
+## Auto-fetch branches AND tags
+
+[remote "upstream"]
+	fetch = +refs/heads/*:refs/remotes/upstream/*
+	fetch = +refs/tags/*:refs/tags/*
+
+
+
 ## Fetch multiple remotes (but NOT all!) at once
 
 git fetch --multiple origin upstream

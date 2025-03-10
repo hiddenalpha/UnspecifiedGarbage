@@ -104,7 +104,14 @@ HINT: Repeat afade twice for log scale.
 
 ## Rotate Portrait
 
-  -i INFILE -vf "transpose=2" OUTFILE
+  `# 90° dräie`
+  -vf "transpose=2"
+
+  `# rotate metadata-only, NO re-encoding `
+  -metadata:s:v rotate="90"
+
+  `# Aufn Kopf stellen (re-encoding)`
+  -vf "vflip,hflip" -c:v h264_qsv -preset slow
 
 
 

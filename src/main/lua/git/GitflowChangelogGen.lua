@@ -281,7 +281,7 @@ function run( app )
         })
         ::nextCommit::
     end
-    if #dateEntry.msgs > 0 then table.insert(entries, dateEntry) end
+    if dateEntry.msgs and #dateEntry.msgs > 0 then table.insert(entries, dateEntry) end
     -- output
     for k, v in ipairs(entries) do
         app.outputPrinter:append(v)
