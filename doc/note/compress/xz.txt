@@ -1,5 +1,5 @@
 
 
-  xz --keep --lzma2=preset=9,nice=273,dict=1G -vv
+  xz --keep --lzma2=preset=9,nice=273,dict=1G -vv --memlimit=$((32*1073741824))
 
 
