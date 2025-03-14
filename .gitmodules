@@ -13,3 +13,6 @@
 [submodule "src/private/babelfish-Deadlock-20250226"]
 	path = src/private/babelfish-Deadlock-20250226
 	# TODO add pi URL:  url = file:///c/work/tmp/du/.git
+[submodule "preflux-install-performance-20250314"]
+	path = src/private/preflux-install-performance-20250314
+	url = file:///c/work/tmp/foo/.git
