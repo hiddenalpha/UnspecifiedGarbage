@@ -57,7 +57,7 @@
 
   Firewall: https://fwehfnet.pnet.ch/connect
   Known Namespaces: isa-houston-prod, isa-houston-int, isa-houston-snapshot,
-      isa-houston-test
+      isa-houston-test, isa-god-test
 
   kubectl version   (WARN: server/client max 2 minor versions apart of each other!)
   kubectl config view
