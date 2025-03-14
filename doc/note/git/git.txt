@@ -159,6 +159,15 @@ Setup a "pre-push" hook.
 
 
 
+## fatal: transport 'file' not allowed
+
+Looks as this got disable due to a CVE. WARN: only use this (insecure)
+würgaround if you know what you're doing:
+
+  -c "protocol.file.allow=always"
+
+
+
 
 ## Refs
 
