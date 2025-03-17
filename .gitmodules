@@ -16,3 +16,6 @@
 [submodule "preflux-install-performance-20250314"]
 	path = src/private/preflux-install-performance-20250314
 	url = file:///c/work/tmp/foo/.git
+[submodule "src/private/paisa-cloc"]
+	path = src/private/paisa-cloc
+	url = file:///c/Users/fankhauseand/OneDrive - Post CH AG/git-remotes/paisa-cloc.git
