@@ -15,7 +15,7 @@
 	# TODO add pi URL:  url = file:///c/work/tmp/du/.git
 [submodule "preflux-install-performance-20250314"]
 	path = src/private/preflux-install-performance-20250314
-	url = file:///c/work/tmp/foo/.git
+	url = file://~/OneDrive - Post CH AG/git-remotes/preflux-install-performance-20250314.git
 [submodule "src/private/paisa-cloc"]
 	path = src/private/paisa-cloc
-	url = file:///c/Users/fankhauseand/OneDrive - Post CH AG/git-remotes/paisa-cloc.git
+	url = file://~/OneDrive - Post CH AG/git-remotes/paisa-cloc.git
