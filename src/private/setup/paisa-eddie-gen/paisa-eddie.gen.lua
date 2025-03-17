@@ -139,12 +139,19 @@ set -e \
   && $SUDO chmod 775 /mnt/data/fenchurch \
   && $SUDO chgrp ${appGid:?} /data/instances \
   && $SUDO chmod 775 /data/instances \
+  && <<EOF_q34huq398 cat > /home/isa/.bashrc &&
+
+export PS1='[$? \u@\h \W]\\$ '
+
+EOF_q34huq398
+true \
   && $SUDO mkdir -p /home/isa/.ssh \
   && printf %s\\n ']=].. isaSshPubKey ..[=[' | $SUDO tee -a /home/isa/.ssh/authorized_keys >/dev/null \
   && $SUDO find /home/isa/.ssh -exec chown ${isaUid:?}:${isaGid:?} {} + \
   && $SUDO find /home/isa/.ssh -type d -exec chmod 700 {} + \
   && $SUDO find /home/isa/.ssh -type f -exec chmod 600 {} + \
-  && `# Inject some inlien documentation ` \
+  && `# Inject some inline documentation ` \
+  && mkdir /home/isa/doc \
   && printf %s\\n \
          '' \
          '  ## Additional packages, helpful for some debugging scenarios' \
@@ -159,8 +166,8 @@ set -e \
          '  `# vv-- WARN WIPES EVERYTHING, (including networks!) `' \
          '  $SUDO podman system prune -a -f' \
          '' \
-     | $SUDO tee /home/isa/README.txt >/dev/null \
-  && $SUDO chown ${isaUid:?}:${isaGid:?} /home/isa/README.txt \
+     | $SUDO tee /home/isa/doc/README.txt >/dev/null \
+  && $SUDO chown ${isaUid:?}:${isaGid:?} /home/isa/doc /home/isa/doc/README.txt \
 ]=])
     write_setupPodmanNetworks(dst)
     write_saveMyAssPodmanReset(dst)
