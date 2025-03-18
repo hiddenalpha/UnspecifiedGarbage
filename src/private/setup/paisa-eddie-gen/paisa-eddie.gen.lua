@@ -145,9 +145,10 @@ export PS1='[$? \u@\h \W]\\$ '
 
 EOF_q34huq398
 true \
+  && cp /etc/skel/.bash_profile /home/isa/. \
   && $SUDO mkdir -p /home/isa/.ssh \
   && printf %s\\n ']=].. isaSshPubKey ..[=[' | $SUDO tee -a /home/isa/.ssh/authorized_keys >/dev/null \
-  && $SUDO find /home/isa/.ssh -exec chown ${isaUid:?}:${isaGid:?} {} + \
+  && $SUDO find /home/isa -exec chown ${isaUid:?}:${isaGid:?} {} + \
   && $SUDO find /home/isa/.ssh -type d -exec chmod 700 {} + \
   && $SUDO find /home/isa/.ssh -type f -exec chmod 600 {} + \
   && `# Inject some inline documentation ` \
