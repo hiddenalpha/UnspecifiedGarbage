@@ -2,3 +2,6 @@
 set colored-completion-prefix on
 set colored-stats off
 
+# OneOf "none", "visible", "audible"
+set bell-style none
+

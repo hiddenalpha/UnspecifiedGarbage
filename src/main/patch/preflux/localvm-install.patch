@@ -10,7 +10,7 @@
 +        } else if (Pattern.compile("^localhost$").matcher(hostname).matches()) {
 +            machine = new Machine() {
 +                @Override public String getHostname() { return hostname; }
-+                @Override public String getExpectedRemoteHostname() { return "veddie01"; }
++                @Override public String getExpectedRemoteHostname() { return "veddie42"; }
 +                @Override public String getSshUsername() { return "isa"; }
 +                @Override public boolean needsLegacyDocker() { return false; }
 +                @Override public boolean isTeddie() { return true; }

@@ -131,6 +131,14 @@ git push all --dry-run --all
 
 
 
+## Auto-fetch branches AND tags
+
+[remote "upstream"]
+	fetch = +refs/heads/*:refs/remotes/upstream/*
+	fetch = +refs/tags/*:refs/tags/*
+
+
+
 ## Fetch multiple remotes (but NOT all!) at once
 
 git fetch --multiple origin upstream
@@ -148,6 +156,15 @@ Setup a "pre-push" hook.
 
   `# HINT: this may take a while`
   git fsck --full --no-reflogs | grep commit
+
+
+
+## fatal: transport 'file' not allowed
+
+Looks as this got disable due to a CVE. WARN: only use this (insecure)
+würgaround if you know what you're doing:
+
+  -c "protocol.file.allow=always"
 
 
 
