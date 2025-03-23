@@ -55,8 +55,8 @@ Manage GnuPG Master And Subkeys
 
   gpg --import keys-for-device
   gpg --edit-key foo@example.com
-  gpg> trust
-  gpg> save
+    trust
+    save
 
 
 ## Sign a foreign key to express to the world that we trust it
@@ -75,6 +75,7 @@ PS: Why is this so fu***** damn complicated! Anyone still wondering why this
   (cd "${OFFHOME:?}/.gnupg" && tar c $(ls -A)) | (cd master && tar x)
   export GNUPGHOME="${WORKDIR:?}/master"
   gpg --list-secret-keys --with-keygrip --keyid-format=long --with-fingerprint --with-subkey-fingerprint --list-options show-unusable-subkeys
+  `# WARN: encrypt subkey MUST have the LATEST date, even newer than the master key! `
   gpg --edit-key SEC_KEY
     expire
     save

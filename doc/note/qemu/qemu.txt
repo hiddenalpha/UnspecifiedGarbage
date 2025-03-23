@@ -54,6 +54,10 @@ qemu-system-x86_64 \
     `# Fix broken guests` \
     -device usb-ehci,id=usb,bus=pci.0,addr=0x4 -device usb-tablet \
 
+TODO try integrate this into above:
+  -drive ... discard=unmap,detect-zeroes=unmap
+  write doc about: `fstrim -av`
+
 [src udev rules](https://mirrors.edge.kernel.org/pub/linux/utils/kernel/hotplug/udev/udev.html)
 [TODO mcast broken](https://serverfault.com/q/1002977/673216)
 
