@@ -1,0 +1,86 @@
+
+Wifi Access Point Mode
+======================
+
+WARN: This is NOT working...
+
+  && $SUDO RUNLEVEL=1 apt install --no-install-recommends -y \
+        iw wireless-regdb hostapd dnsmasq \
+
+  `# check if AP-mode is supported `
+  && $SUDO iw list \
+
+  `# scan for existing wifi nets (doesNotWorkForMe) `
+  && $SUDO ip link set wlan0 up \
+  && $SUDO iw dev wlan0 scan sched_start \
+  && sleep 3 \
+  && $SUDO iw dev wlan0 dump \
+  && $SUDO iw dev wlan0 scan sched_stop \
+  `# or with less flexibility: `
+  && $SUDO iw dev wlan0 scan \
+
+
+
+"/etc/hostapd/hostapd.conf"
+
+# [src](UnspecifiedGarbage/doc/note/wifi/wifi-AP.txt)
+interface=wlan0
+hw_mode=g
+channel=10
+auth_algs=1
+wpa=2
+wpa_key_mgmt=WPA-PSK
+wpa_pairwise=CCMP
+rsn_pairwise=CCMP
+wpa_passphrase=guguseli
+ssid=HomeMatic
+ieee80211n=1
+wmm_enabled=1
+ht_capab=[HT20][HT40][DSSS_CCK-40]
+vht_capab=[SHORT-GI-20][SHORT-GI-40]
+ignore_broadcast_ssid=0
+ieee80211d=1
+country_code=CH
+
+
+"/etc/default/hostapd"
+
+DAEMON_CONF="/etc/hostapd/hostapd.conf"
+
+
+"/etc/network/interfaces"
+
+# [src](UnspecifiedGarbage/doc/note/wifi/wifi-AP.txt)
+auto wlan0
+iface wlan0 inet static
+    address 192.168.66.1
+    netmask 255.255.255.0
+    hostapd /etc/hostapd/hostapd.conf
+    # https://stackoverflow.com/a/65457048/4415884
+    nohook wpa_supplicant
+
+
+
+"/etc/dnsmasq/dnsmasq.conf"
+
+# [src](UnspecifiedGarbage/doc/note/wifi/wifi-AP.txt)
+interface=wlan0
+dhcp-range=192.168.66.101,192.168.66.199,48h
+
+
+
+  && $SUDO systemctl mask wpa_supplicant \
+  && $SUDO systemctl stop wpa_supplicant \
+  && $SUDO systemctl unmask hostapd `# maybe needed` \
+  && $SUDO ifdown wlan0 \
+  && sleep 1 \
+  && $SUDO ifup wlan0 \
+
+
+
+- [more details for hostapd](https://wiki.archlinux.org/title/Software_access_point)
+- [useful iw commands](https://wireless.docs.kernel.org/en/latest/en/users/documentation/iw.html)
+- [setup turorial](https://woshub.com/create-wi-fi-access-point-hotspot-linux/)
+- [ieee80211n fix](https://unix.stackexchange.com/a/556433)
+
+
