@@ -1,0 +1,15 @@
+
+  Grrrr. Please stop annoying me with those nonsense error logs.
+
+--- a/preflux-web/src/main/java/ch/post/it/paisa/preflux/web/controller/RolloutSituationOnDemandNook.java
++++ b/preflux-web/src/main/java/ch/post/it/paisa/preflux/web/controller/RolloutSituationOnDemandNook.java
+@@ -55,6 +55,7 @@ public class RolloutSituationOnDemandNook extends AbstractNook<ApiRolloutSituati
+     public HashMap<String, ApiRolloutSituation> fetch(String id) {
+         LOG.trace("fetch triggered with id: {}", id);
+         // Extract hostname and instanceName from the id
++        if(id == null) return null;
+         Matcher matcher = ID_PATTERN.matcher(id);
+         if (!matcher.matches()) {
+             throw new IllegalArgumentException("Id is expected to be of format 'hostname/instanceName' but was: '" + id + "'");
+
+
