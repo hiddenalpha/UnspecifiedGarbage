@@ -203,7 +203,7 @@ true `# WARN danger zone zere!` \
 EOF
 true \
   && $SUDO sed -i -E 's_^SELINUX=enforcing$_SELINUX=permissive_g' /etc/selinux/config \
-  && cat /home/isa/README.txt \
+  && cat /home/isa/doc/README.txt \
   && printf '\n  DONE :)\n\n' \
 ]=])
 end

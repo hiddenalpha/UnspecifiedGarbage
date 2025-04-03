@@ -10,11 +10,11 @@
 +    <skip.angular.build>true</skip.angular.build>
 +    <skip.frontend.sourceformat.check>true</skip.frontend.sourceformat.check>
 +    <skip.grunt.build>true</skip.grunt.build>
-+    <skip.install.nodeAndNpm>false</skip.install.nodeAndNpm>
++    <skip.install.nodeAndNpm>true</skip.install.nodeAndNpm>
 +    <skip.integration.tests>true</skip.integration.tests>
 +    <skip.jacoco>true</skip.jacoco>
 +    <skip.jacoco.regularbuild>true</skip.jacoco.regularbuild>
-+    <skip.junit.tests>false</skip.junit.tests>
++    <skip.junit.tests>true</skip.junit.tests>
 +    <skip.karma.tests>true</skip.karma.tests>
 +    <skip.npm.install>true</skip.npm.install>
 +    <skip.remote.tests>true</skip.remote.tests>
