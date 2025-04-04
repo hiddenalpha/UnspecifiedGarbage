@@ -1,0 +1,326 @@
+{
+  "timestamp": "2025-04-01T16:39:29.246+02:00",
+  "isaVersionId": "bundle-sw_4537-data_4538-a",
+  "isaVersionName": "sw_4537-data_4538 CopyPasta from INT",
+  "trial": false,
+  "services": [
+    {
+      "name": "captain",
+      "version": "04.00.02.00",
+      "properties": []
+    },
+    {
+      "name": "zaphod",
+      "version": "00.02.46.31",
+      "properties": []
+    },
+    {
+      "name": "allitnil",
+      "version": "03.00.02.00",
+      "properties": []
+    },
+    {
+      "name": "vogon",
+      "version": "04.00.01.00",
+      "properties": []
+    },
+    {
+      "name": "loon",
+      "version": "03.00.02.00",
+      "properties": []
+    },
+    {
+      "name": "minetti",
+      "version": "04.00.01.00",
+      "properties": []
+    },
+    {
+      "name": "poodoo",
+      "version": "04.00.05.00",
+      "properties": []
+    },
+    {
+      "name": "thor",
+      "version": "04.00.03.00",
+      "properties": []
+    },
+    {
+      "name": "jeltz",
+      "version": "04.00.02.00",
+      "properties": []
+    },
+    {
+      "name": "colin",
+      "version": "04.00.01.00",
+      "properties": []
+    },
+    {
+      "name": "nowwhat",
+      "version": "05.00.01.00",
+      "properties": []
+    },
+    {
+      "name": "fenchurch",
+      "version": "2024.02.6.5",
+      "properties": []
+    },
+    {
+      "name": "hooli",
+      "version": "03.00.01.00",
+      "properties": []
+    },
+    {
+      "name": "drdan",
+      "version": "03.00.02.00",
+      "properties": []
+    },
+    {
+      "name": "megacamel",
+      "version": "04.00.01.00",
+      "properties": []
+    },
+    {
+      "name": "towel",
+      "version": "02.00.03.00",
+      "properties": []
+    },
+    {
+      "name": "barman",
+      "version": "04.00.01.00",
+      "properties": []
+    },
+    {
+      "name": "benjy",
+      "version": "03.00.04.00",
+      "properties": []
+    },
+    {
+      "name": "caveman",
+      "version": "05.00.02.00",
+      "properties": []
+    },
+    {
+      "name": "prosser",
+      "version": "04.00.01.00",
+      "properties": []
+    },
+    {
+      "name": "streetmentioner",
+      "version": "01.00.02.00",
+      "properties": []
+    },
+    {
+      "name": "eagle",
+      "version": "03.00.03.00",
+      "properties": []
+    },
+    {
+      "name": "mown",
+      "version": "03.00.01.00",
+      "properties": []
+    },
+    {
+      "name": "heimdall",
+      "version": "04.00.05.00",
+      "properties": []
+    },
+    {
+      "name": "zem",
+      "version": "05.00.04.01",
+      "properties": []
+    },
+    {
+      "name": "redis",
+      "version": "7.0.11-alpine",
+      "properties": []
+    },
+    {
+      "name": "kwaltz",
+      "version": "04.00.01.00",
+      "properties": []
+    },
+    {
+      "name": "babelfish",
+      "version": "03.00.07.00",
+      "properties": []
+    },
+    {
+      "name": "deep",
+      "version": "04.00.01.02",
+      "properties": []
+    },
+    {
+      "name": "desiato",
+      "version": "00.15.00.00",
+      "properties": []
+    },
+    {
+      "name": "vroom",
+      "version": "02.00.03.00",
+      "properties": []
+    },
+    {
+      "name": "magician",
+      "version": "04.00.01.00",
+      "properties": []
+    },
+    {
+      "name": "platform",
+      "version": "04.00.14.01",
+      "properties": []
+    },
+    {
+      "name": "trillian",
+      "version": "04.00.03.00",
+      "properties": []
+    },
+    {
+      "name": "guide",
+      "version": "03.00.01.00",
+      "properties": []
+    },
+    {
+      "name": "vannharl",
+      "version": "02.00.02.00",
+      "properties": []
+    },
+    {
+      "name": "lazlar",
+      "version": "00.01.01.00",
+      "properties": []
+    },
+    {
+      "name": "slarti",
+      "version": "04.00.06.00",
+      "properties": []
+    },
+    {
+      "name": "pobble",
+      "version": "02.00.03.00",
+      "properties": []
+    },
+    {
+      "name": "blart",
+      "version": "21.06.03.00",
+      "properties": []
+    },
+    {
+      "name": "rob",
+      "version": "04.00.04.00",
+      "properties": []
+    },
+    {
+      "name": "hafas",
+      "version": "5.45.SBB.14.4.13.1-2",
+      "properties": []
+    },
+    {
+      "name": "data-fis-63",
+      "version": "00.37.09.18",
+      "properties": []
+    },
+    {
+      "name": "data-nova",
+      "version": "14.191.0.20250310-1226.P.P.12186.0",
+      "properties": []
+    },
+    {
+      "name": "data-fis-105",
+      "version": "00.37.09.16",
+      "properties": []
+    },
+    {
+      "name": "data-fis-32",
+      "version": "00.37.09.14",
+      "properties": []
+    },
+    {
+      "name": "data-fis-14",
+      "version": "00.37.09.14",
+      "properties": []
+    },
+    {
+      "name": "hafas-proxy",
+      "version": "2.34.4-4",
+      "properties": []
+    },
+    {
+      "name": "data-fis-64",
+      "version": "00.37.09.14",
+      "properties": []
+    },
+    {
+      "name": "data-fis-9",
+      "version": "00.37.09.18",
+      "properties": []
+    },
+    {
+      "name": "data-sale",
+      "version": "01.38.304.01",
+      "properties": []
+    },
+    {
+      "name": "data-fis-106",
+      "version": "00.37.09.21",
+      "properties": []
+    },
+    {
+      "name": "data-fis-65",
+      "version": "00.37.09.16",
+      "properties": []
+    },
+    {
+      "name": "data-forms",
+      "version": "01.03.02.03",
+      "properties": []
+    },
+    {
+      "name": "data-fpd",
+      "version": "37.25.13.00",
+      "properties": []
+    },
+    {
+      "name": "data-fis-13",
+      "version": "00.37.09.17",
+      "properties": []
+    },
+    {
+      "name": "data-fis-3",
+      "version": "00.37.09.16",
+      "properties": []
+    },
+    {
+      "name": "data-fis-4",
+      "version": "00.37.09.16",
+      "properties": []
+    },
+    {
+      "name": "data-fis-17",
+      "version": "00.37.09.14",
+      "properties": []
+    },
+    {
+      "name": "nova",
+      "version": "14.191.0",
+      "properties": []
+    },
+    {
+      "name": "data-fis-1",
+      "version": "00.37.09.16",
+      "properties": []
+    }
+  ],
+  "featureSwitches": [],
+  "mergedBundles": [
+    {
+      "id": 4537,
+      "name": "TR-25.1.1-FE-13-HF",
+      "type": "SOFTWARE"
+    },
+    {
+      "id": 4538,
+      "name": "DR-37.14-02",
+      "type": "DATA"
+    }
+  ]
+}

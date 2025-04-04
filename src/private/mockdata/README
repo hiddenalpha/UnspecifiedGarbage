@@ -1,0 +1,5 @@
+
+
+  && (cd /c/work/projects/UnspecifiedGarbage/src/private/mockdata/data-preflux && tar c *) | gateleen-resclone.exe --push --url localhost:7013/houston/data/preflux \
+
+
