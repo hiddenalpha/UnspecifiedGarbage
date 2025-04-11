@@ -1,6 +1,7 @@
 
   TODO which of those is correct? -> "position/current" seems correct, but should stop the other service from putting.
 
+  && `# PUT position` \
   && host=eddie00849 \
   && port=7012 \
   && path=/eagle/navigation/location/v1/position/current \
@@ -10,19 +11,6 @@
            --data-raw '{"coordinate":{ "latitude":47.0002738, "longitude":7.4617769, "elevation":28 },"timeStamp":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'","totalDistance":42,"velocity":{"velocity":0,"source":"CANBUS"}}' \
       && printf '.' \
       && sleep 1 \
-    ;done \
-
-
-  && TODO this seems the wrong place \
-  && host=eddie00849 \
-  && port=7012 \
-  && path=/eagle/navigation/sensor/v1/position \
-  && while true; do true \
-      && curl --max-time 3 -sS -X PUT "http://${host:?}:${port:?}${path:?}" \
-           -H 'Content-Type: application/json' \
-           --data-raw '{"coordinate":{ "elevation":538.9, "latitude":47.0002738, "longitude":7.4617769 },"positionFix":"GNSS_AND_DEAD_RECKONING","timeStamp": "'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'","totalDistance":23248.470154,"vehicleHeading":148.98466,"velocity":0}' \
-      && printf '.' \
-      && sleep 3 \
     ;done \
 
 
