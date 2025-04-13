@@ -177,8 +177,8 @@ TODO: move this to a better place. Eg: debian/setup.txt or whatever.
   true \
   && SUDO= \
   && no_proxy="127.0.0.1,10.0.2.*" \
-  && http_proxy="http://10.0.2.2:3128" \
-  && https_proxy="http://10.0.2.2:3128" \
+  && http_proxy="http://10.0.2.2:3128/" \
+  && https_proxy="http://10.0.2.2:3128/" \
   && true \
   && if [ -n "$http_proxy" ]; then true \
     && (echo "Acquire::http::proxy \"${http_proxy}\";"

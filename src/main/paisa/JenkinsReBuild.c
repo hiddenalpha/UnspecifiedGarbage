@@ -25,14 +25,21 @@
 #   include <windows.h>
 #endif
 
+#define Garbage_Closure void*
 #include <Garbage.h>
+#include <Garbage_Bootstrap.h>
 
 
 #define STR_QUOT_(s) #s
 #define STR_QUOT(s) STR_QUOT_(s)
 #define LOGDBG(...) fprintf(stderr, __VA_ARGS__)
 #define LOGERR(...) fprintf(stderr, __VA_ARGS__)
+#define LOGT(...) fprintf(stderr, __VA_ARGS__)
 #define REGISTER /*no-op*/
+
+#define Env_enqueBlocking(A, B, C) (*A)->enqueBlocking(A, B, C)
+#define ThreadPool_enque(A, B, C) (*A)->enque(A, B, C)
+#define TlsClient_asSocketMgr(A) (*A)->asSocketMgr(A)
 
 #define FLG_isHelp (1<<0)
 #define FLG_printRspBodyAnyway (1<<1)
@@ -50,12 +57,23 @@ struct App {
     char *serviceName;
     char *branchName;
     char *cookie;
+    /**/
+    struct Garbage_Env **env;
+    struct Garbage_Mallocator **mallocator;
+    struct Garbage_TlsClient **tlsClient;
+    struct Garbage_SocketMgr **socketMgr;
+    struct Garbage_ThreadPool **ioWorker;
+    struct Garbage_IoMultiplexer **ioMultiplexer;
+    struct Garbage_Networker **networker;
+    /**/
     char *rspBody;
     int rspBody_cap, rspBody_end;
-    struct GarbageEnv **env;
-    struct Garbage_TlsClient **tlsClient;
-    void *envMem[SIZEOF_struct_GarbageEnv/sizeof(void*)];
+    /**/
+    void *envMem[SIZEOF_struct_Garbage_Env/sizeof(void*)];
 };
+
+
+static struct Garbage_TlsClient** newTlsClient( App*, char const* );
 
 
 static inline struct App* assert_is_App( void*p, char const*f, int l ){
@@ -133,9 +151,10 @@ verify:
 #define assert_is_Cls(p) assert(p && ((Cls*)p)->mAGIC == Cls_mAGIC)
 
 static void HttpReq_pushIoTask( void(*task)(void*arg), void*arg, void*cls_ ){
+    LOGT("[TRACE] %s()\n", __func__);
     Cls*const cls = cls_; assert_is_Cls(cls_);
     App*const app = assert_is_App(cls->app);
-    (*app->env)->enqueBlocking(app->env, task, arg);
+    ThreadPool_enque(app->ioWorker, task, arg);
 }
 
 
@@ -153,8 +172,10 @@ static void HttpReq_onRspHdr(
     Cls*const cls = cls_; assert_is_Cls(cls_);
     App*const app = assert_is_App(cls->app);
     app->httpRspCode = rspCode;
-    if( rspCode == 200 ){
+    if(0){
+    }else if( rspCode == 200 ){
         /*no debug output needed*/
+        //LOGDBG("%.*s %d %.*s\n", proto_len, proto, rspCode, phrase_len, phrase);
     }else if( rspCode == 401 || rspCode == 404 ){
         /*short output is enough*/
         LOGDBG("%.*s %d %.*s\n", proto_len, proto, rspCode, phrase_len, phrase);
@@ -240,18 +261,7 @@ static void TODO_refactorMeToAProperApi(
     cls->app = app;
     cls->onDone = onDone;
     cls->onDoneArg = arg;
-    static struct Garbage_TlsClient_Mentor tlsMentor = {
-        .pushIoTask = TlsClientMentor_pushIoTask,
-        .onError = TlsClientMentor_onError,
-    };
-    app->tlsClient = (*app->env)->newTlsClient(app->env,
-        &tlsMentor, app, &(struct Garbage_TlsClient_Opts){
-            .peerHostname = peerHostname,
-            //.mallocator = NULL,
-            //.socketMgr = NULL,
-            //.ioWorker = NULL,
-        }
-    );
+    app->tlsClient = newTlsClient(app, peerHostname);
     struct Garbage_HttpClientReq **req = NULL;
     static struct Garbage_HttpClientReq_Mentor httpMentor = {
         .pushIoTask = HttpReq_pushIoTask,
@@ -271,22 +281,26 @@ static void TODO_refactorMeToAProperApi(
     err = snprintf(it, SPACE, "%s", app->branchName); it += err; assert(err == (signed)strlen(app->branchName));
     err = snprintf(it, SPACE, "/lastBuild/pipeline-graph/tree"); it += err; assert(err == 30);
     #undef SPACE
-    //LOGDBG("[DEBUG] GET %s\n", url);
-    req = (*app->env)->newHttpClientReq(app->env, &httpMentor, cls,
+    int const port = 443;
+    LOGDBG("[DEBUG] GET %s:%d%s\n", peerHostname, port, url);
+    req = Garbage_newHttpClientReq(app->env, &httpMentor, cls,
         &(struct Garbage_HttpClientReq_Opts){
-            //.mallocator = NULL,
-            .socketMgr = (*app->tlsClient)->asSocketMgr(app->tlsClient),
+            .mallocator = app->mallocator,
+            .ioWorker = app->ioWorker,
+            .networker = app->networker,
+            .socketMgr = TlsClient_asSocketMgr(app->tlsClient),
             .mthd = "GET",
             .host = peerHostname,
             .url = url,
-            .port = 443,
-            .hdrs_cnt = (app->cookie == NULL) ? 0 : 1,
+            .port = port,
+            .hdrs_cnt = (app->cookie) ? 1 : 0,
             .hdrs = ((struct Garbage_HttpMsg_Hdr[]){{
-                .key = "Cookie", .key_len = 6,
+                .key = "Cookie"   , .key_len = 6,
                 .val = app->cookie, .val_len = (app->cookie == NULL ? 0 : strlen(app->cookie)),
             }}),
         });
     (*req)->resume(req);
+    (*req)->closeSnk(req);
 }
 
 #undef Cls_mAGIC
@@ -300,9 +314,56 @@ static void onBuildStatusAvailable( char const*buildStatus, void*app_ ){
 }
 
 
+static struct Garbage_TlsClient** newTlsClient( App*app, char const*peerHostname ){
+    struct Garbage_TlsClient **tls;
+    static struct Garbage_TlsClient_Mentor tlsMentor = {
+        .pushIoTask = TlsClientMentor_pushIoTask,
+        .onError = TlsClientMentor_onError,
+    };
+    assert(app->mallocator); assert(app->socketMgr); assert(app->ioWorker);
+    tls = Garbage_newTlsClient(app->env, &tlsMentor, app, &(struct Garbage_TlsClient_Opts){
+        .peerHostname = peerHostname,
+        .mallocator = app->mallocator,
+        .socketMgr = app->socketMgr,
+        .ioWorker = app->ioWorker,
+    });
+    assert(tls);
+    return tls;
+}
+
+
 static void run( void*app_ ){
     App*const app = assert_is_App(app_);
     TODO_refactorMeToAProperApi(app, onBuildStatusAvailable, app);
+}
+
+
+static void initApp( App*app ){
+    app->mallocator = Garbage_newMallocator(); assert(app->mallocator);
+    app->env = Garbage_newEnv(&(struct Garbage_Env_Opts){
+        .memBlockToUse = app->envMem,
+        .memBlockToUse_sz = sizeof app->envMem,
+        .mallocator = app->mallocator,
+    }); assert(app->env);
+    app->ioWorker = Garbage_newThreadPool(&(struct Garbage_ThreadPool_Opts){
+        .mallocator = app->mallocator,
+        .numThrds = 8, /* TODO use environ.IO_THRD_CNT */
+    }); assert(app->ioWorker);
+    app->ioMultiplexer = Garbage_newIoMultiplexer(app->env, &(struct Garbage_IoMultiplexer_Opts){
+        .mallocator = app->mallocator,
+        .ioWorker = app->ioWorker,
+    }); assert(app->ioMultiplexer);
+    app->networker = Garbage_newNetworker(&(struct Garbage_Networker_Opts){
+        .mallocator = app->mallocator,
+        .ioWorker = app->ioWorker,
+    }); assert(app->networker);
+    app->socketMgr = Garbage_newSocketMgr(app->env, &(struct Garbage_SocketMgr_Opts){
+        .mallocator = app->mallocator,
+        .ioMultiplexer = app->ioMultiplexer,
+        .blockingIoWorker = app->ioWorker,
+        .reuseaddr = 1,
+    }); assert(app->socketMgr);
+    assert(app->socketMgr);
 }
 
 
@@ -319,7 +380,7 @@ int main( int argc, char**argv ){
     if( app->flg & FLG_isHelp ){ printHelp(); goto endFn; }
     app->exitCode = 0;
     //app->flg |= FLG_printRspBodyAnyway;
-    app->env = GarbageEnv_ctor(app->envMem, sizeof app->envMem);
+    initApp(app);
     (*app->env)->enqueBlocking(app->env, run, app);
     (*app->env)->runUntilDone(app->env);
 endFn:

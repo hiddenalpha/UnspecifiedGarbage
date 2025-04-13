@@ -55,8 +55,8 @@ Manage GnuPG Master And Subkeys
 
   gpg --import keys-for-device
   gpg --edit-key foo@example.com
-    trust
-    save
+  gpg> trust
+  gpg> save
 
 
 ## Sign a foreign key to express to the world that we trust it

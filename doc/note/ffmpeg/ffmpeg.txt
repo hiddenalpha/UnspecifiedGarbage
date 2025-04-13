@@ -114,6 +114,18 @@ HINT: Repeat afade twice for log scale.
   -vf "vflip,hflip" -c:v h264_qsv -preset slow
 
 
+## Change Video Resolution
+
+  ffmpeg -i src_file -vf "scale=480x270" dst_file
+
+
+## Compress Video
+
+  `# crf (for libx265): 0=huge, 18=nearlylossless, 23=default, 28=small 51=tiny `
+  ffmpeg -i src_file -vcodec libx265 -crf 28 dst_file
+  `# crf (for hevc_qsv): 2=huge, 31:tiny `
+  ffmpeg -i src_file -vcodec hevc_qsv -crf 18 dst_file
+
 
 ## Video to Gif
 

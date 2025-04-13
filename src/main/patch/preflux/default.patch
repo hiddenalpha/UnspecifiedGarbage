@@ -10,11 +10,11 @@
 +    <skip.angular.build>true</skip.angular.build>
 +    <skip.frontend.sourceformat.check>true</skip.frontend.sourceformat.check>
 +    <skip.grunt.build>true</skip.grunt.build>
-+    <skip.install.nodeAndNpm>false</skip.install.nodeAndNpm>
++    <skip.install.nodeAndNpm>true</skip.install.nodeAndNpm>
 +    <skip.integration.tests>true</skip.integration.tests>
 +    <skip.jacoco>true</skip.jacoco>
 +    <skip.jacoco.regularbuild>true</skip.jacoco.regularbuild>
-+    <skip.junit.tests>false</skip.junit.tests>
++    <skip.junit.tests>true</skip.junit.tests>
 +    <skip.karma.tests>true</skip.karma.tests>
 +    <skip.npm.install>true</skip.npm.install>
 +    <skip.remote.tests>true</skip.remote.tests>
@@ -108,20 +108,6 @@
      "test": "ng test --no-watch --browsers=ChromeHeadlessNoSandbox",
      "test:ci": "npm run test",
      "test:watch": "ng test --watch --browsers=ChromeHeadlessNoSandbox"
-
-
-  Grrrr. Please stop annoying me with those nonsense error logs.
-
---- a/preflux-web/src/main/java/ch/post/it/paisa/preflux/web/controller/RolloutSituationOnDemandNook.java
-+++ b/preflux-web/src/main/java/ch/post/it/paisa/preflux/web/controller/RolloutSituationOnDemandNook.java
-@@ -55,6 +55,7 @@ public class RolloutSituationOnDemandNook extends AbstractNook<ApiRolloutSituati
-     public HashMap<String, ApiRolloutSituation> fetch(String id) {
-         LOG.trace("fetch triggered with id: {}", id);
-         // Extract hostname and instanceName from the id
-+        if(id == null) return null;
-         Matcher matcher = ID_PATTERN.matcher(id);
-         if (!matcher.matches()) {
-             throw new IllegalArgumentException("Id is expected to be of format 'hostname/instanceName' but was: '" + id + "'");
 
 
 
