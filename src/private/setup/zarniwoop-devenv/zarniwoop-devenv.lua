@@ -18,13 +18,6 @@
   - TEST
   - compress
 
-  TODO: "Quartus Prime 16 Lite" required, but no longer available via intel dload
-        page. Need some solution here.
-        Half-done kludge for quartus dot-run stuff not working, due to "CPU too old".
-        TRY: Maybe try to dload the pure archives and extract manually.
-
-  [maybe helpful for quartus install](https://community.intel.com/t5/Nios-V-II-Embedded-Design-Suite/Nios-V-Processor-Installation-and-Hello-World-Execution-Part-1/m-p/1552554)
-
   ]===========================================================================]
 -- Configure your instance here ----------------------------------------
 local dioVersion = "054897-067962" --"054897-060542"
@@ -119,10 +112,9 @@ function define_aptInstall( dst )
     dst:write([=[
   && aptInstall () { true \
       && $SUDO apt update \
-      && $SUDO apt install -y --no-install-recommends vim make curl git unzip \
-           python3 `# some ugly buildtool needs python` \
-           libglib2.0-0 `# Grr... required by some shitty intel installers` \
-           `# Some strange systems also need 'ca-certificates'` \
+      && $SUDO apt install -y --no-install-recommends make curl git unzip python3 \
+           usbutils cu vim exuberant-ctags \
+           libglib2.0-0 `# TODO maybe no longer used by shitty altera installer?` \
     ;} \
 ]=])
 end
@@ -223,8 +215,41 @@ function define_updateEnv( dst )
       && (true \
           && printf 'export PATH="${PATH}%s"\n' ']=].. snip ..[=[' \
           && printf 'export QUARTUS_ROOTDIR=/opt/QuartusLite/quartus\n' \
+          && printf 'export BEXE=\n' \
           && true) | $SUDO tee -a /etc/profile >/dev/null \
     ;} \
+]=])
+end
+
+
+function define_createDoc( dst )
+    dst:write([=[
+  && createDoc () { true \
+      && mkdir -p "$HOME/doc" \
+      && <<EOF_dKDJaK1XQ7DRsJB4 cat > README &&
+
+  Q: Where is zarniwoop?
+  A: cd ~/zarniwoop-workspace/d-??????-??????/devel/app/
+
+  Q: UsbBlaster unable to find cable?
+  A: Make sure `jtagd` is started as root (inside VM):
+     sudo pkill jtagd
+     sudo ]=].. quartusLiteInstDir ..[=[/quartus/bin/jtagd
+     Can be verified with (HINT: ignore the line containing `grep` itself):
+     sudo ps aux | grep jtagd
+
+  Q: UsbBlaster not listed in lsusb?
+  A: Make sure qemu cmdline contains:
+       -usb -device usb-ehci,id=ehci
+     Hint: DON'T use `qemu-xhci` -> Just crashed my machine everytime I tried.
+     Then list usb-devices on HOST, watch out for `Bus 991 Device 992:` and pass
+     device through based on found values (via qemu monitor cli):
+       device_add usb-host,id=blst,hostbus=991,hostaddr=992
+     Try `lsusb` again in guest.
+
+EOF_dKDJaK1XQ7DRsJB4
+true \
+    ;}
 ]=])
 end
 
@@ -238,6 +263,7 @@ function define_run( dst )
       && whyIsItSoFuckingHardToJustProvideATarball \
       && setupDuagonLib \
       && setupZarniwoop \
+      && createDoc \
       && updateEnv \
     ;} \
 ]=])
@@ -255,6 +281,7 @@ function main()
     define_setupDuagonLib(dst)
     define_setupZarniwoop(dst)
     define_updateEnv(dst)
+    define_createDoc(dst)
     define_run(dst)
     dst:write([=[
   && run \
