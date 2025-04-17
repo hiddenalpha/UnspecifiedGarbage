@@ -122,7 +122,8 @@ HINT: Repeat afade twice for log scale.
 ## Compress Video
 
   According to www, it is better to use (slow) software encoders if small file
-  size is wanted.
+  size is wanted. Bitrate has huge effect on quality. For high quality use
+  `-vb 20M`.
 
   `# crf only affect encoding time and quality. No effect on filesize. `
   ffmpeg -i srcFile -codec:v h264_mf -crf 0 dstFile \
