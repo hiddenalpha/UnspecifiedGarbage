@@ -43,7 +43,7 @@ For master/subkey setup see separate file.
 
   && REALNAME="___ ___" \
   && EMAIL="___@example.com" \
-  && COMMENT="USER@HOST $(date +%Y%m%d)" \
+  && COMMENT="___@___ $(date +%Y%m%d)" \
   && PASS= \
   && EXPIREDATE="$(date +%Y-%m-%d -d@$(($(date +%s) + (7*365*86400))))" \
   && WORKHOME="./stupidhome" \
