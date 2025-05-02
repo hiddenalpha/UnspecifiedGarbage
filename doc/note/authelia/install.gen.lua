@@ -106,43 +106,43 @@ end
 function createConfig( dst )
 	local contents = b64encW80([=[
 log:
-	# Sending the Authelia process a SIGHUP will cause it to close and reopen
-	# the current log file and truncate it.
-	level: "warn"  # OneOf: trace, debug, info, warn, error.
-	format: "text"
-	file_path: "/var/log/authelia/authelia.log"
-	keep_stdout: false
+    # Sending the Authelia process a SIGHUP will cause it to close and reopen
+    # the current log file and truncate it.
+    level: "warn"  # OneOf: trace, debug, info, warn, error.
+    format: "text"
+    file_path: "/var/log/authelia/authelia.log"
+    keep_stdout: false
 server:
-	host: 0.0.0.0
-	port: 9091
+    host: 0.0.0.0
+    port: 9091
 storage:
-	#encryption_key: "WUoXVW1HUWc918C5H4qApHVi6A3H3d9Z" # TODO
-	local:
-		path: "/opt/authelia-]=].. autheliaVersion ..[=[/var/lib/authelia.db"
+    #encryption_key: "WUoXVW1HUWc918C5H4qApHVi6A3H3d9Z" # TODO
+    local:
+        path: "/opt/authelia-]=].. autheliaVersion ..[=[/var/lib/authelia.db"
 #jwt_secret: "TODO-a-super-long-strong-string-of-letters-numbers-characters"
 #default_redirection_url: "https://auth.example.com"
 #totp:
-#	issuer: example.com
-#	period: 30
-#	skew: 1
+#    issuer: example.com
+#    period: 30
+#    skew: 1
 access_control:
-	default_policy: deny
-	rules: [{
-		domain: [ "noauth.example.com" ]
-		policy: bypass
-	},{
-		domain: [ "foo.example.com" ]
-		policy: one_factor
-		#networks: [ "192.168.1.0/24" ]
-	}]
+    default_policy: deny
+    rules: [{
+        domain: [ "noauth.example.com" ]
+        policy: bypass
+    },{
+        domain: [ "foo.example.com" ]
+        policy: one_factor
+        #networks: [ "192.168.1.0/24" ]
+    }]
 notifier:
-	disable_startup_check: true
-	#filesystem:
-	#	filename: "/path/to/notification.txt"
+    disable_startup_check: true
+    #filesystem:
+    #    filename: "/path/to/notification.txt"
 #smtp:
-#	...
+#    ...
 #oidc:
-#	...
+#    ...
 theme: "dark"
 ]=])
 	dst:write([=[
@@ -199,13 +199,12 @@ function createInitdSkel( dst )
 
 appUser=authelia
 appHome="]=].. appHome ..[=["
-PATH="${appHome:?}/bin:${PATH?}"
 
 #. /lib/init/vars.sh
 #. /lib/lsb/init-functions
 
 start () {
-	sudo -u "${appUser:?}" authelia --config "${appHome:?}/etc/config.yml"
+	sudo -u "${appUser:?}" "${appHome:?}/bin/authelia" --config "${appHome:?}/etc/config.yml"
 }
 
 stop () {
@@ -214,8 +213,6 @@ stop () {
 }
 
 main () {
-	echo TODO_naOvQC5TTayjtFeu not impl yet
-	exit 1
 	action=$1
 	case "$action" in
 		start) start ;;
@@ -243,78 +240,80 @@ function createNginxSkel( dst )
 #
 # TODO this is INCOMPLETE!
 #
-server {
-	location /authelia {
-		internal;
-		set $upstream_authelia http://127.0.0.1:9091/api/verify;
-		proxy_pass_request_body off;
-		proxy_pass $upstream_authelia;
-		proxy_set_header Content-Length "";
-		#
-		# Timeout if the real server is dead
-		proxy_next_upstream error timeout invalid_header http_500 http_502 http_503;
-		client_body_buffer_size 128k;
-		proxy_set_header Host $host;
-		proxy_set_header X-Original-URL $scheme://$http_host$request_uri;
-		proxy_set_header X-Real-IP $remote_addr;
-		proxy_set_header X-Forwarded-For $remote_addr; 
-		proxy_set_header X-Forwarded-Proto $scheme;
-		proxy_set_header X-Forwarded-Host $http_host;
-		proxy_set_header X-Forwarded-Uri $request_uri;
-		proxy_set_header X-Forwarded-Ssl on;
-		proxy_redirect  http://  $scheme://;
-		proxy_http_version 1.1;
-		proxy_set_header Connection "";
-		proxy_cache_bypass $cookie_session;
-		proxy_no_cache $cookie_session;
-		proxy_buffers 4 32k;
-		#
-		send_timeout 5m;
-		proxy_read_timeout 240;
-		proxy_send_timeout 240;
-		proxy_connect_timeout 240;
-	}
-	location / {
-		set $upstream_<appname> http://<your application internal ip address with port number>;  #ADD IP AND PORT OF SERVICE
-		proxy_pass $upstream_<appname>;  #change name of the service
-		#
-		auth_request /authelia;
-		auth_request_set $target_url $scheme://$http_host$request_uri;
-		auth_request_set $user $upstream_http_remote_user;
-		auth_request_set $groups $upstream_http_remote_groups;
-		proxy_set_header Remote-User $user;
-		proxy_set_header Remote-Groups $groups;
-		error_page 401 =302 https://auth.<example.com>/?rd=$target_url;
-		#
-		client_body_buffer_size 128k;
-		#
-		proxy_next_upstream error timeout invalid_header http_500 http_502 http_503;
-		#
-		send_timeout 5m;
-		proxy_read_timeout 360;
-		proxy_send_timeout 360;
-		proxy_connect_timeout 360;
-		#
-		proxy_set_header Host $host;
-		proxy_set_header X-Real-IP $remote_addr;
-		proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-		proxy_set_header X-Forwarded-Proto $scheme;
-		proxy_set_header X-Forwarded-Host $http_host;
-		proxy_set_header X-Forwarded-Uri $request_uri;
-		proxy_set_header X-Forwarded-Ssl on;
-		proxy_redirect  http://  $scheme://;
-		proxy_http_version 1.1;
-		proxy_set_header Connection "";
-		proxy_cache_bypass $cookie_session;
-		proxy_no_cache $cookie_session;
-		proxy_buffers 64 256k;
-		#
-		# add your ip range here, and remove this comment!
-		set_real_ip_from 192.168.1.0/16;
-		set_real_ip_from 172.0.0.0/8;
-		set_real_ip_from 10.0.0.0/8;
-		real_ip_header X-Forwarded-For;
-		real_ip_recursive on;
+http {
+	server {
+		location /authelia {
+			internal;
+			set $upstream_authelia http://127.0.0.1:9091/api/verify;
+			proxy_pass_request_body off;
+			proxy_pass $upstream_authelia;
+			proxy_set_header Content-Length "";
+			#
+			# Timeout if the real server is dead
+			proxy_next_upstream error timeout invalid_header http_500 http_502 http_503;
+			client_body_buffer_size 128k;
+			proxy_set_header Host $host;
+			proxy_set_header X-Original-URL $scheme://$http_host$request_uri;
+			proxy_set_header X-Real-IP $remote_addr;
+			proxy_set_header X-Forwarded-For $remote_addr; 
+			proxy_set_header X-Forwarded-Proto $scheme;
+			proxy_set_header X-Forwarded-Host $http_host;
+			proxy_set_header X-Forwarded-Uri $request_uri;
+			proxy_set_header X-Forwarded-Ssl on;
+			proxy_redirect  http://  $scheme://;
+			proxy_http_version 1.1;
+			proxy_set_header Connection "";
+			proxy_cache_bypass $cookie_session;
+			proxy_no_cache $cookie_session;
+			proxy_buffers 4 32k;
+			#
+			send_timeout 5m;
+			proxy_read_timeout 240;
+			proxy_send_timeout 240;
+			proxy_connect_timeout 240;
+		}
+		location / {
+			set $upstream_<appname> http://<your application internal ip address with port number>;  #ADD IP AND PORT OF SERVICE
+			proxy_pass $upstream_<appname>;  #change name of the service
+			#
+			auth_request /authelia;
+			auth_request_set $target_url $scheme://$http_host$request_uri;
+			auth_request_set $user $upstream_http_remote_user;
+			auth_request_set $groups $upstream_http_remote_groups;
+			proxy_set_header Remote-User $user;
+			proxy_set_header Remote-Groups $groups;
+			error_page 401 =302 https://auth.<example.com>/?rd=$target_url;
+			#
+			client_body_buffer_size 128k;
+			#
+			proxy_next_upstream error timeout invalid_header http_500 http_502 http_503;
+			#
+			send_timeout 5m;
+			proxy_read_timeout 360;
+			proxy_send_timeout 360;
+			proxy_connect_timeout 360;
+			#
+			proxy_set_header Host $host;
+			proxy_set_header X-Real-IP $remote_addr;
+			proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+			proxy_set_header X-Forwarded-Proto $scheme;
+			proxy_set_header X-Forwarded-Host $http_host;
+			proxy_set_header X-Forwarded-Uri $request_uri;
+			proxy_set_header X-Forwarded-Ssl on;
+			proxy_redirect  http://  $scheme://;
+			proxy_http_version 1.1;
+			proxy_set_header Connection "";
+			proxy_cache_bypass $cookie_session;
+			proxy_no_cache $cookie_session;
+			proxy_buffers 64 256k;
+			#
+			# add your ip range here, and remove this comment!
+			set_real_ip_from 192.168.1.0/16;
+			set_real_ip_from 172.0.0.0/8;
+			set_real_ip_from 10.0.0.0/8;
+			real_ip_header X-Forwarded-For;
+			real_ip_recursive on;
+		}
 	}
 }
 ]=])
@@ -331,6 +330,7 @@ end
 
 function main()
 	local dst = io.stdout
+	dst:write("#!/bin/sh\nset -e \\\n")
 	vars(dst)
 	storeKnownHashes(dst)
 	aptInstall(dst)
