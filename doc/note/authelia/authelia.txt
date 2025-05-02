@@ -1,0 +1,8 @@
+
+Authelia - SelfHosted SSH
+=========================
+
+- [github](https://github.com/authelia/authelia)
+- [Doc](https://www.authelia.com/)
+- [detailed tutorial](https://geekscircuit.com/configure-authelia-with-nginx-proxy-manager/)
+
