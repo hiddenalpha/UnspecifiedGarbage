@@ -51,6 +51,21 @@ WARN: Do NOT use 'alias' directive! It is broken as hell. Use 'root'.
               return 418 "Teapod says hi\n";
           }
       }
+      server {
+          # Exampe redirect all to TLS
+          listen 80;
+          server_name example.com;
+          return 301 https://$server_name$request_uri;
+      }
+      #server {
+      #    listen 443 ssl;
+      #    server_name  example.com;
+      #    ssl_certificate  example-com.crt;
+      #    ssl_certificate_key  example-com.key;
+      #    ssl_password_file /path/to/nginx.pass;
+      #    ssl_protocols  TLSv1.2 TLSv1.3;
+      #    ssl_ciphers  HIGH:!aNULL:!MD5;
+      #}
   }
 
 

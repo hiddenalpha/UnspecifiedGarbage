@@ -50,7 +50,7 @@ function aptInstall( dst )
   && `# aptInstall` \
   && `# Package missing? Try: $SUDO apt update` \
   && $SUDO apt install --no-install-recommends -y \
-	   curl \
+       curl \
 ]=])
 end
 
@@ -88,6 +88,7 @@ function installAuthelia( dst )
                  /opt/authelia-"${autheliaVersion:?}"/var \
                  /opt/authelia-"${autheliaVersion:?}"/var/lib \
                  /opt/authelia-"${autheliaVersion:?}"/skel \
+  && $SUDO chown authelia:authelia /opt/authelia-"${autheliaVersion:?}"/var/lib \
   && cd /opt/authelia-"${autheliaVersion:?}/unpack" \
   && $SUDO tar xf "${cacheDir:?}/authelia-v${autheliaVersion:?}-linux-${arch:?}.tar.gz" \
   && cd /opt/authelia-"${autheliaVersion:?}" \
@@ -113,14 +114,40 @@ log:
     file_path: "/var/log/authelia/authelia.log"
     keep_stdout: false
 server:
-    host: 0.0.0.0
-    port: 9091
+    address: tcp4://127.0.0.1:9091/
 storage:
     #encryption_key: "WUoXVW1HUWc918C5H4qApHVi6A3H3d9Z" # TODO
     local:
         path: "/opt/authelia-]=].. autheliaVersion ..[=[/var/lib/authelia.db"
-#jwt_secret: "TODO-a-super-long-strong-string-of-letters-numbers-characters"
-#default_redirection_url: "https://auth.example.com"
+authentication_backend:
+    password_reset: { disable: true }
+    file:
+        path: "/opt/authelia-]=].. autheliaVersion ..[=[/etc/users.yml
+        password:
+            algorithm: argon2id
+            iterations: 1
+            salt_length: 16
+            parallelism: 8
+            memory: 64
+session:
+    #name: "authelia_session"
+    #same_site: "lax"
+    #inactivity: "12h"
+    #expiration: "3d"
+    #remember_me: "300d"
+    cookies: [{
+        domain: "example.com",
+        authelia_url: "https://auth.example.com/login",
+        default_redirection_url: "https://example.com/wherever/to/go",
+    }]
+#    # This secret can also be set using the env variables AUTHELIA_SESSION_SECRET_FILE
+#    secret: "a-really-L0ng_s7r0ng-secr3t-st1nggggg-shoul0-be-used"
+#    expiration: 3600  # seconds
+#    inactivity: 7200  # seconds
+#    domain: "example.com"  # Should match whatever your root protected domain is
+#identity_validation:
+#    reset_password:
+#        jwt_secret: "TODO-a-super-long-strong-string-of-letters-numbers-characters"
 #totp:
 #    issuer: example.com
 #    period: 30
@@ -128,12 +155,12 @@ storage:
 access_control:
     default_policy: deny
     rules: [{
-        domain: [ "noauth.example.com" ]
-        policy: bypass
+        domain: [ "noauth.example.com" ],
+        policy: bypass,
     },{
-        domain: [ "foo.example.com" ]
-        policy: one_factor
-        #networks: [ "192.168.1.0/24" ]
+        domain: [ "foo.example.com" ],
+        policy: one_factor,
+        #networks: [ "192.168.1.0/24" ],
     }]
 notifier:
     disable_startup_check: true
@@ -160,16 +187,16 @@ function createUserDbYml( dst )
 	local contents = b64encW80([=[
 # Use: authelia crypto hash generate
 users:
-	john:
-		displayname: "John Wick"
-		password: "$argon2id$v=19$m=65536,t=3,p=2$BpLnfgDsdfdsgdthgdsdfsdfdg6bUGsDY//8mKUYNZZaR0t4MFFSs+iM"
-		email: john@example.com
-		groups: ["admins", "dev"]
-	harry:
-		displayname: "Thanos Infinity"
-		password: "$argon2id$v=19$m=65536,t=3,p=2$BpLnfgjhfrtretasdfdfghja44sdfdfa/8mKUYNZZaR0t4MFFSs+iM"
-		email: thanos@authelia.com
-		groups: []
+    john:
+        displayname: "John Wick"
+        password: "$argon2id$v=19$m=65536,t=3,p=2$BpLnfgDsdfdsgdthgdsdfsdfdg6bUGsDY//8mKUYNZZaR0t4MFFSs+iM"
+        email: john@example.com
+        groups: ["admins", "dev"]
+    harry:
+        displayname: "Thanos Infinity"
+        password: "$argon2id$v=19$m=65536,t=3,p=2$BpLnfgjhfrtretasdfdfghja44sdfdfa/8mKUYNZZaR0t4MFFSs+iM"
+        email: thanos@authelia.com
+        groups: []
 ]=])
 	dst:write([=[
   \
@@ -197,32 +224,76 @@ function createInitdSkel( dst )
 #
 ### END INIT INFO
 
+img=authelia
 appUser=authelia
 appHome="]=].. appHome ..[=["
+pidfile="/var/run/${img:?}.pid"
 
 #. /lib/init/vars.sh
 #. /lib/lsb/init-functions
 
 start () {
-	sudo -u "${appUser:?}" "${appHome:?}/bin/authelia" --config "${appHome:?}/etc/config.yml"
+	if test -e "${pidfile:?}" ;then echo "EEXISTS: ${pidfile:?}"; exit 2 ;fi
+	(sudo -u "${appUser:?}" -- \
+		"${appHome:?}/bin/${img:?}" --config "${appHome:?}/etc/config.yml") &
+	e=$?
+	childpid=$!
+	if test $e -ne 0 ;then
+		# TODO I guess this doesn't work
+		echo ERR $e
+		return $e
+	else
+		echo "${childpid:?}" > "${pidfile}"
+	fi
+	return $e
 }
 
 stop () {
-	# TODO impl this in a more correct way
-	pkill authelia
+	if test ! -e "${pidfile:?}" ;then
+		echo "ENOENT: ${pidfile:?}"
+		return 2
+	fi
+	childpid="$(cat "${pidfile:?}")"
+	kill "${childpid:?}"
+	e=$?
+	if test "$e" != "0" ;then
+		echo "ESRCH: ${childpid:?}"
+	fi
+	rm "${pidfile:?}"
+	return $e
+}
+
+status () {
+	if test ! -e "${pidfile:?}" ;then
+		echo "ENOENT: ${pidfile:?}"
+		return 2
+	fi
+	childpid="$(cat "${pidfile:?}")"
+	descr="$(ps -fp "${childpid:?}")"
+	if test -z "$(echo "${descr?}"|tail -n+2)" ;then
+		echo "ENOENT: (pid: ${childpid:?})"
+		return 2
+	else
+		echo "${descr:?}"
+		return 0
+	fi
 }
 
 main () {
 	action=$1
+	e=99
 	case "$action" in
-		start) start ;;
-		stop)  stop  ;;
+		start)  start  ; e=$? ;;
+		stop)   stop   ; e=$? ;;
+		status) status ; e=$? ;;
 		restart) stop; start ;;
-		*)     echo "ENOTSUP: ${action?}"; exit 3 ;;
+		*)     echo "ENOTSUP: ${action?}"; e=95 ;;
 	esac
+	return $e
 }
 
 main "$@"
+exit $?
 ]=])
 	dst:write([=[
   \
@@ -276,7 +347,7 @@ http {
 			set $upstream_<appname> http://<your application internal ip address with port number>;  #ADD IP AND PORT OF SERVICE
 			proxy_pass $upstream_<appname>;  #change name of the service
 			#
-			auth_request /authelia;
+			auth_request /login;
 			auth_request_set $target_url $scheme://$http_host$request_uri;
 			auth_request_set $user $upstream_http_remote_user;
 			auth_request_set $groups $upstream_http_remote_groups;

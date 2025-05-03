@@ -5,30 +5,17 @@ TLS Key Management
 WARN: Nothing useful here. Just some nonsense copy-pasta lines.
 
 
-## Create new server PEM cert
+## Create a (self-signed) Server cert
 
-```sh
-openssl genrsa -out path/to/private/key 2048
-```
-
-```sh
-openssl req -new -key path/to/private/key -new -nodes -x509 -days 42 -out path/to/certSignRequest.csr -subj "/C=/ST=/L=/O=/OU=/CN=example.com"
-```
-
-```sh
-openssl x509 -req -days 42 -in path/to/certSignRequest.csr -signkey path/to/private/key -out path/to/cert.crt
-```
-
-```sh
-cat path/to/private/key path/to/cert.crt > path/to/cert.pem
-```
-
-
-## TLS debugging
-
-```sh
-socat OPENSSL-LISTEN:1234,reuseaddr,cert=server.pem tcp-connect:127.0.0.1:1235
-```
-
-HINT: Add option 'fork' to ssl sock to serve multiple requests.
+  && caKey=./caKey.pem \
+  && caCert=./caCert.pem \
+  && serverKey=./serverKey.pem \
+  && serverCert=./serverCert.pem \
+  && signReq=./serverSignReq.pem \
+  && `# Create a SelfSigned CA` \
+  && openssl req -x509 -newkey rsa:4096 -days 42 -keyout "${caKey:?}" -out "${caCert}" -subj "/C=/ST=/L=/O=/OU=/CN=example.com" \
+  && `# create a CertSignReq` \
+  && openssl req -newkey rsa:4096 -keyout "${serverKey:?}" -out "${signReq:?}" -subj "/C=/ST=/L=/O=/OU=/CN=example.com" \
+  && `# sign the CertSignReq using CA` \
+  && openssl x509 -req -in "${signReq:?}" -CA "${caCert:?}" -CAkey "${caKey:?}" -CAcreateserial -out "${serverCert:?}" \
 
