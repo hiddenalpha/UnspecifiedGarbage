@@ -127,7 +127,7 @@ feedback_links_enabled = false
 
 [security]
 # TODO maybe should be 'true' for my use-case?
-#disable_initial_admin_creation = false
+disable_initial_admin_creation = true
 # default admin user, created on startup
 admin_user = admin
 # default admin password, can be changed before first start of grafana, or in profile settings
@@ -150,18 +150,39 @@ default_language = en-US
 [sso_settings]
 configurable_providers =
 
+[auth]
+#disable_login_form = true
+#oauth_auto_login = false
+
 [auth.anonymous]
-enabled = true
-org_name = Main Org.
-org_role = Viewer
-hide_version = true
+enabled = false
+#org_name = Main Org.
+#org_role = Viewer
+#hide_version = true
 
 [auth.basic]
-enabled = true
+enabled = false
 
 [auth.ldap]
 enabled = false
 active_sync_enabled = false
+
+[auth.generic_oauth]
+enabled = true
+name = SingleSignOn
+icon = signin
+client_id = grafana
+# TODO client_secret = insecure_secret
+scopes = openid profile email groups
+empty_scopes = false
+# TODO auth_url = https://auth.example.com/api/v0/oidc/authorization
+# TODO token_url = https://auth.example.com/api/v0/oidc/token
+# TODO api_url = https://auth.example.com/api/v0/oidc/userinfo
+login_attribute_path = preferred_username
+groups_attribute_path = groups
+name_attribute_path = name
+use_pkce = true
+role_attribute_path =
 
 [smtp]
 enabled = false
@@ -224,15 +245,21 @@ function installGrafana( dst )
   && `# installGrafana` \
   && $SUDO mkdir -p \
        /var/log/grafana \
+       "${grafanaHome:?}/etc/grafana" \
        "${grafanaHome:?}/etc/init.d" \
+       "${grafanaHome:?}/etc/nginx/sites-available" \
        "${grafanaHome:?}/var/lib" \
   && cd "${grafanaHome:?}" \
   && $SUDO tar --strip-components=1 -xf "${cacheDir:?}/${grafanaTgz:?}" \
   && $SUDO chown grafana:adm /var/log/grafana \
   && $SUDO chown grafana:grafana "${grafanaHome:?}/var/lib" \
-  && base64 -d <<EOF_aXNLhBH|$SUDO tee "${grafanaHome:?}/etc/grafana.ini" >/dev/null &&
+  && base64 -d <<EOF_aXNLhBH|$SUDO tee "${grafanaHome:?}/etc/grafana/grafana.ini" >/dev/null &&
 ]=].. b64wrap(getGrafanaConfig()) ..[=[
 EOF_aXNLhBH
+true \
+  && <<EOF_NyHaO9ES base64 -d|$SUDO tee "${grafanaHome:?}/etc/nginx/sites-available/grafana" >/dev/null &&
+]=]..b64wrap(getGrafanaNginxSite())..[=[
+EOF_NyHaO9ES
 true \
   && <<EOF_YS1PAeob base64 -d|$SUDO tee "${grafanaHome:?}/etc/init.d/grafana.skel" >/dev/null &&
 ]=].. b64wrap(getGrafanaSysVInitScript()) ..[=[
@@ -264,7 +291,7 @@ pidfile="/var/run/${img:?}.pid"
 start () {
 	if test -e "${pidfile:?}" ;then echo "EEXISTS: ${pidfile:?}"; exit 2 ;fi
 	(cd "${appHome:?}" && sudo -u "${appUser:?}" -- \
-		"${appHome:?}/bin/${img:?}" server --config "${appHome:?}/etc/grafana.ini" \
+		"${appHome:?}/bin/${img:?}" server --config "${appHome:?}/etc/grafana/grafana.ini" \
 		2>&1 >> /var/log/grafana/grafana.log
 	) &
 	childpid=$!
@@ -312,8 +339,7 @@ main () {
 	e=99
 	case "$action" in
 		start)  start  ; e=$? ;;
-		stop)   stop   ; e=$? ;;
-		reload) reload ; e=$? ;;
+		stop)   stop   ; e=$? ;; reload) reload ; e=$? ;;
 		status) status ; e=$? ;;
 		restart) stop; start ;;
 		*)     echo "ENOTSUP: ${action?}"; e=95 ;;
@@ -323,6 +349,38 @@ main () {
 
 main "$@"
 exit $?
+]=]
+end
+
+
+function getGrafanaNginxSite()
+    return [=[
+# "https://grafana.com/tutorials/run-grafana-behind-a-proxy/".
+map $http_upgrade $connection_upgrade {
+    default upgrade;
+    '' close;
+}
+upstream grafana {
+    server 127.0.0.1:3000;
+}
+server {
+    # TODO unused? listen 80;
+    # TODO unused? listen [::]:80;
+    # TODO unused? root /srv/www;
+    location /grafana {
+        rewrite  ^/grafana/(.*)  /$1 break;
+        proxy_set_header Host $host;
+        proxy_pass http://grafana;
+    }
+    location /grafana/api/live/ {
+        rewrite  ^/grafana/(.*)  /$1 break;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $connection_upgrade;
+        proxy_set_header Host $host;
+        proxy_pass http://grafana;
+    }
+}
 ]=]
 end
 

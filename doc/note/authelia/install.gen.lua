@@ -9,7 +9,15 @@
   ]===========================================================================]
 
 local autheliaVersion = "4.39.1"
+local autheliaPort = 9091
 local appHome = "/opt/authelia-".. autheliaVersion
+local appSecDir = appHome .."/etc/authelia/sec"
+local srvPriv = "srvPriv.pem"
+local srvPubl = "srvPubl.pem"
+local srvCert = "srvCert.pem"
+local domain = "example.com"
+local domainAuth = "auth.example.com"
+local basePath = "/authelia"
 
 
 -- [Source](http://git.hiddenalpha.ch/UnspecifiedGarbage.git/tree/src/main/lua/common/base64.lua)
@@ -99,6 +107,10 @@ function installAuthelia( dst )
                  /opt/authelia-"${autheliaVersion:?}"/unpack \
                  /opt/authelia-"${autheliaVersion:?}"/bin \
                  /opt/authelia-"${autheliaVersion:?}"/etc \
+                 /opt/authelia-"${autheliaVersion:?}"/etc/authelia \
+                 ]=].. appSecDir ..[=[ \
+                 /opt/authelia-"${autheliaVersion:?}"/etc/nginx \
+                 /opt/authelia-"${autheliaVersion:?}"/etc/nginx/sites-available \
                  /opt/authelia-"${autheliaVersion:?}"/var \
                  /opt/authelia-"${autheliaVersion:?}"/var/lib \
                  /opt/authelia-"${autheliaVersion:?}"/skel \
@@ -117,85 +129,168 @@ function installAuthelia( dst )
        unpack/authelia.tmpfiles.conf \
        unpack/authelia.tmpfiles.config.conf \
   && $SUDO rmdir unpack \
+  && <<EOF_YuF8gFVUbHVVBIiA base64 -d|$SUDO tee "${appHome:?}/etc/authelia/config.yml" >/dev/null &&
+]=].. b64encW80(getAutheliaConfig()) ..[=[
+EOF_YuF8gFVUbHVVBIiA
+true \
+  && base64 -d <<EOF_irLe8foWULF|$SUDO tee "${appHome:?}/etc/nginx/sites-available/authelia" >/dev/null &&
+]=].. b64encW80(getAutheliaNginxSite()) ..[=[
+EOF_irLe8foWULF
+true \
+  && `# create some certs (WHY IS THIS SO FU**ING COMPLICATED)` \
+  && caPrivPem=']=].. appSecDir ..[=[/caPriv.pem' \
+  && caCrtPem=']=].. appSecDir ..[=[/caCrt.pem' \
+  && srvPrivAbs=']=].. appSecDir .."/".. srvPriv ..[=[' \
+  && srvPublAbs=']=].. appSecDir .."/".. srvPubl ..[=[' \
+  && srvCertPem=']=].. appSecDir .."/".. srvCert ..[=[' \
+  && srvSigReq=']=].. appSecDir ..[=[/sigReq.pem' \
+  && `# create custom root CA` \
+  && $SUDO openssl genrsa -out "${caPrivPem:?}" 4096 \
+  && `# SelfSign custom root CA` \
+  && $SUDO openssl req -x509 -new -nodes -key "${caPrivPem}" -days 365 -out "${caCrtPem:?}" \
+       -subj "/C=/ST=/L=/O=/CN=giveashit.example.com" \
+  && `# Create server key` \
+  && $SUDO openssl genrsa -out "${srvPrivAbs:?}" 2048 \
+  && `# create sign-request` \
+  && $SUDO openssl req -new -key "${srvPrivAbs:?}" -out "${srvSigReq:?}" \
+       -subj '/C=/ST=/L=/O=/CN=]=].. domain ..[=[' \
+  && `# sign srv with CA` \
+  && $SUDO openssl x509 -req -in "${srvSigReq:?}" -CA "${caCrtPem:?}" -CAkey "${caPrivPem:?}" \
+       `#whatisthisshitfor -CAcreateserial` -days 500 -out "${srvCertPem:?}" \
+  && `# mk srv pub key` \
+  && $SUDO openssl rsa -in "${srvPrivAbs:?}" -pubout -out "${srvPublAbs:?}" \
+  && `# (pseudo-) cleanup` \
+  && $SUDO rm "${srvSigReq:?}" \
+  && `# permissions` \
+  && $SUDO find ']=].. appSecDir ..[=[' -type d -exec chown root:authelia {} + \
+  && $SUDO find ']=].. appSecDir ..[=[' -type f -exec chown authelia:root {} + \
+  && $SUDO find ']=].. appSecDir ..[=[' -type d -exec chmod 550 {} + \
+  && $SUDO find ']=].. appSecDir ..[=[' -type f -exec chmod 440 {} + \
 ]=])
 end
 
 
-function createConfig( dst )
-	dst:write([=[
-  \
-  && `# createConfig` \
-  && <<EOF_YuF8gFVUbHVVBIiA base64 -d|$SUDO tee "${appHome:?}/etc/config.yml" >/dev/null &&
-]=]..b64encW80([=[
+function getAutheliaNginxSite()
+	return [=[
+server {
+	server_name  auth.* ]=].. domain ..[=[  ]=].. domainAuth ..[=[;
+	listen 443 ssl;
+	#root /var/www;  # TODO unused?
+	include /etc/nginx/tls-]=].. domain ..[=[.conf;
+	location /api/oidc/authorization {
+		# TODO_what_is_this_for internal;
+		set $upstream_authelia http://127.0.0.1:]=].. autheliaPort ..[=[/api/verify?rd=https://]=].. domainAuth ..[=[:]=].. autheliaPort ..[=[/;
+		proxy_pass_request_body off;
+		proxy_pass $upstream_authelia;
+		proxy_set_header Content-Length "";
+		#
+		# Timeout if the real server is dead
+		proxy_next_upstream error timeout invalid_header http_500 http_502 http_503;
+		client_body_buffer_size 128k;
+		proxy_set_header Host $host;
+		proxy_set_header X-Original-URL $scheme://$http_host$request_uri;
+		proxy_set_header X-Real-IP $remote_addr;
+		proxy_set_header X-Forwarded-For $remote_addr; 
+		proxy_set_header X-Forwarded-Proto $scheme;
+		proxy_set_header X-Forwarded-Host $http_host;
+		proxy_set_header X-Forwarded-Uri $request_uri;
+		proxy_set_header X-Forwarded-Ssl on;
+		proxy_redirect  http://  $scheme://;
+		proxy_http_version 1.1;
+		proxy_set_header Connection "";
+		proxy_cache_bypass $cookie_session;
+		proxy_no_cache $cookie_session;
+		proxy_buffers 4 32k;
+		#
+		send_timeout 5m;
+		proxy_read_timeout 240;
+		proxy_send_timeout 240;
+		proxy_connect_timeout 240;
+	}
+}
+]=]
+end
+
+
+function getAutheliaConfig( dst )
+	return [=[
 log:
-    # Sending the Authelia process a SIGHUP will cause it to close and reopen
-    # the current log file and truncate it.
-    level: "warn"  # OneOf: trace, debug, info, warn, error.
-    format: "text"
-    file_path: "/var/log/authelia/authelia.log"
-    keep_stdout: false
+  # Sending the Authelia process a SIGHUP will cause it to close and reopen
+  # the current log file and truncate it.
+  level: warn
+  format: text
+  file_path: "/var/log/authelia/authelia.log"
+  keep_stdout: false
 server:
-    address: tcp4://127.0.0.1:9091/
+  address: "tcp4://127.0.0.1:]=].. autheliaPort ..[=[/"
 storage:
-    #encryption_key: "WUoXVW1HUWc918C5H4qApHVi6A3H3d9Z" # TODO
-    local:
-        path: "/opt/authelia-]=].. autheliaVersion ..[=[/var/lib/authelia.db"
+  #encryption_key: "TODO_WUoXVW1HUWc918C5H4qApHVi6A3H3d9Z"
+  local:
+    path: "/opt/authelia-]=].. autheliaVersion ..[=[/var/lib/authelia.db"
 authentication_backend:
-    password_reset: { disable: true }
-    file:
-        path: "/opt/authelia-]=].. autheliaVersion ..[=[/etc/users.yml
-        password:
-            algorithm: argon2id
-            iterations: 1
-            salt_length: 16
-            parallelism: 8
-            memory: 64
+  password_reset:
+    disable: true
+  file:
+    path: /opt/authelia-]=].. autheliaVersion ..[=[/etc/authelia/users.yml
+    password:
+      algorithm: argon2id
+      iterations: 1
+      salt_length: 16
+      parallelism: 8
+      memory: 64
+identity_providers:
+  oidc:
+    jwks:
+      # openssl genrsa -out ./foo.pem 4096
+      # openssl rsa -in ./foo.pem -outform PEM -pubout -out ./foo.pub.pem
+      - key: |
+          {{- fileContent "]=].. appSecDir .."/".. srvPriv ..[=[" | nindent 10 }}
+        certificate_chain: |
+          {{- fileContent "]=].. appSecDir .."/".. srvCert ..[=[" | nindent 10 }}
+    clients:
+      - client_id: "grafana"
+        client_name: "Grafana"
+        # authelia crypto hash generate
+        client_secret: "$argon2id$v=19$m=65536,t=3,p=4$jEEn1HqJSeZo0+sK+UlObw$31a7CC/kTZZmBXQwdrVWuARsCGIg7OCSpoEKtQqV7rk" # aka "TODO_G7furLckWjthisVannoTying4shi1ttSlh8c"
+        public: false
+        authorization_policy: "two_factor"
+        require_pkce: true
+        pkce_challenge_method: "S256"
+        redirect_uris:
+          - "https://grafana.]=].. domain ..[=[/login/generic_oauth"
+        scopes:
+          - openid
+          - profile
+          - groups
+          - email
+        userinfo_signed_response_alg: none
+        token_endpoint_auth_method: "client_secret_basic"
 session:
-    #name: "authelia_session"
-    #same_site: "lax"
-    #inactivity: "12h"
-    #expiration: "3d"
-    #remember_me: "300d"
-    cookies: [{
-        domain: "example.com",
-        authelia_url: "https://auth.example.com/login",
-        default_redirection_url: "https://example.com/wherever/to/go",
-    }]
-#    # This secret can also be set using the env variables AUTHELIA_SESSION_SECRET_FILE
-#    secret: "a-really-L0ng_s7r0ng-secr3t-st1nggggg-shoul0-be-used"
-#    expiration: 3600  # seconds
-#    inactivity: 7200  # seconds
-#    domain: "example.com"  # Should match whatever your root protected domain is
-#identity_validation:
-#    reset_password:
-#        jwt_secret: "TODO-a-super-long-strong-string-of-letters-numbers-characters"
-#totp:
-#    issuer: example.com
-#    period: 30
-#    skew: 1
+  #name: "authelia_session",
+  #same_site: "lax",
+  #inactivity: "12h",
+  #expiration: "3d",
+  #remember_me: "300d",
+  cookies:
+    - domain: example.com
+      authelia_url: "https://]=].. domainAuth .. basePath ..[=["
+      default_redirection_url: "https://example.com/TODO_mz9NmRu1N7l9lS"
+  #secret: "TODO-really-L0ng_s7r0ng-secr3t-st1nggggg-shoul0-be-used",
+  #expiration: 3600s,
+  #inactivity: 7200s,
+  #domain: "]=].. domain ..[=[",
 access_control:
-    default_policy: deny
-    rules: [{
-        domain: [ "noauth.example.com" ],
-        policy: bypass,
-    },{
-        domain: [ "foo.example.com" ],
-        policy: one_factor,
-        #networks: [ "192.168.1.0/24" ],
-    }]
+  default_policy: "deny"
+  rules:
+    - domain: ["noauth.example.com"]
+      policy: "bypass"
+    - domain: ["TODO.example.com"]
+      policy: "two_factor"
 notifier:
-    disable_startup_check: true
-    #filesystem:
-    #    filename: "/path/to/notification.txt"
-#smtp:
-#    ...
-#oidc:
-#    ...
+  disable_startup_check: true
+  #filesystem: { filename: "/path/to/notification.txt" }
 theme: "dark"
-]=]) ..[=[
-EOF_YuF8gFVUbHVVBIiA
-true \
-]=])
+]=]
 end
 
 
@@ -217,7 +312,7 @@ users:
 	dst:write([=[
   \
   && `# createUserDbYml` \
-  && <<EOF_Ar8AlO6UXh3kYrj0 base64 -d | $SUDO tee "${appHome:?}/etc/users.yml" >/dev/null &&
+  && <<EOF_Ar8AlO6UXh3kYrj0 base64 -d | $SUDO tee "${appHome:?}/etc/authelia/users.yml" >/dev/null &&
 ]=].. contents ..[=[
 EOF_Ar8AlO6UXh3kYrj0
 true \
@@ -249,13 +344,13 @@ appUser=authelia
 appHome="]=].. appHome ..[=["
 pidfile="/var/run/${img:?}.pid"
 
-#. /lib/init/vars.sh
-#. /lib/lsb/init-functions
+# [why](https://www.authelia.com/reference/guides/templating/#enable-templating)
+export X_AUTHELIA_CONFIG_FILTERS=template
 
 start () {
 	if test -e "${pidfile:?}" ;then echo "EEXISTS: ${pidfile:?}"; exit 2 ;fi
 	(sudo -u "${appUser:?}" -- \
-		"${appHome:?}/bin/${img:?}" --config "${appHome:?}/etc/config.yml") &
+		"${appHome:?}/bin/${img:?}" --config "${appHome:?}/etc/authelia/config.yml") &
 	e=$?
 	childpid=$!
 	if test $e -ne 0 ;then
@@ -326,99 +421,6 @@ true \
 end
 
 
-function createNginxSkel( dst )
-	local contents = b64encW80([=[
-#
-# TODO this is INCOMPLETE!
-#
-http {
-	server {
-		location /authelia {
-			internal;
-			set $upstream_authelia http://127.0.0.1:9091/api/verify;
-			proxy_pass_request_body off;
-			proxy_pass $upstream_authelia;
-			proxy_set_header Content-Length "";
-			#
-			# Timeout if the real server is dead
-			proxy_next_upstream error timeout invalid_header http_500 http_502 http_503;
-			client_body_buffer_size 128k;
-			proxy_set_header Host $host;
-			proxy_set_header X-Original-URL $scheme://$http_host$request_uri;
-			proxy_set_header X-Real-IP $remote_addr;
-			proxy_set_header X-Forwarded-For $remote_addr; 
-			proxy_set_header X-Forwarded-Proto $scheme;
-			proxy_set_header X-Forwarded-Host $http_host;
-			proxy_set_header X-Forwarded-Uri $request_uri;
-			proxy_set_header X-Forwarded-Ssl on;
-			proxy_redirect  http://  $scheme://;
-			proxy_http_version 1.1;
-			proxy_set_header Connection "";
-			proxy_cache_bypass $cookie_session;
-			proxy_no_cache $cookie_session;
-			proxy_buffers 4 32k;
-			#
-			send_timeout 5m;
-			proxy_read_timeout 240;
-			proxy_send_timeout 240;
-			proxy_connect_timeout 240;
-		}
-		location / {
-			set $upstream_<appname> http://<your application internal ip address with port number>;  #ADD IP AND PORT OF SERVICE
-			proxy_pass $upstream_<appname>;  #change name of the service
-			#
-			auth_request /login;
-			auth_request_set $target_url $scheme://$http_host$request_uri;
-			auth_request_set $user $upstream_http_remote_user;
-			auth_request_set $groups $upstream_http_remote_groups;
-			proxy_set_header Remote-User $user;
-			proxy_set_header Remote-Groups $groups;
-			error_page 401 =302 https://auth.<example.com>/?rd=$target_url;
-			#
-			client_body_buffer_size 128k;
-			#
-			proxy_next_upstream error timeout invalid_header http_500 http_502 http_503;
-			#
-			send_timeout 5m;
-			proxy_read_timeout 360;
-			proxy_send_timeout 360;
-			proxy_connect_timeout 360;
-			#
-			proxy_set_header Host $host;
-			proxy_set_header X-Real-IP $remote_addr;
-			proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-			proxy_set_header X-Forwarded-Proto $scheme;
-			proxy_set_header X-Forwarded-Host $http_host;
-			proxy_set_header X-Forwarded-Uri $request_uri;
-			proxy_set_header X-Forwarded-Ssl on;
-			proxy_redirect  http://  $scheme://;
-			proxy_http_version 1.1;
-			proxy_set_header Connection "";
-			proxy_cache_bypass $cookie_session;
-			proxy_no_cache $cookie_session;
-			proxy_buffers 64 256k;
-			#
-			# add your ip range here, and remove this comment!
-			set_real_ip_from 192.168.1.0/16;
-			set_real_ip_from 172.0.0.0/8;
-			set_real_ip_from 10.0.0.0/8;
-			real_ip_header X-Forwarded-For;
-			real_ip_recursive on;
-		}
-	}
-}
-]=])
-	dst:write([=[
-  \
-  && `# createNginxSkel (WARN: INCOMPLETE)` \
-  && <<EOF_r9b5ORa7zE7nsTFr base64 -d | $SUDO tee "${appHome:?}/skel/nginx.conf" >/dev/null &&
-]=].. contents ..[=[
-EOF_r9b5ORa7zE7nsTFr
-true \
-]=])
-end
-
-
 function main()
 	local dst = io.stdout
 	dst:write("#!/bin/sh\nset -e \\\n")
@@ -427,10 +429,8 @@ function main()
 	storeKnownHashes(dst)
 	aptInstall(dst)
 	installAuthelia(dst)
-	createConfig(dst)
 	createUserDbYml(dst)
 	createInitdSkel(dst)
-	createNginxSkel(dst)
 end
 
 
