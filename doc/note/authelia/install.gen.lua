@@ -40,6 +40,20 @@ function vars( dst )
   && autheliaVersion=']=].. autheliaVersion ..[=[' \
   && arch='amd64' \
   && appHome=']=].. appHome ..[=[' \
+  && autheliaUser=authelia \
+  && autheliaGrp=authelia \
+]=])
+end
+
+
+function ensureAppUserExists( dst )
+	dst:write([=[
+  \
+  && `# ensureAppUserExists` \
+  && if ! grep -E "^${autheliaUser:?}:" /etc/passwd >/dev/null; then true \
+     && echo "No such user '${autheliaUser:?}'"; \
+     && false \
+    ;fi \
 ]=])
 end
 
@@ -88,24 +102,31 @@ function installAuthelia( dst )
                  /opt/authelia-"${autheliaVersion:?}"/var \
                  /opt/authelia-"${autheliaVersion:?}"/var/lib \
                  /opt/authelia-"${autheliaVersion:?}"/skel \
-  && $SUDO chown authelia:authelia /opt/authelia-"${autheliaVersion:?}"/var/lib \
+  && $SUDO chown "${autheliaUser:?}:${autheliaGrp:?}" \
+       /opt/authelia-"${autheliaVersion:?}"/var/lib \
   && cd /opt/authelia-"${autheliaVersion:?}/unpack" \
   && $SUDO tar xf "${cacheDir:?}/authelia-v${autheliaVersion:?}-linux-${arch:?}.tar.gz" \
   && cd /opt/authelia-"${autheliaVersion:?}" \
-  && $SUDO mv unpack/authelia-linux-amd64          bin/authelia \
-  && $SUDO mv unpack/authelia.service              skel/. \
-  && $SUDO mv unpack/authelia@.service             skel/. \
-  && $SUDO mv unpack/authelia.sysusers.conf        skel/. \
-  && $SUDO mv unpack/authelia.tmpfiles.conf        skel/. \
-  && $SUDO mv unpack/authelia.tmpfiles.config.conf skel/. \
-  && $SUDO mv unpack/config.template.yml           skel/. \
+  && $SUDO mv unpack/authelia-linux-a??64  bin/authelia \
+  && $SUDO mv -t skel/. \
+       unpack/config.template.yml \
+  && $SUDO rm \
+       unpack/authelia.service \
+       unpack/authelia@.service \
+       unpack/authelia.sysusers.conf \
+       unpack/authelia.tmpfiles.conf \
+       unpack/authelia.tmpfiles.config.conf \
   && $SUDO rmdir unpack \
 ]=])
 end
 
 
 function createConfig( dst )
-	local contents = b64encW80([=[
+	dst:write([=[
+  \
+  && `# createConfig` \
+  && <<EOF_YuF8gFVUbHVVBIiA base64 -d|$SUDO tee "${appHome:?}/etc/config.yml" >/dev/null &&
+]=]..b64encW80([=[
 log:
     # Sending the Authelia process a SIGHUP will cause it to close and reopen
     # the current log file and truncate it.
@@ -171,12 +192,7 @@ notifier:
 #oidc:
 #    ...
 theme: "dark"
-]=])
-	dst:write([=[
-  \
-  && `# createConfig` \
-  && <<EOF_YuF8gFVUbHVVBIiA base64 -d|$SUDO tee "${appHome:?}/etc/config.yml" >/dev/null &&
-]=].. contents ..[=[
+]=]) ..[=[
 EOF_YuF8gFVUbHVVBIiA
 true \
 ]=])
@@ -210,7 +226,11 @@ end
 
 
 function createInitdSkel( dst )
-	local contents = b64encW80([=[
+	dst:write([=[
+  \
+  && `# createInitdSkel` \
+  && <<EOF_WlEZR87guI9RGVda base64 -d | $SUDO tee "${appHome:?}/skel/authelia.initd.sh" >/dev/null &&
+]=] .. b64encW80([=[
 #!/bin/sh
 ### BEGIN INIT INFO
 #
@@ -263,6 +283,10 @@ stop () {
 	return $e
 }
 
+reload () {
+	pkill -SIGHUP "${img:?}"
+}
+
 status () {
 	if test ! -e "${pidfile:?}" ;then
 		echo "ENOENT: ${pidfile:?}"
@@ -271,7 +295,7 @@ status () {
 	childpid="$(cat "${pidfile:?}")"
 	descr="$(ps -fp "${childpid:?}")"
 	if test -z "$(echo "${descr?}"|tail -n+2)" ;then
-		echo "ENOENT: (pid: ${childpid:?})"
+		echo "ENOENT: pid ${childpid:?}"
 		return 2
 	else
 		echo "${descr:?}"
@@ -285,6 +309,7 @@ main () {
 	case "$action" in
 		start)  start  ; e=$? ;;
 		stop)   stop   ; e=$? ;;
+		reload) reload ; e=$? ;;
 		status) status ; e=$? ;;
 		restart) stop; start ;;
 		*)     echo "ENOTSUP: ${action?}"; e=95 ;;
@@ -294,12 +319,7 @@ main () {
 
 main "$@"
 exit $?
-]=])
-	dst:write([=[
-  \
-  && `# createInitdSkel` \
-  && <<EOF_WlEZR87guI9RGVda base64 -d | $SUDO tee "${appHome:?}/skel/authelia.initd.sh" >/dev/null &&
-]=].. contents ..[=[
+]=]) .. [=[
 EOF_WlEZR87guI9RGVda
 true \
 ]=])
@@ -403,6 +423,7 @@ function main()
 	local dst = io.stdout
 	dst:write("#!/bin/sh\nset -e \\\n")
 	vars(dst)
+	ensureAppUserExists(dst)
 	storeKnownHashes(dst)
 	aptInstall(dst)
 	installAuthelia(dst)
