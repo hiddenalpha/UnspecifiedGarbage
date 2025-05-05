@@ -143,15 +143,32 @@ In GUEST to access it do:
 
 
 ## USB pass-through
+  [tutorial](https://wiki.archlinux.org/title/QEMU#Pass-through_host_USB_device)
+  [see also](https://unix.stackexchange.com/a/452946)
 
-    -device nec-usb-xhci \
-    -device usb-host,hostbus=999,hostaddr=999 `# tested, seems to work` \
+  `# 1st, qemu needs access:`
+  `# NOTE: this shit didn't work for me. Workaround: run qemu as root`
+  $ cat /etc/udev/rules.d/andy-qemu-usb.rule
+  SUBSYSTEM=="usb", ATTR{idVendor}=="GUGU", ATTR{idProduct}=="BA77", MODE="0660", GROUP="plugdev"
+  $ sudo udevadm control --reload-rules
 
-### By physical port (TODO broken)
-  -usb -device usb-host,hostbus=1,hostport=2.3
+    -usb -device usb-ehci,id=ehci `# for USB v1 & v2` \
+    -usb -device qemu-xhci,id=xhci `# USBv3, WARN: likes to crash. Prefer ehci.` \
 
-### By device (TODO broken)
-  -usb -device usb-host,vendorid=123,productid=456
+### Connect USB by physical port (Use lsusb -t)
+  `# HINT: www says we need "bus=xhci.0". But I get qemu assert crash. Leave it`
+  `#       out, it seems to work. `
+  device_add usb-host,id=d1,hostbus=1,hostport=2
+  device_add usb-host,id=d1,hostbus=1,hostport=2.3
+
+### Connect USB by device
+  `# TODO never worked for me yet, for whatever bullshit reason`
+  device_add usb-host,id=foo,vendorid=0xDADA,productid=0xBA77
+
+### Helpful
+  help device_add
+  device_del id
+  info usb
 
 
 ## Alpine PostInstall

@@ -40,7 +40,7 @@ HINT: In case of based images, need rebase afterwards because convert
       makes them standalone.
 
 Normal systems:
-  `# TODO try "fstrim -av" instead zero fill. `
+  `# TODO try "fstrim -av" instead zerofill. `
   sudo sh -c 'sudo -u user dd if=/dev/zero of=/tmp/deleteme ; rm /tmp/deleteme ; poweroff'
   qemu-img convert -O qcow2 -S 1M input.qcow2 output.qcow2
 
@@ -51,6 +51,22 @@ Windoof:
   sdelete -z C:
   qemu-img convert -O qcow2 input.qcow output.qcow2
   qemu-img rebase -b base.qcow2 output.qcow2
+
+
+## Step-By-Step to setup a machine package
+
+  - Create base VM.
+  - Setup
+  - sudo vim /etc/hostname /etc/hosts
+  - set PS1
+  - fix proxyPort
+  - sudo apt clean
+  - rm -rf ~/.bash_history ~/.viminfo
+  - sudo rm -rf /tmp/* /var/tmp/*
+  - zerofill, sparsify
+  - md5sum, tar, md5sum
+  - test
+  - compress
 
 
 ## Shrink snapshot layer (TODO what is this for?)

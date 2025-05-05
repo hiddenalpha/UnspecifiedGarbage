@@ -17,3 +17,16 @@ LDFLAGS= -static -static-libgcc
 CFLAGS= -Os
 LDFLAGS= -s
 
+
+## Gcc Fine-Tuning
+
+[Options Summary](https://gcc.gnu.org/onlinedocs/gcc/Option-Summary.html)
+
+[Optimization Options](https://gcc.gnu.org/onlinedocs/gcc/Optimize-Options.html)
+`gcc -Q --help=optimizers`
+[Machine specific Options](https://gcc.gnu.org/onlinedocs/gcc/Submodel-Options.html)
+
+Print Machine specific defaults:
+gcc -Q --help=target -march=ivybridge
+May also add `-mtune=foo` to specify which cpu to optimize for.
+
