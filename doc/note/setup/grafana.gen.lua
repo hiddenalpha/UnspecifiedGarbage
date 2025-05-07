@@ -188,7 +188,7 @@ name_attribute_path = name
 #groups_attribute_path = groups
 role_attribute_strict = true
 skip_org_role_sync = false
-role_attribute_path=role
+role_attribute_path = role
 
 
 [smtp]

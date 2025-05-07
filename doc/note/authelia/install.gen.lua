@@ -255,7 +255,7 @@ storage:
 definitions:
   user_attributes:
     grafanaRole:
-      expression: '("GrafanaAdmin" in groups) ? "Admin" : "None"'
+      expression: '("GrafanaSuperDuperAdmin" in groups) ? "GrafanaAdmin" : (("GrafanaAdmin" in groups) ? "Admin" : (("GrafanaEditor" in groups) ? "Editor" : (("GrafanaViewer" in groups) ? "Viewer" : "None")))'
 authentication_backend:
   password_reset:
     disable: true
