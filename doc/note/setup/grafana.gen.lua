@@ -4,9 +4,12 @@
 
   ]============================================================================]
 
-local grafanaVersion = "11.2.0"
+local grafanaVersion = "12.0.0"
 local grafanaHome = "/opt/grafana-".. grafanaVersion
-local domain = "example.com"
+local domain = "grafana.example.com"
+local grafanaListenPort = 3000
+local publicProxyPort = 4443
+local autheliaPort = 443
 
 function vars( dst )
 	dst:write([=[
@@ -52,17 +55,16 @@ function storeKnownHashes( dst )
 	dst:write([=[
   \
   && `# storeKnownHashes` \
-  && printf '%s\n' \
-     | tee -a >/dev/null \
-  && <<EOF_HuYRzPq base64 -d|gzip -d|$SUDO tee -a "${cacheDir:?}/MD5SUM" >/dev/null &&
+  && base64 -d <<EOF_HuYRzPq|gzip -d|$SUDO tee -a "${cacheDir:?}/MD5SUM" > /dev/null &&
 H4sIAG9YFmgAA7NITjZKSko1TEoxMTNMMjJKNEkxtrAwNDAzNDYwSLM0V9BKKypOLdItLszJLEnVTUks
 SSzOLy1KTtU11jPVM9CryizgAgAYIIuCRAAAAA==
 EOF_HuYRzPq
 true \
   && <<EOF_cPnZuN base64 -d|gzip -d|$SUDO tee -a "${cacheDir:?}/SHA256SUM" >/dev/null &&
-H4sIAKxYFmgAA3XNMQ7CMAwAwJ1XMCM1shM7Tp9jx3aFRBkqkBCvh42JD9wpmHNf08lWbKCOURmkA09E
-r4M9qAkPs9Zm1opISdU0IEO6zvNlOzT1rgtiqQXK7Xp/vhY99k7loUfZ3ieVEBST8SWjiSHJulJOoM7s
-ykmN6oDABJxhg2JkG1MlPRIY/h27/44PNKtOVcgAAAA=
+H4sIAGiZGmgAA3XPu2qDMQwF4L1P0bmQH8mWLPtxdA2FJkNoofTp407N0GwCCX3nKFjwWBVkCztoYDYG
+GcCOGG1yJHXhada7V2uIVNRMEyplqL++nW9aetUT4tEOOD7er1/fJ71dBh2fejvOPy8qKSgmc7/MLoYk
+a1E50GAO5aJObUJiAXrapJzVp6tUZAHDM+MSf0aL0BqLB+HCIEcbCS6hgsPVsqqv6WMPwSQ7ClgtbEN2
+GZj90fgV/u1hXMjZlttE9ka5xY5pqobS1oAZy4kGDNvB954bTXfbFy0X5zPjsccd9Nw/XpABAAA=
 EOF_cPnZuN
 true \
 ]=])
@@ -74,12 +76,12 @@ function dload( dst )
   \
   && `# dload` \
   && verify () (cd "${cacheDir:?}" && grep ' .'"${grafanaTgz:?}"'$' SHA256SUM|sha256sum -c -) \
-  && if !verify ;then true \
+  && if verify ;then true ;else true \
       && (cd "${cacheDir:?}" && curl -LO "${grafanaTgzUrl:?}") \
       && verify \
     ;fi \
   && verify () (cd "${cacheDir:?}" && grep ' .'"${frserZip:?}"'$' MD5SUM|md5sum -c -) \
-  && if !verify ;then \
+  && if verify ;then true ;else true \
       && (cd "${cacheDir:?}" && curl -LO "${frserUrl:?}") \
       && verify \
     ;fi
@@ -97,8 +99,8 @@ plugins = plugins
 logs = /var/log/grafana
 
 [server]
-domain = ]=].. domain ..[=[
-root_url = http://%(domain)s/grafana/
+domain = ]=].. domain .."\n"..[=[
+root_url = https://%(domain)s:]=].. publicProxyPort ..[=[/grafana/
 read_timeout = 2
 
 [database]
@@ -131,7 +133,7 @@ disable_initial_admin_creation = true
 # default admin user, created on startup
 admin_user = admin
 # default admin password, can be changed before first start of grafana, or in profile settings
-admin_password = 12345
+admin_password = XjMoquizkmlp4BgSecMiXBa2h9PJCI6YcSClnzhjctCwAVuT
 # default admin email, created on startup
 admin_email = grafana@localhost
 disable_gravatar = true
@@ -151,7 +153,7 @@ default_language = en-US
 configurable_providers =
 
 [auth]
-#disable_login_form = true
+#disable_login_form = false
 #oauth_auto_login = false
 
 [auth.anonymous]
@@ -175,20 +177,26 @@ client_id = grafana
 # TODO client_secret = insecure_secret
 scopes = openid profile email groups
 empty_scopes = false
-# TODO auth_url = https://auth.example.com/api/v0/oidc/authorization
-# TODO token_url = https://auth.example.com/api/v0/oidc/token
-# TODO api_url = https://auth.example.com/api/v0/oidc/userinfo
-login_attribute_path = preferred_username
-groups_attribute_path = groups
-name_attribute_path = name
+allow_assign_grafana_admin = true
+# TODO auth_url = https://auth.example.com:]=].. publicProxyPort ..[=[/api/oidc/authorization
+# TODO token_url = https://auth.example.com:]=].. autheliaPort ..[=[/api/oidc/token
+# TODO api_url = https://auth.example.com:]=].. autheliaPort ..[=[/api/oidc/userinfo
+#tls_skip_verify_insecure = false
 use_pkce = true
-role_attribute_path =
+login_attribute_path = preferred_username
+name_attribute_path = name
+groups_attribute_path = groups
+role_attribute_strict = true
+# FUCK THIS SHIT RULE!è!!!!!
+role_attribute_path=(groups[?@=='GrafanaSuperDuperAdmin'].[?length(@)>0] && ['Admin']) || 'None')
+#role_attribute_path=contains(groups, 'GrafanaSuperDuperAdmin') ? 'GrafanaAdmin' : (contains(groups, 'GrafanaAdmin') ? 'Admin' : (contains(groups, 'GrafanaEditor') ? 'Editor' : (contains(groups, 'GrafanaViewer') ? 'Viewer' : 'None')))
+
 
 [smtp]
 enabled = false
 
 [log]
-mode = console file
+mode = file
 level = warn
 filters =
 user_facing_default_error = "Fehler Details siehe grafana server logs"
@@ -221,7 +229,7 @@ alerting_rule_group_rules = 100
 alerting_rule_evaluation_results = -1
 
 [profile]
-enabled = false
+enabled = true
 
 [plugins]
 plugin_admin_enabled = false
@@ -339,9 +347,10 @@ main () {
 	e=99
 	case "$action" in
 		start)  start  ; e=$? ;;
-		stop)   stop   ; e=$? ;; reload) reload ; e=$? ;;
+		stop)   stop   ; e=$? ;;
+		reload) reload ; e=$? ;;
 		status) status ; e=$? ;;
-		restart) stop; start ;;
+		restart) stop ;sleep 1; start ; e=$? ;;
 		*)     echo "ENOTSUP: ${action?}"; e=95 ;;
 	esac
 	return $e
@@ -361,12 +370,13 @@ map $http_upgrade $connection_upgrade {
     '' close;
 }
 upstream grafana {
-    server 127.0.0.1:3000;
+    server 127.0.0.1:]=].. grafanaListenPort ..[=[;
 }
 server {
-    # TODO unused? listen 80;
-    # TODO unused? listen [::]:80;
-    # TODO unused? root /srv/www;
+    # listen 80;
+    # listen [::]:80;
+    # listen 443 ssl;
+    # server_name example.com;
     location /grafana {
         rewrite  ^/grafana/(.*)  /$1 break;
         proxy_set_header Host $host;

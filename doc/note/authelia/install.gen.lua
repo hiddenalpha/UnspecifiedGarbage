@@ -10,6 +10,7 @@
 
 local autheliaVersion = "4.39.1"
 local autheliaPort = 9091
+local proxyPublicPort = 4443
 local appHome = "/opt/authelia-".. autheliaVersion
 local appSecDir = appHome .."/etc/authelia/sec"
 local srvPriv = "srvPriv.pem"
@@ -70,9 +71,12 @@ function aptInstall( dst )
 	dst:write([=[
   \
   && `# aptInstall` \
-  && `# Package missing? Try: $SUDO apt update` \
   && $SUDO apt install --no-install-recommends -y \
        curl \
+  ;  if test $? -ne 0 ;then
+      && echo "Package missing? Try: $SUDO apt update" \
+      && false \
+    ;fi \
 ]=])
 end
 
@@ -114,8 +118,6 @@ function installAuthelia( dst )
                  /opt/authelia-"${autheliaVersion:?}"/var \
                  /opt/authelia-"${autheliaVersion:?}"/var/lib \
                  /opt/authelia-"${autheliaVersion:?}"/skel \
-  && $SUDO chown "${autheliaUser:?}:${autheliaGrp:?}" \
-       /opt/authelia-"${autheliaVersion:?}"/var/lib \
   && cd /opt/authelia-"${autheliaVersion:?}/unpack" \
   && $SUDO tar xf "${cacheDir:?}/authelia-v${autheliaVersion:?}-linux-${arch:?}.tar.gz" \
   && cd /opt/authelia-"${autheliaVersion:?}" \
@@ -137,6 +139,10 @@ true \
 ]=].. b64encW80(getAutheliaNginxSite()) ..[=[
 EOF_irLe8foWULF
 true \
+  && `# Fix permissions` \
+  && (cd ']=].. appHome ..[=[/var/lib' \
+      && $SUDO find -exec chown "${autheliaUser:?}:${autheliaGrp:?}" {} + \
+     ) \
   && `# create some certs (WHY IS THIS SO FU**ING COMPLICATED)` \
   && caPrivPem=']=].. appSecDir ..[=[/caPriv.pem' \
   && caCrtPem=']=].. appSecDir ..[=[/caCrt.pem' \
@@ -245,7 +251,7 @@ server:
 storage:
   #encryption_key: "TODO_WUoXVW1HUWc918C5H4qApHVi6A3H3d9Z"
   local:
-    path: "/opt/authelia-]=].. autheliaVersion ..[=[/var/lib/authelia.db"
+    path: "/opt/authelia-]=].. autheliaVersion ..[=[/var/lib/authelia/authelia.db"
 authentication_backend:
   password_reset:
     disable: true
@@ -276,7 +282,7 @@ identity_providers:
         require_pkce: true
         pkce_challenge_method: "S256"
         redirect_uris:
-          - "https://grafana.]=].. domain ..[=[/login/generic_oauth"
+          - "https://grafana.]=].. domain ..[=[/grafana/login/generic_oauth"
         scopes:
           - openid
           - profile
@@ -293,7 +299,7 @@ session:
   cookies:
     - domain: example.com
       authelia_url: "https://]=].. domainAuth .. basePath ..[=["
-      default_redirection_url: "https://example.com/TODO_mz9NmRu1N7l9lS"
+      default_redirection_url: "https://]=].. domainAuth ..":".. publicProxyPort .. basePath ..[=[/"
   #secret: "TODO-really-L0ng_s7r0ng-secr3t-st1nggggg-shoul0-be-used",
   #expiration: 3600s,
   #inactivity: 7200s,
@@ -309,6 +315,12 @@ notifier:
   disable_startup_check: true
   #filesystem: { filename: "/path/to/notification.txt" }
 theme: "dark"
+#ntp:
+#  address: 'udp://example.com:123'
+#  version: 3
+#  max_desync: '3s'
+#  disable_startup_check: false
+#  disable_failure: false
 ]=]
 end
 
@@ -331,7 +343,8 @@ users:
 	dst:write([=[
   \
   && `# createUserDbYml` \
-  && <<EOF_Ar8AlO6UXh3kYrj0 base64 -d | $SUDO tee "${appHome:?}/etc/authelia/users.yml" >/dev/null &&
+  && usersYml="${appHome:?}/var/lib/authelia/users.yml"  \
+  && <<EOF_Ar8AlO6UXh3kYrj0 base64 -d | $SUDO tee "${usersYml:?}" >/dev/null &&
 ]=].. contents ..[=[
 EOF_Ar8AlO6UXh3kYrj0
 true \
