@@ -252,6 +252,10 @@ storage:
   #encryption_key: "TODO_WUoXVW1HUWc918C5H4qApHVi6A3H3d9Z"
   local:
     path: "/opt/authelia-]=].. autheliaVersion ..[=[/var/lib/authelia/authelia.db"
+definitions:
+  user_attributes:
+    grafanaRole:
+      expression: '("GrafanaAdmin" in groups) ? "Admin" : "None"'
 authentication_backend:
   password_reset:
     disable: true
@@ -272,6 +276,13 @@ identity_providers:
           {{- fileContent "]=].. appSecDir .."/".. srvPriv ..[=[" | nindent 10 }}
         certificate_chain: |
           {{- fileContent "]=].. appSecDir .."/".. srvCert ..[=[" | nindent 10 }}
+    claims_policies:
+      "myGrafanaClaimsPolicy":
+        custom_claims:
+          role: { attribute: "grafanaRole" }
+    scopes:
+      "grafana":
+        claims: ["role"]
     clients:
       - client_id: "grafana"
         client_name: "Grafana"
@@ -283,11 +294,13 @@ identity_providers:
         pkce_challenge_method: "S256"
         redirect_uris:
           - "https://grafana.]=].. domain ..[=[/grafana/login/generic_oauth"
+        claims_policy: "myGrafanaClaimsPolicy"
         scopes:
           - openid
           - profile
-          - groups
+          #- groups
           - email
+          - grafana
         userinfo_signed_response_alg: none
         token_endpoint_auth_method: "client_secret_basic"
 session:
@@ -333,7 +346,7 @@ users:
         displayname: "John Wick"
         password: "$argon2id$v=19$m=65536,t=3,p=2$BpLnfgDsdfdsgdthgdsdfsdfdg6bUGsDY//8mKUYNZZaR0t4MFFSs+iM"
         email: john@example.com
-        groups: ["admins", "dev"]
+        groups: ["GrafanaViewer", "dev"]
     harry:
         displayname: "Thanos Infinity"
         password: "$argon2id$v=19$m=65536,t=3,p=2$BpLnfgjhfrtretasdfdfghja44sdfdfa/8mKUYNZZaR0t4MFFSs+iM"

@@ -175,7 +175,7 @@ name = SingleSignOn
 icon = signin
 client_id = grafana
 # TODO client_secret = insecure_secret
-scopes = openid profile email groups
+scopes = openid profile email grafana
 empty_scopes = false
 allow_assign_grafana_admin = true
 # TODO auth_url = https://auth.example.com:]=].. publicProxyPort ..[=[/api/oidc/authorization
@@ -185,11 +185,10 @@ allow_assign_grafana_admin = true
 use_pkce = true
 login_attribute_path = preferred_username
 name_attribute_path = name
-groups_attribute_path = groups
+#groups_attribute_path = groups
 role_attribute_strict = true
-# FUCK THIS SHIT RULE!è!!!!!
-role_attribute_path=(groups[?@=='GrafanaSuperDuperAdmin'].[?length(@)>0] && ['Admin']) || 'None')
-#role_attribute_path=contains(groups, 'GrafanaSuperDuperAdmin') ? 'GrafanaAdmin' : (contains(groups, 'GrafanaAdmin') ? 'Admin' : (contains(groups, 'GrafanaEditor') ? 'Editor' : (contains(groups, 'GrafanaViewer') ? 'Viewer' : 'None')))
+skip_org_role_sync = false
+role_attribute_path=role
 
 
 [smtp]
