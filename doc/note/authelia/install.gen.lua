@@ -9,10 +9,15 @@
   ]===========================================================================]
 
 local autheliaVersion = "4.39.1"
-local autheliaPort = 9091
-local proxyPublicPort = 4443
+local arch = "arm64" -- arm64, amd64
+local autheliaPort, publicProxyPort
+    = 9091        , 4443
+local autheliaUser, autheliaGrp, autheliaUid, autheliaGid
+    = "authelia"  , "authelia" , 65533      , 65533
+local workdir = "."
 local appHome = "/opt/authelia-".. autheliaVersion
-local appSecDir = appHome .."/etc/authelia/sec"
+local appRoot = workdir
+local appSecDir = appRoot .."/etc/authelia/sec"
 local srvPriv = "srvPriv.pem"
 local srvPubl = "srvPubl.pem"
 local srvCert = "srvCert.pem"
@@ -45,12 +50,16 @@ function vars( dst )
   \
   && `# vars` \
   && SUDO=sudo \
-  && cacheDir=/var/tmp \
+  && workdir=']=].. workdir ..[=[' \
+  && cacheDir="/var/tmp" \
   && autheliaVersion=']=].. autheliaVersion ..[=[' \
-  && arch='amd64' \
+  && arch=']=].. arch ..[=[' \
   && appHome=']=].. appHome ..[=[' \
-  && autheliaUser=authelia \
-  && autheliaGrp=authelia \
+  && appRoot=']=].. appRoot ..[=[' \
+  && autheliaUser=]=].. autheliaUser ..[=[ \
+  && autheliaGrp=]=].. autheliaGrp ..[=[ \
+  && autheliaUid=]=].. autheliaUid ..[=[ \
+  && autheliaGid=]=].. autheliaGid ..[=[ \
 ]=])
 end
 
@@ -59,9 +68,21 @@ function ensureAppUserExists( dst )
 	dst:write([=[
   \
   && `# ensureAppUserExists` \
-  && if ! grep -E "^${autheliaUser:?}:" /etc/passwd >/dev/null; then true \
-     && echo "No such user '${autheliaUser:?}'"; \
-     && false \
+  && passwd="${appRoot:?}/etc/passwd" \
+  && mkdir -p "$(dirname "${passwd:?}")" \
+  && (test -e "${passwd:?}" || touch "${passwd:?}") \
+  && if ! grep -E "^${autheliaUser:?}:" "${passwd:?}" >/dev/null ;then true \
+     && printf '%s:x:%s:%s::/var/lib/authelia:/usr/sbin/nologin\n' \
+          "${autheliaUser:?}" "${autheliaUid:?}" "${autheliaGid:?}" \
+        >> "${passwd:?}" \
+    ;fi \
+  && group="${appRoot:?}/etc/group" \
+  && mkdir -p "$(dirname "${group:?}")" \
+  && (test -e "${group:?}" || touch "${group:?}") \
+  && if ! grep -E "^${autheliaGrp:?}:" "${group:?}" > /dev/null ;then true \
+      && printf '%s:x:%s:\n' \
+           "${autheliaGrp:?}" "${autheliaGid:?}" \
+         >> "${group:?}" \
     ;fi \
 ]=])
 end
@@ -73,7 +94,7 @@ function aptInstall( dst )
   && `# aptInstall` \
   && $SUDO apt install --no-install-recommends -y \
        curl \
-  ;  if test $? -ne 0 ;then
+  ;  if test $? -ne 0 ;then true \
       && echo "Package missing? Try: $SUDO apt update" \
       && false \
     ;fi \
@@ -97,7 +118,7 @@ function installAuthelia( dst )
 	dst:write([=[
   \
   && `# installAuthelia` \
-  && cd /var/tmp \
+  && (cd /var/tmp \
   && isFileOk () { true \
       && grep -E "authelia.+${autheliaVersion:?}.+${arch:?}" "${cacheDir:?}/SHA256SUM" \
          | sha256sum -c - ;} \
@@ -107,42 +128,35 @@ function installAuthelia( dst )
           'https://github.com/authelia/authelia/releases/download/v'"${autheliaVersion:?}"'/authelia-v'"${autheliaVersion:?}"'-linux-'"${arch:?}"'.tar.gz' \
       && isFileOk \
     ;fi\
-  && $SUDO mkdir /opt/authelia-"${autheliaVersion:?}" \
-                 /opt/authelia-"${autheliaVersion:?}"/unpack \
-                 /opt/authelia-"${autheliaVersion:?}"/bin \
-                 /opt/authelia-"${autheliaVersion:?}"/etc \
-                 /opt/authelia-"${autheliaVersion:?}"/etc/authelia \
-                 ]=].. appSecDir ..[=[ \
-                 /opt/authelia-"${autheliaVersion:?}"/etc/nginx \
-                 /opt/authelia-"${autheliaVersion:?}"/etc/nginx/sites-available \
-                 /opt/authelia-"${autheliaVersion:?}"/var \
-                 /opt/authelia-"${autheliaVersion:?}"/var/lib \
-                 /opt/authelia-"${autheliaVersion:?}"/skel \
-  && cd /opt/authelia-"${autheliaVersion:?}/unpack" \
-  && $SUDO tar xf "${cacheDir:?}/authelia-v${autheliaVersion:?}-linux-${arch:?}.tar.gz" \
-  && cd /opt/authelia-"${autheliaVersion:?}" \
-  && $SUDO mv unpack/authelia-linux-a??64  bin/authelia \
-  && $SUDO mv -t skel/. \
-       unpack/config.template.yml \
-  && $SUDO rm \
-       unpack/authelia.service \
-       unpack/authelia@.service \
-       unpack/authelia.sysusers.conf \
-       unpack/authelia.tmpfiles.conf \
-       unpack/authelia.tmpfiles.config.conf \
+  && `# EndOf cd`) \
+  && mkdir -p "${appRoot:?}"/bin \
+              "${appRoot:?}"/etc \
+              "${appRoot:?}"/etc/authelia \
+              ']=].. appSecDir ..[=[' \
+              "${appRoot:?}"/etc/init.d \
+              "${appRoot:?}"/etc/nginx \
+              "${appRoot:?}"/etc/nginx/sites-available \
+              "${appRoot:?}"/var \
+              "${appRoot:?}"/var/lib \
+              "${appRoot:?}"/var/lib/authelia \
+  && rm -rf unpack && mkdir -p unpack \
+  && (cd unpack && tar xf "${cacheDir:?}/authelia-v${autheliaVersion:?}-linux-${arch:?}.tar.gz") \
+  && mv unpack/authelia-linux-a??64  "${appRoot:?}"/bin/authelia \
+  && mv unpack/config.template.yml "${appRoot:?}/etc/authelia/config.yml.skel" \
+  && rm unpack/authelia.service \
+        unpack/authelia@.service \
+        unpack/authelia.sysusers.conf \
+        unpack/authelia.tmpfiles.conf \
+        unpack/authelia.tmpfiles.config.conf \
   && $SUDO rmdir unpack \
-  && <<EOF_YuF8gFVUbHVVBIiA base64 -d|$SUDO tee "${appHome:?}/etc/authelia/config.yml" >/dev/null &&
+  && <<EOF_YuF8gFVUbHVVBIiA base64 -d|tee "${appRoot:?}/etc/authelia/config.yml" >/dev/null &&
 ]=].. b64encW80(getAutheliaConfig()) ..[=[
 EOF_YuF8gFVUbHVVBIiA
 true \
-  && base64 -d <<EOF_irLe8foWULF|$SUDO tee "${appHome:?}/etc/nginx/sites-available/authelia" >/dev/null &&
+  && base64 -d <<EOF_irLe8foWULF|$SUDO tee "${appRoot:?}/etc/nginx/sites-available/authelia" >/dev/null &&
 ]=].. b64encW80(getAutheliaNginxSite()) ..[=[
 EOF_irLe8foWULF
 true \
-  && `# Fix permissions` \
-  && (cd ']=].. appHome ..[=[/var/lib' \
-      && $SUDO find -exec chown "${autheliaUser:?}:${autheliaGrp:?}" {} + \
-     ) \
   && `# create some certs (WHY IS THIS SO FU**ING COMPLICATED)` \
   && caPrivPem=']=].. appSecDir ..[=[/caPriv.pem' \
   && caCrtPem=']=].. appSecDir ..[=[/caCrt.pem' \
@@ -151,27 +165,23 @@ true \
   && srvCertPem=']=].. appSecDir .."/".. srvCert ..[=[' \
   && srvSigReq=']=].. appSecDir ..[=[/sigReq.pem' \
   && `# create custom root CA` \
-  && $SUDO openssl genrsa -out "${caPrivPem:?}" 4096 \
+  && openssl genrsa -out "${caPrivPem:?}" 4096 \
   && `# SelfSign custom root CA` \
-  && $SUDO openssl req -x509 -new -nodes -key "${caPrivPem}" -days 365 -out "${caCrtPem:?}" \
-       -subj "/C=/ST=/L=/O=/CN=giveashit.example.com" \
+  && openssl req -x509 -new -nodes -key "${caPrivPem}" -days 365 -out "${caCrtPem:?}" \
+       -subj "/C=/ST=SNAKEOIL/L=SNAKEOIL/O=SNAKEOIL/CN=SNAKEOIL.example.com" \
   && `# Create server key` \
-  && $SUDO openssl genrsa -out "${srvPrivAbs:?}" 2048 \
+  && openssl genrsa -out "${srvPrivAbs:?}" 2048 \
   && `# create sign-request` \
-  && $SUDO openssl req -new -key "${srvPrivAbs:?}" -out "${srvSigReq:?}" \
-       -subj '/C=/ST=/L=/O=/CN=]=].. domain ..[=[' \
+  && openssl req -new -key "${srvPrivAbs:?}" -out "${srvSigReq:?}" \
+       -subj '/C=/ST=SNAKEOIL/L=SNAKEOIL/O=SNAKEOIL/CN=SNAKEOIL]=].. domain ..[=[' \
   && `# sign srv with CA` \
-  && $SUDO openssl x509 -req -in "${srvSigReq:?}" -CA "${caCrtPem:?}" -CAkey "${caPrivPem:?}" \
+  && openssl x509 -req -in "${srvSigReq:?}" -CA "${caCrtPem:?}" -CAkey "${caPrivPem:?}" \
        `#whatisthisshitfor -CAcreateserial` -days 500 -out "${srvCertPem:?}" \
   && `# mk srv pub key` \
-  && $SUDO openssl rsa -in "${srvPrivAbs:?}" -pubout -out "${srvPublAbs:?}" \
+  && openssl rsa -in "${srvPrivAbs:?}" -pubout -out "${srvPublAbs:?}" \
   && `# (pseudo-) cleanup` \
-  && $SUDO rm "${srvSigReq:?}" \
+  && rm "${srvSigReq:?}" \
   && `# permissions` \
-  && $SUDO find ']=].. appSecDir ..[=[' -type d -exec chown root:authelia {} + \
-  && $SUDO find ']=].. appSecDir ..[=[' -type f -exec chown authelia:root {} + \
-  && $SUDO find ']=].. appSecDir ..[=[' -type d -exec chmod 550 {} + \
-  && $SUDO find ']=].. appSecDir ..[=[' -type f -exec chmod 440 {} + \
 ]=])
 end
 
@@ -251,7 +261,7 @@ server:
 storage:
   #encryption_key: "TODO_WUoXVW1HUWc918C5H4qApHVi6A3H3d9Z"
   local:
-    path: "/opt/authelia-]=].. autheliaVersion ..[=[/var/lib/authelia/authelia.db"
+    path: "]=].. appHome ..[=[/var/lib/authelia/authelia.db"
 definitions:
   user_attributes:
     grafanaRole:
@@ -260,7 +270,7 @@ authentication_backend:
   password_reset:
     disable: true
   file:
-    path: /opt/authelia-]=].. autheliaVersion ..[=[/etc/authelia/users.yml
+    path: ]=].. appHome ..[=[/etc/authelia/users.yml
     password:
       algorithm: argon2id
       iterations: 1
@@ -344,19 +354,19 @@ function createUserDbYml( dst )
 users:
     john:
         displayname: "John Wick"
-        password: "$argon2id$v=19$m=65536,t=3,p=2$BpLnfgDsdfdsgdthgdsdfsdfdg6bUGsDY//8mKUYNZZaR0t4MFFSs+iM"
+        password: "$argon2id$v=19$m=65536,t=3,p=2$BpLnfgDsdfdsgdthgdsdfsdfdg6bUGsDY//8mKUYNZZaR0t4MFFSs+iM"  # aka john
         email: john@example.com
         groups: ["GrafanaViewer", "dev"]
     harry:
         displayname: "Thanos Infinity"
-        password: "$argon2id$v=19$m=65536,t=3,p=2$BpLnfgjhfrtretasdfdfghja44sdfdfa/8mKUYNZZaR0t4MFFSs+iM"
+        password: "$argon2id$v=19$m=65536,t=3,p=2$BpLnfgjhfrtretasdfdfghja44sdfdfa/8mKUYNZZaR0t4MFFSs+iM"  # aka harry
         email: thanos@authelia.com
         groups: []
 ]=])
 	dst:write([=[
   \
   && `# createUserDbYml` \
-  && usersYml="${appHome:?}/var/lib/authelia/users.yml"  \
+  && usersYml="${appRoot:?}/var/lib/authelia/users.yml"  \
   && <<EOF_Ar8AlO6UXh3kYrj0 base64 -d | $SUDO tee "${usersYml:?}" >/dev/null &&
 ]=].. contents ..[=[
 EOF_Ar8AlO6UXh3kYrj0
@@ -369,7 +379,7 @@ function createInitdSkel( dst )
 	dst:write([=[
   \
   && `# createInitdSkel` \
-  && <<EOF_WlEZR87guI9RGVda base64 -d | $SUDO tee "${appHome:?}/skel/authelia.initd.sh" >/dev/null &&
+  && <<EOF_WlEZR87guI9RGVda base64 -d | tee "${appRoot:?}/etc/init.d/authelia" >/dev/null &&
 ]=] .. b64encW80([=[
 #!/bin/sh
 ### BEGIN INIT INFO
@@ -466,6 +476,38 @@ true \
 end
 
 
+function fixPermissions( dst )
+	dst:write([=[
+  && `# fixPermissions` \
+  && $SUDO find ']=].. appSecDir ..[=[' -type d -exec chown root:${autheliaGid:?} {} + \
+  && $SUDO find ']=].. appSecDir ..[=[' -type f -exec chown root:${autheliaGid:?} {} + \
+  && $SUDO find ']=].. appSecDir ..[=[' -type d -exec chmod 550 {} + \
+  && $SUDO find ']=].. appSecDir ..[=[' -type f -exec chmod 440 {} + \
+  && (cd "${appRoot:?}/var/lib" \
+      && $SUDO find -exec chown "${autheliaUid:?}:${autheliaGid:?}" {} + \
+     ) \
+]=])
+end
+
+
+function packIntoTar( dst )
+	dst:write([=[
+  && `# packIntoTar` \
+  && printf '%s\n' \
+       "+${autheliaUid:?}  ${autheliaUser:?}:0" \
+     > tar-owner \
+  && printf '%s\n' \
+       "+${autheliaGid:?}  ${autheliaGrp:?}:0" \
+     > tar-group \
+  && $SUDO tar --owner=0 --group=0 --owner-map=tar-owner --group-map=tar-group \
+       -czf "authelia-${autheliaVersion:?}+${arch:?}.tar" bin etc var \
+  && md5sum -b "authelia-${autheliaVersion:?}+${arch:?}.tar" > "authelia-${autheliaVersion:?}+${arch:?}.md5" \
+  && sha512sum -b "authelia-${autheliaVersion:?}+${arch:?}.tar" > "authelia-${autheliaVersion:?}+${arch:?}.sha512" \
+  && `# Note: compression not worth it` \
+]=])
+end
+
+
 function main()
 	local dst = io.stdout
 	dst:write("#!/bin/sh\nset -e \\\n")
@@ -476,6 +518,8 @@ function main()
 	installAuthelia(dst)
 	createUserDbYml(dst)
 	createInitdSkel(dst)
+	fixPermissions(dst)
+	packIntoTar(dst)
 end
 
 

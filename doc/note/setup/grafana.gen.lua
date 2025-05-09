@@ -1,10 +1,12 @@
 --[============================================================================[
 
-  Grafana Install
+  Grafana re-packaging script. Does NOT build, but re-pack only.
 
   ]============================================================================]
 
 local grafanaVersion = "12.0.0"
+local grafanaArch = "amd64" -- amd64, arm64
+local grafanaUser = "grafana"
 local grafanaHome = "/opt/grafana-".. grafanaVersion
 local domain = "grafana.example.com"
 local grafanaListenPort = 3000
@@ -17,16 +19,18 @@ function vars( dst )
   && `# vars` \
   && SUDO=sudo \
   && grafanaVersion=']=].. grafanaVersion ..[=[' \
-  && grafanaArch="linux-$(a="$(uname -r)" && a=${a##*-} && echo $a)" \
-  && grafanaTgz="grafana-${grafanaVersion:?}.${grafanaArch:?}.tar.gz" \
+  && grafanaArch=]=].. grafanaArch ..[=[ \
+  && frserVersion=3.5.0 \
+  && grafanaUser=]=].. grafanaUser ..[=[ \
+  && grafanaGrp=grafana \
+  && grafanaTgz="grafana-${grafanaVersion:?}.linux-${grafanaArch:?}.tar.gz" \
   && grafanaTgzUrl="https://dl.grafana.com/oss/release/${grafanaTgz:?}" \
   && grafanaHome=']=].. grafanaHome ..[=[' \
-  && grafanaUser=grafana \
-  && grafanaGrp=grafana \
-  && frserVersion=3.5.0 \
+  && grafanaUid=64798 \
+  && grafanaGid=64798 \
   && frserZip="frser-sqlite-datasource-${frserVersion:?}.zip" \
   && frserUrl="https://github.com/fr-ser/grafana-sqlite-datasource/releases/download/v${frserVersion:?}/${frserZip:?}" \
-  && workDir="/tmp" \
+  && workDir="." \
   && cacheDir="/var/tmp" \
 ]=])
 end
@@ -42,11 +46,26 @@ function wrap( s )s=s:gsub("(...................................................
 function b64wrap( s )return wrap(b64enc(s)) end
 
 
-function ensureUserGrafanaExists( dst )
+function ensureAppUserExists( dst )
 	dst:write([=[
   \
-  && `# ensureUserGrafanaExists` \
-  && if ! grep -E "^${grafanaUser}:" /etc/passwd >/dev/null; then echo "No such user '${grafanaUser:?}'"; false; fi \
+  && `# ensureAppUserExists` \
+  && passwd="${workDir:?}/etc/passwd" \
+  && mkdir -p "$(dirname "${passwd:?}")" \
+  && (test -e "${passwd:?}" || touch "${passwd:?}") \
+  && if ! grep -E "^${grafanaUser:?}:" "${passwd:?}" >/dev/null ;then true \
+     && printf '%s:x:%s:%s::/var/lib/grafana:/usr/sbin/nologin\n' \
+          "${grafanaUser:?}" "${grafanaUid:?}" "${grafanaGid:?}" \
+        >> "${passwd:?}" \
+    ;fi \
+  && group="${workDir:?}/etc/group" \
+  && mkdir -p "$(dirname "${group:?}")" \
+  && (test -e "${group:?}" || touch "${group:?}") \
+  && if ! grep -E "^${grafanaGrp:?}:" "${group:?}" > /dev/null ;then true \
+      && printf '%s:x:%s:\n' \
+           "${grafanaGrp:?}" "${grafanaGid:?}" \
+         >> "${group:?}" \
+    ;fi \
 ]=])
 end
 
@@ -55,12 +74,12 @@ function storeKnownHashes( dst )
 	dst:write([=[
   \
   && `# storeKnownHashes` \
-  && base64 -d <<EOF_HuYRzPq|gzip -d|$SUDO tee -a "${cacheDir:?}/MD5SUM" > /dev/null &&
+  && base64 -d <<EOF_HuYRzPq|gzip -d|$SUDO tee "${cacheDir:?}/MD5SUM" > /dev/null &&
 H4sIAG9YFmgAA7NITjZKSko1TEoxMTNMMjJKNEkxtrAwNDAzNDYwSLM0V9BKKypOLdItLszJLEnVTUks
 SSzOLy1KTtU11jPVM9CryizgAgAYIIuCRAAAAA==
 EOF_HuYRzPq
 true \
-  && <<EOF_cPnZuN base64 -d|gzip -d|$SUDO tee -a "${cacheDir:?}/SHA256SUM" >/dev/null &&
+  && <<EOF_cPnZuN base64 -d|gzip -d|$SUDO tee "${cacheDir:?}/SHA256SUM" >/dev/null &&
 H4sIAGiZGmgAA3XPu2qDMQwF4L1P0bmQH8mWLPtxdA2FJkNoofTp407N0GwCCX3nKFjwWBVkCztoYDYG
 GcCOGG1yJHXhada7V2uIVNRMEyplqL++nW9aetUT4tEOOD7er1/fJ71dBh2fejvOPy8qKSgmc7/MLoYk
 a1E50GAO5aJObUJiAXrapJzVp6tUZAHDM+MSf0aL0BqLB+HCIEcbCS6hgsPVsqqv6WMPwSQ7ClgtbEN2
@@ -75,12 +94,12 @@ function dload( dst )
 	dst:write([=[
   \
   && `# dload` \
-  && verify () (cd "${cacheDir:?}" && grep ' .'"${grafanaTgz:?}"'$' SHA256SUM|sha256sum -c -) \
+  && verify () (cd "${cacheDir:?}" && grep -E "${grafanaVersion:?}.*${grafanaArch:?}" SHA256SUM|sha256sum -c -) \
   && if verify ;then true ;else true \
       && (cd "${cacheDir:?}" && curl -LO "${grafanaTgzUrl:?}") \
       && verify \
     ;fi \
-  && verify () (cd "${cacheDir:?}" && grep ' .'"${frserZip:?}"'$' MD5SUM|md5sum -c -) \
+  && verify () (cd "${cacheDir:?}" && grep "${frserZip:?}" MD5SUM|md5sum -c -) \
   && if verify ;then true ;else true \
       && (cd "${cacheDir:?}" && curl -LO "${frserUrl:?}") \
       && verify \
@@ -195,7 +214,7 @@ role_attribute_path = role
 enabled = false
 
 [log]
-mode = file
+mode = console file
 level = warn
 filters =
 user_facing_default_error = "Fehler Details siehe grafana server logs"
@@ -250,28 +269,33 @@ function installGrafana( dst )
 	dst:write([=[
   \
   && `# installGrafana` \
-  && $SUDO mkdir -p \
-       /var/log/grafana \
-       "${grafanaHome:?}/etc/grafana" \
-       "${grafanaHome:?}/etc/init.d" \
-       "${grafanaHome:?}/etc/nginx/sites-available" \
-       "${grafanaHome:?}/var/lib" \
-  && cd "${grafanaHome:?}" \
-  && $SUDO tar --strip-components=1 -xf "${cacheDir:?}/${grafanaTgz:?}" \
-  && $SUDO chown grafana:adm /var/log/grafana \
-  && $SUDO chown grafana:grafana "${grafanaHome:?}/var/lib" \
-  && base64 -d <<EOF_aXNLhBH|$SUDO tee "${grafanaHome:?}/etc/grafana/grafana.ini" >/dev/null &&
+  && mkdir -p \
+       "${workDir:?}/unpack" \
+       "${workDir:?}/bin" \
+       "${workDir:?}/etc/grafana" \
+       "${workDir:?}/etc/init.d" \
+       "${workDir:?}/etc/nginx/sites-available" \
+       "${workDir:?}/var/lib/grafana" \
+       "${workDir:?}/var/log/grafana" \
+  && (cd unpack && tar --strip-components=1 -xf "${cacheDir:?}/${grafanaTgz:?}") \
+  && base64 -d <<EOF_aXNLhBH|tee "${workDir:?}/etc/grafana/grafana.ini" >/dev/null &&
 ]=].. b64wrap(getGrafanaConfig()) ..[=[
 EOF_aXNLhBH
 true \
-  && <<EOF_NyHaO9ES base64 -d|$SUDO tee "${grafanaHome:?}/etc/nginx/sites-available/grafana" >/dev/null &&
+  && <<EOF_NyHaO9ES base64 -d|tee "${workDir:?}/etc/nginx/sites-available/grafana" >/dev/null &&
 ]=]..b64wrap(getGrafanaNginxSite())..[=[
 EOF_NyHaO9ES
 true \
-  && <<EOF_YS1PAeob base64 -d|$SUDO tee "${grafanaHome:?}/etc/init.d/grafana.skel" >/dev/null &&
+  && <<EOF_YS1PAeob base64 -d|tee "${workDir:?}/etc/init.d/grafana" >/dev/null &&
 ]=].. b64wrap(getGrafanaSysVInitScript()) ..[=[
 EOF_YS1PAeob
 true \
+  && mv -t "${workDir:?}/bin/." \
+       unpack/bin/grafana unpack/bin/grafana-cli unpack/bin/grafana-server \
+  && `# TODO are those files even needed?` \
+  && mv -t "${workDir:?}/." \
+       unpack/conf  unpack/docs  unpack/LICENSE  unpack/NOTICE.md  unpack/npm-artifacts \
+       unpack/plugins-bundled unpack/public  unpack/README.md  unpack/storybook  unpack/VERSION \
 ]=])
 end
 
@@ -291,7 +315,7 @@ function getGrafanaSysVInitScript()
 ### END INIT INFO
 
 img=grafana
-appUser=grafana
+appUser=]=].. grafanaUser ..[=[ 
 appHome="]=].. grafanaHome ..[=["
 pidfile="/var/run/${img:?}.pid"
 
@@ -299,7 +323,7 @@ start () {
 	if test -e "${pidfile:?}" ;then echo "EEXISTS: ${pidfile:?}"; exit 2 ;fi
 	(cd "${appHome:?}" && sudo -u "${appUser:?}" -- \
 		"${appHome:?}/bin/${img:?}" server --config "${appHome:?}/etc/grafana/grafana.ini" \
-		2>&1 >> /var/log/grafana/grafana.log
+		2>&1 > /dev/null
 	) &
 	childpid=$!
 	if test -n "${childpid?}" ;then echo "${childpid:?}" > "${pidfile}" ;fi
@@ -309,7 +333,7 @@ start () {
 stop () {
 	if test ! -e "${pidfile:?}" ;then
 		echo "ENOENT: ${pidfile:?}"
-		return 2
+		return 0
 	fi
 	childpid="$(cat "${pidfile:?}")"
 	kill "${childpid:?}"
@@ -345,12 +369,12 @@ main () {
 	action=$1
 	e=99
 	case "$action" in
-		start)  start  ; e=$? ;;
-		stop)   stop   ; e=$? ;;
-		reload) reload ; e=$? ;;
-		status) status ; e=$? ;;
+		start)   start  ; e=$? ;;
+		stop)    stop   ; e=$? ;;
+		reload)  reload ; e=$? ;;
+		status)  status ; e=$? ;;
 		restart) stop ;sleep 1; start ; e=$? ;;
-		*)     echo "ENOTSUP: ${action?}"; e=95 ;;
+		*)       echo "ENOTSUP: ${action?}"; e=95 ;;
 	esac
 	return $e
 }
@@ -372,10 +396,7 @@ upstream grafana {
     server 127.0.0.1:]=].. grafanaListenPort ..[=[;
 }
 server {
-    # listen 80;
-    # listen [::]:80;
-    # listen 443 ssl;
-    # server_name example.com;
+    server_name ]=].. domain ..[=[;
     location /grafana {
         rewrite  ^/grafana/(.*)  /$1 break;
         proxy_set_header Host $host;
@@ -398,8 +419,44 @@ function installFrserSqlitePlugin( dst )
 	dst:write([=[
   \
   && `# installFrserSqlitePlugin` \
-  && $SUDO mkdir "${grafanaHome:?}/plugins" \
-  && (cd "${grafanaHome:?}/plugins" && $SUDO unzip -q "${cacheDir:?}/${frserZip:?}") \
+  && mkdir "${workDir:?}/plugins" \
+  && (cd "${workDir:?}/plugins" && unzip -q "${cacheDir:?}/${frserZip:?}") \
+]=])
+end
+
+
+function fixPermissions( dst )
+	dst:write([=[
+  \
+  && `# fixPermissions` \
+  && $SUDO chown "${grafanaUid:?}:adm" "${workDir:?}"/var/log/grafana \
+  && $SUDO find "${workDir:?}/var/lib" -exec chown "${grafanaUid:?}:${grafanaGid:?}" {} + \
+]=])
+end
+
+
+function makeTar( dst )
+	dst:write([=[
+  \
+  && `# makeTar` \
+  && printf '%s\n' \
+       "+${grafanaUid:?}  grafana:0" \
+     > tar-owners \
+  && printf '%s\n' \
+       "adm  adm:0" \
+       "+${grafanaUid:?}  grafana:0" \
+     > tar-groups \
+  && tarFile="grafana-${grafanaVersion:?}+${grafanaArch:?}.tar" \
+  && tgzFile="grafana-${grafanaVersion:?}+${grafanaArch:?}.tgz" \
+  && md5File="grafana-${grafanaVersion:?}+${grafanaArch:?}.md5" \
+  && shaFile="grafana-${grafanaVersion:?}+${grafanaArch:?}.sha512" \
+  && tar --owner=0 --group=0 --owner-map=tar-owners --group-map=tar-groups \
+       -czf "${tarFile:?}" \
+       README.md  LICENSE  NOTICE.md  VERSION  bin  conf  docs  etc  npm-artifacts  plugins \
+       plugins-bundled  public storybook  unpack  var \
+  && md5sum -b "${tarFile:?}" > "${md5File:?}" \
+  && sha512sum -b "${tarFile:?}" > "${shaFile:?}" \
+  && `# Note: compression was not worth it` \
 ]=])
 end
 
@@ -408,11 +465,13 @@ function main()
 	local dst = io.stdout
 	dst:write("#!/bin/sh\nset -e \\\n")
 	vars(dst)
-	ensureUserGrafanaExists(dst)
+	ensureAppUserExists(dst)
 	storeKnownHashes(dst)
 	dload(dst)
 	installGrafana(dst)
 	installFrserSqlitePlugin(dst)
+	fixPermissions(dst)
+	makeTar(dst)
 	dst:write("\n")
 end
 

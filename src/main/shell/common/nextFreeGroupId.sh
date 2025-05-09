@@ -1,4 +1,8 @@
 #!/bin/sh
+#
+# Source:
+# http://git.hiddenalpha.ch/UnspecifiedGarbage.git/tree/src/main/shell/common/nextFreeGroupId.sh
+#
 
 set -e \
   && nextFreeGroupId () { true \
