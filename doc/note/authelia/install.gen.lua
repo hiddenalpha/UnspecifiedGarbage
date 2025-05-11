@@ -270,7 +270,7 @@ authentication_backend:
   password_reset:
     disable: true
   file:
-    path: ]=].. appHome ..[=[/etc/authelia/users.yml
+    path: ]=].. appHome ..[=[/var/lib/authelia/users.yml
     password:
       algorithm: argon2id
       iterations: 1

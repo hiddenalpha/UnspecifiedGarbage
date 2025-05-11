@@ -54,7 +54,7 @@ function ensureAppUserExists( dst )
   && mkdir -p "$(dirname "${passwd:?}")" \
   && (test -e "${passwd:?}" || touch "${passwd:?}") \
   && if ! grep -E "^${grafanaUser:?}:" "${passwd:?}" >/dev/null ;then true \
-     && printf '%s:x:%s:%s::/var/lib/grafana:/usr/sbin/nologin\n' \
+     && printf '%s:x:%s:%s::/var/lib/grafana:/bin/false\n' \
           "${grafanaUser:?}" "${grafanaUid:?}" "${grafanaGid:?}" \
         >> "${passwd:?}" \
     ;fi \
@@ -396,6 +396,7 @@ upstream grafana {
     server 127.0.0.1:]=].. grafanaListenPort ..[=[;
 }
 server {
+    listen 443 ssl;
     server_name ]=].. domain ..[=[;
     location /grafana {
         rewrite  ^/grafana/(.*)  /$1 break;
