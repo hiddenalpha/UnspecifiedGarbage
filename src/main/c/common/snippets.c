@@ -213,3 +213,26 @@ static int ensureBufCap(
 #endif
 
 
+
+
+
+
+
+
+
+/* TODO share this 'HUMANIZE_SI' somewhere. */
+/* [Source](https://git.hiddenalpha.ch/UnspecifiedGarbage.git/tree/src/main/c/common/snippets.c) */
+#define HUMANIZE_SI(VAL, UNIT, PAD_LEN) do{ \
+    UNIT = ""; \
+    if( VAL >= 1000 ){ VAL /= 1024; UNIT = "ki"; } \
+    if( VAL >= 1000 ){ VAL /= 1024; UNIT = "Mi"; } \
+    if( VAL >= 1000 ){ VAL /= 1024; UNIT = "Gi"; } \
+    if( VAL >= 1000 ){ VAL /= 1024; UNIT = "Ti"; } \
+    PAD_LEN = 2; \
+    if( VAL >=   10 ){ PAD_LEN -= 1; } \
+    if( VAL >=  100 ){ PAD_LEN -= 1; } \
+}while(0)
+
+
+
+
