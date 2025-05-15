@@ -108,6 +108,7 @@ run () {
         --exclude="/Downloads" \
         --exclude="/images" \
         --exclude="/mnt" \
+        --exclude="/post-läbi-migration-2025" `#TODO cleanup` \
         --exclude="/projects/forks" \
         --exclude="/tmp" \
         --exclude="/virtualbox-*" \
