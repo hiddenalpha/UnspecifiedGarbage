@@ -69,6 +69,7 @@ main () {
     xrandr | grep "^\(Screen \|${POST:?}\|${LG4K:?}\)"
     fuckPanning "${POST:?}"
     fuckPanning "${LG4K:?}"
+    xrandr --output "${LG4K:?}" --primary
     # Restore desktop
     sleep 1
     if test -e ~/.fehbg; then ~/.fehbg; fi
