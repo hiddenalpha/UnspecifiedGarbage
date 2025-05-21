@@ -100,6 +100,9 @@ HINT: Repeat afade twice for log scale.
        -filter_complex '[0:v] [0:a] [1:v] [1:a] concat=n=2:v=1:a=1 [v] [a]' \
        -map "[v]" -map "[a]" out.mkv \
 
+  `# or if all videos have same codec:` \
+  && printf "file 'inn1.mkv'\nfile 'inn2.mkv\n'" > list.txt \
+  && ffmpeg -f concat -i list.txt -c copy "${outFile:?}" \
 
 
 ## Rotate Portrait
