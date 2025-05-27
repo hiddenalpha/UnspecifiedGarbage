@@ -5,7 +5,7 @@ set -e
 POST=$(xrandr | grep ' connected' | grep HDMI- | cut -d' ' -f1)
 LG4K=$(xrandr | grep ' connected' | grep DP- | cut -d' ' -f1)
 POST_W=1920 ; POST_H=1200
-LG4K_W=2560 ; LG4K_H=1440 ; LG4K_X="${POST_H:?}" ; LG4K_Y=140
+LG4K_W=2560 ; LG4K_H=1440 ; LG4K_X="${POST_H:?}" ; LG4K_Y=220
 FB_W="$((${POST_H:?} + ${LG4K_W:?}))" ; FB_H="${POST_W:?}"
 
 setGlobalOptions () {
