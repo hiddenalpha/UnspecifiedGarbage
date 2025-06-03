@@ -44,7 +44,7 @@ function parseArgs( app )
         elseif arg == "--svcName" then
             iA = iA + 1; arg = _ENV.arg[iA]
             if not arg then log:write("EINVAL: --svcName needs value\n")return end
-            if arg ~= "preflux" and arg ~= "trin" then
+            if arg ~= "preflux" and arg ~= "trin" and arg ~= "paisa-api" then
                 log:write("ENOTSUP: TODO impl svcName '".. arg .."'\n")return
             end
             app.svcName = arg
@@ -249,7 +249,7 @@ function run( app )
         local author = assert(v.hdr:match("\nAuthor: +([^\n]+)\n"))
         local prNr, short = v.msg:match("Pull request #(%d+): ([^\n]+)\n")
         prevVersion = version
-        _, version = v.hdr:match("^([^\n]+)\n"):match("tag: ([a-z]+)-([^,]+)[,)]")
+        _, version = v.hdr:match("^([^\n]+)\n"):match("tag: ([a-z-]+)-([^,]+)[,)]")
         if not version then version = prevVersion end
         if version ~= prevVersion or not dateEntry then
             if dateEntry and dateEntry.msgs and (#dateEntry.msgs > 0)

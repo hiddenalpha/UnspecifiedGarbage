@@ -62,21 +62,25 @@ HINT: Repeat afade twice for log scale.
       "screen-$(date -u +%Y%m%d-%H%M%SZ).mp4" \
 
   && `# grab BAPO (HINT: use offset 0x0 and set primary) ` \
+  && X=300 && Y=180 && W=3240 && H=1950 `# 4kFull TODO test` \
+  && X=3840 && Y=1300 && W=1920 && H=1400 `# läbiRgtOf4k TODO test` \
   && while true ;do true \
     && ffmpeg -f gdigrab -framerate 6 -probesize 10M -an `# no-audio` \
-        -offset_x 0 -offset_y 0 -video_size 1920x1080 -show_region 0 \
+        -offset_x "${X:?}" -offset_y "${Y:?}" -video_size "${W:?}x${H:?}" -show_region 0 \
         -i desktop \
-        -c:v h264_nvenc -crf 0 -preset fast -color_range 2 \
-        "screen-$(date -u +%Y%m%d-%H%M%SZ).mp4" \
+        -c:v mpeg4 -crf 0 -vb 50M -preset fast -color_range 2 \
+        "screen-$(date -u +%Y%m%d-%H%M%SZ).mkv" \
     || true \
-    && sleep 1 || break \
+    && sleep 3 || break \
     ;done \
 
   `# compress recording ` \
+  && ScaleW=-1 && ScaleH=-1 \
+  && CropX=718 && CropY=317 && CropW=960 && CropH=760 \
   && ffmpeg -i "${INNFILE:?}" \
-       -map 0:v -vf scale=ih*16/9:ih,scale=960:540,setsar=1 \
-       -c:v h264_nvenc -preset slow -rc vbr -cq 30 -crf 30 -rc-lookahead 240 \
-       -b:v 4000K -minrate 10K -maxrate 6000K -bufsize 4M -movflags -faststart \
+       `#Scale  -map 0:v -vf "scale=${ScaleW:?}:${ScaleH:?},setsar=1" ` \
+       `#Crop  -vf "crop=${CropW:?}:${CropH:?}:${CropX:?}:${CropY:?}" ` \
+       -c:v h264_mf -crf 0 -vb 4M \
        -dn \
        "${FFMPEG_OUTPUT:?}" \
 
@@ -129,11 +133,11 @@ HINT: Repeat afade twice for log scale.
   `-vb 20M`.
 
   `# crf only affect encoding time and quality. No effect on filesize. `
-  ffmpeg -i srcFile -codec:v h264_mf -crf 0 dstFile \
+  && ffmpeg -i srcFile -codec:v h264_mf -crf 0 dstFile \
   `# crf: 0=huge, 18=nearlylossless, 23=default, 28=small 51=tiny `
-  ffmpeg -i src_file -vcodec libx265 -crf 28 dst_file
+  &&ffmpeg -i src_file -vcodec libx265 -crf 28 dst_file \
   `# crf: 2=huge, 31:tiny `
-  ffmpeg -i src_file -vcodec hevc_qsv -crf 18 dst_file
+  && ffmpeg -i src_file -vcodec hevc_qsv -crf 18 dst_file \
 
 
 ## Double/half OUTPUT framerate

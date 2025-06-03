@@ -653,4 +653,5 @@ Links (Aka argument amplifiers)
 
 ## ...
 - [git for windoof macht crlf newlines kapput](https://wikit.post.ch/display/ISA/Code+Formatting?focusedCommentId=791239536#comment-791239536)
+- [Rust](https://drewdevault.com/2019/03/25/Rust-is-not-a-good-C-replacement.html)
 

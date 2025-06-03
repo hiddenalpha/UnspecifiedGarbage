@@ -1,16 +1,18 @@
-/*
+#if 0
 
   Shitty policies require shitty workarounds. Standard maven ships with a 'cmd'
   file for its execution. But as some shiny 'security' policies forbid
   execution of 'cmd' files, we need to waste our time writing stuff like this
   instead doing our work. Grrr...
 
-  ${CC:?} -o build/bin/mvn-versions-set.exe \
-    -Wall -Werror -fmax-errors=3 -Wno-error=unused-function -Wno-error=unused-variable \
-    -DPROJECT_VERSION=0.0.0-$(date -u +%s) \
-    src/main/c/postshit/launch/mvn/mvn-versions-set.c \
+  && CC=x86_64-w64-mingw32-gcc \
+  && CFLAGS="-Wall -Werror -DPROJECT_VERSION=0.0.0-$(date -u +%Y%m%d.%H%M%S)" \
+  && LDFLAGS="-s" \
+  && ${CC:?} -c -o /tmp/AhYAAO8wAAA4MgAA.o ${CFLAGS?} \
+       src/main/c/postshit/launch/mvn/mvn-versions-set.c \
+  && ${CC:?} -o build/bin/mvn-versions-set.exe ${LDFLAGS?} /tmp/AhYAAO8wAAA4MgAA.o \
 
-*/
+#endif
 
 #include <windows.h>
 #include <assert.h>
@@ -83,6 +85,14 @@ int main( int argc, char**argv ){
             "  Set a specific maven version. Usage:\n"
             "  \n"
             "    %s  0.0.0-SNAPSHOT\n"
+            "  \n"
+            "  environ.MVN_EXE\n"
+            "      Usually \"mvn\" will be launched. But if \"mvn\" is not in PATH, one can\n"
+            "      set this environ value to a path to the mvn executable.\n"
+            "      Examples:\n"
+            "      > export MVN_EXE=/usr/bin/mvn\n"
+            "      > set    MVN_EXE=C:/path/to/mvn.cmd\n"
+            "  \n"
             "\n", strrchr(__FILE__,'/')+1, argv[0]);
         err = -1; goto endFn;
     }
@@ -96,9 +106,15 @@ int main( int argc, char**argv ){
     cmdline[0] = '\0';
     const int cmdline_cap = sizeof cmdline;
     int cmdline_len = 0;
+    char const *mvnExe = "mvn";
+    {   char const *environMvnExe = getenv("MVN_EXE");
+        if( environMvnExe ){ mvnExe = environMvnExe; }
+    }
+    int const mvnExe_len = strlen(mvnExe);
 
     err = 0
-        || appendRaw(cmdline, &cmdline_len, cmdline_cap, "mvn versions:set -DgenerateBackupPoms=false \"-DnewVersion=", 58) < 0
+        || appendRaw(cmdline, &cmdline_len, cmdline_cap, mvnExe, mvnExe_len) < 0
+        || appendRaw(cmdline, &cmdline_len, cmdline_cap, " versions:set -DgenerateBackupPoms=false \"-DnewVersion=", 55) < 0
         || appendQuotEscaped(cmdline, &cmdline_len, cmdline_cap, newVersion, newVersion_len)
         || appendRaw(cmdline, &cmdline_len, cmdline_cap, "\"", 1) < 0
         ;
