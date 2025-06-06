@@ -3,17 +3,32 @@
 
 ## Initial Setup
 
-  apt-get install --no-install-recommends iptables-persistent
-  cp src-v4 /etc/iptables/src-v4
+  $SUDO apt-get install --no-install-recommends iptables-persistent
+  $SUDO cp src-v4 /etc/iptables/src-v4
 
 
-## IPv4 activate for session.
+## Load temporarily
 
-  cat /etc/iptables/src-v4 | sudo iptables-restore
+  cat /etc/iptables/src-x | $SUDO iptables-restore
 
 
-## ipv4 store current session as default.
+## ipv4 store current session as default
 
-  sudo iptables-save | sudo tee /etc/iptables/rules.v4
+  $SUDO iptables-save | $SUDO tee /etc/iptables/rules.v4
+
+
+## Persist ipv4 (from memory, to survive reboots)
+
+  $SUDO iptables-save > /etc/iptables/rules.v4
+
+
+## Load ipv6 (file-to-memory)
+
+  cat /etc/iptables/src-x | $SUDO ip6tables-restore
+
+
+## Persist ipv6 (from memory, to survive reboots)
+
+  $SUDO ip6tables-save > /etc/iptables/rules.v6
 
 

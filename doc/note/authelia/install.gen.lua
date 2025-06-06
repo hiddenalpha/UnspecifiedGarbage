@@ -484,7 +484,7 @@ function fixPermissions( dst )
   && $SUDO find ']=].. appSecDir ..[=[' -type d -exec chmod 550 {} + \
   && $SUDO find ']=].. appSecDir ..[=[' -type f -exec chmod 440 {} + \
   && (cd "${appRoot:?}/var/lib" \
-      && $SUDO find -exec chown "${autheliaUid:?}:${autheliaGid:?}" {} + \
+      && $SUDO find authelia -exec chown "${autheliaUid:?}:${autheliaGid:?}" {} + \
      ) \
 ]=])
 end
