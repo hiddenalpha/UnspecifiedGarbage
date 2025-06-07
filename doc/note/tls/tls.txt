@@ -7,15 +7,16 @@ WARN: Nothing useful here. Just some nonsense copy-pasta lines.
 
 ## Create a (self-signed) Server cert
 
+  && `# SNAKEOIL=-nodes` \
   && caKey=./caKey.pem \
   && caCert=./caCert.pem \
   && serverKey=./serverKey.pem \
   && serverCert=./serverCert.pem \
   && signReq=./serverSignReq.pem \
   && `# Create a SelfSigned CA` \
-  && openssl req -x509 -newkey rsa:4096 -days 42 -keyout "${caKey:?}" -out "${caCert}" -subj "/C=/ST=/L=/O=/OU=/CN=example.com" \
+  && openssl req -x509 -newkey rsa:4096 -days 42 $SNAKEOIL -keyout "${caKey:?}" -out "${caCert}" -subj "/C=/ST=snakeoil/L=snakeoil/O=snakeoil/OU=snakeoil/CN=example.com" \
   && `# create a CertSignReq` \
-  && openssl req -newkey rsa:4096 -keyout "${serverKey:?}" -out "${signReq:?}" -subj "/C=/ST=/L=/O=/OU=/CN=example.com" \
+  && openssl req -newkey rsa:4096 $SNAKEOIL -keyout "${serverKey:?}" -out "${signReq:?}" -subj "/C=/ST=snakeoil/L=snakeoil/O=snakeoil/OU=snakeoil/CN=example.com" \
   && `# sign the CertSignReq using CA` \
   && openssl x509 -req -in "${signReq:?}" -CA "${caCert:?}" -CAkey "${caKey:?}" -CAcreateserial -out "${serverCert:?}" \
 
