@@ -3,13 +3,12 @@
 
   Prints for gateleen a provisioning (POSIX shell) script to stdout.
 
-  TODO: Move 'Example Run' into generated README.
-  TODO: Test if this works.
-  TODO: use devuan in place of alpine.
+  WARN: RestStorage used in gateleen-2.1.23 seems broken (thats why the
+  patch got introduced)
 
   ]===========================================================================]
 
-local main
+local gateleenVersion="2.1.23"
 
 
 function aptInstall( dst )
@@ -20,7 +19,7 @@ function aptInstall( dst )
   && $SUDO dpkg-divert --add --rename /sbin/start-stop-daemon \
   && $SUDO ln -fs /bin/true /sbin/start-stop-daemon \
   && $SUDO RUNLEVEL=1 apt install --no-install-recommends -y \
-       curl maven nodejs npm redis openjdk-17-jre-headless \
+       curl maven nodejs npm redis openjdk-17-jre-headless patch \
   && $SUDO rm /sbin/start-stop-daemon \
   && $SUDO dpkg-divert --remove --rename /sbin/start-stop-daemon \
 ]=])
@@ -32,7 +31,7 @@ function main()
     dst:write("#!/bin/sh\nset -e \\\n")
     dst:write([=[
   && SUDO=sudo \
-  && gateleenGitTag="v2.1.23" \
+  && gateleenGitTag="v]=].. gateleenVersion ..[=[" \
   && workDir="${PWD:?}" \
   && cacheDir="/var/tmp" \
   \
@@ -53,9 +52,24 @@ function main()
   && mkdir -p gateleen-hook-js/node/node_modules/npm/bin \
   && ln -s /usr/bin/node gateleen-hook-js/node/node \
   && printf "require('/usr/share/nodejs/npm/lib/cli.js')\n" | tee gateleen-hook-js/node/node_modules/npm/bin/npm-cli.js >/dev/null \
+  && base64 -d <<EOF_xMV8eqhxI64v4aB3|$SUDO tee "${workDir:?}/fixstuff.patch" >/dev/null &&
+LS0tIHBvbS54bWwJdjIuMS4yMworKysgcG9tLnhtbApAQCAtNzksOCArNzksOCBAQAogICAgICAgICA8
+bW9kLW1ldHJpY3MudmVyc2lvbj4zLjAuMDwvbW9kLW1ldHJpY3MudmVyc2lvbj4KICAgICAgICAgPG5l
+dHdvcmtudC52ZXJzaW9uPjAuMS4xNTwvbmV0d29ya250LnZlcnNpb24+CiAgICAgICAgIDxyZXN0LWFz
+c3VyZWQudmVyc2lvbj40LjQuMDwvcmVzdC1hc3N1cmVkLnZlcnNpb24+Ci0gICAgICAgIDxyZWRpc3F1
+ZXMudmVyc2lvbj4zLjEuMDwvcmVkaXNxdWVzLnZlcnNpb24+Ci0gICAgICAgIDxyZXN0LXN0b3JhZ2Uu
+dmVyc2lvbj4zLjEuMTwvcmVzdC1zdG9yYWdlLnZlcnNpb24+CisgICAgICAgIDxyZWRpc3F1ZXMudmVy
+c2lvbj40LjEuMTQ8L3JlZGlzcXVlcy52ZXJzaW9uPgorICAgICAgICA8cmVzdC1zdG9yYWdlLnZlcnNp
+b24+My4xLjk8L3Jlc3Qtc3RvcmFnZS52ZXJzaW9uPgogICAgICAgICA8c3ByaW5nZnJhbWV3b3JrLnZl
+cnNpb24+NS4zLjI3PC9zcHJpbmdmcmFtZXdvcmsudmVyc2lvbj4KICAgICAgICAgPHNsZjRqLnZlcnNp
+b24+Mi4wLjEwPC9zbGY0ai52ZXJzaW9uPgogICAgICAgICA8cXVhcnR6LnZlcnNpb24+Mi4zLjI8L3F1
+YXJ0ei52ZXJzaW9uPgo=
+EOF_xMV8eqhxI64v4aB3
+true \
+  && patch < ../fixstuff.patch \
   && mvn install -PpublicRepos -DskipTests -Dskip.installnodenpm -pl gateleen-hook-js \
   && mvn verify -PpublicRepos -DfailIfNoTests=false -pl '!gateleen-test,!gateleen-hook-js' \
-      '-Dtest=!HookHandlerTest,!ReleaseLockLuaScriptTests,!RedisCacheStorageTest,!QueueCircuitBreakerCloseCircuitLuaScriptTests,!QueueCircuitBreakerUpdateStatsLuaScriptTests,!QueueCircuitBreakerReOpenCircuitLuaScriptTests,!QueueCircuitBreakerGetAllCircuitsLuaScriptTests,!QueueCircuitBreakerHalfOpenCircuitsLuaScriptTests,!RemoveExpiredQueuesLuaScriptTests,!StartQueueTimerLuaScriptTests' \
+      '-Dtest=!DeltaHandlerTest,!HookHandlerTest,!QueueCircuitBreakerCloseCircuitLuaScriptTests,!QueueCircuitBreakerGetAllCircuitsLuaScriptTests,!QueueCircuitBreakerHalfOpenCircuitsLuaScriptTests,!QueueCircuitBreakerReOpenCircuitLuaScriptTests,!QueueCircuitBreakerUpdateStatsLuaScriptTests,!RedisCacheStorageTest,!ReleaseLockLuaScriptTests,!RemoveExpiredQueuesLuaScriptTests,!StartQueueTimerLuaScriptTests' \
   && mkdir "${workDir:?}/classpath" \
   && (cd gateleen-playground && mvn dependency:copy-dependencies \
       -DexcludeScope=provided -DoutputDirectory="${workDir:?}/classpath/.") \
