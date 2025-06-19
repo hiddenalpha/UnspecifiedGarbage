@@ -3,6 +3,12 @@
 
   Prints for gateleen a provisioning (POSIX shell) script to stdout.
 
+  FUCK THIS ANNOYING "move-fast-break-thing" BULLSHIT PHILOSOPHY! YET AGAIN, THE
+  BUILD SETUP IS BROKEN **AGAIN**. FUCK THIS SHIT. FOR WHATEVER BULLSHIT REASON,
+  SUDDENLY "maven (no such package)". FUCK THIS SHITTY USELESS ERROR MESSAGE!
+  EVERYTHING ELSE INSTALLS JUST FINE AS BEFURE...
+  Solution.. -> use devuan...
+
   TODO: Move 'Example Run' into generated README.
   TODO: Test if this works.
   TODO: use devuan in place of alpine.
