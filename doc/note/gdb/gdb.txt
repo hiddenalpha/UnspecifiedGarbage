@@ -5,6 +5,12 @@
 
 
 
+## Dump to file
+
+(gdb) dump binary memory /tmp/dump 0x00 0xFF
+
+
+
 ## Allow child to handle SIGPIPE itself
 
 (gdb) handle SIGPIPE nostop noprint

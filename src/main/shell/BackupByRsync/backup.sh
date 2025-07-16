@@ -65,6 +65,13 @@ run () {
         --exclude=".git/packed-refs" \
         --exclude=".git/refs/remotes" \
         --exclude=".git/refs/tags" \
+        --exclude=".git/modules/*/COMMIT_EDITMSG" \
+        --exclude=".git/modules/*/FETCH_HEAD" \
+        --exclude=".git/modules/*/hooks/*.sample" \
+        --exclude=".git/modules/*/logs" \
+        --exclude=".git/modules/*/objects" \
+        --exclude=".git/modules/*/refs/remotes" \
+        --exclude=".git/modules/*/refs/tags" \
         --exclude=".idea" \
         --exclude="/.android" \
         --exclude="/.bash_history" \
