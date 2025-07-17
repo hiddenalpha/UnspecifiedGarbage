@@ -9,16 +9,6 @@ HINT: See also
 Commands look the same as with openshift.
 
 
-## How to login
-
-  TODO
-
-
-## How to login (DEPRECATED!)
-
-  && saml2aws login \
-
-
 
 [kubectl logs](https://kubernetes.io/docs/reference/kubectl/generated/kubectl_logs/)
 
@@ -26,13 +16,13 @@ Commands look the same as with openshift.
 
   kubectl logs ${POD:?} --since-time=2024-12-31T24:59:59Z --timestamps=true
 
-  && POD=houston-0 \
-  && LOGNAME=houston \
-  && STAGE=prod \
+  && pod=houston-0 \
+  && logName=houston \
+  && stage=prod \
   && KUBECTL=kubectl \
   && NOW=$(date -u +%Y%m%d-%H%M%S) \
-  && ${KUBECTL:?} logs ${POD:?} > ${LOGNAME:?}-${STAGE:?}-log-${NOW:?}.stdout.log 2> ${LOGNAME:?}-${STAGE:?}-log-${NOW:?}.stderr.log \
-  && ${KUBECTL:?} logs -p ${POD:?} > ${LOGNAME:?}-${STAGE:?}-log-${NOW:?}.prev.stdout.log 2> ${LOGNAME:?}-${STAGE:?}-log-${NOW:?}.prev.stderr.log \
+  && ${KUBECTL:?} logs ${pod:?} > ${logName:?}-${stage:?}-log-${NOW:?}.stdout.log 2> ${logName:?}-${stage:?}-log-${NOW:?}.stderr.log \
+  && ${KUBECTL:?} logs -p ${pod:?} > ${logName:?}-${stage:?}-log-${NOW:?}.prev.stdout.log 2> ${logName:?}-${stage:?}-log-${NOW:?}.prev.stderr.log \
 
 
 

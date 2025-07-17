@@ -1,5 +1,7 @@
 #if 0
 
+  20250606: Seems broken. Try "NerdButtler.c" (with source-patch) instead.
+
   && HOST_=x86_64-w64-mingw32- \
   && CC=${HOST_}gcc \
   && LD=${HOST_}gcc \

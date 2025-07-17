@@ -20,3 +20,10 @@ WARN: Nothing useful here. Just some nonsense copy-pasta lines.
   && `# sign the CertSignReq using CA` \
   && openssl x509 -req -in "${signReq:?}" -CA "${caCert:?}" -CAkey "${caKey:?}" -CAcreateserial -out "${serverCert:?}" \
 
+
+## TLS debugging
+
+  && socat OPENSSL-LISTEN:1234,reuseaddr,cert=server.pem tcp-connect:127.0.0.1:1235 \
+
+HINT: Add option 'fork' to ssl sock to serve multiple requests.
+

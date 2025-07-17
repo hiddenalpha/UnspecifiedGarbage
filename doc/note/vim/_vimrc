@@ -109,6 +109,8 @@ set showbreak=↳\
 set spelllang=en,de
 set sidescroll=8
 syntax on
+" Disable those disturbing flashes.
+set visualbell  t_vb=
 
 
 " indent ----------------------------------------------------------------------

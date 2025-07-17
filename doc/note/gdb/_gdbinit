@@ -2,3 +2,10 @@
 set history save on
 set print thread-events off
 set print inferior-events off
+#
+# handy for winDOOF:
+set breakpoint pending on
+break abort
+break OutputDebugStringA
+set breakpoint pending auto
+#
