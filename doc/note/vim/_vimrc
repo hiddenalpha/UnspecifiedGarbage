@@ -176,9 +176,9 @@ nnoremap cdc :cd %:p:h<CR>:pwd<CR>
 
 " Not searchNext. Do only highlight word under cursor.
 "nmap * *N
-nnoremap * viw"9yb/9<CR>zz
-nnoremap n nzz
-nnoremap N Nzz
+nnoremap * viw"9yb/9<CR>
+#nnoremap n nzz
+#nnoremap N Nzz
 
 " save with ctrl-s
 nmap <C-s> :up<CR>
