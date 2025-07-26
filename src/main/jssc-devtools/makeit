@@ -1,0 +1,63 @@
+#!/bin/sh
+set -e
+#vm=
+workDirGuest=./jssc
+CXX=g++
+CFLAGS="-fPIC -Wall -Wextra -Werror -pedantic \
+	-O0 -g3 \
+	-I/home/user/.sdkman/candidates/java/current/include \
+	-I/home/user/.sdkman/candidates/java/current/include/linux \
+	-Isrc/main/cpp \
+	";
+javaHome="/home/user/.sdkman/candidates/java/current"
+libJsscSo=src/main/resources-precompiled/natives/linux_64/libjssc.so
+jsscCpp=src/main/cpp/_nix_based/jssc.cpp
+
+
+main () {
+    make_debug
+    #make_verify
+}
+
+
+make_debug () { true \
+    && rm -rf target \
+    && `#ssh "${vm:?}" 'cd '"${workDirGuest:?}"' && rm -rf *' ` \
+    && (tar c \
+        src/test/java \
+        src/main/cpp/_nix_based \
+        src/main/cpp/windows \
+        src/main/cpp/jssc* \
+        src/main/cpp/version.h \
+    ) | ssh "${vm:?}" -T 'cd "'"${workDirGuest:?}"'" && tar x' \
+    && ssh "${vm:?}" -t 'cd "'"${workDirGuest:?}"'" \
+      && mkdir -p src/main/resources-precompiled/natives/linux_64 \
+      && '${CXX:?}' '"${CFLAGS?}"' -shared \
+           -o '${libJsscSo:?}' \
+           '${jsscCpp:?}' \
+           ' \
+    && ssh "${vm:?}" -t 'true \
+        && cd "'"${workDirGuest:?}"'" \
+        && export JAVA_HOME='"${javaHome:?}"' \
+        && mvn -Px86_64 verify \
+        && true' \
+    && ssh "${vm:?}" -T 'cd "'"${workDirGuest:?}"'" && tar c target/jssc-*.jar' \
+      | tar x \
+;}
+
+
+make_verify () { true \
+    && rm -rf target \
+    && (tar c ant src toolchain CMakeLists.txt pom.xml) | ssh "${vm:?}" -T 'cd '"${workDirGuest:?}"' && rm -rf * && tar x' \
+    && ssh "${vm:?}" -t sh -l -c 'true \
+        && cd "'"${workDirGuest:?}"'" \
+        && export JAVA_HOME=/home/user/.sdkman/candidates/java/current \
+        && mvn -Px86_64 verify \
+        && true' \
+    && ssh "${vm:?}" -T 'cd "'"${workDirGuest:?}"'" && tar c target/jssc-*.jar' \
+      | tar x \
+;}
+
+
+main "$@"
+
