@@ -46,18 +46,6 @@
 
 
 /* [Source](https://git.hiddenalpha.ch/UnspecifiedGarbage.git/tree/src/main/c/common/snippets.c) */
-typedef  unsigned char  uchar;
-
-
-
-
-
-
-
-
-
-
-/* [Source](https://git.hiddenalpha.ch/UnspecifiedGarbage.git/tree/src/main/c/common/snippets.c) */
 #define STRQUOT_(s) #s
 #define STRQUOT(s) STRQUOT_(s)
 #ifndef PROJECT_VERSION
@@ -232,6 +220,27 @@ static int ensureBufCap(
     if( VAL >=   10 ){ PAD_LEN -= 1; } \
     if( VAL >=  100 ){ PAD_LEN -= 1; } \
 }while(0)
+
+
+
+
+
+
+
+
+
+
+/* [Source](https://git.hiddenalpha.ch/UnspecifiedGarbage.git/tree/src/main/c/common/snippets.c) */
+#if defined(_MSC_VER) && _MSC_VER < 1800
+#   define PRIsz "Iu"
+#   define PRIssz "Id"
+#elif defined(__MINGW32__) && !defined(__MINGW64__)
+#   define PRIsz "lu"
+#   define PRIssz "ld"
+#else
+#   define PRIsz "zu"
+#   define PRIssz "zd"
+#endif
 
 
 

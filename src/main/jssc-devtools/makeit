@@ -7,6 +7,7 @@ CFLAGS="-fPIC -Wall -Wextra -Werror -pedantic \
 	-O0 -g3 \
 	-I/home/user/.sdkman/candidates/java/current/include \
 	-I/home/user/.sdkman/candidates/java/current/include/linux \
+	-I/tmp/jssc-include \
 	-Isrc/main/cpp \
 	";
 javaHome="/home/user/.sdkman/candidates/java/current"
@@ -15,8 +16,9 @@ jsscCpp=src/main/cpp/_nix_based/jssc.cpp
 
 
 main () {
+    # HINT: if "jssc_SerialNativeInterface.h" is missing, run a 'verfy' once.
+    make_verify
     make_debug
-    #make_verify
 }
 
 
@@ -27,7 +29,6 @@ make_debug () { true \
         src/test/java \
         src/main/cpp/_nix_based \
         src/main/cpp/windows \
-        src/main/cpp/jssc* \
         src/main/cpp/version.h \
     ) | ssh "${vm:?}" -T 'cd "'"${workDirGuest:?}"'" && tar x' \
     && ssh "${vm:?}" -t 'cd "'"${workDirGuest:?}"'" \
@@ -51,8 +52,10 @@ make_verify () { true \
     && (tar c ant src toolchain CMakeLists.txt pom.xml) | ssh "${vm:?}" -T 'cd '"${workDirGuest:?}"' && rm -rf * && tar x' \
     && ssh "${vm:?}" -t sh -l -c 'true \
         && cd "'"${workDirGuest:?}"'" \
-        && export JAVA_HOME=/home/user/.sdkman/candidates/java/current \
+        && export JAVA_HOME='"${javaHome:?}"' \
         && mvn -Px86_64 verify \
+        && mkdir -p /tmp/jssc-include \
+        && cp target/nar/javah-include/jssc_SerialNativeInterface.h /tmp/jssc-include/. \
         && true' \
     && ssh "${vm:?}" -T 'cd "'"${workDirGuest:?}"'" && tar c target/jssc-*.jar' \
       | tar x \
