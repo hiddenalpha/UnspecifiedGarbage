@@ -104,6 +104,8 @@ Populate "/etc/environment" as described by "./etc-environment".
        numlockx \
        `# basic UI (vim-gtk required for system clipboard)` \
        vim-gtk3 firefox-esr pcmanfm file-roller thunderbird chromium okular \
+       `# pcmanfm requires gvfs to browse trashcan ` \
+       gvfs-backends gvfs-fuse \
        `# software devel` \
        git sqlite3 manpages-dev gdb qemu-utils qemu-system-x86 qemu-system-arm wireshark samba \
        tigervnc-viewer jq universal-ctags binutils \
