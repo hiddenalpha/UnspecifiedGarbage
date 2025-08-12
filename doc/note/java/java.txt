@@ -9,3 +9,37 @@ Java / JVM
   _JAVA_OPTS  (seems deprecated/unusable since jdk9 or so)
 
 
+## Prepare for jVisualVM
+
+`# WARN: use localhost, NOT 127.0.0.1 (AI sais) `
+`# start JVM with:`
+-Dcom.sun.management.jmxremote.port=8090
+-Dcom.sun.management.jmxremote.rmi.port=8090
+-Djava.rmi.server.hostname=localhost
+-Dcom.sun.management.jmxremote.authenticate=false
+-Dcom.sun.management.jmxremote.ssl=false
+`# run more required bloat`
+
+
+
+## NON-live profiling
+
+  && SUDO=sudo \
+  && podName=eagle.ha2835e0fa4e193b6484807b962770d59b5f28f68 \
+  && pid=1 \
+  && name=RWoAAO1NAACqaAAA \
+  && dstDir=/usr/local/vertx/logs \
+  && while true ;do true \
+      && $SUDO podman exec -i ${podName:?} sh -c 'true \
+          && jcmd '${pid:?}' JFR.start name='${name:?}' filename='"${dstDir:?}"'/profile-$(date -u +%Y%m%d-%H%M%SZ).jfr \
+          && true ' && e=0 || e=$? \
+      && if test $e -eq 0 ;then break ;fi \
+      && sleep 1 || break \
+    ;done \
+
+  && `# For stop recording do: ` \
+  && $SUDO podman exec -i ${podName:?} jcmd ${pid:?} JFR.stop name=${name:?}
+
+  && `# show details (like existing recording sessions etc)` \
+  && jcmd ${pid:?} JFR.check \
+

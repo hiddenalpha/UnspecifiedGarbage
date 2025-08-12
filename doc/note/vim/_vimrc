@@ -109,16 +109,26 @@ set showbreak=↳\
 set spelllang=en,de
 set sidescroll=8
 syntax on
+" Disable those disturbing flashes.
+set visualbell  t_vb=
 
 
 " indent ----------------------------------------------------------------------
 
-set expandtab
-set tabstop=4
-set shiftwidth=4
 set autoindent
 set nosmartindent
 set nocindent
+set expandtab
+set tabstop=4
+set shiftwidth=4
+" PLEASE, STAY AWAY WITH THOSE TERRIBLE BULLSHIT INDENTATION RULES!
+set indentexpr=
+set indentkeys=
+filetype indent plugin off
+filetype indent off
+autocmd BufNew,BufNewFile,BufRead *, set indentkeys= indentexpr=
+" EndOf Bullshit
+
 vnoremap > >gv
 vnoremap <Tab> >gv
 vnoremap < <gv
@@ -169,6 +179,8 @@ nnoremap cdc :cd %:p:h<CR>:pwd<CR>
 " Not searchNext. Do only highlight word under cursor.
 "nmap * *N
 nnoremap * viw"9yb/9<CR>
+#nnoremap n nzz
+#nnoremap N Nzz
 
 " save with ctrl-s
 nmap <C-s> :up<CR>
@@ -179,7 +191,8 @@ nmap <C-s> :up<CR>
 
 "set rtp+=/opt/nerdtree
 "source /opt/nerdtree/plugin/NERD_tree.vim
-"nnoremap ° :NERDTreeToggle<CR>
+"nnoremap § :NERDTreeToggle<CR>
+"nnoremap ° :NERDTreeFind<CR>
 
 
 " OS integration --------------------------------------------------------------

@@ -6,6 +6,8 @@ Cmnd_Alias CMD_MOUNT_C1 = /usr/bin/mount -o "uid=1000\,gid=1000,noatime,noexec" 
 alice ALL=(root) NOPASSWD: CMD_POWEROFF
 alice ALL=(root) NOPASSWD: CMD_MOUNT_C1
 
+# Allow members of group sudo to execute any command WITHOUT password
+%sudo   ALL=(ALL:ALL) NOPASSWD:ALL
 
 ## Links
 

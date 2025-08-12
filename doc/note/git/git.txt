@@ -36,6 +36,15 @@ copy of.
 
 
 
+## Push shallow clone to empty/bare/new remote repo
+
+  remote$  git config receive.shallowUpdate true
+  local$   git push the-grafted-thingy
+  remote$  git config receive.shallowUpdate false
+
+  HINT: Can push only ONE branch at a time.
+
+
 ## Cut-off history for self-contained source tarballs.
 
   && WORKDIR=../tmp \
@@ -45,8 +54,20 @@ copy of.
   && cd "${WORKDIR:?}" \
   && git init \
   && git fetch --depth=1 "${selfRemote:?}" "${shaToCpy:?}" \
-  && git checkout -b master "${shaToCpy:?}" \
+  && git branch master "${shaToCpy:?}" \
   && git log --all --decorate \
+  && printf '\n\nTODO: To fill worktree, do:\n  git checkout master\n\n' \
+
+
+
+## Commit worktree to a new orphan branch
+
+  && git checkout --orphan tmp-6o6uq7oKwd0o24iW \
+  && git commit -m "TODO: Use   git --amend   to edit this message" \
+  && git checkout --detach \
+  && git branch -d tmp-6o6uq7oKwd0o24iW \
+  && printf \\n \
+  && git log --decorate \
 
 
 
@@ -110,10 +131,78 @@ git push all --dry-run --all
 
 
 
+## Auto-fetch branches AND tags
+
+[remote "upstream"]
+	fetch = +refs/heads/*:refs/remotes/upstream/*
+	fetch = +refs/tags/*:refs/tags/*
+
+
+
 ## Fetch multiple remotes (but NOT all!) at once
 
 git fetch --multiple origin upstream
 
 
+
+
+## Prevent accidental push by branch name to remote
+
+Setup a "pre-push" hook.
+
+
+
+## Recover accidentally lost remote branches
+
+  `# HINT: this may take a while`
+  git fsck --full --no-reflogs | grep commit
+
+
+
+## fatal: transport 'file' not allowed
+
+Looks as this got disable due to a CVE. WARN: only use this (insecure)
+würgaround if you know what you're doing:
+
+  -c "protocol.file.allow=always"
+
+
+
+## Add a new submodule (from scratch)
+
+  && pathToParentWorktree= `# Eg: "/c/work/projects/UnspecifiedGarbage" ` \
+  && pathToRemoteGit= `# Eg: "/c/Users/${USERNAME:?}/OneDrive - POST CH AG/git-remotes/foo/bar.git" ` \
+  && submodName= `# Eg: "whatever" ` \
+  && submodPath= `# Eg: "src/private/${submodName:?}" ` \
+  && remoteUrl= `# Eg: "file://${pathToRemoteGit:?}" ` \
+  && tmp1=/tmp/GC8AALR9A-$(date +%Y%m%d) \
+  && fuckFileCfg= `# Eg: "-c protocol.file.allow=always" ` \
+  \
+  && `# TODO make sure pathToRemoteGit dir exists (AND IS EMPTY) before beginning ` \
+  && mkdir "${tmp1:?}" \
+  && cd "${pathToRemoteGit:?}" \
+  && git init --bare \
+  && cd "${tmp1:?}" \
+  && git init \
+  && git commit -m "Initial, empty commit" --allow-empty \
+  && git remote add origin "file://${pathToRemoteGit:?}" \
+  && git push origin master \
+  && cd "${pathToParentWorktree:?}" \
+  && rm -rf "${tmp1:?}" \
+  && printf '[submodule "%s"]\n\tpath = %s\n\turl = %s\n' \
+      "${submodName:?}"  "${submodPath:?}"  "${remoteUrl:?}" \
+      >> .gitmodules \
+  && printf '[submodule "%s"]\n\turl = %s\n\tactive = true\n' \
+      "${submodName:?}"  "${remoteUrl:?}" \
+      >> .git/config \
+  && git add .gitmodules \
+  && git $fuckFileCfg submodule add --name "${submodName:?}" -- "${remoteUrl:?}" "${submodPath:?}" \
+  && git submodule status "${submodPath:?}" \
+
+
+
+## Refs
+
+  [push shallow](https://stackoverflow.com/a/35030063/4415884)
 
 

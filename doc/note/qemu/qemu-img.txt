@@ -40,10 +40,9 @@ HINT: In case of based images, need rebase afterwards because convert
       makes them standalone.
 
 Normal systems:
-  `# TODO try "fstrim -av" instead zero fill. `
-  dd if=/dev/zero of=/tmp/deleteme ; rm /tmp/deleteme && poweroff
+  `# TODO try "fstrim -av" instead zerofill. `
+  sudo sh -c 'sudo -u user dd if=/dev/zero of=/tmp/deleteme bs=32M; rm /tmp/deleteme ; poweroff'
   qemu-img convert -O qcow2 -S 1M input.qcow2 output.qcow2
-  qemu-img rebase -F qcow2 -b base.qcow2 output.qcow2
 
 Windoof:
   Win -> "Disk Cleanup" -> "Clean System (Admin)" -> "More" -> "Prog+Features" -> uninst bloat.
@@ -54,6 +53,22 @@ Windoof:
   qemu-img rebase -b base.qcow2 output.qcow2
 
 
+## Step-By-Step to setup a machine package
+
+  - Create base VM.
+  - Setup
+  - sudo vim /etc/hostname /etc/hosts
+  - set PS1
+  - fix proxyPort
+  - sudo apt clean
+  - rm -rf ~/.bash_history ~/.viminfo
+  - sudo rm -rf /tmp/* /var/tmp/*
+  - zerofill, sparsify
+  - md5sum, tar, md5sum
+  - test
+  - compress
+
+
 ## Shrink snapshot layer (TODO what is this for?)
 
   qemu-img convert -O qcow2 snapLayer.qcow2 tmpFullClone.qcow2
@@ -62,11 +77,43 @@ Windoof:
   mv tmpDiff.qcow2 snapLayer.qcow2
 
 
-## Resize/Shrink disk (WARN: make sure partitions are ready before shrink!)
+## Resize/Shrink disk
+
+  THIS FU@@ shit is broken as hell!
+
+  && oldQcow2=old.qcow2 \
+  && newQcow2=new.qcow2 \
+  && tmpRaw=tmp.raw \
+  && newDiskSz=$((40*1024*1024*1024)) \
+  && tmpFsSize=32G \
+  && SUDO=sudo \
+  && qemu-img convert -f qcow2 -O raw ${oldQcow2:?} ${tmpRaw:?} \
+  && printf 'p\n' | /sbin/fdisk ${tmpRaw:?} \
+  && $SUDO losetup -o ${partitionOff1:?} -f ${tmpRaw:?} \
+  && $SUDO losetup -a \
+  && $SUDO e2fsck -f "${loopDev1:?}" \
+  && $SUDO resize2fs "${loopDev1:?}" "${tmpFsSize:?}" \
+  && $SUDO losetup -d ${loopDev1:?} \
+  && truncate -s ${newDiskSz:?} ${tmpRaw:?} \
+  && TODO_GrrrReCreateCompletePartitionTblAgainToFixSillySizeMismatch \
+  && `# /sbin/fdisk "${tmpRaw:?}" ` \
+  && $SUDO losetup -o ${partitionOff2:?} -f ${tmpRaw:?} \
+  && $SUDO losetup -a \
+  && $SUDO e2fsck -f "${loopDev2:?}" \
+  && $SUDO resize2fs "${loopDev2:?}" `#NO sz arg, to grow fully` \
+  && $SUDO losetup -d ${loopDev2:?} \
+  && qemu-img convert -f raw -O qcow2 ${tmpRaw:?} ${newQcow2:?} \
+  && `# cleanup` \
+  && rm "${tmpRaw:?}" \
+
+
+## Resize/Enlarge disk (RHEL edition Grrr....)
 
   qemu-img info my.disk
-  qemu-img resize my.disk to disk -5G   (<- relative size change)
-  qemu-img resize my.disk 32G    (<- or with abs size)
+  qemu-img resize my.disk 32G
+  $SUDO fdisk -l
+  $SUDO lvs   (or lvdisplay for more details)
+  $SUDO lvextend -r --extents +100%FREE /dev/mapper/fedora-root
 
 
 ## Create common base for two diverged VMs.

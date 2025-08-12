@@ -1,0 +1,8 @@
+
+WinDOOF 11 Suspend To Ram
+=========================
+
+%windir%\system32\rundll32.exe powrprof.dll,SetSuspendState Standby
+
+For example put the above into a shortcut and "Attach to Startmenu" or similar.
+

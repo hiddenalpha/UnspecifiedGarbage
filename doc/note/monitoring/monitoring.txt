@@ -19,4 +19,28 @@
       && echo " --disc----" && df -h | grep -E "^/" \
       && true'
 
+  && `# Overal CPU usage in percent` \
+  && sshT="echo TODO put ssh cmd prefix here && false" \
+  && intervalSec=5 \
+  && while true ;do true \
+    && ${sshT:?} 'true \
+      && while true ;do true \
+        && now="$(date -u "+%H:%M:%S%z")" \
+        && cpuPcnt=$((100 - $(top -b -n1 | grep -E '\''%Cpu'\'' | sed -E '\''s_.*, *([0-9]+)\.[0-9] id,.*$_\1_'\'') )) \
+        && printf "%s - cpuPercent=%d\n" "${now:?}" "${cpuPcnt:?}" \
+        && sleep '${intervalSec:?}' \
+        ||break;done \
+      && true' \
+    && sleep ${intervalSec:?} \
+    ;done \
+
+  && `# CPU hogs ` \
+  && headRow="USER         PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND" \
+  && now="$(date "+%Y-%m-%d_%H:%M:%S%z")" \
+  && printf "\n%s - %s\n%s\n"  "${now:?}"  "$(cat /etc/hostname)"  "${headRow:?}" \
+  && ps aux | sort -nrk 10 | head -n10 \
+
+
+
+
 

@@ -46,18 +46,6 @@
 
 
 /* [Source](https://git.hiddenalpha.ch/UnspecifiedGarbage.git/tree/src/main/c/common/snippets.c) */
-typedef  unsigned char  uchar;
-
-
-
-
-
-
-
-
-
-
-/* [Source](https://git.hiddenalpha.ch/UnspecifiedGarbage.git/tree/src/main/c/common/snippets.c) */
 #define STRQUOT_(s) #s
 #define STRQUOT(s) STRQUOT_(s)
 #ifndef PROJECT_VERSION
@@ -176,12 +164,84 @@ static int ensureBufCap(
 
 
 /* [source](https://git.hiddenalpha.ch/UnspecifiedGarbage.git/tree/src/main/c/common/snippets.c) */
-#if __WIN32
+#if _WIN32
     int _setmode(int,int);
 #   define FUCK_BROKEN_SYSTEMS() do{char a=0;for(;!(a&10);){_setmode(a++,32768);}}while(0)
 #else
 #   define FUCK_BROKEN_SYSTEMS()
 #endif
+
+
+
+
+
+
+
+/* [source](https://git.hiddenalpha.ch/UnspecifiedGarbage.git/tree/src/main/c/common/snippets.c) */
+#if _WIN32
+    switch( WSAStartup(1, &(WSADATA){0}) ){
+    case 0: break;
+    case WSASYSNOTREADY    : assert(!"WSASYSNOTREADY"    ); break;
+    case WSAVERNOTSUPPORTED: assert(!"WSAVERNOTSUPPORTED"); break;
+    case WSAEINPROGRESS    : assert(!"WSAEINPROGRESS"    ); break;
+    case WSAEPROCLIM       : assert(!"WSAEPROCLIM"       ); break;
+    case WSAEFAULT         : assert(!"WSAEFAULT"         ); break;
+    default                : assert(!"ERROR"             ); break;
+    }
+#endif
+/* [source](https://git.hiddenalpha.ch/UnspecifiedGarbage.git/tree/src/main/c/common/snippets.c) */
+#if _WIN32
+    switch( WSACleanup() ){
+    case 0: break;
+    case WSANOTINITIALISED : assert(!"WSANOTINITIALISED" ); break;
+    case WSAENETDOWN       : assert(!"WSAENETDOWN"       ); break;
+    case WSAEINPROGRESS    : assert(!"WSAEINPROGRESS"    ); break;
+    default                : assert(!"ERROR"             ); break;
+    }
+#endif
+
+
+
+
+
+
+
+
+
+/* TODO share this 'HUMANIZE_SI' somewhere. */
+/* [Source](https://git.hiddenalpha.ch/UnspecifiedGarbage.git/tree/src/main/c/common/snippets.c) */
+#define HUMANIZE_SI(VAL, UNIT, PAD_LEN) do{ \
+    UNIT = ""; \
+    if( VAL >= 1000 ){ VAL /= 1024; UNIT = "ki"; } \
+    if( VAL >= 1000 ){ VAL /= 1024; UNIT = "Mi"; } \
+    if( VAL >= 1000 ){ VAL /= 1024; UNIT = "Gi"; } \
+    if( VAL >= 1000 ){ VAL /= 1024; UNIT = "Ti"; } \
+    PAD_LEN = 2; \
+    if( VAL >=   10 ){ PAD_LEN -= 1; } \
+    if( VAL >=  100 ){ PAD_LEN -= 1; } \
+}while(0)
+
+
+
+
+
+
+
+
+
+
+/* [Source](https://git.hiddenalpha.ch/UnspecifiedGarbage.git/tree/src/main/c/common/snippets.c) */
+#if defined(_MSC_VER) && _MSC_VER < 1800
+#   define PRIsz "Iu"
+#   define PRIssz "Id"
+#elif defined(__MINGW32__) && !defined(__MINGW64__)
+#   define PRIsz "u"
+#   define PRIssz "d"
+#else
+#   define PRIsz "zu"
+#   define PRIssz "zd"
+#endif
+
 
 
 

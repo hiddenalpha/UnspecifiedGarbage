@@ -198,9 +198,9 @@
 #-A OUTPUT -p udp -m udp --match multiport --sports 10000:10010 -m state --state RELATED,ESTABLISHED -j ACCEPT
 
 # Log blocked connection attemps
-#-A INPUT   -j LOG --log-prefix "FwBadInn: " --log-level 6
--A FORWARD -j LOG --log-prefix "FwBadFwd: " --log-level 6
--A OUTPUT  -j LOG --log-prefix "FwBadOut: " --log-level 6
+#-A INPUT   -j LOG --log-prefix "FwBadInn: " --log-level 7
+-A FORWARD -j LOG --log-prefix "FwBadFwd: " --log-level 5
+-A OUTPUT  -j LOG --log-prefix "FwBadOut: " --log-level 5
 
 # Disallow any non-whitelisted packets (Use either DROP or REJECT. Your choice)
 -A INPUT   -j DROP

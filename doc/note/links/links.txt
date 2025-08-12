@@ -2,6 +2,10 @@
 Links (Aka argument amplifiers)
 ===============================
 
+## VI IS REQUIRED!
+
+[r u sure? no vi in containers?](https://jira.post.ch/browse/SDCISA-16752?focusedId=2163274&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-2163274)
+
 ## Pro DI over serviceLocator
 - "http://blog.ploeh.dk/2010/02/03/ServiceLocatorisanAnti-Pattern/"
 - "https://adamcod.es/2013/11/25/service-locator-vs-dependency-injection-container.html"
@@ -234,6 +238,8 @@ Links (Aka argument amplifiers)
 - [java streams are ugly](https://gitit.post.ch/projects/ISA/repos/nsync/pull-requests/55/overview?commentId=328210)
 
 ## Backward compatibility, Breaking Changes
+- [BuildPipeline broken bcause agrajag/god NOT backward compatible](https://teams.microsoft.com/l/message/19:261fb671bd664d4fb30d6d9e09869a7f@thread.tacv2/1740481260032?tenantId=3ae7c479-0cf1-47f4-8f84-929f364eff67&groupId=dce34a79-5661-41ab-b495-60a46b69d38e&parentMessageId=1740481260032&teamName=SDC-ISA&channelName=%F0%9F%A4%96SDC-ISA%20DevOps-Support&createdTime=1740481260032)
+- [Redis7 vs Redis4 aof breaking migration problems](https://wikit.post.ch/x/2g-ygQ)
 - [SprintFeedback says STOP IT](https://jira.post.ch/projects/SDCISA?selectedItem=com.arijea.plugins.easy-agile-user-story-maps&rapidView=9825#/retros/board/9825/sprint/48137)
 - [preflux 2024 storage/redis aws isaVersion](https://gitit.post.ch/projects/ISA/repos/preflux/pull-requests/780/overview?commentId=396322)
 - "https://www.redstar.be/backward-compatibility-in-software-development-what-and-why/"
@@ -250,6 +256,8 @@ Links (Aka argument amplifiers)
 
 
 ## Performance DOES matter
+- [Thought OOM auf int](https://jira.post.ch/browse/SDCISA-19003)
+- [Preflux OOM](https://gitit.post.ch/projects/ISA/repos/isa-k8s-deployment/pull-requests/1045)
 - [aws database HMS 2024](https://jira.post.ch/browse/SDCISA-16381)
 - [Performance gefühlt viel zu langsam in Wikkit bei Linienaufruf und Export erstellen](https://jira.post.ch/browse/SDCISA-16103)
 - "https://github.com/swisspush/gateleen/pull/456#discussion_r844865066"
@@ -279,6 +287,7 @@ Links (Aka argument amplifiers)
 - [Houston OOM Killed](https://jira.post.ch/browse/SDCISA-10871)
 - [SDCISA-14967 Houston collects all req bodies into memory](https://jira.post.ch/browse/SDCISA-14967)
 - [http cache disable](https://gitit.post.ch/projects/ISA/repos/bangbang/pull-requests/1/overview?commentId=287832)
+- [Vertx.setPeriodic shouldn't be used frivolously](https://github.com/swisspost/vertx-redisques/issues/242)
 - [How to repair KISS for performance](https://gitit.post.ch/projects/ISA/repos/preflux/pull-requests/304/diff)
 - [Houston readyness fails often](https://jira.post.ch/browse/SDCISA-13746?focusedId=1899551&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-1899551)
 - [Just one message per minute](https://gitit.post.ch/projects/ISA/repos/eagle/pull-requests/375/overview?commentId=330543)
@@ -464,7 +473,7 @@ Links (Aka argument amplifiers)
 - [Houston losing hook messages](https://jira.post.ch/browse/SDCISA-13346)
 - [Not interested in the fix](https://jira.post.ch/browse/SDCISA-11619?focusedId=1913186&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-1913186)
 
-## Bugs, Frameworks, Dependencies include them all
+## Bugs, Frameworks, Dependencies include all the framebloat
 - "https://medium.com/dinahmoe/escape-dependency-hell-b289de537403"
 - "https://gitit.post.ch/projects/ISA/repos/preflux/pull-requests/119/overview?commentId=46245"
 - [Stop Ductaping crap together](https://devrant.com/rants/5107044)
@@ -496,7 +505,9 @@ Links (Aka argument amplifiers)
 - logger fail "https://jira.post.ch/browse/SDCISA-9903"
 
 ## FileLogging is a MUST have (kibana is bullsh**)
+- [Ignore errors is funny](https://jira.post.ch/browse/SDCISA-18593)
 - [Andis WARNING](https://wikit.post.ch/x/m4Nreg)
+- [houston prod down wegen elk certs (singlePointOfFailure)](https://wikit.post.ch/x/KIHZg)
 - [example](https://jira.post.ch/browse/SDCISA-8382?focusedCommentId=1554435&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-1554435)
 - [example](https://jira.post.ch/browse/SDCISA-13655)
 - [example](https://teams.microsoft.com/l/message/19:meeting_NGYzYTY2NzktYTc2NS00OTBjLWFkMjAtMGFjZWQ5NDBhNzhj@thread.v2/1733820055846?context=%7B%22contextType%22%3A%22chat%22%7D)
@@ -640,4 +651,7 @@ Links (Aka argument amplifiers)
 ## C Versus C++
 - [C++ is not x-platform anymore](https://gcher.com/posts/2019-07-04-cpp-is-not-cross-platform-anymore/)
 
+## ...
+- [git for windoof macht crlf newlines kapput](https://wikit.post.ch/display/ISA/Code+Formatting?focusedCommentId=791239536#comment-791239536)
+- [Rust](https://drewdevault.com/2019/03/25/Rust-is-not-a-good-C-replacement.html)
 

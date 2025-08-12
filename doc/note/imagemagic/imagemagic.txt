@@ -1,4 +1,8 @@
 
+## Fix annoying BULLSHIT!
+
+  /etc/ImageMagick-6/policy.xml
+
 
 ## Attach thumb to PNG
 
@@ -48,5 +52,10 @@ GcLOrfC9UFuHX7yjPaKFnoHLHdQ+mk35+R2O/2DvbAhn0TfyxFOXa03/t4zlzpgsCNxCaH0KPuDO
 cKltcfp8zhbfc0oPovW1YqfzTEf9tzfQUW/N1oXk2QQAAA==
 EOF
 true \
+
+
+
+  ## PDF from JPEG
+
 
 

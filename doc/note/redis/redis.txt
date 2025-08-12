@@ -5,7 +5,7 @@ Redis
 
 ## Run redis commands from cli
 
-redis-cli -a ***** SCAN 0
+redis-cli -p 6379 -a ***** SCAN 0
 
 
 ## Example commands

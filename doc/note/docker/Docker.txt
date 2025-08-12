@@ -91,3 +91,21 @@ sudo docker create --name "${CNTNR:?}" -e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-un
 
 
 
+  && `# Wiedermal kurz die (PaISA) Welt retten... ` \
+  && cd /tmp/theEmptyDir \
+  && sudo podman build -t localhost/murks:0.0.0 . -f- <<EOF_3etoij &&
+FROM docker.tools.post.ch/paisa/r-service-base:03.06.42.00
+USER 0:0
+RUN true \
+  && microdnf install -y tcpdump \
+  && true
+EOF_3etoij
+true \
+
+--cap-add=NET_ADMIN --cap-add=NET_RAW
+
+  && sudo podman run --rm -ti -v"$PWD:/work:z" --cap-add=NET_ADMIN --net isa-docker localhost/murks:0.0.0 sh -c 'true \
+       && cd /work \
+       && timeout --foreground 5 tcpdump -ni eth0 -C 50M -W 999 -w "'$(cat /etc/hostname)'-$(date -u +%Y%m%d-%H%M%SZ).pcap" "not port 42" \
+       && true' \
+

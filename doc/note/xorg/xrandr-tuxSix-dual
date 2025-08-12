@@ -1,0 +1,82 @@
+#!/bin/sh
+# Source: UnspecifiedGarbage
+set -e
+
+POST=$(xrandr | grep ' connected' | grep HDMI- | cut -d' ' -f1)
+LG4K=$(xrandr | grep ' connected' | grep DP- | cut -d' ' -f1)
+POST_W=1920 ; POST_H=1200
+LG4K_W=2560 ; LG4K_H=1440 ; LG4K_X="${POST_H:?}" ; LG4K_Y=220
+FB_W="$((${POST_H:?} + ${LG4K_W:?}))" ; FB_H="${POST_W:?}"
+
+setGlobalOptions () {
+    xrandr --fb "${FB_W:?}x${FB_H:?}" || true
+    xrandr --dpi 93
+    xrandr | grep -E '^Screen '
+}
+
+fuckPanning () {
+    monitor="$1"
+    for i in $(seq 0 3) ;do # WHY THE FUCK IS THIS DAMN 'panning' STAYING THERE FUCKING FOREVER?!?
+        xrandr --fb "${FB_W:?}x${FB_H:?}" --output "${monitor:?}" --panning 0x0
+        if echo "$(xrandr | grep "${monitor:?}")" | grep -q panning ;then true ;else break ;fi
+        echo FUCK panning on "${monitor:?}" && sleep 0.5
+    done
+}
+
+setupPostMonitor () {
+    for i in $(seq 0 3) ;do
+        xrandr --fb "${FB_W:?}x${FB_H:?}" \
+            --output "${POST:?}" --mode 1920x1200 --rate 59.95 --pos 0x0 --dpi 93 --rotate left
+        isOk=true ; actual="$(xrandr | grep "${POST:?}")"
+        if echo ${actual:?} | grep -q "${POST_W:?}" ;then true ;else isOk=false ;fi
+        if echo ${actual:?} | grep -q '0+0' ;then true ;else isOk=false ;fi
+        if $isOk ;then break ;fi
+        echo FUCK: $actual ; sleep 0.5
+    done
+}
+
+setupLg4kMonitor () {
+    for i in $(seq 0 5) ;do
+        xrandr --fb "${FB_W:?}x${FB_H:?}" \
+            --output "${LG4K:?}" --mode "${LG4K_W:?}x${LG4K_H:?}" --rate 59.95
+        isOk=true ; actual="$(xrandr | grep "${LG4K:?}")"
+        if echo ${actual:?} | grep -q "${LG4K_W:?}" ;then true ;else isOk=false ;fi
+        if $isOk ;then break ;fi
+        echo FUCK MODE: $actual ; sleep 0.1
+    done
+    for i in $(seq 0 20) ;do
+        xrandr --fb "${FB_W:?}x${FB_H:?}" --output "${LG4K:?}" --pos "${LG4K_X:?}x${LG4K_Y:?}"
+        isOk=true ; actual="$(xrandr | grep "${LG4K:?}")"
+        if echo ${actual:?} | grep -q "+${LG4K_X:?}+${LG4K_Y:?}" ;then true ;else isOk=false ;fi
+        if $isOk ;then break ;fi
+        echo FUCK POS: $actual ; sleep 0.1
+    done
+    xrandr --fb "${FB_W:?}x${FB_H:?}" --output "${LG4K:?}" --dpi 93 --rotate normal
+}
+
+main () {
+    pkill lxpanel || true
+    setGlobalOptions
+    fuckPanning "${POST:?}"
+    fuckPanning "${LG4K:?}"
+    setupPostMonitor
+    echo "Post monitor now configured. Result:"
+    xrandr | grep "^\(Screen \|${POST:?}\|${LG4K:?}\)"
+    fuckPanning "${POST:?}"
+    fuckPanning "${LG4K:?}"
+    setupLg4kMonitor
+    echo "LG4K monitor now configured. Result:"
+    xrandr | grep "^\(Screen \|${POST:?}\|${LG4K:?}\)"
+    fuckPanning "${POST:?}"
+    fuckPanning "${LG4K:?}"
+    xrandr --output "${LG4K:?}" --primary
+    # Restore desktop
+    sleep 1
+    if test -e ~/.fehbg; then ~/.fehbg; fi
+    lxpanel --profile dual >/dev/null 2>/dev/null &
+    echo Desktop restored
+    printf 'DONE :)\n'
+}
+
+main "$@"
+

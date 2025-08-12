@@ -52,3 +52,11 @@ HINT: Shouldn't be used. It is only a workaround bcause regular is broken.
 
 
 
+
+
+
+kubectl rollout history deployments/preflux -o yaml | grep -E '(image: |creationTimestamp: )'
+
+
+
+

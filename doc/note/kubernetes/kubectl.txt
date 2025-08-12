@@ -2,18 +2,45 @@
 Kubectl usage
 =============
 
-HINT: See also "../aws/aws.txt".
+HINT: See also
+- "../aws/aws.txt"
+- "../../../src/private/kube/"
 
 Commands look the same as with openshift.
 
 
-## How to login
 
-  TODO
+[kubectl logs](https://kubernetes.io/docs/reference/kubectl/generated/kubectl_logs/)
+
+  kubectl logs ${POD:?} --tail=42 -f
+
+  kubectl logs ${POD:?} --since-time=2024-12-31T24:59:59Z --timestamps=true
+
+  && pod=houston-0 \
+  && logName=houston \
+  && stage=prod \
+  && KUBECTL=kubectl \
+  && NOW=$(date -u +%Y%m%d-%H%M%S) \
+  && ${KUBECTL:?} logs ${pod:?} > ${logName:?}-${stage:?}-log-${NOW:?}.stdout.log 2> ${logName:?}-${stage:?}-log-${NOW:?}.stderr.log \
+  && ${KUBECTL:?} logs -p ${pod:?} > ${logName:?}-${stage:?}-log-${NOW:?}.prev.stdout.log 2> ${logName:?}-${stage:?}-log-${NOW:?}.prev.stderr.log \
 
 
-## How to login (DEPRECATED!)
 
-  && saml2aws login \
+## Record logs (live AND download) while jenkins test is running
 
+  `# config`
+  && namespaceFromJenkinsLog="isa-preview-preflux--992753950-1" `#isa-preview-__TODO__` \
+  && svcName=preflux \
+
+  `# shell nr 1, für service logs`
+  && kubectl --context=eks-int-m15cn0001 -n "${namespaceFromJenkinsLog:?}" exec -i ${svcName:?}-0 -- sh -c 'cd logs && tail -F '"${svcName:?}"'.log ' > "jenkins-${svcName:?}-$(date +%s)-${svcName:?}.log" \
+
+  `# shell nr 2, für platform logs`
+  && kubectl --context=eks-int-m15cn0001 -n "${namespaceFromJenkinsLog:?}" exec -i ${svcName:?}-0 -- sh -c 'cd logs && tail -F platform.log ' > "jenkins-${svcName:?}-$(date +%s)-platform.log" \
+
+  `# shell nr 3, für combine live preview`
+  && tail -qF "jenkins-${svcName}-*${svcName:?}.log" "jenkins-${svcName:?}-*-platform.log" \
+
+  `# others `
+  && kubectl --context=eks-int-m15cn0001 -n "${namespaceFromJenkinsLog:?}" get pods
 

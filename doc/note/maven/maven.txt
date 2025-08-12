@@ -14,6 +14,19 @@ mvn versions:set-property -DgenerateBackupPoms=false -DallowSnapshots=true -Dpro
 
 export MAVEN_OPTS="..."
 
+
+
+## SILENCE those annoying log-spammers!!
+
+"-B" (aka "--batch-mode") or "-q" (aka "--quiet").
+
+BullshitSpoiler: Doesn't work with MAVEN_OPTS. Grrr...
+
+Huiii :) Works with MAVEN_OPTS:
+  -Dorg.slf4j.simpleLogger.defaultLogLevel=WARN
+
+
+
 ## Get project version without any other bullshit
 mvn help:evaluate -o -q -DforceStdout -Dexpression=project.version && echo
 
@@ -65,9 +78,11 @@ mvn verify -U -DSelBaseUrl=http://localhost:7012/apigateway/services/foo/index.h
 [See also](https://maven.apache.org/plugins/maven-dependency-plugin/go-offline-mojo.html)
 
 
-## Skip SOME tests
+## Skip/ignore SOME tests
 
-mvn '-Dtest=!BadTestClass,!AlsoNotWanted' test
+mvn '-Dtest=!BadTestClass,!AlsoNotWanted#method' test
+
+- [doc](https://maven.apache.org/surefire/maven-surefire-plugin/examples/single-test.html#Multiple_Formats_in_One)
 
 
 ## Download dependencies

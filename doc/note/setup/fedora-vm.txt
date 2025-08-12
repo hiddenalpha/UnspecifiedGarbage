@@ -1,0 +1,31 @@
+
+Setup a Fedora VM
+=================
+
+Dload fedora server netinst iso from
+https://fedoraproject.org/server/download
+. Launch a VM from that installer iso. In the installer, take care of
+those settings:
+- Keyboard.
+- DisableRoot.
+- Create "user" with default PW, with groups "wheel,adm".
+- "Advanced" Disk partition.
+- 1x 1MiB "bios" partition.
+- 1x ext4 at "/"
+- TODO forgotten anything?
+
+Wait for installation to complete. Reboot machine. Created user should
+already work via SSH.
+
+  && $SUDO dnf install -y vim \
+
+Enable "%wheel ALL=(ALL:ALL) NOPASSWD:ALL" in "/etc/sudoers".
+
+Add exitCode to PS1 in "~/.bashrc".
+
+  && $SUDO dnf clean all \
+  && $SUDO fstrim -av \
+
+Sparsify disk image from host as usual.
+Packaging.
+

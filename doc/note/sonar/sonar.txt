@@ -1,0 +1,7 @@
+
+Sonar, FUCK YOUR USELESS BULLSHIT "ADVICE"!
+
+  @java.lang.SuppressWarnings("squid:S00042")
+  @java.lang.SuppressWarnings("squid:S1313")
+
+

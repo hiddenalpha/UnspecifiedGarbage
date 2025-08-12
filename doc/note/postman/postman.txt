@@ -1,0 +1,25 @@
+
+How to fu** this bastard cloud/online shit
+==========================================
+
+
+## Get package
+
+- [Get if from here](https://github.com/portapps/postman-portable/releases/tag/10.15.0-57)
+  (Yep, old version, because newer versions seem to not allow this anymore at all)
+
+
+## Get back the local save feature
+
+- Open DevTools (Ctrl-Shift-I)
+- Type into the console `pm.settings.setSetting("offlineAPIClientEnabled",0)`
+  (this will turn off the lightweight client and switch to ScratchPad)
+- Restart Postman (you'll see briefly the ScratchPad interface but it will be
+  hidden with a login screen then)
+- Open DevTools again (Ctrl-Shift-I)
+- Type into the console `pm.mediator.trigger("hideUserSwitchingExperienceModal")`
+
+
+[Source](https://stackoverflow.com/a/77175559/4415884)
+
+

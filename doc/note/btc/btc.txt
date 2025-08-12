@@ -1,0 +1,28 @@
+
+BTC
+================
+
+Ws söu dä huere Schwachsinnig Scheiss? Ds cha doch ni sii, dass efach jedes
+pflock tutorial phouptet, me müsesi der privat key ufelade, fürds gugge ws ufm
+kto isch?!? Ws söu dä Schrott??
+
+  && `# The RunFromSources way ` \
+  && VERSION_ELECTRUM=4.5.8 \
+  && SUDO=sudo \
+  && $SUDO RUNLEVEL=1 apt install --no-install-recommends -y \
+       curl python3-pyqt5 libsecp256k1-dev python3-cryptography gpg \
+       `# for UI: ` \
+       `#xorg openbox mate-terminal gnome-themes-extra darkmint-gtk-theme ` \
+  && curl -LO 'https://download.electrum.org/'"${VERSION_ELECTRUM:?}"'/Electrum-'"${VERSION_ELECTRUM:?}"'.tar.gz.asc' \
+  && curl -LO 'https://download.electrum.org/'"${VERSION_ELECTRUM:?}"'/Electrum-'"${VERSION_ELECTRUM:?}"'.tar.gz' \
+  && gpg --verify Electrum-"${VERSION_ELECTRUM:?}".tar.gz.asc \
+  && tar xf Electrum-"${VERSION_ELECTRUM:?}".tar.gz \
+  && printf '\nRun (from sources) with:\n  python3 Electrum-%s/run_electrum\n\n' "${VERSION_ELECTRUM:?}" | tee README.txt \
+
+  -netdev '...,restrict=y,...'
+
+[setup tutorial](https://freedomnode.com/blog/how-to-create-and-use-an-offline-bitcoin-wallet-aka-cold-storage-with-electrum/)
+[sftware](https://github.com/spesmilo/electrum.git)
+[dload & short tuto](https://electrum.org/#download)
+
+

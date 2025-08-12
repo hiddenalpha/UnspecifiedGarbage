@@ -12,7 +12,7 @@ set -o errexit
 readonly NOW_SHORT="$(date -u '+%Y%m%d-%H%M%S')"
 readonly DIR_FROM="/home/${USER:?}/."
 readonly DST_PREFIX="${DIR_FROM:?}"
-readonly DIR_TO="/mnt/x/ROOT_DIR/bkup-rsync/tux-six"
+#readonly DIR_TO="/mnt/x/ROOT_DIR/bkup-rsync/tux-six"
 readonly BACKUP_PATH="${DIR_TO:?}/${NOW_SHORT:?}"
 
 
@@ -65,6 +65,13 @@ run () {
         --exclude=".git/packed-refs" \
         --exclude=".git/refs/remotes" \
         --exclude=".git/refs/tags" \
+        --exclude=".git/modules/*/COMMIT_EDITMSG" \
+        --exclude=".git/modules/*/FETCH_HEAD" \
+        --exclude=".git/modules/*/hooks/*.sample" \
+        --exclude=".git/modules/*/logs" \
+        --exclude=".git/modules/*/objects" \
+        --exclude=".git/modules/*/refs/remotes" \
+        --exclude=".git/modules/*/refs/tags" \
         --exclude=".idea" \
         --exclude="/.android" \
         --exclude="/.bash_history" \
@@ -91,6 +98,7 @@ run () {
         --exclude="/.m2/repository" \
         --exclude="/mnt" \
         --exclude="/.mozilla/firefox" \
+        `# TODO exclude either "/.mysave" or "/mysave" ` \
         --exclude="/.NERDTreeBookmarks" \
         --exclude="/.recently-used" \
         --exclude="/.recoll" \
@@ -107,6 +115,7 @@ run () {
         --exclude="/Downloads" \
         --exclude="/images" \
         --exclude="/mnt" \
+        --exclude="/post-läbi-migration-2025" `#TODO cleanup` \
         --exclude="/projects/forks" \
         --exclude="/tmp" \
         --exclude="/virtualbox-*" \

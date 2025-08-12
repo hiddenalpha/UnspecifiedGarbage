@@ -34,4 +34,13 @@ TODO: Those have potential:
 "${HOME:?}/AppData/Local/Microsoft/Edge/User Data/Default/Service Worker/Database"
 "${HOME:?}/AppData/Local/Microsoft/Edge/User Data/Default/Service Worker/ScriptCache"
 
+(cd "${HOME:?}/AppData/Roaming/Microsoft" && for E in $(ls -A) ;do du -hs "$E" ;done) | sort -h | tail
+(cd "${HOME:?}/AppData/Roaming/Mozilla" && for E in $(ls -A) ;do du -hs "$E" ;done) | sort -h | tail
+(cd "${HOME:?}/AppData/Roaming/npm-cache" && for E in $(ls -A) ;do du -hs "$E" ;done) | sort -h | tail
+
+(cd "${HOME:?}/AppData/Roaming" && for E in $(ls -A) ;do du -hs "$E" ;done) | sort -h | tail
+(cd "${HOME:?}/AppData/Local" && for E in $(ls -A) ;do du -hs "$E" ;done) | sort -h | tail
+
+(cd "${HOME:?}/AppData/Roaming/Microsoft/Teams" && for E in $(ls -A) ;do du -hs "$E" ;done) | sort -h | tail
+
 

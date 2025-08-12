@@ -6,22 +6,22 @@ NonSense in: preflux.
 MustHave in: lazlar.
 
 
-  && GIT_COMMIT_MSG="${MSG_PRE:?}: Auto-destroy code-format" \
-  && PR_REMOTE=upstream \
-  && PR_BRANCH= \
-  && LOCL_BRANCH="$(git branch --show-current)" \
-
+  && wipBr= \
+  && dstBr= \
+  && commitMsg="SDCISA-_____: Auto-destroy code-format" \
+  && remote=upstream \
+  \
   && if test -n "$(git status --porcelain)" ;then echo "ERROR: Git worktree not clean"; false ;fi \
-  && git checkout --detach \
+  && if git log -n1 --decorate|grep -F "HEAD -> ${wipBr:?}" >/dev/null ;then true \
+      && printf 'EROR: Wrong branch checked out\n' \
+    ;fi \
+  && git detach \
   && mvn spotless:apply \
   && git add -- . \
-  && git commit -m "${GIT_COMMIT_MSG:?}" \
-  && destroyedSha1="$(git log -n1 --format=format:%H)" \
-  && if test -n "${LOCL_BRANCH?}" ;then true \
-      && git checkout "${LOCL_BRANCH:?}" \
-    ;else true \
-      && git checkout "HEAD^" \
-    ;fi \
-  && printf "\nTODO:\n git push ${PR_REMOTE:?} ${destroyedSha1:?}:${PR_BRANCH:?} -f\n\n" \
+  && git commit -m "${commitMsg:?}" \
+  && cmitId="$(git rev-parse HEAD)" \
+  && git co "${wipBr:?}" \
+  && git log -n2 "${cmitId:?}" \
+  && git push upstream "${cmitId:?}":"${dstBr:?}" -f \
 
 

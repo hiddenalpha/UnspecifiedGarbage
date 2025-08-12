@@ -1,0 +1,11 @@
+
+
+-------------------------------------------------------------------------------
+
+Error: OCI runtime error: crun: invalid file system type on '/sys/fs/cgroup'
+
+mount -t cgroup2 none /sys/fs/cgroup
+
+-------------------------------------------------------------------------------
+
+

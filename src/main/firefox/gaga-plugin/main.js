@@ -16,7 +16,8 @@
             ui: {},
             lastClickEpochMs: 0,
             wantChecklistExpanded: false,
-            wantDevelopmentExpanaded: false,
+            wantDevelopmentExpanaded: true,
+            wantAgileExpanaded: false,
             wantBigTemplateExpanded: false,
         });
         if( NDEBUG ){
@@ -60,8 +61,8 @@
 
 
     function performStateCheck( app ){
-        var buttons = [ "checklistBtn", "developmentBtn", "bigTemplateBtn" ];
-        var wantKey = [ "wantChecklistExpanded", "wantDevelopmentExpanaded", "wantBigTemplateExpanded" ];
+        var buttons = [ "checklistBtn", "developmentBtn", "agileBtn", "bigTemplateBtn" ];
+        var wantKey = [ "wantChecklistExpanded", "wantDevelopmentExpanaded", "wantAgileExpanaded", "wantBigTemplateExpanded" ];
         for( var i = 0 ; i < buttons.length ; ++i ){
             var btnKey = buttons[i];
             var btnElem = getBloatyButton(app, btnKey);
@@ -96,6 +97,11 @@
     }
 
 
+    function onBloatyAgileBtnMousedown( app ){
+        app.wantAgileExpanaded = !app.wantAgileExpanaded;
+    }
+
+
     function onBloatyBigTemplateBtnMousedown( app ){
         app.wantBigTemplateExpanded = !app.wantBigTemplateExpanded;
     }
@@ -111,6 +117,10 @@
             var selector = "button[aria-label=Development]";
             var uiKey = "bloatyDevelopmentBtn";
             var onMousedown = onBloatyDevelopmentBtnMousedown;
+        }else if(  btnKey == "agileBtn" ){
+            var selector = "button[aria-label=Agile]";
+            var uiKey = "bloatyAgileBtn";
+            var onMousedown = onBloatyAgileBtnMousedown;
         }else if(  btnKey == "bigTemplateBtn" ){
             var selector = "button[aria-label=BigTemplate]";
             var uiKey = "bloatyBigTemplateBtn";

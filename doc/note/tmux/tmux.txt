@@ -2,6 +2,25 @@
 Tmux - Terminal Multilexer
 ==========================
 
+## Basisc
+
+  ^b ?      show keybindings.
+  ^b :      command mode
+  ^b w      show open windows
+  ^b c      new window.
+  ^b n/p    next/prev window
+  ^b 0..9   goto window by its number.
+  ^b d      detach current session
+  tmux ls   show running sessions
+  tmux attach -t 0
+            Attach to session 0 (see tmux ls).
+  ^b %      hsplit
+  ^b "      vsplit
+  ^b <arrw> select next pane by arrow keys.
+  ^b x      close pane.
+
+
+## __
 
 TODO: Try if this fixes my ctrl-space-not-working-in-copy-mode issue:
 

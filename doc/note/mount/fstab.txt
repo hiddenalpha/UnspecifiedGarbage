@@ -20,4 +20,11 @@ fstab entry:
 none  /home/YOURNAME/.cache/mozilla/firefox  tmpfs  noatime,noexec,users  0 0
 
 
+## cifs (smb/samba)
+
+Server Needs: a samba share
+Client Needs: cifs-utils
+
+//example.com/share-name  /mnt/somename  cifs  user,nofail,forceuid,uid=1000,vers=3.0,password=,exec  0  0
+
 

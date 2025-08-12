@@ -1,0 +1,10 @@
+
+
+apt install --no-install-recommends acpid
+
+$ cat /etc/acpi/events/power
+event=button/power
+action=/sbin/poweroff
+
+service acpid reload
+

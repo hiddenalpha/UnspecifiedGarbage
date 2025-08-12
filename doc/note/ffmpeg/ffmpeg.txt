@@ -25,10 +25,10 @@ Then use that knowlege to extract that (audio) stream:
 
 Use  -codec:v copy  to keep video, or -codec:v no  for audio-only.
 
-  -codec:a aac        -q:a 1.3   (min=0.1, good=1.3 max=2)
+  -codec:a aac        -q:a 3   (min=1, good=, max=5)
   -codec:a aac        -b:a 96k
   -codec:a libmp3lame -q:a 2
-  -codec:a libopus
+  -codec:a libopus -b:a 96k -vbr on -compression_level 9 `# fast=0, highqual=10`
   -filter:a lowpass=f=16000
 
 
@@ -55,17 +55,34 @@ HINT: Repeat afade twice for log scale.
 
 ## Record Desktop Screen
 
-  ffmpeg -f gdigrab -framerate 6 -probesize 10M -an `# no-audio` \
-      -offset_x 0 -offset_y 0 -video_size 1920x1080 -show_region 1 \
-      -i desktop \
-      `# regular: libx264,  doof+nvidia: h264_nvenc,  doof+intel: h264_qsv ` \
+  && `# nix ` \
+  && ffmpeg -f gdigrab -framerate 6 -probesize 10M -an `# no-audio` \
+      -offset_x 0 -offset_y 0 -video_size 1920x1080 -show_region 1 -i desktop \
       -c:v libx264 -crf 0 -preset ultrafast -color_range 2 \
-      "output-$(date -u +%Y%m%d-%H%M%SZ).mp4"
+      "screen-$(date -u +%Y%m%d-%H%M%SZ).mp4" \
 
-  The above will compress badly to keep realtime recording responsive. Compress
-  it afterwards with eg:
+  && `# grab BAPO (HINT: use offset 0x0 and set primary) ` \
+  && X=300 && Y=180 && W=3240 && H=1950 `# 4kFull TODO test` \
+  && X=3840 && Y=1300 && W=1920 && H=1400 `# läbiRgtOf4k TODO test` \
+  && while true ;do true \
+    && ffmpeg -f gdigrab -framerate 6 -probesize 10M -an `# no-audio` \
+        -offset_x "${X:?}" -offset_y "${Y:?}" -video_size "${W:?}x${H:?}" -show_region 0 \
+        -i desktop \
+        -c:v mpeg4 -crf 0 -vb 50M -preset fast -color_range 2 \
+        "screen-$(date -u +%Y%m%d-%H%M%SZ).mkv" \
+    || true \
+    && sleep 3 || break \
+    ;done \
 
-  ffmpeg -i ${RECORDING:?} -c:v h264_qsv -pix_fmt yuv420p optimized-for-size.mkv
+  `# compress recording ` \
+  && ScaleW=-1 && ScaleH=-1 \
+  && CropX=718 && CropY=317 && CropW=960 && CropH=760 \
+  && ffmpeg -i "${INNFILE:?}" \
+       `#Scale  -map 0:v -vf "scale=${ScaleW:?}:${ScaleH:?},setsar=1" ` \
+       `#Crop  -vf "crop=${CropW:?}:${CropH:?}:${CropX:?}:${CropY:?}" ` \
+       -c:v h264_mf -crf 0 -vb 4M \
+       -dn \
+       "${FFMPEG_OUTPUT:?}" \
 
 
 ## Trim video
@@ -74,17 +91,59 @@ HINT: Repeat afade twice for log scale.
   -i INFILE -ss <pos> -to <pos> OUTFILE
 
 
+
+## Crop video
+
+  -vf "crop=w:h:x:y"
+
+
+
 ## Concatenate
 
   && ffmpeg -i one.mkv -i two.mkv \
        -filter_complex '[0:v] [0:a] [1:v] [1:a] concat=n=2:v=1:a=1 [v] [a]' \
        -map "[v]" -map "[a]" out.mkv \
 
+  `# or if all videos have same codec:` \
+  && printf "file 'inn1.mkv'\nfile 'inn2.mkv\n'" > list.txt \
+  && ffmpeg -f concat -i list.txt -c copy "${outFile:?}" \
+
 
 ## Rotate Portrait
 
-  -i INFILE -vf "transpose=2" OUTFILE
+  `# 90° dräie`
+  -vf "transpose=2"
 
+  `# rotate metadata-only, NO re-encoding `
+  -metadata:s:v rotate="90"
+
+  `# Aufn Kopf stellen (re-encoding)`
+  -vf "vflip,hflip" -c:v h264_qsv -preset slow
+
+
+## Change Video Resolution
+
+  ffmpeg -i src_file -vf "scale=480x270" dst_file
+
+
+## Compress Video
+
+  According to www, it is better to use (slow) software encoders if small file
+  size is wanted. Bitrate has huge effect on quality. For high quality use
+  `-vb 20M`.
+
+  `# crf only affect encoding time and quality. No effect on filesize. `
+  && ffmpeg -i srcFile -codec:v h264_mf -crf 0 dstFile \
+  `# crf: 0=huge, 18=nearlylossless, 23=default, 28=small 51=tiny `
+  && ffmpeg -i src_file -vcodec libx265 -crf 28 dst_file \
+  `# crf: 2=huge, 31:tiny `
+  && ffmpeg -i src_file -vcodec hevc_qsv -crf 18 dst_file \
+
+
+## Double/half OUTPUT framerate
+
+  `# this SHIT doesn't work! output is just a single, frozen frame... `
+  ffmpeg -i srcFile $yourFilter -r 15 dstFile  `# MUST be after filters etc`
 
 
 ## Video to Gif
@@ -105,6 +164,7 @@ Working example from web (but not optimized):
   ffmpeg -ss 0 -t 2.5 -i INPUT.mp4 -filter_complex "[0:v] fps=12,scale=-1:600,split [a][b];[a] palettegen=stats_mode=diff [p];[b][p] paletteuse=new=1" OUTPUT.gif
 
 
+
 ## Pictures to Video (eg Timelapse)
 
   -start_number 5619 -framerate 24 -i "input/IMG_%d.JPG" \
@@ -112,13 +172,14 @@ Working example from web (but not optimized):
     out.mkv
 
 
+
 ## Create GIF by image series
 
-  && TMPVID="tmp.mkv" \
+  && TMPVID="tmp.ffv1" \
   && PALETTE_PNG="palette.png" \
   && FPS="5" \
   && FILTERV="fps=${FPS:?}" \
-  && ffmpeg -start_number 0 -framerate "${FPS:?}" -i "src%d.png" "${TMPVID:?}" \
+  && ffmpeg -start_number 0 -framerate "${FPS:?}" -i "src%d.png" -c:v ffv1 "${TMPVID:?}" \
   && ffmpeg -i "${TMPVID:?}" -vf "${FILTERV:?},palettegen=stats_mode=diff" "${PALETTE_PNG:?}" \
   && ffmpeg -i "${TMPVID:?}" -i "${PALETTE_PNG:?}" -filter_complex "[0:v]${FILTERV:?}[vid];[vid][1:v]paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle" dst.gif \
   && rm "${TMPVID:?}" "${PALETTE_PNG:?}" \

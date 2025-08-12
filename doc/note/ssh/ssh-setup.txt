@@ -10,7 +10,7 @@ SSH Setup & Key Management
 
 ## Create New Ssh Key
 
-Create "path/to/key" and "path/to/key.pub" as a 2048 bit RSA with
+Create "path/to/key" and "path/to/key.pub" as a 3072 bit RSA with
 "your comment" as comment (you can skip "-C comment" if you dont care).
 
 TODO: mättu sagt evtl noch "-a 256" angeben für keygen.
@@ -82,6 +82,21 @@ TODO to PKCS8:
 ## Remove obsolete entry from known_hosts
 
   ssh-keygen -f path/to/known_hosts -R "example.com"
+
+
+
+## Print key info
+
+  `# public key`
+  ssh-keygen -lf path/to/key
+  `# private key (WARN: sensitive!)`
+  openssl rsa -text -noout -in path/to/key
+
+
+
+## Change key comments (for private keys)
+
+  ssh-keygen -c -f path/to/key
 
 
 

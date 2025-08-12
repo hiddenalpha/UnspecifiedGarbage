@@ -11,9 +11,9 @@
 
 local host = "devuan5" -- "devuan5", "debian9"
 local target = "posix" -- "posix", "windoof"
-local envWORKDIR = "/home/${USER:?}/work"
+local envWORKDIR = "${PWD:?}"
 local envCACHEDIR = "/var/tmp"
-local envMAKE_JOBS = 8
+local envMAKE_JOBS = 16
 local envSUDO = "sudo"
 
 local version_cJSON   = "1.7.15"
@@ -171,7 +171,7 @@ function defineLua()
             "AR=${HOST_:?}ar rcu" \
             "RANLIB=${HOST_:?}ranlib" \
         && cp -t build/. README \
-        && cp -t build/bin/. src/lua.exe src/luac.exe \
+        && cp -t build/bin/. src/lua.exe src/luac.exe src/lua*.dll \
         ]===]
     else error("ENOTSUP: "..target) end
     lua.makeShell = lua.makeShell .. [===[ \
@@ -515,6 +515,7 @@ end
 function writeSystemSetupToDst( dst )
     dst:write(""
         .." && SUDO=".. envSUDO .." \\\n"
+        .." && WORKDIR=\"".. envWORKDIR .."\" \\\n"
         ..' && now="$(date +%s)" \\\n'
         ..' && old="$(date +%s -r "/tmp/fUXfavAEP6jtMbIF" || echo 0)" \\\n'
         ..' && if test "$((now - old))" -gt "$((7*3600))" ;then true \\\n'
@@ -591,18 +592,18 @@ function writeModulesMake( dst )
             dst:write('     && export "'.. env.k ..'='.. env.v ..'" \\\n')
         end
         dst:write(""
-            ..'     && rm -rf "'.. envWORKDIR ..'/make/'.. mod.name ..'" \\\n'
-            ..'     && (cd "'.. envWORKDIR ..'" && mkdir -p make) \\\n'
-            ..'     && (cd "'.. envWORKDIR ..'/make" && mkdir -p "'.. mod.name ..'") \\\n'
-            ..'     && cd "'.. envWORKDIR ..'/make/'.. mod.name ..'" \\\n'
+            ..'     && rm -rf "${WORKDIR:?}/make/'.. mod.name ..'" \\\n'
+            ..'     && (cd "${WORKDIR:?}" && mkdir -p make) \\\n'
+            ..'     && (cd "${WORKDIR:?}/make" && mkdir -p "'.. mod.name ..'") \\\n'
+            ..'     && cd "${WORKDIR:?}/make/'.. mod.name ..'" \\\n'
             ..'     && printf "\\n  MAKE '.. mod.name ..' ...\\n" \\\n'
             ..'     && (echo "set -e" && echo '.. b64e(mod.makeShell) ..'|base64 -d)|sh - \\\n'
             ..'     && DSTMD5="'.. envCACHEDIR ..'/md5/'.. dstMd5 ..'" \\\n'
             ..'     && (cd "$(dirname "${DSTTAR:?}")" && md5sum -b "$(basename "${DSTTAR:?}")" >> "${DSTMD5:?}") \\\n'
             ..'   );fi \\\n'
-            ..' && mkdir -p "'.. envWORKDIR ..'/dist" \\\n'
-            ..' && cp -t "'.. envWORKDIR ..'/dist/." "'.. envCACHEDIR ..'/dst/'.. dstTar ..'" \\\n'
-            ..' && cp -t "'.. envWORKDIR ..'/dist/." "'.. envCACHEDIR ..'/md5/'.. dstMd5 ..'" \\\n'
+            ..' && mkdir -p "${WORKDIR:?}/dist" \\\n'
+            ..' && cp -t "${WORKDIR:?}/dist/." "'.. envCACHEDIR ..'/dst/'.. dstTar ..'" \\\n'
+            ..' && cp -t "${WORKDIR:?}/dist/." "'.. envCACHEDIR ..'/md5/'.. dstMd5 ..'" \\\n'
             .."")
     end
 end
@@ -659,7 +660,7 @@ function main()
     TODO_EgXYTUrb6fVdv5wr()
     defineWhatToBuild()
     collectPkgsToAddOverall()
-    dst:write("#!/bin/sh\nset -e\ntrue \\\n")
+    dst:write("#!/bin/sh\nset -e \\\n")
     writeSystemSetupToDst(dst)
     writeModulesPrepare(dst)
     writeModulesMake(dst)

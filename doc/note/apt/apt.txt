@@ -29,3 +29,17 @@ WARN: I saw cases where above still misses to print relevant packages. Then I
 +-----------------------------------------------------------------------
 
 
+
+## About annoying TLS intercept proxies
+
+"/etc/apt/apt.conf.d/80fuckannoyingcorporateproxies"
+
+// in general:
+Acquire::https::Verify-Peer "false";
+Acquire::https::Verify-Host "false";
+
+// just for a specific host:
+Acquire::https::repo.domain.tld::Verify-Peer "false";
+Acquire::https::repo.domain.tld::Verify-Host "false";
+
+

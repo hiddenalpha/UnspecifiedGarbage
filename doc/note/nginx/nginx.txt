@@ -51,6 +51,21 @@ WARN: Do NOT use 'alias' directive! It is broken as hell. Use 'root'.
               return 418 "Teapod says hi\n";
           }
       }
+      server {
+          # Example redirect all to TLS
+          listen 80;
+          server_name example.com;
+          return 301 https://$server_name$request_uri;
+      }
+      #server {
+      #    listen 443 ssl;
+      #    server_name  example.com;
+      #    ssl_certificate  example-com.crt;
+      #    ssl_certificate_key  example-com.key;
+      #    ssl_password_file /path/to/nginx.pass;
+      #    ssl_protocols  TLSv1.2 TLSv1.3;
+      #    ssl_ciphers  HIGH:!aNULL:!MD5;
+      #}
   }
 
 
@@ -128,5 +143,16 @@ server {
      ) >"${NGINX_HTTPD_DIR:?}/${VHOST:?}" \
   && ${ENABLE_SITE:?} \
   && true
+
+
+## Fine-Tune proxy buffering
+
+Some silly (aka fancy modern) webapp serves assets with OVER 6MB IN SIZE!! This
+made my nginx bufering to disk. Here my guess of better buffer settings for such
+silly upstream apps.
+
+Can be anywhere in 'http{}' or 'server{}' or 'location{}' depending on scope needed.
+
+  proxy_buffers 512 16k;
 
 

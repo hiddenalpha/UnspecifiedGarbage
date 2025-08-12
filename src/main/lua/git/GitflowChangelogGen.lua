@@ -10,6 +10,9 @@ function printHelp()
         .."  \n"
         .."  Options:\n"
         .."  \n"
+        .."    --svcName <str>\n"
+        .."      Eg: 'preflux', 'trin', ...\n"
+        .."  \n"
         .."    --since <date>\n"
         .."        Ignore commits with this ISO date and older.\n"
         .."  \n"
@@ -22,6 +25,12 @@ function printHelp()
         .."    --tags\n"
         .."      Pass '--tags' to git-log.\n"
         .."  \n"
+        .."    --markdown\n"
+        .."      Produce markdown output.\n"
+        .."  \n"
+        .."    --html\n"
+        .."      Produce HTML output.\n"
+        .."  \n"
         )
 end
 
@@ -32,6 +41,13 @@ function parseArgs( app )
         local arg = _ENV.arg[iA]
         if not arg then
             break
+        elseif arg == "--svcName" then
+            iA = iA + 1; arg = _ENV.arg[iA]
+            if not arg then log:write("EINVAL: --svcName needs value\n")return end
+            if arg ~= "preflux" and arg ~= "trin" and arg ~= "paisa-api" then
+                log:write("ENOTSUP: TODO impl svcName '".. arg .."'\n")return
+            end
+            app.svcName = arg
         elseif arg == "--since" then
             iA = iA + 1; arg = _ENV.arg[iA]
             if not arg then log:write("EINVAL: --since needs value\n")return end
@@ -44,6 +60,10 @@ function parseArgs( app )
             app.isFetch = false
         elseif arg == "--tags" then
             app.isTags = true
+        elseif arg == "--html" then
+            app.isPrintHtml = true
+        elseif arg == "--markdown" then
+            app.isPrintMarkdown = true
         elseif arg == "--help" then
             app.isHelp = true; return 0
         else
@@ -52,6 +72,11 @@ function parseArgs( app )
     end
     if not app.since then log:write("EINVAL: --since missing\n")return end
     if not app.remoteName then app.remoteName = "upstream" end
+    if not app.svcName then log:write("EINVAL: --svcName missing\n")return end
+    local i = 0
+    if app.isPrintHtml then i = i + 1 end
+    if app.isPrintMarkdown then i = i + 1 end
+    if i > 1 then log:write("EINVAL: Too many output formats given.\n")return end
     return 0
 end
 
@@ -115,6 +140,68 @@ function readCommitMsg( app )
 end
 
 
+function newTextPrinter( app, dst )
+    return { append = function( t, entry )
+        dst:write("\n\n")
+        dst:write(entry.date .." - ".. entry.version .."\n\n")
+        for k, msg in ipairs(entry.msgs) do
+            if msg.jiraNr then
+                dst:write("[".. msg.jiraNr .."] ")
+            end
+            dst:write(msg.body)
+            if prNr then dst:write(" (PR ".. prNr ..")") end
+            dst:write("\n")
+        end
+        dst:write("\n")
+    end }
+end
+
+
+function newHtmlPrinter( app, dst )
+    return { append = function( t, entry )
+        dst:write('\n\n\n<h3>'.. entry.date .." - ".. entry.version .."</h3>\n\n")
+        for k, msg in ipairs(entry.msgs) do
+            if msg.jiraNr then
+                dst:write(""
+                    ..'[<a href="https://jira.post.ch/browse/'.. msg.jiraNr ..'">'
+                    .. msg.jiraNr .."</a>] ")
+            end
+            dst:write(msg.body)
+            if msg.prNr then
+                dst:write(""
+                    ..' (<a href="https://gitit.post.ch/projects/ISA/repos/'.. app.svcName ..'/pull-requests/'
+                    .. msg.prNr ..'">PR '.. msg.prNr ..'</a>)'
+                    .."")
+            end
+            dst:write("</br>\n")
+        end
+    end }
+end
+
+
+function newMarkdownPrinter( app, dst )
+    return { append = function( t, entry )
+        dst:write(""
+            .."\n\n"
+            .."## ".. entry.date .." - ".. entry.version .."\n"
+            .."\n")
+        for k, msg in ipairs(entry.msgs) do
+            if msg.jiraNr then
+                dst:write("- [[".. msg.jiraNr .."](https://jira.post.ch/browse/".. msg.jiraNr ..")] ")
+            else
+                dst:write("- [ NO-JIRA ] ")
+            end
+            dst:write(msg.body)
+            if msg.prNr then
+                dst:write(" ([PR ".. msg.prNr .."](https://gitit.post.ch/projects/ISA/repos/".. app.svcName .."/pull-requests/".. msg.prNr .."))")
+            end
+            dst:write("\n")
+        end
+        dst:write("\n\n")
+    end }
+end
+
+
 function run( app )
     local snk = io.stdout
     if app.isFetch then
@@ -146,6 +233,13 @@ function run( app )
     app.parseFn = assert(readCommitHdr)
     while app.parseFn do app.parseFn(app) end
     -- Prepare output
+    if app.isPrintHtml then
+        app.outputPrinter = newHtmlPrinter(app, snk)
+    elseif app.isPrintMarkdown then
+        app.outputPrinter = newMarkdownPrinter(app, snk)
+    else
+        app.outputPrinter = newTextPrinter(app, snk)
+    end
     local prevDate = "0000-00-00"
     local version, prevVersion = "v_._._", false
     local dateEntry = false
@@ -155,39 +249,42 @@ function run( app )
         local author = assert(v.hdr:match("\nAuthor: +([^\n]+)\n"))
         local prNr, short = v.msg:match("Pull request #(%d+): ([^\n]+)\n")
         prevVersion = version
-        _, version = v.hdr:match("^([^\n]+)\n"):match("tag: ([a-z]+)-([^,]+)[,)]")
+        _, version = v.hdr:match("^([^\n]+)\n"):match("tag: ([a-z-]+)-([^,]+)[,)]")
         if not version then version = prevVersion end
-
         if version ~= prevVersion or not dateEntry then
-            if dateEntry then table.insert(entries, dateEntry) end
-            dateEntry = {
-                txt = date .." - ".. version .."\n\n" --.."Resolved issues:\n\n"
-            }
+            if dateEntry and dateEntry.msgs and (#dateEntry.msgs > 0)
+            then table.insert(entries, dateEntry) end
+            dateEntry = { date = assert(date), version = assert(version) }
             prevDate = date
         end
-        -- Drop some crappy bloat
         local msg = short or v.msg
-        local jiraNr = msg:match("^(SDCISA%-%d%d%d%d%d?)[^%d]")
-        if false
-        or msg:find("^Develop$")
+        -- Drop some crappy bloat
+        if msg:find("^Develop$")
         or msg:find("^Release$")
+        or msg:find("^%[AUTO%] Release PR$")
         or msg:find("^%[P2%] merge master back to develop$")
         or msg:find("^%[P2%] release [^ ]+ %[skip ci%]$")
         then
             goto nextCommit
         end
-        if jiraNr then dateEntry.txt = dateEntry.txt .."[".. jiraNr .."] " end
-        dateEntry.txt = dateEntry.txt .. msg
-        if prNr then dateEntry.txt = dateEntry.txt .." (PR ".. prNr ..")" end
-        dateEntry.txt = dateEntry.txt .."\n"
+        local jiraNr
+        local jiraNrPref = msg:match("^(%[?SDCISA%-%d%d%d%d%d?[^%d] ?)")
+        if jiraNrPref then
+            jiraNr = msg:match("^%[?(SDCISA%-%d%d%d%d%d?)[^%d]")
+            if jiraNr then msg = msg:sub(#jiraNrPref):gsub("^%s+", "") end
+        end
+        if not dateEntry.msgs then dateEntry.msgs = {} end
+        table.insert(dateEntry.msgs, {
+            jiraNr = jiraNr or false,
+            prNr = prNr or false,
+            body = msg or false,
+        })
         ::nextCommit::
     end
-    if dateEntry then table.insert(entries, dateEntry) end
+    if dateEntry.msgs and #dateEntry.msgs > 0 then table.insert(entries, dateEntry) end
     -- output
     for k, v in ipairs(entries) do
-        snk:write("\n\n")
-        snk:write(v.txt)
-        snk:write("\n")
+        app.outputPrinter:append(v)
     end
 end
 
@@ -196,8 +293,12 @@ function main()
     local app = {
         since = false,
         remoteName = false,
+        svcName = false,
         isFetch = true,
         isTags = false,
+        isPrintHtml = false,
+        isPrintMarkdown = false,
+        outputPrinter = false,
         fullHistory = {},
         fullHistoryRdBeg = 1,
         commits = {},
