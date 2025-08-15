@@ -30,8 +30,8 @@ Manage vDisk images
 
 ## Convert to based from standalone
 
-  qemu-img create -f qcow2 -b old.qcow2 new.qcow2
-  qemu-img rebase -b base.qcow2 new.qcow2
+  qemu-img create -b old.qcow2 -F qcow2 -f qcow2 new.qcow2
+  qemu-img rebase -b base.qcow2 -F qcow2 new.qcow2
 
 
 ## Shrink/compact img
