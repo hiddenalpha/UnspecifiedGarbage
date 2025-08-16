@@ -25,6 +25,7 @@ local version_nuklear = "4.12.2"
 local version_GLFW    = "3.4"
 local version_sqlite  = "3.33.0"
 local version_zlib    = "1.2.11"
+local version_gtk     = false -- TODO "4.19.2"
 
 local ndebug_cJSON   = 1
 local ndebug_expat   = 1
@@ -33,15 +34,49 @@ local ndebug_mbedtls = 1
 local ndebug_GLFW    = 1
 local ndebug_sqlite  = 1
 local ndebug_zlib    = 1
+local ndebug_gtk     = 1
 
 -- end Config -----------------------------------------------------------------
 
-local TODO_EgXYTUrb6fVdv5wr, b64e, collectPkgsToAddOverall, defineExpat, defineLua, defineMbedtls,
-    defineNuklear, defineGLFW, defineWhatToBuild, defineCJSON, defineZlib, main, newModule,
-    newModuleDloads, newModuleEnviron, writeModulesMake, writeModulesPrepare, writeSystemSetupToDst
+local TODO_EgXYTUrb6fVdv5wr, b64e, collectPkgsToAddOverallv1, defineExpat, defineLua, defineMbedtls,
+	defineNuklear, defineGLFW, defineGtk, defineWhatToBuild, defineCJSON, defineZlib, main,
+	newModule, newModuleDloads, newModuleEnviron, writeModulesMake, writeModulesPrepare,
+	writeSystemSetupToDst
 local envHOST, envHOST_
 local cmdPkgInit, cmdPkgClean, cmdPkgAdd
 local modulesToMake, pkgsToAddMerged, pkgsToAddGlobally
+local log = io.stderr
+
+
+function loadConfig( app )
+	app.vmBaseImg = "/home/andreas/tmp/14329cf7db9ced798bd03f0f4d476575.qcow2"
+	app.versionByLibName = {
+--		["cJSON"     ] = version_cJSON,
+--		["expat"     ] = version_expat,
+--		["lua"       ] = version_lua,
+--		["mbedtls"   ] = version_mbedtls,
+--		["nuklear"   ] = version_nuklear,
+--		-- TODO DoesNotWorkYet ["GLFW"      ] = "3.4"     ,
+--		-- TODO DoesNotWorkYet ["gtk"       ] = "4.19.2"  ,
+--		["sqlite"    ] = version_sqlite,
+		["zlib"      ] = version_zlib,
+	}
+	app.tripls = {
+		"aarch64-linux-gnu"
+		-- TODO "x86_64-linux-gnu", "x86_64-w64-mingw32", "aarch64-linux-gnu"
+	}
+	app.vmSshPort = 2229
+	app.qemuMonitorUri = "telnet:127.0.0.1:"..(app.vmSshPort + 10)
+	app.pkgsShared = {
+		["ca-certificates"] = true,
+		["curl"] = true,
+		["findutils"] = true,
+		["gzip"] = true,
+		["make"] = true,
+		["tar"] = true,
+		["xz-utils"] = true,
+	}
+end
 
 
 function defineWhatToBuild()
@@ -54,8 +89,128 @@ function defineWhatToBuild()
     if version_mbedtls then add(defineMbedtls()) end
     if version_nuklear then add(defineNuklear()) end
     if version_GLFW    then add(defineGLFW   ()) end
+    if version_gtk     then add(defineGtk    ()) end
     if version_sqlite  then add(defineSqlite ()) end
     if version_zlib    then add(defineZlib   ()) end
+end
+
+
+function shEsc( str ) assert(str,"str")return"'"..(""..str):gsub("'","'\\''").."'"end
+
+
+function table_sort( tbl, cmp ) table.sort(tbl, cmp)return tbl end
+
+
+function keysAsArr( set ) local r={}for k,_ in pairs(set)do table.insert(r, k)end return r end
+
+
+function qemuMonitorForNcat( app )
+	assert(type(app)=="table")
+	-- TODO impl unix sockets too
+	local host, port = (app.qemuMonitorUri):match("^telnet:([^:]+):([0-9]+)$")
+	if host then return host.." "..port end
+	error("TODO_impl_me_GwyBka3OKiwbSPOj")
+end
+
+
+function qemuSshT( app )
+	return "ssh"
+		.." -oUser=user -p".. shEsc(app.vmSshPort)
+		.." -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null"
+		.." 127.0.0.1 -T "
+end
+
+
+function getSudoCmd( app ) return"sudo"end
+
+
+function vmSshPort( app ) return app.vmSshPort end
+
+
+function getAllLibNames( app )
+	local exists = {}
+	local libNms = {}
+	for libNm, _ in pairs(app.versionByLibName) do
+		if exists[libNm] then goto nextLibNm end
+		exists[libNm] = true
+		table.insert(libNms, libNm)
+		::nextLibNm::
+	end
+	return libNms
+end
+
+
+function getPksToAddByLibNm( app, libNm, tripl )
+	local modObj
+	for _, mod_ in pairs(modulesToMake) do
+		if mod_.name == libNm then modObj = mod_ break end
+	end
+	assert(modObj, libNm)
+	local a = {}
+	for _, pkgNm in pairs(modObj.pkgsToAdd) do a[pkgNm] = true end
+	return a
+end
+
+
+function getDloadsByLibNm(app, tripl, libNm)
+	local modObj
+	for _, mod_ in pairs(modulesToMake) do
+		if mod_.name == libNm then modObj = mod_ break end
+	end
+	assert(modObj, libNm)
+	local dloadSet = {}
+	for dloadObj, _ in pairs(modObj.dloads) do
+		assert(type(dloadObj)=="table", type(dloadObj))
+		dloadSet[dloadObj] = true
+	end
+	return dloadSet
+end
+
+
+function getMd5sumsByLibNm( app, libNm )
+	-- TODO refactor towards config
+	if libNm == "cJSON" then
+		return "921b4bcb401aa604dc632fdb1c8dbdea *cJSON-1.7.15.tgz\n"
+	elseif libNm == "expat" then
+		return "b49e50792ddb35165bab41413238f66e *expat-2.4.2.txz\n"
+	elseif libNm == "lua" then
+		return "ef63ed2ecfb713646a7fcc583cf5f352 *lua-5.4.3.tgz"
+	elseif libNm == "mbedtls" then
+		return "_TODO_E0FDuKeG5wPsE2NN_ *mbedtls-3.1.0.tgz"
+	elseif libNm == "nuklear" then
+		return "5317f590836514f47ade332c183657af *nuklear-4.12.2.md5"
+	elseif libNm == "sqlite" then
+		return "_TODO_3T0rjT73phTlmtgu_ *sqlite-3.33.0.tgz"
+	elseif libNm == "zlib" then
+		return "_TODO_63jPWw10B1NWHRx0_ *zlib-1.2.11.tgz"
+	else
+		error("TODO_9S2xlJu4q49WizuT ".. libNm)
+	end
+end
+
+
+function getNdebugByLibNm( app, libNm )
+	-- TODO refactor to use via config
+	if libNm == "cJSON"   then return (ndebug_cJSON   and true or false) end
+	if libNm == "expat"   then return (ndebug_expat   and true or false) end
+	if libNm == "lua"     then return (ndebug_lua     and true or false) end
+	if libNm == "mbedtls" then return (ndebug_mbedtls and true or false) end
+	if libNm == "sqlite"  then return (ndebug_sqlite  and true or false) end
+	if libNm == "zlib"    then return (ndebug_zlib    and true or false) end
+	error(libNm)
+end
+
+
+function qemuImgNmByTripl( app, tripl )
+	-- TODO assert(app.tripls:contains(tripl))
+	assert(tripl=="x86_64-linux-gnu" or tripl=="x86_64-w64-mingw32" or tripl=="aarch64-linux-gnu")
+	return "hda-".. tripl ..".qcow2"
+end
+
+
+function qemuImgNmByLibNm( app, libNm )
+	assert(app.versionByLibName[libNm], libNm)
+	return "hda-".. libNm ..".qcow2"
 end
 
 
@@ -64,7 +219,7 @@ function defineCJSON()
     cjson.name = "cJSON"
     cjson.version = version_cJSON
     cjson.ndebug = ndebug_cJSON
-    cjson.pkgsToAdd = { "xz-utils" }
+    cjson.pkgsToAdd = {}
     cjson.dloads:add{
         url = "https://github.com/DaveGamble/cJSON/archive/refs/tags/v".. version_cJSON ..".tar.gz",
         dstFile = envCACHEDIR ..'/src/cJSON-'.. version_cJSON ..'.t__',
@@ -101,7 +256,7 @@ function defineExpat()
     expat.name = "expat"
     expat.version = version_expat
     expat.ndebug = ndebug_expat
-    expat.pkgsToAdd = { "make", "findutils", }
+    expat.pkgsToAdd = {}
     expat.dloads:add{
         url = "https://github.com/libexpat/libexpat/releases/download/R_2_4_2/expat-".. version_expat ..".tar.xz",
         dstFile = envCACHEDIR ..'/src/expat-'.. version_expat ..'.t__',
@@ -109,16 +264,8 @@ function defineExpat()
     expat.makeShell = [===[ true \
       && tar --strip-components 1 -xf "${SRCTAR:?}" \
       && mkdir build \
+      && ./configure --prefix=${PWD:?}/build --host=${HOST:?} CFLAGS="-Wall -pedantic --std=c99 -O2" \
     ]===]
-    if target == "posix" then
-        expat.makeShell = expat.makeShell .. [===[ \
-          && ./configure --prefix=${PWD:?}/build CFLAGS="-Wall -pedantic --std=c99 -O2" \
-        ]===]
-    elseif target == "windoof" then
-        expat.makeShell = expat.makeShell .. [===[ \
-          && ./configure --prefix=${PWD:?}/build --host=${HOST:?} CFLAGS="-Wall -pedantic --std=c99 -O2" \
-        ]===]
-    else error("ENOTSUP: "..target) end
     expat.makeShell = expat.makeShell .. [===[ \
       && make -e clean \
       && make -e -j${MAKE_JOBS:?} \
@@ -149,31 +296,39 @@ function defineLua()
       && tar --strip-components 1 -xf "${SRCTAR:?}" \
       && mkdir build build/bin build/include build/lib build/man build/man/man1 \
     ]===]
-    if target == "posix" then
-        lua.makeShell = lua.makeShell .. ' && export CFLAGS="-Wall -Wextra -DLUA_USE_DLOPEN=1" \\\n'
-    elseif target == "windoof" then
-        -- windoof is too "doooof" again ...
-        lua.makeShell = lua.makeShell .. ' && export CFLAGS="-Wall -Wextra" \\\n'
-    else error("ENOTSUP: "..target) end
+    lua.makeShell = lua.makeShell .. ' && export CFLAGS="-Wall -Wextra'
+	-- TODO get rid of this FU**ING DAMN BULLSHIT 'if'!!
+	--   just because winDOOF is too "DOOOOF" again! GRR...
+	if target == "windoof" then
+	else
+		lua.makeShell = lua.makeShell ..' -DLUA_USE_DLOPEN=1'
+	end
+	lua.makeShell = lua.makeShell ..'" \\\n'
     if lua.ndebug == 0 then  lua.makeShell = lua.makeShell ..''
         ..' && export CFLAGS="$CFLAGS -ggdb -DLUAI_ASSERT -DLUA_USE_APICHECK" \\\n'
     end
-    if target == "posix" then lua.makeShell = lua.makeShell .. [===[ \
-        && export CFLAGS="$CFLAGS -DLUA_USE_POSIX" \
-        && make -e -j${MAKEJOBS} AR='ar rcu'\
-        && cp -t build/. README \
-        && cp -t build/bin/. src/lua src/luac \
-    ]===]
-    elseif target == "windoof" then lua.makeShell = lua.makeShell .. [===[ \
-        && sed -i -E 's,(RANLIB=)(strip ),\1'"${HOST_:?}"'\2,' src/Makefile \
-        && make -e -j${MAKE_JOBS:?} PLAT=mingw \
-            "CC=${HOST_:?}gcc -std=gnu99" \
-            "AR=${HOST_:?}ar rcu" \
-            "RANLIB=${HOST_:?}ranlib" \
-        && cp -t build/. README \
-        && cp -t build/bin/. src/lua.exe src/luac.exe src/lua*.dll \
-        ]===]
-    else error("ENOTSUP: "..target) end
+	-- TODO get rid of this FU**ING DAMN BULLSHIT 'if'!!
+	--   just because winDOOF is too "DOOOOF" again! GRR...
+	if target == "windoof" then
+		lua.makeShell = lua.makeShell
+			..[=[ && sed -i -E 's,(RANLIB=)(strip ),\1'"${HOST_:?}"'\2,' src/Makefile ]=]..' \\\n'
+			..' && make -e -j${MAKE_JOBS:?} PLAT=mingw'..' \\\n'
+			..'     "CC=${HOST_:?}gcc -std=gnu99"'..' \\\n'
+			..'     "AR=${HOST_:?}ar rcu"'..' \\\n'
+			..'     "RANLIB=${HOST_:?}ranlib"'..' \\\n'
+			..' && cp -t build/. README'..' \\\n'
+			..' && cp -t build/bin/. src/lua.exe src/luac.exe src/lua*.dll'..' \\\n'
+	else
+		lua.makeShell = lua.makeShell
+			..' && export CFLAGS="$CFLAGS -DLUA_USE_POSIX"' .." \\\n"
+			..' && make -e -j${MAKEJOBS}'
+			..	' CC="${HOST_:?}"gcc'
+			..	' AR="ar rcu"'
+			..	' RANLIB="${HOST_:?}"ranlib'
+			..	' \\\n'
+			..' && cp -t build/. README'..' \\\n'
+			..' && cp -t build/bin/. src/lua src/luac' .." \\\n"
+	end
     lua.makeShell = lua.makeShell .. [===[ \
       && cp -t build/include/. src/lua.h src/luaconf.h src/lualib.h src/lauxlib.h src/lua.hpp \
       && cp -t build/lib/. src/liblua.a \
@@ -216,16 +371,15 @@ function defineMbedtls()
       && printf '#%s MBEDTLS_DEBUG_C\n' "$(test "${NDEBUG:?}" -ne 0 && echo "undef" || echo "define")" \
      ) >> "include/mbedtls/mbedtls_config.h" \
     ]===]
-    if target == "posix" then
-        -- no bullshit needed
-    elseif target == "windoof" then
-        mbedtls.makeShell = mbedtls.makeShell .. [===[ \
-          && export WINDOWS_BUILD=1 \
-          && export CC=${HOST:?}-gcc \
-          && export LD=${HOST:?}-ld \
-          && export AR=${HOST:?}-ar \
-        ]===]
-    else error("TODO_JZYD0SH8ivqjGf8f "..target) end
+	mbedtls.makeShell = mbedtls.makeShell
+		..' && export CC=${HOST:?}-gcc' .."\\\n"
+		..' && export LD=${HOST:?}-ld' .."\\\n"
+		..' && export AR=${HOST:?}-ar' .."\\\n"
+	if target == "windoof" then
+		-- I HATE those FU**ING BULLSHIT systems!!
+		mbedtls.makeShell = mbedtls.makeShell
+			..' && export WINDOWS_BUILD=1' .."\\\n"
+	end
     mbedtls.makeShell = mbedtls.makeShell .. [===[ \
   && make -e -j${MAKE_JOBS:?} lib $(test "${NDEBUG:?}" -ne 0 || echo "DEBUG=1") \
   && mkdir build build/include build/lib \
@@ -321,12 +475,52 @@ function defineGLFW()
 end
 
 
+-- WARN: WorkInProgress!
+-- [building](https://gitlab.gnome.org/GNOME/gtk/-/blob/main/README.md?ref_type=heads#building-and-installing)
+function defineGtk()
+	local m = newModule()
+	m.name = "gtk"
+	m.version = version_gtk
+	m.ndebug = ndebug_gtk
+	--m.dependsByNm = { "glib", "gdkpixbuf", "gobject-introspection", "cairo", "pango", "epoxy",
+	--	"graphene", "xkb-common" }
+	m.pkgsToAdd = {
+		-- build tools
+		"python3", "meson", "ninja",
+		-- X11
+		"Xlib", "xrandr", "xrender", "xi", "xext", "xfixes", "xcursor", "xdamage", "xcomposite",
+		-- Wayland
+		"Wayland-client", "Wayland-protocols", "Wayland-cursor", "Wayland-EGL",
+	}
+	m.environ:add("cacheDir", envCACHEDIR)
+	m.dloads:add{
+		url = "https://github.com/GNOME/gtk/archive/refs/tags/".. m.version ..".tar.gz",
+		dstFile = envCACHEDIR .."/src/".. m.name .."-".. m.version ..".tgz",
+	}
+	m.makeShell = [===[true \
+	  && printf 'WARN: this script is likely non-functional!\n' \
+	  && rm -rf build \
+	  && meson setup --prefix "${PWD:?}/install-root" build \
+	  && meson compile -Cbuild \
+	  && `#meson test -Cbuild` \
+	  && meson install -Cbuild \
+	  && TODO_JyySq5LoesibzCLq create bundle \
+	]===]
+	m:verifyAndFreeze()
+	return m
+end
+
+
 function defineSqlite()
     local sqlite = newModule()
     sqlite.name = "sqlite"
     sqlite.version = version_sqlite
     sqlite.ndebug = ndebug_sqlite
-    sqlite.pkgsToAdd = { "tcl" }
+    sqlite.pkgsToAdd = {
+		"tcl",
+		--[[required bcause build uses FUCKING STUPID TOOLS]]
+		"gcc", "libc6-dev",
+	}
     sqlite.environ:add("SUDO", envSUDO)
     sqlite.dloads:add{
         url = "https://github.com/sqlite/sqlite/archive/refs/tags/version-".. sqlite.version ..".tar.gz",
@@ -336,35 +530,39 @@ function defineSqlite()
       && tar --strip-components 1 -xf "${SRCTAR:?}" \
       && mkdir build \
     ]===]
-    if target == "posix" then
-        sqlite.makeShell = sqlite.makeShell .. [===[ \
-          && ./configure --prefix=${PWD:?}/build \
-          && make -e clean && make -e -j${MAKE_JOBS:?} && make -e install \
-        ]===]
-    elseif target == "windoof" then
-        sqlite.makeShell = sqlite.makeShell .. [===[ \
-          && `# WTF?!? What fu**ing bullshit is this?!? Why do people produce so ugly shit? ` \
-          && $SUDO apt install -y --no-install-recommends gcc libc6-dev \
-          && ./configure --prefix=${PWD:?}/build --host=${HOST:?} \
-               CC=${HOST:?}-gcc BEXE=.exe config_TARGET_EXEEXT=.exe \
-          && rm -f mksourceid && ln -s mksourceid.exe mksourceid \
-          && make -e clean \
-          && make -e -j${MAKE_JOBS:?} BCC=gcc\
-          && make -e install \
-          && $SUDO apt purge -y gcc libc6-dev `# Cleanup again that Fu**ing shit! ` \
-          && (cd build && rm -rf lemon* mksourceid lib/pkgconfig lib/*.la) \
-        ]===]
-    else error("ENOTSUP: "..target) end
-    sqlite.makeShell = sqlite.makeShell .. [===[ \
-      && cp README.md LICENSE.md VERSION build/. \
-      && (cd build \
-          && rm -rf lib/libsqlite3.la lib/pkgconfig \
-          && find -not -name MD5SUM -type f -exec md5sum -b {} + > MD5SUM \
-          && tar --owner=0 --group=0 -cz * > "${DSTTAR:?}" \
-         ) \
-    ]===]
-    sqlite:verifyAndFreeze()
-    return sqlite
+	sqlite.makeShell = sqlite.makeShell
+		..' && export CC="${HOST_?}"gcc' .." \\\n"
+	if target == "windoof" then -- FUUCKKKK THIS SHITTTT systemss!!!
+		sqlite.makeShell = sqlite.makeShell
+			..' && `# WTF?!? What fu**ing BS is this?!? Why do people produce so'
+			..	' ugly shit systems? `' .." \\\n"
+			..' && $SUDO apt install -y --no-install-recommends gcc libc6-dev' .." \\\n"
+			..' && ./configure --prefix=${PWD:?}/build --host=${HOST:?}' .." \\\n"
+			..'      CC=${CC:?} BEXE=.exe config_TARGET_EXEEXT=.exe' .." \\\n"
+			..' && rm -f mksourceid && ln -s mksourceid.exe mksourceid' .." \\\n"
+			..' && make -e clean' .." \\\n"
+			..' && make -e -j${MAKE_JOBS:?} BCC=gcc ' .." \\\n"
+			..' && make -e install' .." \\\n"
+			..' && $SUDO apt purge -y gcc libc6-dev `# Cleanup again that Fu**ing shit! `' .." \\\n"
+			..' && (cd build && rm -rf lemon* mksourceid lib/pkgconfig lib/*.la)' .." \\\n"
+	else
+		sqlite.makeShell = sqlite.makeShell
+			..' && printf "CC:${CC:?}, HOST:${HOST:?}, HOST_:${HOST_:?}, TRIPLET:${TRIPLET:?}\n"' .." \\\n"
+			..' && ./configure --prefix=${PWD:?}/build --host=${HOST:?}'
+			..	' CC=${CC:?} ' .." \\\n"
+			..' && printf "CC:${CC:?}, HOST:${HOST:?}, HOST_:${HOST_:?}, TRIPLET:${TRIPLET:?}\n"' .." \\\n"
+			..' && make -e clean && make -e -j${MAKE_JOBS:?} BCC=gcc && make -e install' .." \\\n"
+			..' && printf "CC:${CC:?}, HOST:${HOST:?}, HOST_:${HOST_:?}, TRIPLET:${TRIPLET:?}\n"' .." \\\n"
+	end
+	sqlite.makeShell = sqlite.makeShell
+		..[=[ && cp README.md LICENSE.md VERSION build/. ]=].."\\\n"
+		..[=[ && (cd build ]=].."\\\n"
+		..[=[     && rm -rf lib/libsqlite3.la lib/pkgconfig ]=].." \\\n"
+		..[=[     && find -not -name MD5SUM -type f -exec md5sum -b {} + > MD5SUM ]=].."\\\n"
+		..[=[     && tar --owner=0 --group=0 -cz * > "${DSTTAR:?}" ]=].."\\\n"
+		..[=[    ) ]=].."\\\n"
+	sqlite:verifyAndFreeze()
+	return sqlite
 end
 
 
@@ -382,21 +580,22 @@ function defineZlib()
       && tar --strip-components 1 -xf "${SRCTAR:?}" \
       && mkdir build \
     ]===]
-    if target == "posix" then
-        zlib.makeShell = zlib.makeShell ..[===[ \
-          && ./configure --prefix="$(pwd)/build/" \
-          && make -j${MAKE_JOBS:?} && make install \
-        ]===]
-    elseif target == "windoof" then
-        zlib.makeShell = zlib.makeShell ..[===[ \
-          && export CC=${HOST_:?}gcc AR=${HOST_:?}ar STRIP=${HOST_:?}strip \
-          && export DESTDIR=./build BINARY_PATH=/bin INCLUDE_PATH=/include LIBRARY_PATH=/lib \
-          && sed -i "s;^PREFIX =.\*\$;;" win32/Makefile.gcc \
-          && make -e -j${MAKE_JOBS:?} -fwin32/Makefile.gcc PREFIX=${HOST_:?} \
-          && make -e -fwin32/Makefile.gcc install PREFIX=${HOST_:?} \
-          && unset DESTDIR BINARY_PATH INCLUDE_PATH LIBRARY_PATH \
-        ]===]
-    else error(target) end
+	zlib.makeShell = zlib.makeShell
+		..' && export CC=${HOST_:?}gcc'
+		..' && export AR=${HOST_:?}ar'
+		..' && export STRIP=${HOST_:?}strip'
+	if target == "windoof" then -- FUCK THOSE ANNOYING BS SYSTEMS!!
+		zlib.makeShell = zlib.makeShell
+			..[=[ && export DESTDIR=./build BINARY_PATH=/bin INCLUDE_PATH=/include LIBRARY_PATH=/lib ]=].."\\\n"
+			..[=[ && sed -i "s;^PREFIX =.\*\$;;" win32/Makefile.gcc ]=].."\\\n"
+			..[=[ && make -e -j${MAKE_JOBS:?} -fwin32/Makefile.gcc PREFIX=${HOST_:?} ]=].."\\\n"
+			..[=[ && make -e -fwin32/Makefile.gcc install PREFIX=${HOST_:?} ]=].."\\\n"
+			..[=[ && unset DESTDIR BINARY_PATH INCLUDE_PATH LIBRARY_PATH ]=].."\\\n"
+	else
+		zlib.makeShell = zlib.makeShell
+			..[=[ && ./configure --prefix="$(pwd)/build/" ]=].."\\\n"
+			..[=[ && make -j${MAKE_JOBS:?} && make install ]=].."\\\n"
+	end
     zlib.makeShell = zlib.makeShell ..[===[ \
       && cp README build/. \
       && (cd build && rm -rf lib/pkgconfig) \
@@ -489,7 +688,7 @@ function newModule()
 end
 
 
-function collectPkgsToAddOverall()
+function collectPkgsToAddOverallv1()
     assert(not pkgsToAddMerged)
     local numPkgsMerged = 0
     pkgsToAddMerged = {}
@@ -562,7 +761,7 @@ function writeModulesPrepare( dst )
 end
 
 
-function writeModulesMake( dst )
+function writeModulesMake( dst, isAcceptMod )
     for k, mod in pairs(modulesToMake) do
         assert(type(k) == "number", k)
         assert(type(mod) == "table", mod)
@@ -570,6 +769,7 @@ function writeModulesMake( dst )
         local     name,     version
             = mod.name, mod.version
         assert(name and version)
+		if isAcceptMod and not isAcceptMod(name) then goto nextMod end
         local srcTar = name ..'-'.. version ..'.t__'
         local dstMd5 = name ..'-'.. version ..'.md5'
         local dstTar = name ..'-'.. version ..'+${TRIPLET:?}'
@@ -583,8 +783,6 @@ function writeModulesMake( dst )
             ..'     && export DSTTAR="'.. envCACHEDIR ..'/dst/'.. dstTar ..'" \\\n'
             ..((mod.ndebug ~= 0)and'     && export NDEBUG=1 \\\n'or'')
             .."")
-        dst:write('     && export "HOST='..  envHOST  ..'" \\\n')
-        dst:write('     && export "HOST_='.. envHOST_ ..'" \\\n')
         for env, _ in pairs(mod.environ) do
             assert(type(env) == "table")
             assert(type(env.k) == "string", env.k)
@@ -605,6 +803,7 @@ function writeModulesMake( dst )
             ..' && cp -t "${WORKDIR:?}/dist/." "'.. envCACHEDIR ..'/dst/'.. dstTar ..'" \\\n'
             ..' && cp -t "${WORKDIR:?}/dist/." "'.. envCACHEDIR ..'/md5/'.. dstMd5 ..'" \\\n'
             .."")
+		::nextMod::
     end
 end
 
@@ -655,16 +854,339 @@ function TODO_EgXYTUrb6fVdv5wr()
 end
 
 
-function main()
+function fSrFYCeG8WanFO4Bj( app )
     local dst = io.stdout
     TODO_EgXYTUrb6fVdv5wr()
     defineWhatToBuild()
-    collectPkgsToAddOverall()
+    collectPkgsToAddOverallv1()
     dst:write("#!/bin/sh\nset -e \\\n")
     writeSystemSetupToDst(dst)
     writeModulesPrepare(dst)
     writeModulesMake(dst)
     dst:write("\n")
+end
+
+
+function aptUpdate( app )
+	log:write("[INFO ] aptUpdate ...\n")
+	local cmd = getSudoCmd(app) .." apt update"
+	local ok, etyp, code = os.execute(qemuSshT(app).." "..shEsc(cmd))
+	if not ok then error(etyp.." "..code)end
+	log:write("[INFO ] aptUpdate DONE\n")
+end
+
+
+function aptInstallShared( app )
+	log:write("[INFO ] aptInstallShared ...\n")
+	local cmd = "true"
+		.." && ".. getSudoCmd(app) .." apt install --no-install-recommends -y"
+	for _, pkgNm in pairs(table_sort(keysAsArr(app.pkgsShared))) do
+		assert(pkgNm ~= "gcc", "gcc")  assert(pkgNm ~= "libc-dev", "libc-dev")
+		assert(pkgNm ~= "libc6-dev", "libc6-dev")
+		cmd = cmd .." ".. pkgNm
+	end
+	local ok, etyp, code = os.execute(qemuSshT(app).." "..shEsc(cmd))
+	if not ok then error(etyp.." "..code)end
+	log:write("[INFO ] aptInstallShared DONE\n")
+end
+
+
+function aptInstallForTripl( app, tripl )
+	log:write("[INFO ] aptInstallForTripl ...\n")
+	local cmd = "true"
+		.." && ".. getSudoCmd(app) .." apt install --no-install-recommends -y"
+	-- TODO refactor to config
+	if tripl == "x86_64-linux-gnu" then
+		cmd = cmd 
+			..[=[ $(apt list|grep -E 'gcc/.* 4:12\.'|sed -E 's_^([^/]+)/.*$_\1_'||printf 'ERROR: gcc NOT FOUND')]=]
+			.." libc6-dev"
+	elseif tripl == "x86_64-w64-mingw32" then
+		cmd = cmd
+			..[=[ $(apt list|grep -E 'gcc-mingw-w64-x86-64-win32(-runtime)?/.* 12\.'|sed -E 's_^([^/]+)/.*$_\1_'||printf 'ERROR: gcc-mingw-w64-x86-64-win32 NOT FOUND')]=]
+	elseif tripl == "aarch64-linux-gnu" then
+		cmd = cmd
+			..[=[ $(apt list|grep -E 'gcc-aarch64-linux-gnu/.* 4:12\.'|sed -E 's_^([^/]+)/.*$_\1_'||printf 'ERROR: gcc-mingw-w64-x86-64-win32 NOT FOUND')]=]
+			.."   libc6-dev-arm64-cross"
+		-- GRRRRRRRRRRRRRRRR!!!!!! Why is this only needed for aarch64?!? FUCK
+		-- this annoying inconsistency bullshit!!
+		cmd = cmd
+			.." && test -e /usr/bin/aarch64-linux-gnu-gcc"
+			.." || sudo ln -s /usr/bin/aarch64-linux-gnu-gcc-12 /usr/bin/aarch64-linux-gnu-gcc"
+	else
+		error(tripl)
+	end
+	local ok, etyp, code = os.execute(qemuSshT(app).." "..shEsc(cmd))
+	if not ok then error(etyp.." "..code)end
+	log:write("[INFO ] aptInstallForTripl DONE\n")
+end
+
+
+function aptInstallForLib( app, tripl, libNm )
+	log:write("[INFO ] aptInstallForLib ...\n")
+	local ok
+	local cmd = "true"
+		.." && ".. getSudoCmd(app) .." apt install --no-install-recommends -y"
+	local pkgToAddList = keysAsArr(getPksToAddByLibNm(app, libNm, tripl))
+	if #pkgToAddList == 0 then goto endFn end
+	for _, pkgNm in ipairs(table_sort(pkgToAddList)) do
+		cmd = cmd .." ".. pkgNm
+	end
+	ok, etyp, code = os.execute(qemuSshT(app).." "..shEsc(cmd))
+	if not ok then error(etyp.." "..code)end
+::endFn::
+	log:write("[INFO ] aptInstallForLib DONE\n")
+end
+
+
+function downloadLibPrerequisites( app, tripl, libNm )
+	do
+		-- TODO cache those somewhere (eg on host workdir?)
+		log:write("[INFO ] downloadLibPrerequisites ...\n")
+		local cmd = "true"
+		local dloadSet = getDloadsByLibNm(app, tripl, libNm)
+		local dloadArr = table_sort(keysAsArr(dloadSet),function(a,b)return a.dstFile<b.dstFile end)
+		if #dloadArr == 0 then goto endFn end
+		for _, dload in pairs(dloadArr) do
+			cmd = cmd ..""
+				.." && printf 'Dload  %s\\n' ".. shEsc(dload.dstFile)
+				..' && mkdir -p "$(dirname '.. shEsc(dload.dstFile) ..')"'
+				..' && curl -Lo '.. shEsc(dload.dstFile) ..' '.. shEsc(dload.url) ..''
+				-- TODO hash-verify dload
+		end
+		local ok, etyp, code = os.execute(qemuSshT(app).." "..shEsc(cmd))
+		if not ok then error(etyp.." "..code)end
+	end
+::endFn::
+	log:write("[INFO ] downloadLibPrerequisites DONE\n")
+end
+
+
+function makeLib( app, tripl, libNm )
+	log:write("[INFO ] makeLib ...\n")
+	local libVersion = assert(app.versionByLibName[libNm]);
+	local md5sumBuf = getMd5sumsByLibNm(app, libNm)
+	local cmd = "true"
+		.." && export TRIPLET='".. tripl .."'"
+		.." && export HOST='".. tripl .."'"
+		.." && export HOST_='".. tripl .."-'"
+		.." && export MAKE_JOBS=$(nproc)"
+		..' && export WORKDIR="${PWD:?}"/work'
+		..' && mkdir -p "${WORKDIR:?}" /var/tmp/dst /var/tmp/md5'
+		..' && printf %s '.. shEsc(md5sumBuf) ..' >/var/tmp/md5/'.. libNm ..'-'.. libVersion ..'.md5'
+	writeModulesMake(
+		{write=function(t,b,n)assert(not n)cmd=cmd..b end},
+		function(nm)return nm==libNm end)
+	log:write("[DEBUG] CMD: ".. cmd .."\n\n")
+	local ok, etyp, code = os.execute(qemuSshT(app).." "..shEsc(cmd))
+	if not ok then error(etyp.." "..code)end
+	log:write("[INFO ] makeLib DONE\n")
+end
+
+
+function copyBuildResultOutToHost( app, tripl, libNm )
+	log:write("[INFO ] copyBuildResultOutToHost ...\n")
+	local libVersion = assert(app.versionByLibName[libNm])
+	local tgzFile = libNm .."-".. libVersion .."+".. tripl ..".tgz"
+	local ok, etyp, code = os.execute(qemuSshT(app) .." "
+		.. shEsc("true"
+		..	" && cd /var/tmp/dst"
+		..	" && tar c ".. shEsc(tgzFile)
+		..	"")
+		.." | tar x")
+	if not ok then error(etyp.." "..code)end
+	local ok, etyp, code = os.execute(qemuSshT(app) .." "
+		.. shEsc("true"
+		..	" && cd /var/tmp/dst"
+		..	" && md5sum -b ".. shEsc(tgzFile)
+		..	"")
+		.." > ".. shEsc(libNm.."-"..libVersion.."+".. tripl ..".md5"))
+	if not ok then error(etyp.." "..code.." "..libNm.." "..tripl)end
+	log:write("[INFO ] copyBuildResultOutToHost DONE\n")
+end
+
+
+function vmDiskCreate( app, dst, baseImg )
+	assert(false
+		or dst=="hda-shared.qcow2"
+		or dst=="hda-x86_64-linux-gnu.qcow2"
+		or dst=="hda-x86_64-w64-mingw32.qcow2"
+		or dst=="hda-aarch64-linux-gnu.qcow2"
+		or dst=="hda-cJSON.qcow2"
+		or dst=="hda-expat.qcow2"
+		or dst=="hda-lua.qcow2"
+		or dst=="hda-mbedtls.qcow2"
+		or dst=="hda-nuklear.qcow2"
+		or dst=="hda-sqlite.qcow2"
+		or dst=="hda-zlib.qcow2"
+		, dst)
+	log:write("[INFO ] vmDiskCreateShared ...\n")
+	local cmd = ""
+		.."qemu-img create -b ".. shEsc(baseImg) .." -F qcow2 -f qcow2 ".. shEsc(dst)
+	local ok, etyp, code = os.execute(cmd)
+	if not ok then error(etyp.." "..code)end
+	log:write("[INFO ] vmDiskCreateShared DONE\n")
+end
+
+
+function vmDiskDeleteForLib( app, img )
+	assert(type(app)=="table", "app")
+	assert(type(img)=="string", "img")
+	assert(img:sub(1, 4) == "hda-", img .."(".. img:sub(1, 5) ..")")
+	assert(img:sub(-6) == ".qcow2", img)
+	log:write("[INFO ] vmDiskDeleteForLib ...\n")
+	if isVmRunning(app) then error("Refuse to delete disk of running VM") end
+	local cmd = "true"
+		.." && rm ".. img
+	local ok, etyp, code = os.execute(cmd)
+	if not ok then error(etyp.." "..code)end
+	log:write("[INFO ] vmDiskDeleteForLib DONE\n")
+end
+
+
+function isVmRunning( app )
+	local isSshReachable, isMonitorReachable
+	-- probe guest ssh
+	local ok, etyp, code = os.execute("true"
+		.." && ".. qemuSshT(app) .." true || { e=$?;sleep 1;exit ${e:?} ;} && exit 42")
+	if not ok and code == 42 then
+		isSshReachable = true
+	elseif not ok then
+		log:write("[DEBUG] ".. etyp .." ".. code .."\n")
+		return false
+	end
+	-- probe qemu monitor
+	local ok, etyp, code = os.execute("true"
+		.." && sleep 1 | nc ".. qemuMonitorForNcat(app) .." >/dev/null"
+		.."")
+	if not ok then
+		log:write("[DEBUG] ".. etyp .." ".. code .."\n")
+	else
+		isMonitorReachable = true
+	end
+	local ret = (isSshReachable and isMonitorReachable)
+	log:write("[DEBUG]"
+		.." isSshReachable=".. tostring(isSshReachable)
+		..", isMonitorReachable=".. tostring(isMonitorReachable)
+		..", isVmRunning=".. tostring(ret) .."\n")
+	return ret
+end
+
+
+function isVmStopped( app )
+	local isMonitorReachable
+	local ok, etyp, code = os.execute("true"
+		.." && sleep 1 | nc ".. qemuMonitorForNcat(app) .." >/dev/null"
+		.."")
+	if not ok then
+		log:write("[DEBUG] ".. etyp .." ".. code .."\n")
+	else
+		isMonitorReachable = true
+	end
+	local ret = (not isMonitorReachable)
+	log:write("[DEBUG]"
+		..", isMonitorReachable=".. tostring(isMonitorReachable)
+		..", isVmStopped=".. tostring(ret) .."\n")
+	return ret
+end
+
+
+function vmStart( app, img )
+	assert(type(app)=="table")
+	assert(type(img)=="string", "img")
+	assert(img:sub(1, 4) == "hda-", img .."(".. img:sub(1, 5) ..")")
+	assert(img:sub(-6) == ".qcow2", img)
+	log:write("[INFO ] vmStart ".. img .." ...\n")
+	local pidFile = "/tmp/uBs9uii-".. shEsc(img)
+	local cmd = 'qemu-system-x86_64'
+		..' -accel kvm -m size=2G -smp cores=$(nproc)'
+		..' -device e1000,netdev=n0'
+		..' -netdev user,id=n0,hostfwd=tcp:127.0.0.1:'.. vmSshPort(app) ..'-:22'
+		..' -hda '.. shEsc(img)
+		..' -display none -monitor '.. shEsc(app.qemuMonitorUri) ..',server,nowait'
+	local ok, etyp, code = os.execute(""
+		..'{ '.. cmd ..';rm '.. shEsc(pidFile) ..' ;} & echo $! > '.. shEsc(pidFile) ..'')
+	if not ok then error(etyp.." "..code)end
+	for i=0, 6 do
+		if isVmRunning(app) then break end
+		if i >= 42 then error("Why VM unreachable via SSH?") end
+		local ok, e, c = os.execute("sleep 5") if not ok then error(e.." "..c)end
+	end
+	log:write("[INFO ] vmStart DONE\n")
+end
+
+
+function vmStop( app )
+	assert(type(app)=="table")
+	log:write("[INFO ] vmStop ...\n")
+	local cmd = "true"
+		--.." && (printf 'system_powerdown\n' && sleep 1) | nc ".. qemuMonitorForNcat(app)
+		.." && ".. qemuSshT(app) .."sudo poweroff"
+	local ok, etyp, code = os.execute(cmd)
+	if not ok then error(etyp.." "..code)end
+	for i=0, 42 do
+		if isVmStopped(app) then break end
+		if i >= 40 then error("Failed to ACPI shutdown VM") end
+		local ok, b, c = os.execute("sleep 1")if not ok then error(b.." "..c)end
+	end
+	log:write("[INFO ] vmStop DONE\n")
+end
+
+
+function fRd3FLCII8241ChFlexperimental( app )
+	TODO_EgXYTUrb6fVdv5wr() -- TODO get rid of this side-effect producer
+	defineWhatToBuild() -- TODO get rid of this side-effect producer
+	if isVmRunning(app) or not isVmStopped(app) then error("Seems there's already some VM running")end
+	--vmDiskCreate(app, "hda-shared.qcow2", assert(app.vmBaseImg))
+	--vmStart(app, "hda-shared.qcow2")
+	--aptUpdate(app)
+	--aptInstallShared(app)
+	--vmStop(app)
+	assert(not isVmRunning(app))
+	for _, tripl in ipairs(app.tripls) do
+		-- TODO get rid of this TERRIBLE hack
+		target = ((tripl == "x86_64-w64-mingw32")and"windoof"or"posix")
+		defineWhatToBuild() -- Wurgh.. need re-run bcause 'target' has changed.
+		-- EndOf TODO
+		--vmDiskCreate(app, qemuImgNmByTripl(app, tripl), "hda-shared.qcow2")
+		--vmStart(app, qemuImgNmByTripl(app, tripl))
+		--aptInstallForTripl(app, tripl)
+		--vmStop(app, qemuImgNmByTripl(app, tripl))
+		assert(not isVmRunning(app))
+		for _, libNm in ipairs(table_sort(getAllLibNames(app))) do
+			log:write("[INFO ] Begin '".. libNm .."' as ".. tripl .."\n")
+			vmDiskCreate(app, qemuImgNmByLibNm(app, libNm), qemuImgNmByTripl(app, tripl))
+			vmStart(app, qemuImgNmByLibNm(app, libNm))
+			aptInstallForLib(app, tripl, libNm)
+			downloadLibPrerequisites(app, tripl, libNm)
+			makeLib(app, tripl, libNm)
+			copyBuildResultOutToHost(app, tripl, libNm)
+			vmStop(app)
+			assert(not isVmRunning(app))
+			vmDiskDeleteForLib(app, qemuImgNmByLibNm(app, libNm))
+			log:write("[INFO ] End   '".. libNm .."' as ".. tripl .."\n")
+		end
+		--vmDiskDeleteForLib(app, qemuImgNmByTripl(app, tripl))
+	end
+	--vmDiskDeleteForLib(app, "hda-shared.qcow2")
+end
+
+
+function main()
+	local app = setmetatable({
+		tripls = false,
+		versionByLibName = false,
+		vmBaseImg = false,
+		vmSshPort = false,
+		qemuMonitorUri = false,
+		-- Set of Architecture INDEPENDENT package names.
+		pkgsShared = false,
+	}, {
+		__index = function(t, k, _)_=rawget(t,k)return(_==nil and error(k)or _)end,
+		__newindex = function(t, k, v)rawset(t,k,rawget(t,k)==nil and error(k)or v)end,
+	})
+	loadConfig(app)
+	fRd3FLCII8241ChFlexperimental(app)
+	--fSrFYCeG8WanFO4Bj( app )
 end
 
 
