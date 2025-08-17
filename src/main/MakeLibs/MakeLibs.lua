@@ -51,19 +51,18 @@ local log = io.stderr
 function loadConfig( app )
 	app.vmBaseImg = "/home/andreas/tmp/14329cf7db9ced798bd03f0f4d476575.qcow2"
 	app.versionByLibName = {
---		["cJSON"     ] = version_cJSON,
---		["expat"     ] = version_expat,
---		["lua"       ] = version_lua,
---		["mbedtls"   ] = version_mbedtls,
---		["nuklear"   ] = version_nuklear,
---		-- TODO DoesNotWorkYet ["GLFW"      ] = "3.4"     ,
---		-- TODO DoesNotWorkYet ["gtk"       ] = "4.19.2"  ,
---		["sqlite"    ] = version_sqlite,
+		["cJSON"     ] = version_cJSON,
+		["expat"     ] = version_expat,
+		["lua"       ] = version_lua,
+		["mbedtls"   ] = version_mbedtls,
+		["nuklear"   ] = version_nuklear,
+		-- TODO DoesNotWorkYet ["GLFW"      ] = "3.4"     ,
+		-- TODO DoesNotWorkYet ["gtk"       ] = "4.19.2"  ,
+		["sqlite"    ] = version_sqlite,
 		["zlib"      ] = version_zlib,
 	}
 	app.tripls = {
-		"aarch64-linux-gnu"
-		-- TODO "x86_64-linux-gnu", "x86_64-w64-mingw32", "aarch64-linux-gnu"
+		"x86_64-linux-gnu", "x86_64-w64-mingw32", "aarch64-linux-gnu"
 	}
 	app.vmSshPort = 2229
 	app.qemuMonitorUri = "telnet:127.0.0.1:"..(app.vmSshPort + 10)
@@ -323,7 +322,7 @@ function defineLua()
 			..' && export CFLAGS="$CFLAGS -DLUA_USE_POSIX"' .." \\\n"
 			..' && make -e -j${MAKEJOBS}'
 			..	' CC="${HOST_:?}"gcc'
-			..	' AR="ar rcu"'
+			..	' AR="${HOST_:?}ar rcu"'
 			..	' RANLIB="${HOST_:?}"ranlib'
 			..	' \\\n'
 			..' && cp -t build/. README'..' \\\n'
@@ -1136,21 +1135,21 @@ function fRd3FLCII8241ChFlexperimental( app )
 	TODO_EgXYTUrb6fVdv5wr() -- TODO get rid of this side-effect producer
 	defineWhatToBuild() -- TODO get rid of this side-effect producer
 	if isVmRunning(app) or not isVmStopped(app) then error("Seems there's already some VM running")end
-	--vmDiskCreate(app, "hda-shared.qcow2", assert(app.vmBaseImg))
-	--vmStart(app, "hda-shared.qcow2")
-	--aptUpdate(app)
-	--aptInstallShared(app)
-	--vmStop(app)
+	vmDiskCreate(app, "hda-shared.qcow2", assert(app.vmBaseImg))
+	vmStart(app, "hda-shared.qcow2")
+	aptUpdate(app)
+	aptInstallShared(app)
+	vmStop(app)
 	assert(not isVmRunning(app))
 	for _, tripl in ipairs(app.tripls) do
 		-- TODO get rid of this TERRIBLE hack
 		target = ((tripl == "x86_64-w64-mingw32")and"windoof"or"posix")
 		defineWhatToBuild() -- Wurgh.. need re-run bcause 'target' has changed.
 		-- EndOf TODO
-		--vmDiskCreate(app, qemuImgNmByTripl(app, tripl), "hda-shared.qcow2")
-		--vmStart(app, qemuImgNmByTripl(app, tripl))
-		--aptInstallForTripl(app, tripl)
-		--vmStop(app, qemuImgNmByTripl(app, tripl))
+		vmDiskCreate(app, qemuImgNmByTripl(app, tripl), "hda-shared.qcow2")
+		vmStart(app, qemuImgNmByTripl(app, tripl))
+		aptInstallForTripl(app, tripl)
+		vmStop(app, qemuImgNmByTripl(app, tripl))
 		assert(not isVmRunning(app))
 		for _, libNm in ipairs(table_sort(getAllLibNames(app))) do
 			log:write("[INFO ] Begin '".. libNm .."' as ".. tripl .."\n")
@@ -1165,9 +1164,9 @@ function fRd3FLCII8241ChFlexperimental( app )
 			vmDiskDeleteForLib(app, qemuImgNmByLibNm(app, libNm))
 			log:write("[INFO ] End   '".. libNm .."' as ".. tripl .."\n")
 		end
-		--vmDiskDeleteForLib(app, qemuImgNmByTripl(app, tripl))
+		vmDiskDeleteForLib(app, qemuImgNmByTripl(app, tripl))
 	end
-	--vmDiskDeleteForLib(app, "hda-shared.qcow2")
+	vmDiskDeleteForLib(app, "hda-shared.qcow2")
 end
 
 
