@@ -988,13 +988,16 @@ function copyBuildResultOutToHost( app, tripl, libNm )
 	local tgzFile = libNm .."-".. libVersion .."+".. tripl ..".tgz"
 	local ok, etyp, code = os.execute(qemuSshT(app) .." "
 		.. shEsc("true"
-		..	" && cd /var/tmp/dst"
-		..	" && tar c ".. shEsc(tgzFile)
+		..	" && tar -c"
+		..		" -C /var/tmp/src ".. shEsc(libNm.."-"..libVersion.."*")
+		..		" -C /var/tmp/dst ".. shEsc(tgzFile)
 		..	"")
 		.." | tar x")
 	if not ok then error(etyp.." "..code)end
 	local ok, etyp, code = os.execute(qemuSshT(app) .." "
 		.. shEsc("true"
+		..	" && cd /var/tmp/src"
+		..	" && md5sum -b ".. shEsc(libNm.."-"..libVersion.."*")
 		..	" && cd /var/tmp/dst"
 		..	" && md5sum -b ".. shEsc(tgzFile)
 		..	"")
