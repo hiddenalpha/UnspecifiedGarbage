@@ -43,3 +43,18 @@ Acquire::https::repo.domain.tld::Verify-Peer "false";
 Acquire::https::repo.domain.tld::Verify-Host "false";
 
 
+
+## Prime locally cached packages
+
+
+  && `# dload (incl deps) into default cache` \
+  && $SUDO apt install --download-only ${pkgNms:?} \
+
+
+  && `# dload (incl deps) into custom dir` \
+  && $SUDO apt install --download-only -o Dir::Cache=/path/to/custom/cache -o Dir::State::Lists=/path/to/custom/lists ${pkgNms:?}
+
+
+  && `# dload individual pkgs only (without deps)` \
+  && $SUDO apt download ${pkgNms:?} \
+

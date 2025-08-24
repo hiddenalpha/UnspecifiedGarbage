@@ -12,14 +12,19 @@ local gateleenVersion="2.1.23"
 
 
 function aptInstall( dst )
+	-- HINT: also install 'chromium' to run 'gateleen-hook-js' tests.
 	dst:write([=[
+  && pkgNms="curl maven nodejs npm redis openjdk-17-jre-headless patch" \
+  && $SUDO apt update \
+  && `# Cache priming` \
+  && $SUDO apt install --no-install-recommends -y --download-only ${pkgNms:?} \
+  && `# Actually installing them` \
   && `# wurgh... what a terrible hack! Unbelievable that there is no proper ` \
   && `# way to do this. The days of clean software are counted! From now on,` \
   && `# it will only become worse day by day.` \
   && $SUDO dpkg-divert --add --rename /sbin/start-stop-daemon \
   && $SUDO ln -fs /bin/true /sbin/start-stop-daemon \
-  && $SUDO RUNLEVEL=1 apt install --no-install-recommends -y \
-       curl maven nodejs npm redis openjdk-17-jre-headless patch \
+  && $SUDO RUNLEVEL=1 apt install --no-install-recommends -y ${pkgNms:?} \
   && $SUDO rm /sbin/start-stop-daemon \
   && $SUDO dpkg-divert --remove --rename /sbin/start-stop-daemon \
 ]=])
@@ -67,6 +72,7 @@ YXJ0ei52ZXJzaW9uPgo=
 EOF_xMV8eqhxI64v4aB3
 true \
   && patch < ../fixstuff.patch \
+  && export CHROME_BIN=/usr/bin/chromium \
   && mvn install -PpublicRepos -DskipTests -Dskip.installnodenpm -pl gateleen-hook-js \
   && mvn verify -PpublicRepos -DfailIfNoTests=false -pl '!gateleen-test,!gateleen-hook-js' \
       '-Dtest=!DeltaHandlerTest,!HookHandlerTest,!QueueCircuitBreakerCloseCircuitLuaScriptTests,!QueueCircuitBreakerGetAllCircuitsLuaScriptTests,!QueueCircuitBreakerHalfOpenCircuitsLuaScriptTests,!QueueCircuitBreakerReOpenCircuitLuaScriptTests,!QueueCircuitBreakerUpdateStatsLuaScriptTests,!RedisCacheStorageTest,!ReleaseLockLuaScriptTests,!RemoveExpiredQueuesLuaScriptTests,!StartQueueTimerLuaScriptTests' \
