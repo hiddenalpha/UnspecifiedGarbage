@@ -1,0 +1,18 @@
+#
+# ~/.config/vlc/vlcrc
+# On Broken systems try (TODO verify):  %AppData%/vlc/vlcrc
+#
+
+[equalizer] # Fuck LoudnessWar in EDM as good as possible
+equalizer-vlcfreqs=0
+equalizer-preamp=-20
+equalizer-bands=18 18 18 12 6 -3 -9 -15 -18 -18
+equalizer-2pass=0
+
+[spatializer] # TODO this is just CopyPasta
+#spatializer-roomsize=0.500000
+#spatializer-width=0.500000
+#spatializer-wet=0.400000
+#spatializer-dry=0.700000
+#spatializer-damp=0.900000
+
