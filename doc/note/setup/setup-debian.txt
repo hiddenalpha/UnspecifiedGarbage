@@ -105,7 +105,8 @@ Populate "/etc/environment" as described by "./etc-environment".
        `# basic UI (vim-gtk required for system clipboard)` \
        vim-gtk3 firefox-esr pcmanfm file-roller thunderbird chromium okular \
        `# pcmanfm requires gvfs to browse trashcan ` \
-       gvfs-backends gvfs-fuse \
+       `# HINT: DO NOT install this! it makes pcmanfm horribly slow! ` \
+       `#gvfs-backends gvfs-fuse` \
        `# software devel` \
        git sqlite3 manpages-dev gdb qemu-utils qemu-system-x86 qemu-system-arm wireshark samba \
        tigervnc-viewer jq universal-ctags binutils \
@@ -135,6 +136,8 @@ Populate "/etc/environment" as described by "./etc-environment".
        lm-sensors fancontrol exfat-fuse exfatprogs \
        `# dig, nslookup, nsupdate commands ` \
        bind9-dnsutils \
+       `# Some WiFi USB dongles need this one` \
+       `#firmware-misc-nonfree` \
        `# Others` \
        systemd-sysv bc rsync qrencode libxml2-utils adb \
        `# GPU ` \
