@@ -66,8 +66,15 @@ iface wlan0 inet static
 # [src](UnspecifiedGarbage/doc/note/wifi/wifi-AP.txt)
 interface=wlan0
 dhcp-range=192.168.66.101,192.168.66.199,48h
+dhcp-authoritative
+#server=/www.google.com/8.8.4.4
+#address=/pi-one.local/192.168.66.11
+#dhcp-option=option:ntp-server,0.0.0.0
 
-
+  && $SUDO apt purge systemd-timesyncd \
+  && $SUDO apt install --no-install-recommends ntp \
+  && $SUDO systemctl enable ntp \
+  && $SUDO systemctl start ntp \
 
   && $SUDO systemctl mask wpa_supplicant \
   && $SUDO systemctl stop wpa_supplicant \

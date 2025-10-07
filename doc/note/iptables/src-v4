@@ -17,12 +17,16 @@
 # Anti DoS attack
 #-A INPUT -p tcp --dport 1:1024 -m limit --limit 1/seconds --limit-burst 100 -j ACCEPT
 
-# DNS client
-#-A OUTPUT -p udp --dport 53 -m udp -j ACCEPT
+# DNS client (yep, some crazy edge cases need tcp too)
+#-A OUTPUT -p udp --dport 53 -j ACCEPT
 #-A INPUT  -p udp --sport 53 -m state --state ESTABLISHED,RELATED -j ACCEPT
-## Some crazy edge-cases need fallback to TCP mode:
 #-A OUTPUT -p tcp --dport 53 -j ACCEPT
 #-A INPUT  -p tcp --sport 53 -m state --state ESTABLISHED,RELATED -j ACCEPT
+# DNS server (on wlan1 only)
+#-A INPUT  -i wlan1 -p udp --dport 53 -j ACCEPT
+#-A OUTPUT -o wlan1 -p udp --sport 53 -m state --state ESTABLISHED,RELATED -j ACCEPT
+#-A INPUT  -i wlan1 -p tcp --dport 53 -j ACCEPT
+#-A OUTPUT -o wlan1 -p tcp --sport 53 -m state --state ESTABLISHED,RELATED -j ACCEPT
 
 # mDNS (zeroconf, bonjour)
 #-A INPUT  -p udp --sport 5353 --dport 5353 -j ACCEPT
@@ -172,6 +176,10 @@
 #-A OUTPUT -p tcp -m state --state RELATED,ESTABLISHED --match multiport --sports 137:139 -j ACCEPT
 #-A INPUT  -p tcp -m state --state NEW,ESTABLISHED     --dport 445 -j ACCEPT
 #-A OUTPUT -p tcp -m state --state RELATED,ESTABLISHED --sport 445 -j ACCEPT
+
+# MQTT Server
+#-A INPUT  -p tcp --dport 1883 -m state --state NEW,ESTABLISHED -j ACCEPT
+#-A OUTPUT -p tcp --dport 1883 -m state --state RELATED,ESTABLISHED -j ACCEPT
 
 # MsTeams/MsSkype clients (in addition to TCP 80 & 443)
 #-A OUTPUT -p udp --match multiport --dports 3478:3481  -j ACCEPT
