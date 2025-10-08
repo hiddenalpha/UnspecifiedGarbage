@@ -60,16 +60,8 @@ iface wlan0 inet static
     nohook wpa_supplicant
 
 
+See also "doc/note/dnsmasq/dnsmasq.txt" for DHCP and DNS.
 
-"/etc/dnsmasq/dnsmasq.conf"
-
-# [src](UnspecifiedGarbage/doc/note/wifi/wifi-AP.txt)
-interface=wlan0
-dhcp-range=192.168.66.101,192.168.66.199,48h
-dhcp-authoritative
-#server=/www.google.com/8.8.4.4
-#address=/pi-one.local/192.168.66.11
-#dhcp-option=option:ntp-server,0.0.0.0
 
   && $SUDO apt purge systemd-timesyncd \
   && $SUDO apt install --no-install-recommends ntp \

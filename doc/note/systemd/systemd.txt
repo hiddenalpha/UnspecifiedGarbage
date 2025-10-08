@@ -35,8 +35,9 @@ Setup a service on a per-user basis:
 
 ## Fix broken logging
 
-  StandardOutput=append:/var/log/foo/foo.out.log
-  StandardError=append:/var/log/foo/foo.err.log
+[Service]
+StandardOutput=null
+StandardError=append:/var/log/foo/foo.err.log
 
   Then configure "/etc/logrotate.d/foo":
 
