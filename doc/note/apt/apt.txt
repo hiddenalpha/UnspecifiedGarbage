@@ -1,4 +1,16 @@
 
+
+## Workaround stupid defaults
+
+  && $SUDO dpkg-divert --add --rename /sbin/start-stop-daemon \
+  && $SUDO ln -fs /bin/true /sbin/start-stop-daemon \
+  && $SUDO RUNLEVEL=1 DEBIAN_FRONTEND=noninteractive apt install --no-install-recommends -y ${pkgNms:?} \
+  && $SUDO rm /sbin/start-stop-daemon \
+  && $SUDO dpkg-divert --remove --rename /sbin/start-stop-daemon \
+
+
+
+
 ## Print why a package is installed
 
   apt-cache rdepends --no-suggests --no-conflicts --no-breaks --no-replaces \

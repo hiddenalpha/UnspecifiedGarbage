@@ -454,7 +454,7 @@ function makeTar( dst )
   && tar --owner=0 --group=0 --owner-map=tar-owners --group-map=tar-groups \
        -czf "${tarFile:?}" \
        README.md  LICENSE  NOTICE.md  VERSION  bin  conf  docs  etc  npm-artifacts  plugins \
-       plugins-bundled  public storybook  unpack  var \
+       plugins-bundled  public  storybook  var \
   && md5sum -b "${tarFile:?}" > "${md5File:?}" \
   && sha512sum -b "${tarFile:?}" > "${shaFile:?}" \
   && `# Note: compression was not worth it` \
