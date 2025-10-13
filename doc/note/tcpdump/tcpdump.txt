@@ -16,9 +16,9 @@ Tcpdump
 
 redis=6379, brox=7022, fluentd=7099
 
-  cd /usr/local/vertx/houston-storage-file && timeout --foreground -s INT 180 tcpdump -ni any -C 50M -W 999 -w houston-STAGE-tcp-`date -u +%Y%m%d-%H%M%S`.pcap "not port 443 and not port 6379 and not port 7022 and not port 7099" -z gzip
+  cd /usr/local/vertx/houston-storage-file && timeout --foreground -s INT 180 tcpdump -ni any -C 50 -W 999 -w houston-STAGE-tcp-`date -u +%Y%m%d-%H%M%S`.pcap "not port 443 and not port 6379 and not port 7022 and not port 7099" -z gzip
 
-  cd /tmp && timeout --foreground -s INT 180 tcpdump -ni any -C 50M -W 999 -w houston-prod-tcp-`date -u +%Y%m%d-%H%M%S`.pcap "not port 443 and not port 6379 and not port 7022 and not port 7099" -z gzip
+  cd /tmp && timeout --foreground -s INT 180 tcpdump -ni any -C 50 -W 999 -w houston-prod-tcp-`date -u +%Y%m%d-%H%M%S`.pcap "not port 443 and not port 6379 and not port 7022 and not port 7099" -z gzip
 
   ocprod exec -i "$(ocprod get pods|egrep ston-[1-9]|cut -f1 -d' ')" -- sh -c 'cd /tmp && tar c "houston-prod-tcp-20231114-165243.pcap*.gz"' > houston-prod-tcp-20231114-165243.pcap.gz.tar
 
@@ -69,7 +69,7 @@ Tips: "https://chrissanders.org/2018/06/large-captures4-filter-whittling/"
 
 ## Try dump kube-probes fully
 
-  timeout --foreground 900 tcpdump -nni any -w /tmp/houston-${PAISA_ENV:?}-tcp-$(date -u +%Y%m%d-%H%M%SZ)-%s.pcap -C 42M -W 42 -G 600 "host 10.127.73.1 and port 7012"
+  timeout --foreground 900 tcpdump -nni any -w /tmp/houston-${PAISA_ENV:?}-tcp-$(date -u +%Y%m%d-%H%M%SZ)-%s.pcap -C 42 -W 42 -G 600 "host 10.127.73.1 and port 7012"
 
 
 ## Extract hosts file from DNS traffic

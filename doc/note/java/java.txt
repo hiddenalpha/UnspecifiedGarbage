@@ -43,3 +43,17 @@ Java / JVM
   && `# show details (like existing recording sessions etc)` \
   && jcmd ${pid:?} JFR.check \
 
+
+
+
+## Inspect Memory Layout of java types
+
+  <dependency>                         <!-- TODO remove me -->
+    <groupId>org.openjdk.jol</groupId> <!-- TODO remove me -->
+    <artifactId>jol-core</artifactId>  <!-- TODO remove me -->
+    <version>0.10</version>            <!-- TODO remove me -->
+  </dependency>                        <!-- TODO remove me -->
+
+  System.out.println(org.openjdk.jol.info.ClassLayout.parseClass(TheClass.class).toPrintable());
+
+

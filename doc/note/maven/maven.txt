@@ -31,11 +31,11 @@ Huiii :) Works with MAVEN_OPTS:
 mvn help:evaluate -o -q -DforceStdout -Dexpression=project.version && echo
 
 ## Deploy paisa snapshot
-mvn deploy -DaltDeploymentRepository=artifactory-snapshots::default::https://artifactory.tools.pnet.ch/artifactory/libs-snapshot-local
+mvn deploy -DskipTests -DaltDeploymentRepository=artifactory-snapshots::default::https://artifactory.tools.post.ch/artifactory/libs-snapshot-local
 
 
 ## Deploy paisa release
-mvn deploy -Dcmake.generate.skip=true -Dcmake.compile.skip=true -DaltDeploymentRepository=artifactory-releases::default::https://artifactory.tools.pnet.ch/artifactory/libs-release-local
+mvn deploy -Dcmake.generate.skip=true -Dcmake.compile.skip=true -DaltDeploymentRepository=artifactory-releases::default::https://artifactory.tools.post.ch/artifactory/libs-release-local
 
 
 true \

@@ -189,7 +189,7 @@ function newMarkdownPrinter( app, dst )
             if msg.jiraNr then
                 dst:write("- [[".. msg.jiraNr .."](https://jira.post.ch/browse/".. msg.jiraNr ..")] ")
             else
-                dst:write("- [ NO-JIRA ] ")
+                dst:write("- [     NO-JIRA     ] ")
             end
             dst:write(msg.body)
             if msg.prNr then

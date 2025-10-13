@@ -255,13 +255,14 @@ Links (Aka argument amplifiers)
 - [API enum case](https://gitit.post.ch/projects/ISA/repos/trin/pull-requests/204/overview?commentId=440735)
 
 
-## Performance DOES matter
+## Performance "MATTERS!" or "is not an issue..."
 - [Thought OOM auf int](https://jira.post.ch/browse/SDCISA-19003)
 - [Preflux OOM](https://gitit.post.ch/projects/ISA/repos/isa-k8s-deployment/pull-requests/1045)
+- [Regularly connection closed error message on eagle](https://jira.post.ch/browse/SDCISA-20774)
 - [aws database HMS 2024](https://jira.post.ch/browse/SDCISA-16381)
 - [Performance gefühlt viel zu langsam in Wikkit bei Linienaufruf und Export erstellen](https://jira.post.ch/browse/SDCISA-16103)
 - "https://github.com/swisspush/gateleen/pull/456#discussion_r844865066"
-- [Performance Excuses Debunked](https://m.youtube.com/watch?v=x2EOOJg8FkA)
+- [Performance Excuses Debunked by casey muratori](https://m.youtube.com/watch?v=x2EOOJg8FkA)
 - [Is writing performant code too expensive?](https://www.youtube.com/watch?v=EpYr3T5VP6w&t=1109)
 - [Simple Code, High Performance](https://m.youtube.com/watch?v=Ge3aKEmZcqY&t=78)
 - [Houston Last führt zu Neustart](https://wikit.post.ch/x/HDV8T)
@@ -269,6 +270,7 @@ Links (Aka argument amplifiers)
 - [Preflux Garbage Collection issues](https://jira.post.ch/browse/SDCISA-4714)
 - [Preflux Gatherfacts läuft in Timeout](https://jira.post.ch/browse/SDCISA-8136)
 - [Performance Fahrplanimports](https://jira.post.ch/browse/SDCISA-11528)
+- [Beeble: Öffnen von make.log dauert sehr lange](https://jira.post.ch/browse/SDCISA-21085)
 - [Houston Optimize EnqueuePatrol](https://jira.post.ch/browse/SDCISA-2876)
 - [Update beim Fahrzeughersteller dauert zu lange](https://jira.post.ch/browse/SDCISA-9059)
 - [vortex too slow](https://jira.post.ch/browse/SDCISA-9990)
@@ -277,8 +279,7 @@ Links (Aka argument amplifiers)
 - [Jenkinsbuild too slow](https://jira.post.ch/browse/SDCISA-14313?focusedId=1914236&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-1914236)
 - [Houston check too slow](https://jira.post.ch/browse/SDCISA-13746?focusedId=1937167&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-1937167)
 - [QueueStatisticsCollector takes up to 10 minutes for ONE SINGLE request](https://github.com/swisspost/vertx-redisques/issues/188)
-
-## Performance is not an issue ...
+- [Monitoring A Stupid Amount Of Data](https://github.com/swisspost/vertx-redisques/pull/287#pullrequestreview-3086820198)
 - [houston GC 100%](https://teams.microsoft.com/l/message/19:261fb671bd664d4fb30d6d9e09869a7f@thread.tacv2/1723705177293?tenantId=3ae7c479-0cf1-47f4-8f84-929f364eff67&groupId=dce34a79-5661-41ab-b495-60a46b69d38e&parentMessageId=1723705177293&teamName=SDC-ISA&channelName=%F0%9F%A4%96SDC-ISA%20DevOps-Support&createdTime=1723705177293)
 - [houston kafka navigation position 2024](https://gitit.post.ch/projects/ISA/repos/houston/pull-requests/633/overview?commentId=396921)
 - [NowWhat info resource timeout 2024](https://jira.post.ch/browse/SDCISA-16515)
@@ -439,10 +440,10 @@ Links (Aka argument amplifiers)
 
 ## java assert
 - [how to enable](https://stackoverflow.com/a/68893479/4415884)
+- [How and when to use them](https://docs.oracle.com/javase/8/docs/technotes/guides/language/assert.html)
 - [When to use them](https://softwareengineering.stackexchange.com/a/15518/306800)
 - [What are they for](https://en.wikipedia.org/wiki/Assertion_(software_development)#Assertions_for_run-time_checking)
 - [What are they for](https://stackoverflow.com/a/298933/4415884)
-- [How and when to use them](https://docs.oracle.com/javase/8/docs/technotes/guides/language/assert.html)
 - [I dont care](https://gitit.post.ch/projects/ISA/repos/preflux/pull-requests/505/overview?commentId=219173)
 
 ## Mensch verblödet, modern tech, IQ, dumm, test
@@ -605,6 +606,7 @@ Links (Aka argument amplifiers)
 
 ## Naming is hard
 - [Naming is hard. SBB](https://gitit.post.ch/projects/ISA/repos/timetable-reservation-api/pull-requests/4/overview?commentId=284225)
+- [Naming is hard](https://hemaks.org/posts/naming-things-the-hardest-problem-in-computer-science/)
 
 ## About True Security
 - [Tips, Tools and How-tos for Safer Online Communications](https://ssd.eff.org/)
@@ -654,4 +656,7 @@ Links (Aka argument amplifiers)
 ## ...
 - [git for windoof macht crlf newlines kapput](https://wikit.post.ch/display/ISA/Code+Formatting?focusedCommentId=791239536#comment-791239536)
 - [Rust](https://drewdevault.com/2019/03/25/Rust-is-not-a-good-C-replacement.html)
+- [jssc obsolete outdated upstream error handling release new old](https://wikit.post.ch/spaces/ISA/pages/2590310790/2025-07-17+Challenger+Mehrere+Services+HW+laufen+nicht?focusedCommentId=2600929303#comment-2600929303)
+- [modern SW is terrible inefficient and bad](https://m.youtube.com/watch?v=eh1vOESSEdQ&pp=0gcJCcEJAYcqIYzv)
+
 

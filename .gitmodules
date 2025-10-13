@@ -13,22 +13,6 @@
 [submodule "preflux-install-performance-20250314"]
 	path = src/private/preflux-install-performance-20250314
 	url = file://~/OneDrive - Post CH AG/git-remotes/notes/preflux-install-performance-20250314.git
-[submodule "paisa-cloc"]
-	path = src/private/paisa-cloc
-	url = file://~/OneDrive - Post CH AG/git-remotes/paisa-cloc.git
-[submodule "eddie-isa-performance-20250318"]
-	path = src/private/eddie-isa-performance-20250318
-	url = file:///c/Users/fankhauseand/OneDrive - Post CH AG/git-remotes/notes/eddie-isa-performance-20250318.git
 [submodule "PrefluxTestsOnAws-20250505"]
 	path = src/private/PrefluxTestsOnAws-20250505
 	url = file://~/OneDrive - Post CH AG/git-remotes/notes/PrefluxTestsOnAws-20250505.git
-[submodule "ansible-course-cottingma-2025"]
-	path = src/private/ansible-course-cottingma-2025
-	url = file://~/OneDrive - Post CH AG/git-remotes/notes/ansible-course-cottingma-2025.git
-[submodule "audio-SIP-bug-20250626"]
-	path = src/private/audio-SIP-bug-20250626
-	url = file://C:/Users/fankhauseand/OneDrive - Post CH AG/git-remotes/notes/audio-SIP-bug-20250626.git
-	branch = master
-[submodule "postchag-issues"]
-	path = src/private/postchag-issues
-	url = file:///c/Users/fankhauseand/OneDrive - POST CH AG/git-remotes/notes/postchag-issues.git

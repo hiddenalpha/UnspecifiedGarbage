@@ -16,13 +16,27 @@ Commands look the same as with openshift.
 
   kubectl logs ${POD:?} --since-time=2024-12-31T24:59:59Z --timestamps=true
 
-  && pod=houston-0 \
-  && logName=houston \
-  && stage=prod \
-  && KUBECTL=kubectl \
-  && NOW=$(date -u +%Y%m%d-%H%M%S) \
-  && ${KUBECTL:?} logs ${pod:?} > ${logName:?}-${stage:?}-log-${NOW:?}.stdout.log 2> ${logName:?}-${stage:?}-log-${NOW:?}.stderr.log \
-  && ${KUBECTL:?} logs -p ${pod:?} > ${logName:?}-${stage:?}-log-${NOW:?}.prev.stdout.log 2> ${logName:?}-${stage:?}-log-${NOW:?}.prev.stderr.log \
+  && `# Get logs once ` \
+  && logName= `# eg "houston", "preflux" \
+  && stage= `# eg "prod", "test" \
+  && pod=$(${KUBECTL:?} get pods | grep "${logName:?}" | cut -f1 -d' ') \
+  && now=$(date -u +%Y%m%d-%H%M%S) \
+  && ${KUBECTL:?} logs ${pod:?} > ${logName:?}-${stage:?}-log-${now:?}.out.log \
+  && ${KUBECTL:?} logs -p ${pod:?} > ${logName:?}-${stage:?}-log-${now:?}.prev.out.log \
+
+  && `# Get logs continuously (to file)` \
+  && logName= `# eg: "houston", "preflux"` \
+  && stage= `# "prod", "test"` \
+  && KUBECTL= \
+  && while sleep 1 ;do true \
+    && echo "BEGIN ${KUBECTL:?} logs -f ${logName:?}.log" \
+    && pod=$(${KUBECTL:?} get pods | grep "${logName:?}" | cut -f1 -d" ") \
+    && now=$(date -u +%Y%m%d-%H%M%S) \
+    && ${KUBECTL:?} logs -f ${pod:?} > ${logName:?}-${stage:?}-log-${now:?}.out.log \
+    && echo "Retry in few seconds..." && sleep 5 \
+    ;done \
+  && echo "Has ENDed" \
+
 
 
 

@@ -11,3 +11,13 @@ Wireshark
 
 
 
+
+
+## Hide re-transmissions
+
+and (not tcp.analysis.fast_retransmission and not tcp.analysis.retransmission and not tcp.analysis.duplicate_ack)
+
+
+
+
+

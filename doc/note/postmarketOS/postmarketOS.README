@@ -1,0 +1,88 @@
+
+
+[doc](https://wiki.postmarketos.org/)
+
+[pmbootstrap.git](https://gitlab.postmarketos.org/postmarketOS/pmbootstrap.git)
+[pmaports.git](https://gitlab.postmarketos.org/postmarketOS/pmaports.git)
+
+
+WARN: Looks like as SamsungGalaxyS6 is a "downstream" device, meaning device
+      support is expected to be horrible.
+
+[orig fw dload evtl hier?](https://samfw.com/firmware/SM-G920F/AUT)
+
+[Hab mal das hier (als backup) gezogen](https://samfw.com/firmware/SM-G920F/SWC/G920FXXU6EVG1)
+
+
+pmbootstrap master was at b4338fd9efb3a5e1f306e79d5be08cff2fd96770.
+
+
+## Setup a devuan 6 VM
+
+ && SUDO=sudo \
+ && sv7sqM1BnlX6ufSft="${HOME:?}/work" \
+ && sv9gM8M72BexAPNV2="${HOME:?}/pmbootstrap" \
+ && spXFU4chpbqywOP2X='https://gitlab.postmarketos.org/postmarketOS/pmbootstrap.git' \
+ \
+ && $SUDO apt update \
+ && $SUDO apt install --no-install-recommends -y \
+     pipx git kpartx \
+     `# UNUSED: python3-pip` \
+ && mkdir "${sv9gM8M72BexAPNV2:?}" \
+ && cd "${sv9gM8M72BexAPNV2:?}" \
+ && git init \
+ && git remote add upstream "${spXFU4chpbqywOP2X:?}" \
+ && git fetch --depth=1 upstream refs/heads/master \
+ && git checkout $(git rev-parse upstream/master) \
+ && pipx install . \
+ && mkdir -p "${sv7sqM1BnlX6ufSft:?}" \
+ && cd "${sv7sqM1BnlX6ufSft:?}" \
+ && pmbootstrap init \
+
+  Work path: /home/user/work
+  Channel: v25.06  (once choosed 'edge', bcause build didnt work..)
+  > These are only asked if device unknown
+  > Vendor: samsung
+  > Codename: zerofltexx
+  > Arch: aarch64
+  > Manufacturer: Samsung
+  > Name: Samsung Galaxy S6
+  > Year: 2015
+  > Chassis: handset
+  > sdcard: n
+  > Flash method: heimdall   (<- www ist sich uneinig)
+  > Type: bootimg
+  Username: user
+  Provider: wpa_supplicant  (<- just my guess)
+  User interface: xfce4   (doc recommends xfce4 to start with)
+  systemd: never
+  extra free space: 0
+  boot partition size: 256MB
+  parallel jobs: 4
+  ccache per arch: 5G
+  sudo timer: False
+  mirror: http://mirror.postmarketos.org/postmarketos/
+  Extra packages: <none>
+  Timezone Europe/Zurich
+  Locale: en_DK
+  Device hostname: pmos-g920f
+  Build outdated packages: n
+  Zap existing chroots: y
+
+ && cd "${sv7sqM1BnlX6ufSft:?}" \
+ && pmbootstrap zap \
+ && `# pmbootstrap checksum linux-samsung-zerofltexx TODO really needed?` \
+ && pmbootstrap build `#--arch aarch64` device-samsung-zerofltexx \
+ && pmbootstrap install `# TODO Maybe need --android-recovery-zip ?` \
+ && `# img is at: work/chroot_native/home/pmos/rootfs/samsung-zerofltexx.img` \
+ && `# boot is at: work/chroot_rootfs_samsung-zerofltexx/boot` \
+
+
+Future, UNTESTED steps:
+
+
+ && pmbootstrap flasher flash_rootfs \
+ && pmbootstrap flasher flash_kernel \
+
+
+

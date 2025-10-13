@@ -3,17 +3,19 @@
 Fu** this horrible fu**ing bastard of code destroyer!
 
 NonSense in: preflux.
-MustHave in: lazlar.
+
+MUSTHave in: eagle, lazlar.
 
 
+  && `# quickNdirty generic. See other for more long-term thingy.` \
   && wipBr= \
   && dstBr= \
   && commitMsg="SDCISA-_____: Auto-destroy code-format" \
   && remote=upstream \
-  \
+
   && if test -n "$(git status --porcelain)" ;then echo "ERROR: Git worktree not clean"; false ;fi \
-  && if git log -n1 --decorate|grep -F "HEAD -> ${wipBr:?}" >/dev/null ;then true \
-      && printf 'EROR: Wrong branch checked out\n' \
+  && if git log -n1 --decorate|head -n1|grep -F "HEAD -> ${wipBr:?}" >/dev/null ;then true;else true \
+      && printf 'EROR: Wrong branch checked out\n' && false \
     ;fi \
   && git detach \
   && mvn spotless:apply \
@@ -23,5 +25,41 @@ MustHave in: lazlar.
   && git co "${wipBr:?}" \
   && git log -n2 "${cmitId:?}" \
   && git push upstream "${cmitId:?}":"${dstBr:?}" -f \
+
+
+#!/bin/sh
+set -e `# make sure to keep me up-to-date in UnspGarb "doc/note/spotless/spotless.txt"` \
+  && dstBr= `# eg: EnhanceExecutorErrorHandling-20250814` \
+  && true ${dstBr:?} \
+  && if test ! -e .git/refs/heads/"${dstBr:?}" ;then true \
+      && printf 'Local branch missing: %s\n' "${dstBr:?}" && false \
+    ;fi \
+  && isDirty="$(git status --porcelain)" \
+  && if test -n "${isDirty?}" ;then true \
+      && git stash save \
+    ;fi \
+  && currId="$(git branch --show-current)" \
+  && if test -z "${currId?}" ;then currId="$(git rev-parse HEAD)" ;fi \
+  && true ${currId:?} \
+  && git checkout --detach \
+  && git reset --soft "${dstBr:?}" \
+  && git checkout "${dstBr:?}" \
+  && `# BEGIN spotless ` \
+  && git reset --soft HEAD^ \
+  && git commit \
+  && mvn spotless:apply \
+  && git add -- . \
+  && git commit -m "Auto-destroy code-format" \
+  && `# END spotless ` \
+  && toPushId="$(git rev-parse HEAD)" \
+  && echo git push upstream "${toPushId:?}:${dstBr:?}" -f \
+  &&      git push upstream "${toPushId:?}:${dstBr:?}" -f \
+  && git checkout -f "${currId:?}" \
+  && if test -n "${isDirty?}" ;then true \
+      && git stash pop \
+    ;fi \
+  && true \
+
+
 
 

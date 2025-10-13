@@ -139,6 +139,15 @@ git push all --dry-run --all
 
 
 
+
+## How to list remote refs
+
+git ls-remote --symref origin HEAD
+git ls-remote origin refs/heads/*
+git ls-remote origin refs/tags/*
+git ls-remote origin refs/pulls/*
+
+
 ## Fetch multiple remotes (but NOT all!) at once
 
 git fetch --multiple origin upstream
@@ -177,7 +186,8 @@ würgaround if you know what you're doing:
   && remoteUrl= `# Eg: "file://${pathToRemoteGit:?}" ` \
   && tmp1=/tmp/GC8AALR9A-$(date +%Y%m%d) \
   && fuckFileCfg= `# Eg: "-c protocol.file.allow=always" ` \
-  \
+  && remoteMasterBranchNm= `# Usually "master"` \
+
   && `# TODO make sure pathToRemoteGit dir exists (AND IS EMPTY) before beginning ` \
   && mkdir "${tmp1:?}" \
   && cd "${pathToRemoteGit:?}" \
@@ -186,7 +196,7 @@ würgaround if you know what you're doing:
   && git init \
   && git commit -m "Initial, empty commit" --allow-empty \
   && git remote add origin "file://${pathToRemoteGit:?}" \
-  && git push origin master \
+  && git push origin "${remoteMasterBranchNm:?}" \
   && cd "${pathToParentWorktree:?}" \
   && rm -rf "${tmp1:?}" \
   && printf '[submodule "%s"]\n\tpath = %s\n\turl = %s\n' \
@@ -204,5 +214,24 @@ würgaround if you know what you're doing:
 ## Refs
 
   [push shallow](https://stackoverflow.com/a/35030063/4415884)
+
+
+
+
+
+## Manually manage git objects (TODO untested!)
+
+
+
+git unpack-objects < path/OUTSIDE/repo/to/some.pack
+
+git gc --prune=now
+
+
+GIT_ALTERNATE_OBJECT_DIRECTORIES='/path/to/.git/objects:/and/another/path/to/.git/objects'
+
+Equivalent for shitty systems:
+GIT_ALTERNATE_OBJECT_DIRECTORIES='C:/path/to/.git/objects;C:/and/another/path/to/.git/objects'
+
 
 

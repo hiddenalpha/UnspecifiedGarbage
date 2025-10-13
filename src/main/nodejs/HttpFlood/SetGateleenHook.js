@@ -115,6 +115,10 @@ function setHook( cls_hook ){
     req.on("error", function( err ){ console.error(err); });
     req.on("response", function( rsp ){
         stdout.write( "HTTP "+ rsp.statusCode +" "+ rsp.statusMessage +"\n" );
+		/* for whatever bullshit reason, nodejs v22 infinitely waits for those
+		 * handlers to be attached.. */
+		rsp.on("data", function(){});
+		rsp.on("end", function(){});
     });
     req.end(JSON.stringify({
         destination: cls_hook.destination,
