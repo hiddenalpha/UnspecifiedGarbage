@@ -87,14 +87,6 @@
         },
         "https://vod-progressive.akamaized.net": {
           "capabilities": [
-            "frame",
-            "noscript",
-            "media"
-          ],
-          "temp": false
-        },
-        "https://vod-progressive.akamaized.net": {
-          "capabilities": [
             "media"
           ],
           "temp": false
@@ -192,16 +184,13 @@
           "temp": false
         },
         "§:rautemusik.fm": {
-          "capabilities": [
-            "frame",
-            "noscript",
-            "other"
-          ],
+          "capabilities": [],
           "contextual": {
             "§:rm.fm": {
               "capabilities": [
                 "font",
-                "media"
+                "media",
+                "fetch"
               ],
               "temp": false
             }
@@ -355,8 +344,7 @@
           "temp": false
         },
         "§:postmarketos.org": {
-          "capabilities": [
-          ],
+          "capabilities": [],
           "contextual": {
             "§:postmarketos.org": {
               "capabilities": [
@@ -516,7 +504,7 @@
           "temp": false
         },
         "§:zx2c4.com": {
-          "capabilities": [ ],
+          "capabilities": [],
           "contextual": {
             "§:zx2c4.com": {
               "capabilities": [
@@ -536,7 +524,33 @@
           "contextual": {
             "§:rm.fm": {
               "capabilities": [
+                "script",
+                "media"
+              ],
+              "temp": false
+            }
+          },
+          "temp": false
+        },
+        "§:cloudflare.com": {
+          "capabilities": [],
+          "contextual": {
+            "§:rm.fm": {
+              "capabilities": [
                 "script"
+              ],
+              "temp": false
+            }
+          },
+          "temp": false
+        },
+        "https://cdnjs.cloudflare.com": {
+          "capabilities": [],
+          "contextual": {
+            "§:rm.fm": {
+              "capabilities": [
+                "script",
+                "media"
               ],
               "temp": false
             }
