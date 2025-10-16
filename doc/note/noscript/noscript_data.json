@@ -1,0 +1,573 @@
+{
+  "policy": {
+    "DEFAULT": {
+      "capabilities": [
+        "frame",
+        "font",
+        "noscript",
+        "unchecked_css"
+      ],
+      "temp": false
+    },
+    "TRUSTED": {
+      "capabilities": [
+        "script",
+        "object",
+        "media",
+        "frame",
+        "font",
+        "webgl",
+        "fetch",
+        "ping",
+        "noscript",
+        "other",
+        "unchecked_css",
+        "lan",
+        "lazy_load",
+        "wasm"
+      ],
+      "temp": false
+    },
+    "UNTRUSTED": {
+      "capabilities": [],
+      "temp": false
+    },
+    "sites": {
+      "trusted": [
+        "§:mozilla.net",
+        "§:addons.mozilla.org",
+        "§:code.jquery.com",
+        "§:brueggmatt.ch",
+        "§:hiddenalpha.ch",
+        "pi-one.local"
+      ],
+      "untrusted": [],
+      "custom": {
+        "https://skeeto.s3.amazonaws.com": {
+          "capabilities": [
+            "frame",
+            "noscript",
+            "other",
+            "media"
+          ],
+          "temp": false
+        },
+        "https://srfaudio-a.akamaihd.net/delivery/world": {
+          "capabilities": [
+            "frame",
+            "noscript",
+            "other",
+            "media"
+          ],
+          "temp": false
+        },
+        "https://mirror.eu.oneandone.net/projects/media.ccc.de/": {
+          "capabilities": [
+            "frame",
+            "noscript",
+            "media"
+          ],
+          "temp": false
+        },
+        "https://mirror.selfnet.de/CCC/": {
+          "capabilities": [
+            "frame",
+            "noscript",
+            "media"
+          ],
+          "temp": false
+        },
+        "https://mirror.netcologne.de/CCC/": {
+          "capabilities": [
+            "frame",
+            "noscript",
+            "media"
+          ],
+          "temp": false
+        },
+        "https://vod-progressive.akamaized.net": {
+          "capabilities": [
+            "frame",
+            "noscript",
+            "media"
+          ],
+          "temp": false
+        },
+        "https://vod-progressive.akamaized.net": {
+          "capabilities": [
+            "media"
+          ],
+          "temp": false
+        },
+        "https://upload.wikimedia.org": {
+          "capabilities": [
+            "media"
+          ],
+          "temp": false
+        },
+        "https://private-user-images.githubusercontent.com": {
+          "capabilities": [
+            "frame",
+            "noscript",
+            "media"
+          ],
+          "temp": false
+        },
+        "§:productionresultssa0.blob.core.windows.net": {
+          "capabilities": [
+            "frame",
+            "noscript",
+            "other"
+          ],
+          "contextual": {
+            "§:github.com": {
+              "capabilities": [
+                "frame",
+                "noscript",
+                "other",
+                "script",
+                "fetch",
+                "wasm"
+              ],
+              "temp": false
+            }
+          },
+          "temp": false
+        },
+        "§:githubassets.com": {
+          "capabilities": [
+            "script",
+            "media",
+            "font",
+            "fetch"
+          ],
+          "contextual": {
+            "§:github.com": {
+              "capabilities": [
+                "script",
+                "font",
+                "fetch",
+                "ping",
+                "noscript"
+              ],
+              "temp": false
+            }
+          },
+          "temp": false
+        },
+        "§:maps.googleapis.com": {
+          "capabilities": [
+            "frame",
+            "noscript",
+            "other",
+            "script"
+          ],
+          "contextual": {
+            "§:brueggmatt.ch": {
+              "capabilities": [
+                "frame",
+                "noscript",
+                "other",
+                "script",
+                "fetch",
+                "wasm"
+              ],
+              "temp": false
+            }
+          },
+          "temp": false
+        },
+        "§:ajax.googleapis.com": {
+          "capabilities": [],
+          "contextual": {
+            "§:stackexchange.com": {
+              "capabilities": [
+                "frame",
+                "noscript",
+                "script"
+              ],
+              "temp": false
+            }
+          },
+          "temp": false
+        },
+        "§:rautemusik.fm": {
+          "capabilities": [
+            "frame",
+            "noscript",
+            "other"
+          ],
+          "contextual": {
+            "§:rm.fm": {
+              "capabilities": [
+                "font",
+                "media"
+              ],
+              "temp": false
+            }
+          },
+          "temp": false
+        },
+        "§:rmsi-player.de": {
+          "capabilities": [
+            "frame",
+            "noscript",
+            "other"
+          ],
+          "contextual": {
+            "§:rm.fm": {
+              "capabilities": [
+                "script",
+                "media"
+              ],
+              "temp": false
+            }
+          },
+          "temp": false
+        },
+        "§:radiohost.de": {
+          "capabilities": [
+            "frame",
+            "noscript",
+            "other",
+            "media"
+          ],
+          "temp": false
+        },
+        "admin.ch": {
+          "capabilities": [
+            "frame",
+            "noscript",
+            "other"
+          ],
+          "contextual": {
+            "§:admin.ch": {
+              "capabilities": [
+                "frame",
+                "noscript",
+                "other",
+                "fetch"
+              ],
+              "temp": false
+            }
+          },
+          "temp": false
+        },
+        "§:hcaptcha.com": {
+          "capabilities": [
+            "frame",
+            "noscript",
+            "other"
+          ],
+          "contextual": {
+            "§:mastodon.social": {
+              "capabilities": [
+                "frame",
+                "noscript",
+                "other",
+                "script",
+                "fetch"
+              ],
+              "temp": false
+            }
+          },
+          "temp": false
+        },
+        "§:googlevideo.com": {
+          "capabilities": [
+            "frame",
+            "noscript",
+            "other"
+          ],
+          "contextual": {
+            "§:youtube.com": {
+              "capabilities": [
+                "frame",
+                "noscript",
+                "other",
+                "fetch"
+              ],
+              "temp": false
+            }
+          },
+          "temp": false
+        },
+        "§:ytimg.com": {
+          "capabilities": [],
+          "contextual": {
+            "§:youtube.com": {
+              "capabilities": [
+                "frame",
+                "noscript",
+                "other",
+                "fetch"
+              ],
+              "temp": false
+            }
+          },
+          "temp": false
+        },
+        "§:digitec.ch": {
+          "capabilities": [],
+          "contextual": {
+            "§:digitec.ch": {
+              "capabilities": [
+                "script",
+                "font",
+                "fetch",
+                "noscript"
+              ],
+              "temp": false
+            }
+          },
+          "temp": false
+        },
+        "§:galaxus.com": {
+          "capabilities": [],
+          "contextual": {
+            "§:digitec.ch": {
+              "capabilities": [
+                "frame",
+                "font",
+                "noscript",
+                "script"
+              ],
+              "temp": false
+            }
+          },
+          "temp": false
+        },
+        "§:mastodon.social": {
+          "capabilities": [],
+          "contextual": {
+            "§:mastodon.social": {
+              "capabilities": [
+                "frame",
+                "font",
+                "noscript",
+                "script",
+                "media",
+                "fetch"
+              ],
+              "temp": false
+            }
+          },
+          "temp": false
+        },
+        "§:postmarketos.org": {
+          "capabilities": [
+          ],
+          "contextual": {
+            "§:postmarketos.org": {
+              "capabilities": [
+                "frame",
+                "font",
+                "noscript",
+                "unchecked_css",
+                "script",
+                "lazy_load",
+                "fetch"
+              ],
+              "temp": false
+            }
+          },
+          "temp": false
+        },
+        "§:fosstodon.org": {
+          "capabilities": [],
+          "contextual": {
+            "§:fosstodon.org": {
+              "capabilities": [
+                "frame",
+                "font",
+                "noscript",
+                "unchecked_css",
+                "script",
+                "media",
+                "fetch"
+              ],
+              "temp": false
+            }
+          },
+          "temp": false
+        },
+        "§:perplexity.ai": {
+          "capabilities": [],
+          "contextual": {
+            "§:perplexity.ai": {
+              "capabilities": [
+                "font",
+                "noscript",
+                "unchecked_css",
+                "script",
+                "fetch"
+              ],
+              "temp": false
+            }
+          },
+          "temp": false
+        },
+        "§:d34r8q7sht0t9k.cloudfront.net": {
+          "capabilities": [],
+          "contextual": {
+            "§:perplexity.ai": {
+              "capabilities": [
+                "frame",
+                "font",
+                "noscript",
+                "unchecked_css",
+                "script"
+              ],
+              "temp": false
+            }
+          },
+          "temp": false
+        },
+        "§:youtube.com": {
+          "capabilities": [],
+          "contextual": {
+            "§:youtube.com": {
+              "capabilities": [
+                "frame",
+                "font",
+                "noscript",
+                "unchecked_css",
+                "script",
+                "media",
+                "fetch"
+              ],
+              "temp": false
+            }
+          },
+          "temp": false
+        },
+        "§:reddit.com": {
+          "capabilities": [],
+          "contextual": {
+            "§:reddit.com": {
+              "capabilities": [
+                "script",
+                "media",
+                "frame",
+                "font",
+                "fetch",
+                "ping",
+                "noscript",
+                "other",
+                "unchecked_css"
+              ],
+              "temp": false
+            }
+          },
+          "temp": false
+        },
+        "§:redditstatic.com": {
+          "capabilities": [],
+          "contextual": {
+            "§:reddit.com": {
+              "capabilities": [
+                "frame",
+                "font",
+                "noscript",
+                "unchecked_css",
+                "script"
+              ],
+              "temp": false
+            }
+          },
+          "temp": false
+        },
+        "§:floss.social": {
+          "capabilities": [],
+          "contextual": {
+            "§:floss.social": {
+              "capabilities": [
+                "frame",
+                "font",
+                "noscript",
+                "unchecked_css",
+                "script",
+                "media",
+                "fetch"
+              ],
+              "temp": false
+            }
+          },
+          "temp": false
+        },
+        "§:post.ch": {
+          "capabilities": [],
+          "contextual": {
+            "§:post.ch": {
+              "capabilities": [
+                "script",
+                "media",
+                "frame",
+                "font",
+                "fetch",
+                "ping",
+                "noscript",
+                "other",
+                "unchecked_css"
+              ],
+              "temp": false
+            }
+          },
+          "temp": false
+        },
+        "§:zx2c4.com": {
+          "capabilities": [ ],
+          "contextual": {
+            "§:zx2c4.com": {
+              "capabilities": [
+                "frame",
+                "font",
+                "noscript",
+                "unchecked_css",
+                "script"
+              ],
+              "temp": false
+            }
+          },
+          "temp": false
+        },
+        "§:rm.fm": {
+          "capabilities": [],
+          "contextual": {
+            "§:rm.fm": {
+              "capabilities": [
+                "script"
+              ],
+              "temp": false
+            }
+          },
+          "temp": false
+        }
+      }
+    },
+    "enforced": true,
+    "autoAllowTop": false
+  },
+  "local": {
+    "debug": false,
+    "showCtxMenuItem": true,
+    "showCountBadge": true,
+    "showFullAddresses": true,
+    "showProbePlaceholders": true,
+    "amnesticUpdates": false,
+    "storage": "local",
+    "uuid": "6832fcf9-f7dc-4ad9-882e-d718078d7dcf",
+    "highContrast": false
+  },
+  "sync": {
+    "global": false,
+    "xss": true,
+    "TabGuardMode": "incognito",
+    "TabGuardPrompt": "post",
+    "cascadeRestrictions": false,
+    "overrideTorBrowserPolicy": true,
+    "clearclick": true,
+    "storage": "sync"
+  },
+  "xssUserChoices": {}
+}
