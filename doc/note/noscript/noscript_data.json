@@ -97,20 +97,8 @@
           ],
           "temp": false
         },
-        "https://private-user-images.githubusercontent.com": {
-          "capabilities": [
-            "frame",
-            "noscript",
-            "media"
-          ],
-          "temp": false
-        },
         "§:productionresultssa0.blob.core.windows.net": {
-          "capabilities": [
-            "frame",
-            "noscript",
-            "other"
-          ],
+          "capabilities": [],
           "contextual": {
             "§:github.com": {
               "capabilities": [
@@ -127,12 +115,7 @@
           "temp": false
         },
         "§:githubassets.com": {
-          "capabilities": [
-            "script",
-            "media",
-            "font",
-            "fetch"
-          ],
+          "capabilities": [],
           "contextual": {
             "§:github.com": {
               "capabilities": [
@@ -181,7 +164,11 @@
           "temp": false
         },
         "§:rautemusik.fm": {
-          "capabilities": [],
+          "capabilities": [
+            "frame",
+            "noscript",
+            "other"
+          ],
           "contextual": {
             "§:rm.fm": {
               "capabilities": [
@@ -530,7 +517,12 @@
           "temp": false
         },
         "§:cloudflare.com": {
-          "capabilities": [],
+          "capabilities": [
+            "frame",
+            "font",
+            "noscript",
+            "unchecked_css"
+          ],
           "contextual": {
             "§:rm.fm": {
               "capabilities": [
@@ -542,7 +534,9 @@
           "temp": false
         },
         "https://cdnjs.cloudflare.com": {
-          "capabilities": [],
+          "capabilities": [
+            "font"
+          ],
           "contextual": {
             "§:rm.fm": {
               "capabilities": [
@@ -560,6 +554,7 @@
             "§:github.com": {
               "capabilities": [
                 "script",
+                "fetch",
                 "ping"
               ],
               "temp": false
@@ -567,15 +562,23 @@
           },
           "temp": false
         },
-        "https://github.com": {
-          "capabilities": [
-            "noscript",
-            "unchecked_css"
-          ],
+        "§:objects-origin.githubusercontent.com": {
+          "capabilities": [],
           "contextual": {
             "§:github.com": {
               "capabilities": [
-                "script",
+                "fetch"
+              ],
+              "temp": false
+            }
+          },
+          "temp": false
+        },
+        "https://objects-origin.githubusercontent.com": {
+          "capabilities": [],
+          "contextual": {
+            "§:github.com": {
+              "capabilities": [
                 "fetch"
               ],
               "temp": false
