@@ -137,10 +137,7 @@
             "§:github.com": {
               "capabilities": [
                 "script",
-                "font",
-                "fetch",
-                "ping",
-                "noscript"
+                "fetch"
               ],
               "temp": false
             }
@@ -551,6 +548,35 @@
               "capabilities": [
                 "script",
                 "media"
+              ],
+              "temp": false
+            }
+          },
+          "temp": false
+        },
+        "§:github.com": {
+          "capabilities": [],
+          "contextual": {
+            "§:github.com": {
+              "capabilities": [
+                "script",
+                "ping"
+              ],
+              "temp": false
+            }
+          },
+          "temp": false
+        },
+        "https://github.com": {
+          "capabilities": [
+            "noscript",
+            "unchecked_css"
+          ],
+          "contextual": {
+            "§:github.com": {
+              "capabilities": [
+                "script",
+                "fetch"
               ],
               "temp": false
             }
