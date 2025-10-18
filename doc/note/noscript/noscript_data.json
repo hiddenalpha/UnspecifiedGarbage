@@ -585,6 +585,92 @@
             }
           },
           "temp": false
+        },
+        "§:opensuse.org": {
+          "capabilities": [],
+          "contextual": {
+            "§:opensuse.org": {
+              "capabilities": [
+                "script"
+              ],
+              "temp": false
+            }
+          },
+          "temp": false
+        },
+        "§:google.ch": {
+          "capabilities": [],
+          "contextual": {
+            "§:google.ch": {
+              "capabilities": [
+                "script"
+              ],
+              "temp": false
+            }
+          },
+          "temp": false
+        },
+        "https://www.google.ch": {
+          "capabilities": [],
+          "contextual": {
+            "§:google.ch": {
+              "capabilities": [
+                "script",
+                "fetch"
+              ],
+              "temp": false
+            }
+          },
+          "temp": false
+        },
+        "§:gstatic.com": {
+          "capabilities": [],
+          "contextual": {
+            "§:google.ch": {
+              "capabilities": [
+                "font",
+                "fetch"
+              ],
+              "temp": false
+            }
+          },
+          "temp": false
+        },
+        "https://fonts.gstatic.com": {
+          "capabilities": [],
+          "contextual": {
+            "§:google.ch": {
+              "capabilities": [
+                "font"
+              ],
+              "temp": false
+            }
+          },
+          "temp": false
+        },
+        "§:google.com": {
+          "capabilities": [],
+          "contextual": {
+            "§:google.ch": {
+              "capabilities": [
+                "fetch"
+              ],
+              "temp": false
+            }
+          },
+          "temp": false
+        },
+        "https://www.google.com": {
+          "capabilities": [],
+          "contextual": {
+            "§:google.ch": {
+              "capabilities": [
+                "fetch"
+              ],
+              "temp": false
+            }
+          },
+          "temp": false
         }
       }
     },
