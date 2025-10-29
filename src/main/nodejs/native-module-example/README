@@ -30,13 +30,12 @@
    && cp ../node-x86_64-linux-gnu/build/Release/mymodule.node  lib/x86_64-linux-gnu/. \
    && cp ../node-x86_64-w64-mingw32/build/Release/mymodule.node  lib/x86_64-w64-mingw32/. \
    && cat > index.js <<EOF_3JggpOVIaHremmvH &&
-var orig, tripl, plat, arch, os = require("os"), path = require("path");
+var orig, plat, arch, os = require("os"), path = require("path");
 plat = os.platform();  arch = os.arch();
-tripl = 0 ? 0
-	: (arch == "x64" && plat == "linux") ? "x86_64-linux-gnu"
-	: (arch == "x64" && plat == "win32") ? "x86_64-w64-mingw32"
-	throw Error("ENOTSUP: "+ os.platform() +" "+ os.arch());
-orig = require(path.join(__dirname, "./lib/"+ tripl +"/mymodule.node"));
+orig = require(path.join(__dirname, (0 ? 0
+	: (arch == "x64" && plat == "linux") ? "./lib/x86_64-linux-gnu/mymodule.node"
+	: (arch == "x64" && plat == "win32") ? "./lib/x86_64-w64-mingw32/mymodule.node"
+	throw Error("ENOTSUP: "+ arch +" "+ plat))));
 for( k of Object.keys(orig) ) exports[k] = orig[k];
 EOF_3JggpOVIaHremmvH
 true \
