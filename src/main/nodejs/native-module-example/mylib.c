@@ -54,7 +54,7 @@ sumForNode( napi_env env, napi_callback_info info ){
 }
 
 
-napi_value
+static napi_value
 init( napi_env env, napi_value exports ){
 	void *ctx = NULL;
 	napi_value fn;
