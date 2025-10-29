@@ -1,0 +1,15 @@
+
+ && SUDO= \
+ && MKDIRS="mkdir -p" \
+ && $SUDO apt install --no-install-recommends -y \
+        nodejs npm make gcc g++ libc-dev \
+ && $SUDO npm install -g node-gyp \
+ && ${MKDIRS:?} build/node-gyp \
+ && tar c $(ls -A|grep -v build) | (cd build/node-gyp && tar x) \
+ && (cd build/node-gyp && node-gyp configure) \
+ && (cd build/node-gyp && node-gyp build) \
+ && file build/node-gyp/build/Release/*.node \
+ && printf '\n' \
+ && nodejs myuse.js \
+ && printf '\n' \
+
