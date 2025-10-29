@@ -177,7 +177,24 @@ würgaround if you know what you're doing:
 
 
 
+## Add a new submodule (from scratch) version 2
+
+This requires a remote repo to already exist.
+
+  && subName= \
+  && subPath= \
+  && subUrl= \
+  && subSha1= \
+  && printf >> .gitmodules '%s\n' \
+       "[submodule \"${subName:?}\"]" \
+       "	path = ${subPath:?}" \
+       "	url = ${subUrl:?}" \
+  && git update-index --add --cacheinfo 160000 "${subSha1:?}" "${subPath:?}" \
+
+
 ## Add a new submodule (from scratch)
+
+This creates a completely new submodule, from scratch.
 
   && pathToParentWorktree= `# Eg: "/c/work/projects/UnspecifiedGarbage" ` \
   && pathToRemoteGit= `# Eg: "/c/Users/${USERNAME:?}/OneDrive - POST CH AG/git-remotes/foo/bar.git" ` \
