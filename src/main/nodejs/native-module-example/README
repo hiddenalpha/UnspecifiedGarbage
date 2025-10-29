@@ -1,15 +1,60 @@
 
- && SUDO= \
+
+ && `# config` \
+ && SUDO=sudo \
+ && NODE=nodejs \
  && MKDIRS="mkdir -p" \
+ && tripl=x86_64-linux-gnu \
+
+
+ && `# setup` \
  && $SUDO apt install --no-install-recommends -y \
         nodejs npm make gcc g++ libc-dev \
  && $SUDO npm install -g node-gyp \
- && ${MKDIRS:?} build/node-gyp \
- && tar c $(ls -A|grep -v build) | (cd build/node-gyp && tar x) \
- && (cd build/node-gyp && node-gyp configure) \
- && (cd build/node-gyp && node-gyp build) \
+ && `# build` \
+ && ${MKDIRS:?} build/node-${tripl:?} \
+ && tar c $(ls -A|grep -v build) | (cd build/node-${tripl:?} && tar x) \
+ && (cd build/node-${tripl:?} && node-gyp configure) \
+ && (cd build/node-${tripl:?} && node-gyp rebuild) \
+ && `# try` \
  && file build/node-gyp/build/Release/*.node \
  && printf '\n' \
- && nodejs myuse.js \
+ && ${NODE:?} -e 'console.log("result: ", require("./build/node-'"${tripl:?}"'/build/Release/mymodule").sum(3, 5));' \
  && printf '\n' \
+
+
+ && `# package` \
+ && ${MKDIRS:?} build/npm-dist \
+ && (cd build/npm-dist \
+   && mkdir lib lib/x86_64-linux-gnu lib/x86_64-w64-mingw32 \
+   && cp ../node-x86_64-linux-gnu/build/Release/mymodule.node  lib/x86_64-linux-gnu/. \
+   && cp ../node-x86_64-w64-mingw32/build/Release/mymodule.node  lib/x86_64-w64-mingw32/. \
+   && cat > index.js <<EOF_3JggpOVIaHremmvH &&
+var orig, tripl, plat, arch, os = require("os"), path = require("path");
+plat = os.platform();  arch = os.arch();
+tripl = 0 ? 0
+	: (arch == "x64" && plat == "linux") ? "x86_64-linux-gnu"
+	: (arch == "x64" && plat == "win32") ? "x86_64-w64-mingw32"
+	throw Error("ENOTSUP: "+ os.platform() +" "+ os.arch());
+orig = require(path.join(__dirname, "./lib/"+ tripl +"/mymodule.node"));
+for( k of Object.keys(orig) ) exports[k] = orig[k];
+EOF_3JggpOVIaHremmvH
+true \
+  && cat > package.json <<EOF_tP0WsjEeEM8QUEak &&
+{
+	"name": "mymodule",
+	"version": "0.0.0-TODO_version",
+	"description": "TODO_description",
+	"main": "index.js",
+	"files": [ "lib/", "index.js" ],
+	"scripts": { "install": "exit 0" },
+	"dependencies": {},
+	"engines": { "node": ">=12" }
+}
+EOF_tP0WsjEeEM8QUEak
+true \
+  && tar --owner=0 --group=0 -Hustar -c lib index.js | gzip -n9 > mymodule-TODO_version.tar \
+  && true) \
+  && true \
+
 
