@@ -88,7 +88,7 @@
   <keyboard>
     <keybind key="W-Tab">
       <action name="Execute">
-        <command>skippy-xd</command>
+        <command>skippy-xd --expose</command>
       </action>
     </keybind>
   </keyboard>
