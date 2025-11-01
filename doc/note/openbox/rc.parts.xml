@@ -83,6 +83,17 @@
   </keyboard>
 </openbox_config>
 
+<!-- stylish window switching -->
+<openbox_config>
+  <keyboard>
+    <keybind key="W-Tab">
+      <action name="Execute">
+        <command>skippy-xd</command>
+      </action>
+    </keybind>
+  </keyboard>
+</openbox_config>
+
 <!-- openboxTile to tile the active window to different locations -->
 <openbox_config>
   <keyboard>
