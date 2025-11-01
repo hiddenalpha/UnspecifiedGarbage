@@ -7,12 +7,12 @@
   <keyboard>
     <keybind key="A-F2">
       <action name="Execute">
-        <command>gmrun</command>
+        <command>rofi -show run</command>
       </action>
     </keybind>
     <keybind key="W-r">
       <action name="Execute">
-        <command>gmrun</command>
+        <command>rofi -show run</command>
       </action>
     </keybind>
     <keybind key="W-t">

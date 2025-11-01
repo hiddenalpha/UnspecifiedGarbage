@@ -87,7 +87,7 @@ UUID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx  /mnt/nameOfHdd  ext4  noatime  0  2
 
 ## Install Desktop Env
 
-  && $SUDO apt install -y --no-install-recommends xorg openbox mate-terminal lightdm light-locker feh scrot lxpanel qalculate-gtk gmrun gnome-system-monitor \
+  && $SUDO apt install -y --no-install-recommends xorg openbox mate-terminal lightdm light-locker feh scrot lxpanel qalculate-gtk rofi gnome-system-monitor \
   && mkdir ~/.config ~/.config/openbox || true \
   && update-alternatives `# TODO needs args` \
 
