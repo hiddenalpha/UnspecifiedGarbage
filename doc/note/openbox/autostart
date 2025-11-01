@@ -19,3 +19,5 @@ if test -e ~/.fehbg; then ~/.fehbg; fi
 # Launch a term as powerusers need one anyway.
 #x-terminal-emulator &
 
+# skippy-xd --start-daemon &
+
