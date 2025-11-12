@@ -185,3 +185,12 @@ Working example from web (but not optimized):
   && rm "${TMPVID:?}" "${PALETTE_PNG:?}" \
 
 
+
+
+## Make Video Blur OutOfFocus
+
+  && ffmpeg -i ${inn:?} -vf "gblur=sigma=5" -c:a copy ${out:?} \
+
+
+
+
