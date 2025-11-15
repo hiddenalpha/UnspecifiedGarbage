@@ -74,6 +74,12 @@ Combine with dnsmasq if both are required.
 | @ 	IN	A	1.2.3.7	; Map "example.com" to specified IPv4
 | www	IN	A	1.2.3.8	; Map "www.example.com" to specified IPv4
 | ftp	IN	A	1.2.3.9	; Map "ftp.example.com" to specified IPv4
+| 
+| mail	IN	A	1.2.3.11	; Map "mail.example.com" to specified IPv4
+| @ 	IN	MX	10	mail.example.com.  ; Let "example.com" use "mail.example.com" with prio 10. TRAILING DOT IMPORTANT!
+| @ 	IN	TXT	"v=spf1 ip4:1.2.3.11 -all"  ; Allow only that IP to send email to here.
+| selector._domainkey	IN	TXT	"v=DKIM1; k=rsa; p=MIIBIjANB_TODO_TODO_TODO_TODO..."
+| _dmarc	IN	TXT	"v=DMARC1; p=reject; rua=mailto:postmaster@example.com"
 +-----------------------------------------------------------------------
 
 
