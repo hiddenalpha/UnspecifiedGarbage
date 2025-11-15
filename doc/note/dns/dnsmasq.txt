@@ -1,6 +1,76 @@
 
+dnsmasq - Simple DHCP / DNS server
+==================================
+
+apt install --no-install-recommends dnsmasq
+
 
 ## List Leases
 
   cat /var/lib/dnsmasq/dnsmasq.leases
+
+
+cat /etc/dnsmasq.d/foo.conf
+#--------------------------------------
+# Only use ONE of `interface` or `listen-address`.
+interface=eth0
+interface=wlan1
+#listen-address=127.0.0.1,::1,192.168.42.42
+#
+# DHCP
+# Using `0.0.0.0` in options, means to use this hosts IP.
+dhcp-range=eth0,192.168.21.16,192.168.21.31,48h
+dhcp-range=wlan1,192.168.21.16,192.168.21.31,48h
+dhcp-authoritative
+# option-6: Announce the dns server (0.0.0.0 means ourself)
+dhcp-option=6,0.0.0.0
+dhcp-option=option:ntp-server,192.168.21.1
+# 3: Default Gateway
+#dhcp-option=3,x.x.x.x
+# 121: z.z.z.z is gateway for x.x.x.x/yy
+#dhcp-option=121,x.x.x.x/yy,z.z.z.z,0.0.0.0,0.0.0.0
+#log-dhcp
+# Give MAC XX:XX:XX:XX:XX:XX hostname foo.home and IP y.y.y.y
+#dhcp-host=XX:XX:XX:XX:XX:XX,foo.home,y.y.y.y
+# Give MAC XX:XX:XX:XX:XX:XX the hostname foo.home
+#dhcp-host=XX:XX:XX:XX:XX:XX,foo.home
+# Give MAC XX:XX:XX:XX:XX:XX the static IP y.y.y.y
+#dhcp-host=XX:XX:XX:XX:XX:XX,y.y.y.y
+#
+# DNS
+#port=0   <- This is to disables DNS
+no-resolv
+no-hosts
+cache-size=50000
+# Upstream servers (either for specifc domains, or general):
+#server=/www.google.com/8.8.4.4
+server=192.168.1.1
+server=8.8.4.4
+server=8.8.8.8
+expand-hosts
+# do NOT forward `*.home` to upstreams.
+local=/home/
+domain=home
+# Resolve `example.home` to `y.y.y.y`
+#address=/example.home/y.y.y.y
+# Block `*.example.com` (but not `example.com`)
+#address=/*.example.com/
+# Block `*.example.com`, but not `foo.example.com`
+#address=/*.example.com/
+#address=/foo.example.com/#
+#--------------------------------------
+
+
+
+For localhost DNS caching ensure `/etc/resolv.conf` contains ONLY this
+nameserver:
+#--------------------------------------
+nameserver 127.0.0.1
+#--------------------------------------
+
+
+
+Existing leases should be in:
+`/var/lib/misc/dnsmasq.leases`
+
 

@@ -191,6 +191,7 @@ Working example from web (but not optimized):
 
   && ffmpeg -i ${inn:?} -vf "gblur=sigma=5" -c:a copy ${out:?} \
 
+[src and more](https://shotstack.io/learn/ffmpeg-blur-video/)
 
 
 

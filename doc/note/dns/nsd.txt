@@ -1,0 +1,80 @@
+
+NSD - NameServerDaemon
+======================
+
+Hint: Authoritative mode ONLY (no recursive, no cache, no ...).
+Combine with dnsmasq if both are required.
+
+  && pkgNms='nsd' \
+  && $SUDO dpkg-divert --add --rename /sbin/start-stop-daemon \
+  && $SUDO ln -fs /bin/true /sbin/start-stop-daemon \
+  && $SUDO RUNLEVEL=1 DEBIAN_FRONTEND=noninteractive apt install --no-install-recommends -y ${pkgNms:?} \
+  && $SUDO rm /sbin/start-stop-daemon \
+  && $SUDO dpkg-divert --remove --rename /sbin/start-stop-daemon \
+
+`/etc/nsd/nsd.conf`
++-----------------------------------------------------------------------
+| server:
+| 	#server-count: 1
+| 	#reuseport: no
+| 	#port: 53
+| 	#username: nsd
+| 	#zonelistfile: "/var/lib/nsd/zone.list"  # <- set empty for disable
+| 	# ReOpen logs by: `nsd-control log_reopen`
+| 	#logfile: "/var/log/nsd/nsd.log"
+| 	#log-only-syslog: no
+| 	#verbosity: 0
+| 	#xfrdfile: "/var/lib/nsd/xfrd.state"
+| 	#xfrdir: "/tmp"
+| 	hide-identity: yes
+| 	hide-version: yes
+| 	drop-updates: yes
+| 	statistics: 3600
+| 	#round-robin: no
+| 	refuse-any: yes
+| 	reload-config: yes
+| 	zonefiles-check: yes
+| 	#tls-service-key: "path/to/privatekeyfile.key"
+| 	#tls-service-pem: "path/to/publiccertfile.pem"
+| 	#tls-service-ocsp: "path/to/ocsp.pem"
+| 	#tls-port: 853
+| 	#metrics-interface: 127.0.0.1
+| 	#metrics-port: 9100
+| 	#metrics-path: "/metrics"
+| verify:
+| 	#enable: no
+| remote-control:
+| 	control-enable: yes
+| 	control-interface: /run/nsd/nsd.sock
+| zone:
+| 	name: example.com
+| 	zonefile: /etc/nsd/zones/com.example
+| #zone:
+| #	name: someotherzone.com
+| #	zonefile: /etc/nsd/zones/com.someotherzone
++-----------------------------------------------------------------------
+
+`/etc/nsd/zones/com.example`
++-----------------------------------------------------------------------
+| $ORIGIN example.com.  ; <- WARN trailing dot important
+| $TTL 3600
+| @ IN SOA ns1.example.com. admin.example.com. (
+| 	2025111501 ; serial (YYYYMMDDNN) -> MUST update on EVERY change.
+| 	3600       ; refresh
+| 	600        ; retry
+| 	604800     ; expire
+| 	3600       ; minimum ttl
+| )
+| ; Provide peer (as in fallback) DNS servers.
+| IN	NS	ns1.example.com.
+| IN	NS	ns2.example.com.
+| ns1	IN	A	1.2.3.4
+| ns2	IN	A	1.2.3.5
+| 
+| @ 	IN	A	1.2.3.7	; Map "example.com" to specified IPv4
+| www	IN	A	1.2.3.8	; Map "www.example.com" to specified IPv4
+| ftp	IN	A	1.2.3.9	; Map "ftp.example.com" to specified IPv4
++-----------------------------------------------------------------------
+
+
+

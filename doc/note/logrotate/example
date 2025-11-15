@@ -1,0 +1,17 @@
+# Example logrotation config file
+# `/etc/logrotate.d/example`
+
+/var/log/example/*.log {
+	daily
+	size 8M
+	rotate 8
+	delaycompress
+	compress
+	compressoptions -n9
+	create 0240 example adm
+	#missingok
+	#postrotate
+	#	/usr/bin/killall -HUP example
+	#endscript
+}
+
