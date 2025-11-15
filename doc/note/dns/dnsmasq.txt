@@ -2,7 +2,7 @@
 dnsmasq - Simple DHCP / DNS server
 ==================================
 
-apt install --no-install-recommends dnsmasq
+apt install --no-install-recommends -y dnsmasq
 
 
 ## List Leases
@@ -58,6 +58,13 @@ domain=home
 # Block `*.example.com`, but not `foo.example.com`
 #address=/*.example.com/
 #address=/foo.example.com/#
+#
+# In case there are multiple networks connected to our server. Use
+# `localise-queries` and then `host-record` to assign an address for
+# every subnet individually. Eg:
+#localise-queries
+#host-record=example.home,192.168.1.5
+#host-record=example.home,10.0.0.5
 #--------------------------------------
 
 
